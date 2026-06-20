@@ -2,13 +2,6 @@
 
 namespace App\Controller\Admin;
 
-use App\Entity\Category;
-use App\Entity\Menu;
-use App\Entity\MenuItem as MenuItemEntity;
-use App\Entity\Page;
-use App\Entity\Post;
-use App\Entity\Setting;
-use App\Entity\Theme;
 use App\Module\AdminModuleInterface;
 use App\Module\ModuleRegistry;
 use App\Module\ModuleStateManager;
@@ -88,19 +81,19 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToDashboard('Nadzorna ploča', 'fa fa-gauge');
 
         yield MenuItem::section('Sadržaj');
-        yield MenuItem::linkToCrud('Stranice', 'fa fa-file-lines', Page::class);
-        yield MenuItem::linkToCrud('Objave', 'fa fa-newspaper', Post::class);
-        yield MenuItem::linkToCrud('Kategorije', 'fa fa-tags', Category::class);
+        yield MenuItem::linkTo(PageCrudController::class, 'Stranice', 'fa fa-file-lines');
+        yield MenuItem::linkTo(PostCrudController::class, 'Objave', 'fa fa-newspaper');
+        yield MenuItem::linkTo(CategoryCrudController::class, 'Kategorije', 'fa fa-tags');
 
         yield MenuItem::section('Navigacija');
-        yield MenuItem::linkToCrud('Izbornici', 'fa fa-bars', Menu::class);
-        yield MenuItem::linkToCrud('Stavke izbornika', 'fa fa-list', MenuItemEntity::class);
+        yield MenuItem::linkTo(MenuCrudController::class, 'Izbornici', 'fa fa-bars');
+        yield MenuItem::linkTo(MenuItemCrudController::class, 'Stavke izbornika', 'fa fa-list');
 
         yield MenuItem::section('Izgled');
-        yield MenuItem::linkToCrud('Teme', 'fa fa-palette', Theme::class);
+        yield MenuItem::linkTo(ThemeCrudController::class, 'Teme', 'fa fa-palette');
 
         yield MenuItem::section('Sustav');
-        yield MenuItem::linkToCrud('Postavke', 'fa fa-gear', Setting::class);
+        yield MenuItem::linkTo(SettingCrudController::class, 'Postavke', 'fa fa-gear');
 
         // Modules surface their own admin entries here, built dynamically from the
         // registry. Disabled modules are skipped.

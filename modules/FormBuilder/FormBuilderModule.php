@@ -4,7 +4,7 @@ namespace Tallyst\FormBuilder;
 
 use App\Module\AdminModuleInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
-use Tallyst\FormBuilder\Entity\Order;
+use Tallyst\FormBuilder\Controller\Admin\OrderCrudController;
 
 /**
  * Module metadata + admin presence. Auto-tagged app.module (via ModuleInterface)
@@ -35,6 +35,6 @@ class FormBuilderModule implements AdminModuleInterface
     public function getAdminMenuItems(): iterable
     {
         yield MenuItem::linkToRoute('Forme', 'fa fa-wpforms', 'form_builder_admin_index');
-        yield MenuItem::linkToCrud('Narudžbe', 'fa fa-receipt', Order::class);
+        yield MenuItem::linkTo(OrderCrudController::class, 'Narudžbe', 'fa fa-receipt');
     }
 }
