@@ -8,8 +8,12 @@
         <div class="fb-success" role="status">Hvala! Vaš odgovor je zaprimljen.</div>
     {% endif %}
 
+    {# data-turbo="false": the submit may 303-redirect to an external payment page
+       (Stripe Checkout); Turbo can't follow a cross-origin redirect, so use a normal
+       full-page navigation. Stimulus (conditional logic) is unaffected. #}
     <form class="fb-form" method="post"
           action="{{ path('form_builder_submit', {id: form.id}) }}"
+          data-turbo="false"
           data-controller="formbuilder--conditions"
           data-formbuilder--conditions-schema-value="{{ schema|json_encode|e('html_attr') }}">
 
