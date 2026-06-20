@@ -53,7 +53,11 @@
             <a class="btn btn-light" href="{{ path('form_builder_admin_index') }}">Odustani</a>
         </div>
 
-        {{ form_end(form) }}
+        {# We render every field manually above; render only the CSRF token from the
+           rest, and disable form_rest so it doesn't re-emit the fields collection as
+           empty index-labelled fieldsets ("0 1 2" under the Save button). #}
+        {{ form_widget(form._token) }}
+        {{ form_end(form, {render_rest: false}) }}
     </div>
 
     <style>
