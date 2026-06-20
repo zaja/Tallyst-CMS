@@ -1,0 +1,5 @@
+{
+    "type": "module",
+    "private": true,
+    "description": "Marks this dir's .js as ES modules so Node can import condition_evaluator.js in tests. Not used by AssetMapper."
+}

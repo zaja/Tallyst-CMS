@@ -1,0 +1,97 @@
+{
+    "_comment": "Single source of truth for condition semantics. Run by BOTH the PHP test (App\\Tests\\FormBuilder\\ConditionEvaluatorTest) and the Node test (condition_evaluator.test.mjs). Keep PHP and JS implementations in lock-step against these cases.",
+
+    "conditionCases": [
+        { "name": "no rules => always visible", "conditions": {}, "values": {}, "expectedVisible": true },
+
+        { "name": "equals: string actual '5' vs value '5'", "conditions": { "action": "show", "match": "all", "rules": [ { "field": "qty", "operator": "equals", "value": "5" } ] }, "values": { "qty": "5" }, "expectedVisible": true },
+        { "name": "equals: number actual 5 coerces to '5'", "conditions": { "rules": [ { "field": "qty", "operator": "equals", "value": "5" } ] }, "values": { "qty": 5 }, "expectedVisible": true },
+        { "name": "equals: mismatch hides (action show)", "conditions": { "rules": [ { "field": "qty", "operator": "equals", "value": "5" } ] }, "values": { "qty": "6" }, "expectedVisible": false },
+        { "name": "equals: '0' equals '0'", "conditions": { "rules": [ { "field": "n", "operator": "equals", "value": "0" } ] }, "values": { "n": "0" }, "expectedVisible": true },
+
+        { "name": "not_equals true", "conditions": { "rules": [ { "field": "color", "operator": "not_equals", "value": "red" } ] }, "values": { "color": "blue" }, "expectedVisible": true },
+
+        { "name": "gt: 10 > 9", "conditions": { "rules": [ { "field": "qty", "operator": "gt", "value": "9" } ] }, "values": { "qty": "10" }, "expectedVisible": true },
+        { "name": "gt: 9 > 10 is false", "conditions": { "rules": [ { "field": "qty", "operator": "gt", "value": "10" } ] }, "values": { "qty": "9" }, "expectedVisible": false },
+        { "name": "gt: non-numeric actual => false", "conditions": { "rules": [ { "field": "qty", "operator": "gt", "value": "5" } ] }, "values": { "qty": "abc" }, "expectedVisible": false },
+        { "name": "gt: numeric value compared as number not string (2 vs 10)", "conditions": { "rules": [ { "field": "qty", "operator": "gt", "value": "10" } ] }, "values": { "qty": "2" }, "expectedVisible": false },
+        { "name": "lt: 3 < 5", "conditions": { "rules": [ { "field": "qty", "operator": "lt", "value": "5" } ] }, "values": { "qty": "3" }, "expectedVisible": true },
+        { "name": "lt: decimal 5.5 not < 5", "conditions": { "rules": [ { "field": "qty", "operator": "lt", "value": "5" } ] }, "values": { "qty": "5.5" }, "expectedVisible": false },
+
+        { "name": "empty: '' is empty", "conditions": { "rules": [ { "field": "note", "operator": "empty", "value": "" } ] }, "values": { "note": "" }, "expectedVisible": true },
+        { "name": "empty: missing key is empty", "conditions": { "rules": [ { "field": "note", "operator": "empty", "value": "" } ] }, "values": {}, "expectedVisible": true },
+        { "name": "empty: '0' is NOT empty", "conditions": { "rules": [ { "field": "note", "operator": "empty", "value": "" } ] }, "values": { "note": "0" }, "expectedVisible": false },
+        { "name": "empty: checkbox false is empty", "conditions": { "rules": [ { "field": "agree", "operator": "empty", "value": "" } ] }, "values": { "agree": false }, "expectedVisible": true },
+        { "name": "not_empty: has value", "conditions": { "rules": [ { "field": "note", "operator": "not_empty", "value": "" } ] }, "values": { "note": "hi" }, "expectedVisible": true },
+        { "name": "not_empty: checkbox checked '1'", "conditions": { "rules": [ { "field": "agree", "operator": "not_empty", "value": "" } ] }, "values": { "agree": "1" }, "expectedVisible": true },
+        { "name": "not_empty: checkbox unchecked false hides", "conditions": { "rules": [ { "field": "agree", "operator": "not_empty", "value": "" } ] }, "values": { "agree": false }, "expectedVisible": false },
+
+        { "name": "contains: substring match", "conditions": { "rules": [ { "field": "msg", "operator": "contains", "value": "world" } ] }, "values": { "msg": "hello world" }, "expectedVisible": true },
+        { "name": "contains: case-sensitive miss", "conditions": { "rules": [ { "field": "msg", "operator": "contains", "value": "hello" } ] }, "values": { "msg": "Hello there" }, "expectedVisible": false },
+
+        { "name": "array equals: membership true", "conditions": { "rules": [ { "field": "tags", "operator": "equals", "value": "a" } ] }, "values": { "tags": ["a", "b"] }, "expectedVisible": true },
+        { "name": "array equals: membership false", "conditions": { "rules": [ { "field": "tags", "operator": "equals", "value": "c" } ] }, "values": { "tags": ["a", "b"] }, "expectedVisible": false },
+        { "name": "array contains: membership true", "conditions": { "rules": [ { "field": "tags", "operator": "contains", "value": "b" } ] }, "values": { "tags": ["a", "b"] }, "expectedVisible": true },
+        { "name": "array empty: no selections is empty", "conditions": { "rules": [ { "field": "tags", "operator": "empty", "value": "" } ] }, "values": { "tags": [] }, "expectedVisible": true },
+
+        { "name": "action hide: condition met => hidden", "conditions": { "action": "hide", "rules": [ { "field": "subscribe", "operator": "equals", "value": "yes" } ] }, "values": { "subscribe": "yes" }, "expectedVisible": false },
+        { "name": "action hide: condition not met => visible", "conditions": { "action": "hide", "rules": [ { "field": "subscribe", "operator": "equals", "value": "yes" } ] }, "values": { "subscribe": "no" }, "expectedVisible": true },
+
+        { "name": "match all: both true", "conditions": { "match": "all", "rules": [ { "field": "a", "operator": "equals", "value": "1" }, { "field": "b", "operator": "not_empty", "value": "" } ] }, "values": { "a": "1", "b": "x" }, "expectedVisible": true },
+        { "name": "match all: one false => false", "conditions": { "match": "all", "rules": [ { "field": "a", "operator": "equals", "value": "1" }, { "field": "b", "operator": "not_empty", "value": "" } ] }, "values": { "a": "1", "b": "" }, "expectedVisible": false },
+        { "name": "match any: one true => true", "conditions": { "match": "any", "rules": [ { "field": "a", "operator": "equals", "value": "1" }, { "field": "b", "operator": "equals", "value": "1" } ] }, "values": { "a": "1", "b": "0" }, "expectedVisible": true },
+        { "name": "match any: none true => false", "conditions": { "match": "any", "rules": [ { "field": "a", "operator": "equals", "value": "1" }, { "field": "b", "operator": "equals", "value": "1" } ] }, "values": { "a": "0", "b": "0" }, "expectedVisible": false },
+
+        { "name": "unknown operator => false (action show hides)", "conditions": { "rules": [ { "field": "a", "operator": "wat", "value": "1" } ] }, "values": { "a": "1" }, "expectedVisible": false }
+    ],
+
+    "fixedPointCases": [
+        {
+            "name": "chain all satisfied",
+            "fields": [
+                { "key": "a", "conditions": {} },
+                { "key": "b", "conditions": { "rules": [ { "field": "a", "operator": "equals", "value": "yes" } ] } },
+                { "key": "c", "conditions": { "rules": [ { "field": "b", "operator": "equals", "value": "x" } ] } }
+            ],
+            "values": { "a": "yes", "b": "x" },
+            "expectedVisibleKeys": ["a", "b", "c"]
+        },
+        {
+            "name": "cascade: hiding b clears its value and hides c",
+            "fields": [
+                { "key": "a", "conditions": {} },
+                { "key": "b", "conditions": { "rules": [ { "field": "a", "operator": "equals", "value": "yes" } ] } },
+                { "key": "c", "conditions": { "rules": [ { "field": "b", "operator": "equals", "value": "x" } ] } }
+            ],
+            "values": { "a": "no", "b": "x" },
+            "expectedVisibleKeys": ["a"]
+        },
+        {
+            "name": "mutual dependency terminates (no infinite loop), converges to empty",
+            "fields": [
+                { "key": "x", "conditions": { "rules": [ { "field": "y", "operator": "equals", "value": "1" } ] } },
+                { "key": "y", "conditions": { "rules": [ { "field": "x", "operator": "equals", "value": "1" } ] } }
+            ],
+            "values": { "x": "1", "y": "2" },
+            "expectedVisibleKeys": []
+        },
+        {
+            "name": "mutual dependency both satisfied stays stable",
+            "fields": [
+                { "key": "x", "conditions": { "rules": [ { "field": "y", "operator": "equals", "value": "1" } ] } },
+                { "key": "y", "conditions": { "rules": [ { "field": "x", "operator": "equals", "value": "1" } ] } }
+            ],
+            "values": { "x": "1", "y": "1" },
+            "expectedVisibleKeys": ["x", "y"]
+        },
+        {
+            "name": "condition referencing unknown field hides dependent",
+            "fields": [
+                { "key": "a", "conditions": {} },
+                { "key": "b", "conditions": { "rules": [ { "field": "ghost", "operator": "equals", "value": "1" } ] } }
+            ],
+            "values": { "a": "hello" },
+            "expectedVisibleKeys": ["a"]
+        }
+    ]
+}

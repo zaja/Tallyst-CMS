@@ -1,0 +1,8 @@
+{# One condition rule row. Used both for existing rules and as the collection
+   prototype (ruleForm = ...rules.vars.prototype). #}
+<div class="fb-rule" data-fb-item>
+    {{ form_widget(ruleForm.field) }}
+    {{ form_widget(ruleForm.operator) }}
+    {{ form_widget(ruleForm.value) }}
+    <button type="button" class="fb-x" data-action="formbuilder--builder#remove" title="Ukloni pravilo">×</button>
+</div>

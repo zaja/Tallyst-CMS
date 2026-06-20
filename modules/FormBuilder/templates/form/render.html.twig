@@ -1,0 +1,91 @@
+{# Data-driven end-user form. NOT the Symfony Form component (see CLAUDE.md rule 3).
+   The Stimulus controller reads the embedded schema and shows/hides fields live;
+   the server re-validates the same rules. #}
+{% set submitted = app.request.query.get('fb_success') == form.id %}
+
+<div class="fb-form-wrap">
+    {% if submitted %}
+        <div class="fb-success" role="status">Hvala! Vaš odgovor je zaprimljen.</div>
+    {% endif %}
+
+    <form class="fb-form" method="post"
+          action="{{ path('form_builder_submit', {id: form.id}) }}"
+          data-controller="formbuilder--conditions"
+          data-formbuilder--conditions-schema-value="{{ schema|json_encode|e('html_attr') }}">
+
+        <input type="hidden" name="_token" value="{{ csrf_token('form_submit_' ~ form.id) }}">
+        <input type="hidden" name="_return" value="{{ app.request.requestUri }}">
+
+        {% if form.description %}<p class="fb-desc">{{ form.description }}</p>{% endif %}
+
+        {% for field in form.fields %}
+            {% set key = field.key %}
+            {% set val = old[key] is defined ? old[key] : '' %}
+            {% set err = errors[key] is defined ? errors[key] : null %}
+            {% set fid = 'fb-' ~ form.id ~ '-' ~ key %}
+
+            <div class="fb-field"
+                 data-formbuilder--conditions-target="field"
+                 data-field-key="{{ key }}">
+
+                {% if field.type != 'checkbox' %}
+                    <label for="{{ fid }}">{{ field.label }}{% if field.required %} <span class="fb-req">*</span>{% endif %}</label>
+                {% endif %}
+
+                {% if field.type == 'textarea' %}
+                    <textarea id="{{ fid }}" name="{{ key }}"{% if field.required %} required{% endif %}
+                              placeholder="{{ field.placeholder }}">{{ val }}</textarea>
+
+                {% elseif field.type == 'select' %}
+                    <select id="{{ fid }}" name="{{ key }}"{% if field.required %} required{% endif %}>
+                        <option value="">—</option>
+                        {% for opt in field.options %}
+                            <option value="{{ opt }}"{{ val == opt ? ' selected' : '' }}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+
+                {% elseif field.type == 'radio' %}
+                    <div class="fb-choices">
+                        {% for opt in field.options %}
+                            <label class="fb-choice">
+                                <input type="radio" name="{{ key }}" value="{{ opt }}"{{ val == opt ? ' checked' : '' }}{% if field.required %} required{% endif %}>
+                                {{ opt }}
+                            </label>
+                        {% endfor %}
+                    </div>
+
+                {% elseif field.type == 'checkbox' %}
+                    <label class="fb-choice">
+                        <input type="checkbox" id="{{ fid }}" name="{{ key }}" value="1"{{ val ? ' checked' : '' }}{% if field.required %} required{% endif %}>
+                        {{ field.label }}{% if field.required %} <span class="fb-req">*</span>{% endif %}
+                    </label>
+
+                {% else %}
+                    {% set inputType = field.type == 'number' ? 'number' : (field.type == 'email' ? 'email' : 'text') %}
+                    <input type="{{ inputType }}" id="{{ fid }}" name="{{ key }}" value="{{ val }}"{% if field.required %} required{% endif %}
+                           placeholder="{{ field.placeholder }}">
+                {% endif %}
+
+                {% if err %}<p class="fb-error">{{ err }}</p>{% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="fb-submit">Pošalji</button>
+    </form>
+</div>
+
+<style>
+    .fb-form-wrap { margin: 1.5rem 0; }
+    .fb-form { display: grid; gap: 1rem; max-width: 32rem; }
+    .fb-field label { display: block; font-weight: 600; margin-bottom: .25rem; }
+    .fb-field input[type=text], .fb-field input[type=email], .fb-field input[type=number],
+    .fb-field select, .fb-field textarea { width: 100%; padding: .55rem .65rem; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; }
+    .fb-field textarea { min-height: 6rem; }
+    .fb-choice { display: block; font-weight: 400; }
+    .fb-req { color: #dc2626; }
+    .fb-error { color: #b91c1c; font-size: .85rem; margin: .35rem 0 0; }
+    .fb-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: .7rem .9rem; border-radius: 8px; margin-bottom: 1rem; }
+    .fb-submit { justify-self: start; background: #2563eb; color: #fff; border: 0; border-radius: 8px; padding: .6rem 1.1rem; font: inherit; cursor: pointer; }
+    .fb-submit:hover { background: #1d4ed8; }
+    .fb-field[hidden] { display: none; }
+</style>

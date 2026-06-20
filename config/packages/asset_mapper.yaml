@@ -2,7 +2,9 @@ framework:
     asset_mapper:
         # The paths to make available to the asset mapper.
         paths:
-            - assets/
+            assets/: ''
+            # FormBuilder module assets (one of the 5 per-module touch points; see CLAUDE.md).
+            modules/FormBuilder/assets/: form_builder
         missing_import_mode: strict
 
 when@prod:

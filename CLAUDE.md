@@ -97,13 +97,32 @@ commercial dual license). A Tiptap custom button can insert the `[form id=N]`
 tag for good UX.
 
 ## Adding a new module (the pattern to follow)
-1. Copy the structure of `modules/FormBuilder/`.
-2. Create `<Name>Bundle.php` and register it in `config/bundles.php`.
-3. Implement `ModuleInterface` so it appears in the admin module registry.
-4. Entities under `Entity/`; templates under `templates/` (=> `@<Name>` namespace).
-5. Register routes and services via the bundle's `config/`.
-6. If it adds content tags, register them with the ShortcodeRegistry.
-7. Generate + run a migration for any new entities.
+Copy `modules/FormBuilder/` — it is the reference module. Its bundle class
+(`AbstractBundle`) self-registers its Doctrine mapping and its `config/services.php`,
+and overrides `getPath()` to `__DIR__` (the bundle lives in `modules/<Name>/`, not a
+`src/` subdir, so the default heuristic mis-resolves it). Implement `ModuleInterface`
+(metadata → shows in the registry) and optionally `AdminModuleInterface`
+(`getAdminMenuItems()` → appears under the dashboard "Moduli" section). Content tags
+implement `ShortcodeInterface`; both interfaces are auto-tagged via
+`#[AutoconfigureTag]`, so no `_instanceof`/services wiring is needed for them.
+
+**The 5 app-side touch points (everything else lives in the module):**
+1. **Autoload** — add the PSR-4 namespace to `composer.json` (`"Tallyst\\<Name>\\":
+   "modules/<Name>/"`) and run `php8.5 /usr/local/bin/composer dump-autoload`.
+2. **bundles.php** — register `Tallyst\<Name>\<Name>Bundle::class => ['all' => true]`.
+3. **Routes** — add `config/routes/<name>.yaml` importing
+   `'../../modules/<Name>/Controller/'` with `type: attribute`.
+4. **AssetMapper** — add `modules/<Name>/assets/: <name>` to `paths` in
+   `config/packages/asset_mapper.yaml` (only if the module ships JS/CSS).
+5. **Stimulus** — `import` the module's controllers in `assets/stimulus_bootstrap.js`
+   and `app.register('<name>--<controller>', ...)` (only if it ships controllers).
+
+Then generate + run a Doctrine migration for any new entities, and `cache:clear`.
+
+**Shared client/server logic (e.g. conditional fields):** keep ONE definition as
+data (JSON on the entity), evaluate it with a PHP class AND a mirrored pure JS module
+(`assets/condition_evaluator.js`), and test BOTH against one fixture
+(`tests/fixtures/condition_cases.json` → PHPUnit + a Node test) so they cannot drift.
 
 ## Workflow expectations for Claude Code
 - Prefer Explore → Plan → Implement → Commit. Propose a plan before large changes.

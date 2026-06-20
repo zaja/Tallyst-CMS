@@ -2,12 +2,18 @@
 
 namespace App\Content;
 
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+
 /**
  * A replacement tag handler. Modules implement this and are auto-registered with
  * the ShortcodeRegistry (tag "app.shortcode"). Core knows nothing about specific
  * tags — e.g. FormBuilder registers a handler whose getName() returns "form" so
  * that `[form id=5]` in page content renders a form.
+ *
+ * Tagging lives on the interface (not in services.yaml _instanceof) so that
+ * implementations from ANY bundle/module are auto-tagged, not just App\.
  */
+#[AutoconfigureTag('app.shortcode')]
 interface ShortcodeInterface
 {
     /** The tag name, without brackets (e.g. "form"). */

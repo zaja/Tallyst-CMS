@@ -1,0 +1,44 @@
+{# One field row. Used both for existing fields and as the collection prototype
+   (fieldForm = form.fields.vars.prototype). The nested rules collection carries its
+   own prototype + __rule__ placeholder. #}
+<div class="fb-field-row" data-fb-item>
+    <div class="fb-row-head">
+        <span class="fb-handle">≡</span>
+        <div class="fb-row-controls">
+            <button type="button" data-action="formbuilder--builder#moveUp" title="Gore">↑</button>
+            <button type="button" data-action="formbuilder--builder#moveDown" title="Dolje">↓</button>
+            <button type="button" class="fb-del" data-action="formbuilder--builder#remove">Ukloni polje</button>
+        </div>
+    </div>
+
+    {{ form_widget(fieldForm.position, {attr: {'data-fb-position': ''}}) }}
+
+    <div class="fb-grid">
+        {{ form_row(fieldForm.label) }}
+        {{ form_row(fieldForm.key) }}
+        {{ form_row(fieldForm.type) }}
+        {{ form_row(fieldForm.placeholder) }}
+        {{ form_row(fieldForm.options) }}
+        {{ form_row(fieldForm.required) }}
+    </div>
+
+    <fieldset class="fb-cond">
+        <legend>Uvjeti prikaza (opcionalno)</legend>
+        <div class="fb-cond-head">
+            {{ form_row(fieldForm.conditions.action) }}
+            {{ form_row(fieldForm.conditions.match) }}
+        </div>
+
+        <div data-fb-collection data-fb-level="rules"
+             data-prototype="{{ include('@FormBuilder/admin/_rule.html.twig', {ruleForm: fieldForm.conditions.rules.vars.prototype})|e('html_attr') }}"
+             data-prototype-name="__rule__"
+             data-fb-index="{{ fieldForm.conditions.rules|length }}">
+            <div data-fb-items>
+                {% for ruleForm in fieldForm.conditions.rules %}
+                    {{ include('@FormBuilder/admin/_rule.html.twig', {ruleForm: ruleForm}) }}
+                {% endfor %}
+            </div>
+            <button type="button" class="fb-add-rule" data-action="formbuilder--builder#add">+ Pravilo</button>
+        </div>
+    </fieldset>
+</div>

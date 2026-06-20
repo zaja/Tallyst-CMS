@@ -1,0 +1,5 @@
+# App-side wiring for the FormBuilder module: load its attribute routes.
+# (One of the 5 per-module touch points documented in CLAUDE.md.)
+form_builder:
+    resource: '../../modules/FormBuilder/Controller/'
+    type: attribute

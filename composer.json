@@ -56,7 +56,8 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "src/"
+            "App\\": "src/",
+            "Tallyst\\FormBuilder\\": "modules/FormBuilder/"
         }
     },
     "autoload-dev": {
