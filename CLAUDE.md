@@ -39,9 +39,23 @@ Plain `php` / `composer` can resolve the wrong PHP version and break installs.
 - Run migrations: `php8.5 bin/console doctrine:migrations:migrate`
 - Sanity check: `php8.5 bin/console about`
 - List routes: `php8.5 bin/console debug:router`
-- Tests / static analysis / lint — NOT YET SET UP. Once installed, replace this
-  line, e.g.: `php8.5 bin/phpunit`, `php8.5 vendor/bin/phpstan analyse`,
-  `php8.5 vendor/bin/php-cs-fixer fix`.
+- Run PHP tests: `php8.5 bin/phpunit` (PHPUnit is set up).
+- Run a module's JS tests: `node modules/<Name>/tests/js/<x>.test.mjs` (Node 20 via nvm).
+- Compile assets: `php8.5 bin/console asset-map:compile` (REQUIRED after JS/CSS changes
+  — see "Front-end assets" below).
+- Static analysis / cs-fixer — not yet set up.
+
+## Front-end assets (AssetMapper) — must be compiled
+nginx serves `/assets/*` as static files, so compiled assets MUST exist on disk:
+after ANY change to JS or CSS (incl. module assets), run
+`php8.5 bin/console asset-map:compile`. Symptom of stale/missing assets: Stimulus
+controllers silently don't boot (e.g. admin buttons do nothing). `public/assets/` is
+a per-environment build artifact and is git-ignored — never commit it.
+- The front-end loads the `app` entrypoint (`assets/app.js` → Stimulus + `app.css`).
+- The admin loads a SEPARATE `admin` entrypoint (`assets/admin.js` → Stimulus only, no
+  front CSS) via `DashboardController::configureAssets()`, so front styles never
+  override the EasyAdmin theme/dark mode. Register module Stimulus controllers in
+  `assets/stimulus_bootstrap.js` (shared by both entrypoints).
 
 ## Directory layout
 ```
@@ -123,18 +137,26 @@ Then generate + run a Doctrine migration for any new entities, and `cache:clear`
 standalone page traps the user with no nav and fragments the admin. The rule:
 - The admin template **extends `@EasyAdmin/page/content.html.twig`** (put content in
   `{% block main %}`, title in `{% block content_title %}`); use Bootstrap 5 classes
-  and `{% form_theme ... 'bootstrap_5_layout.html.twig' %}` for native styling.
+  and `{% form_theme ... 'bootstrap_5_layout.html.twig' %}` for native styling. For
+  status badges use EasyAdmin's classes (`badge badge-success`, `badge badge-secondary`,
+  ...) — NOT Bootstrap's `bg-*` — so they match the CRUD badges and follow dark mode.
 - The admin controller's `#[Route]` sets a default so EasyAdmin builds its
   AdminContext for the route (otherwise `ea` is null and the layout errors):
   `#[Route('/admin/<x>', defaults: ['dashboardControllerFqcn' => 'App\Controller\Admin\DashboardController'])]`.
   (Import-level `defaults:` in routes YAML does NOT propagate to attribute routes —
   it must be on the `#[Route]` itself. Keep the public/front routes WITHOUT it.)
-- For the module's own Stimulus controllers to boot on admin pages, the app
-  Dashboard loads the app entrypoint into EasyAdmin's single importmap:
-  `DashboardController::configureAssets(): Assets { return Assets::new()->addAssetMapperEntry('app'); }`.
-  (One importmap per page — never add a second `importmap('app')` in the template.)
+- For the module's own Stimulus controllers to boot on admin pages, the app Dashboard
+  loads the admin entrypoint into EasyAdmin's single importmap:
+  `DashboardController::configureAssets(): Assets { return Assets::new()->addAssetMapperEntry('admin'); }`.
+  (Use the `admin` entrypoint — Stimulus only — NOT `app`, or front CSS leaks over the
+  EA theme. One importmap per page — never add a second `importmap(...)` in the template.)
 App-level custom admin pages (e.g. the module registry) are simplest as actions on
 the Dashboard controller itself.
+
+**Any entity rendered in an EasyAdmin `AssociationField`** (or shown as a related
+entity) needs a `__toString()` — EA stringifies it for the dropdown/label. Missing it
+throws "Object of class X could not be converted to string". Core entities used this
+way already have one (Menu, Page, MenuItem, Category, User).
 
 **Shared client/server logic (e.g. conditional fields):** keep ONE definition as
 data (JSON on the entity), evaluate it with a PHP class AND a mirrored pure JS module
