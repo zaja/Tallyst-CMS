@@ -21,8 +21,8 @@
                     <tr>
                         <td><a href="{{ path('form_builder_admin_edit', {id: f.id}) }}">{{ f.name }}</a></td>
                         <td>
-                            {% if f.published %}<span class="badge bg-success">Objavljeno</span>
-                            {% else %}<span class="badge bg-secondary">Skica</span>{% endif %}
+                            {% if f.published %}<span class="badge badge-success">Objavljeno</span>
+                            {% else %}<span class="badge badge-secondary">Skica</span>{% endif %}
                         </td>
                         <td><code>[form id={{ f.id }}]</code></td>
                         <td>{{ f.fields|length }}</td>
