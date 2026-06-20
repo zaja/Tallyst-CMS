@@ -1,0 +1,14 @@
+liip_imagine:
+    driver: gd
+    # Thumbnails are written to public/media/cache/ — kept SEPARATE from the
+    # uploads at public/media/uploads/ so clearing/gitignoring one never touches
+    # the other (both live under the git-ignored public/media/).
+    filter_sets:
+        thumb:
+            quality: 80
+            filters:
+                thumbnail: { size: [160, 160], mode: inset }
+        medium:
+            quality: 85
+            filters:
+                thumbnail: { size: [600, 600], mode: inset }

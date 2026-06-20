@@ -1,0 +1,8 @@
+{# Liip "thumb" preview for the Media list/detail. field.value = imageName. #}
+{% if field.value %}
+    <img src="{{ ('media/uploads/' ~ field.value)|imagine_filter('thumb') }}"
+         alt="" loading="lazy"
+         style="max-height: 64px; max-width: 120px; border-radius: 4px; object-fit: cover;">
+{% else %}
+    <span class="text-muted">—</span>
+{% endif %}

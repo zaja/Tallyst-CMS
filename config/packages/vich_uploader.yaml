@@ -1,0 +1,12 @@
+vich_uploader:
+    db_driver: orm
+    metadata:
+        type: attribute
+    mappings:
+        media_image:
+            uri_prefix: /media/uploads
+            upload_destination: '%kernel.project_dir%/public/media/uploads'
+            # Sanitised, collision-free filenames.
+            namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+            delete_on_update: true
+            delete_on_remove: true

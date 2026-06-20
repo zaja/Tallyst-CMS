@@ -23,4 +23,6 @@
 /.tmux.conf
 # Published theme assets (build artifact; run app:theme:assets:install).
 /public/themes/
+# Media uploads + Liip thumbnail cache (runtime data; back up separately).
+/public/media/
 ###< project ###

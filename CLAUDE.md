@@ -75,6 +75,21 @@ from AssetMapper (don't push theme CSS through importmap). Pattern:
   match exactly or as a path prefix), and renders the theme-overridable
   `menu.html.twig` + `menu_items.html.twig`. Never hardcode nav in a layout.
 
+## Media & uploads (Media module)
+- Uploads (VichUploaderBundle) go to `public/media/uploads/` with a sanitised, unique
+  namer; Liip thumbnails to `public/media/cache/` (filters `thumb`, `medium`). Both live
+  under `public/media/`, which is GIT-IGNORED — uploads are **runtime data on the
+  server**, backed up separately (cloud storage is a later iteration).
+- Raster only (`Assert\Image`: jpeg/png/webp/gif, ≤5 MB). **SVG is intentionally
+  rejected** (XSS surface; Liip doesn't thumbnail it).
+- Any entity used in an EA `AssociationField`/`EntityType` picker needs `__toString()`
+  (Media → `title ?: originalName`).
+- **Branding** reuses the `Setting` store (`site_name`, `logo_media_id`) — no table.
+  `logo_media_id` is a LOOSE reference (not a FK), so the render helper MUST be
+  null-safe: `render_branding()` shows the Liip-sized logo (alt = media alt or site
+  name) when the Media still exists, else falls back to the site name. It renders the
+  theme-overridable `branding.html.twig` (same theme-chain pattern as menus).
+
 ## Directory layout
 ```
 src/                  # CORE
@@ -158,6 +173,13 @@ is deprecated). Content tags implement `ShortcodeInterface`; both interfaces are
    `config/packages/asset_mapper.yaml` (only if the module ships JS/CSS).
 5. **Stimulus** — `import` the module's controllers in `assets/stimulus_bootstrap.js`
    and `app.register('<name>--<controller>', ...)` (only if it ships controllers).
+
+Not every module needs all five. A module is only EA CRUD (e.g. **Media**) needs just
+1 + 2 (EA auto-routes CRUD controllers; the routes import in 3 is only for the module's
+*custom* admin/front controllers); no assets → skip 4 + 5. **A module may also WRAP
+third-party bundles** (Media wraps Vich + Liip): register those bundles in `bundles.php`
+too and add their app-level `config/packages/*.yaml` (and any routes the recipe would
+have added, e.g. Liip's) — the contrib recipes are not auto-applied here.
 
 Then generate + run a Doctrine migration for any new entities, and `cache:clear`.
 

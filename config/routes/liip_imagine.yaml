@@ -1,0 +1,4 @@
+# On-demand thumbnail resolution route (/media/cache/resolve/...). Added manually
+# because the contrib recipe is not auto-applied.
+_liip_imagine:
+    resource: "@LiipImagineBundle/Resources/config/routing.yaml"

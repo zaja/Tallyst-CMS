@@ -1,0 +1,9 @@
+{# Header brand for render_branding(). Override in a child theme by placing your own
+   themes/<name>/templates/branding.html.twig. Falls back to the site name as text. #}
+<a class="site-brand" href="{{ path('home') }}">
+    {% if logoUrl %}
+        <img src="{{ logoUrl }}" alt="{{ logoAlt }}" class="site-logo">
+    {% else %}
+        <strong>{{ siteName }}</strong>
+    {% endif %}
+</a>

@@ -1,0 +1,5 @@
+# Media module routes. The Media CRUD is auto-routed by EasyAdmin; this only loads
+# the module's custom admin controllers (Branding). (Per-module touch point.)
+media:
+    resource: '../../modules/Media/Controller/'
+    type: attribute
