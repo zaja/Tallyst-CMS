@@ -1,3 +1,4 @@
-body {
-    background-color: skyblue;
-}
+/*
+ * Front-end app styles. (The skyblue demo background that shipped with the
+ * skeleton was removed — it leaked into every page, including the admin.)
+ */

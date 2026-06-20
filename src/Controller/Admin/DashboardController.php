@@ -77,10 +77,10 @@ class DashboardController extends AbstractDashboardController
 
     public function configureAssets(): Assets
     {
-        // Load the app entrypoint inside EasyAdmin's (single) importmap so our
-        // Stimulus controllers (formbuilder--*, etc.) boot on admin pages too —
-        // module admin pages reuse this shell, so this is required, not optional.
-        return Assets::new()->addAssetMapperEntry('app');
+        // Load the ADMIN entrypoint (Stimulus only, no front-end CSS) inside
+        // EasyAdmin's single importmap so our controllers (formbuilder--*, etc.) boot
+        // on admin pages without the front styles overriding the EA theme/dark mode.
+        return Assets::new()->addAssetMapperEntry('admin');
     }
 
     public function configureMenuItems(): iterable
