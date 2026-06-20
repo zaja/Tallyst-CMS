@@ -38,10 +38,11 @@ class FormDefinition
     private string $status = self::STATUS_DRAFT;
 
     /**
-     * Pass 2 (payments) columns — created now, intentionally UNUSED in pass 1.
+     * Price in the currency's MINOR units (e.g. cents), as an integer — money never
+     * touches float. A form with a positive priceMinor is a product (page-as-product).
      */
-    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
-    private ?string $price = null;
+    #[ORM\Column(nullable: true)]
+    private ?int $priceMinor = null;
 
     #[ORM\Column(length: 3, nullable: true)]
     private ?string $currency = null;
@@ -133,16 +134,22 @@ class FormDefinition
         return self::STATUS_PUBLISHED === $this->status;
     }
 
-    public function getPrice(): ?string
+    public function getPriceMinor(): ?int
     {
-        return $this->price;
+        return $this->priceMinor;
     }
 
-    public function setPrice(?string $price): static
+    public function setPriceMinor(?int $priceMinor): static
     {
-        $this->price = $price;
+        $this->priceMinor = $priceMinor;
 
         return $this;
+    }
+
+    /** A priced form is a product: its submission goes through payment. */
+    public function isProduct(): bool
+    {
+        return null !== $this->priceMinor && $this->priceMinor > 0;
     }
 
     public function getCurrency(): ?string

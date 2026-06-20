@@ -1,0 +1,24 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Narudžba #{{ order.id }} — Tallyst{% endblock %}
+
+{% block body %}
+    <article class="fb-thankyou">
+        <h1>Hvala!</h1>
+
+        {% if order.paid %}
+            <p>Vaše plaćanje je zaprimljeno. Narudžba <strong>#{{ order.id }}</strong> je potvrđena
+               i poslali smo vam potvrdu e-mailom.</p>
+        {% else %}
+            <p>Zaprimili smo vašu narudžbu <strong>#{{ order.id }}</strong>. Plaćanje se još obrađuje —
+               potvrdu ćete dobiti e-mailom čim bude dovršeno. Možete osvježiti ovu stranicu za nekoliko trenutaka.</p>
+        {% endif %}
+
+        <p>
+            Iznos:
+            <strong>{{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}</strong>
+        </p>
+
+        <p><a href="{{ path('home') }}">&larr; Natrag na početnu</a></p>
+    </article>
+{% endblock %}

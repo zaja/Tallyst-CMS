@@ -3,8 +3,10 @@
 namespace Tallyst\FormBuilder\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -28,7 +30,18 @@ class FormDefinitionType extends AbstractType
                 'label' => 'Status',
                 'choices' => ['Skica' => FormDefinition::STATUS_DRAFT, 'Objavljeno' => FormDefinition::STATUS_PUBLISHED],
             ])
-            // price/currency are intentionally NOT exposed in pass 1.
+            ->add('priceMinor', MoneyType::class, [
+                'required' => false,
+                'currency' => false,
+                'label' => 'Cijena',
+                'help' => 'Prazno = forma bez naplate. S cijenom forma postaje proizvod (plaćanje na submit).',
+            ])
+            ->add('currency', ChoiceType::class, [
+                'required' => false,
+                'label' => 'Valuta',
+                'choices' => ['EUR' => 'eur', 'USD' => 'usd', 'GBP' => 'gbp'],
+                'placeholder' => '—',
+            ])
             ->add('fields', CollectionType::class, [
                 'label' => false,
                 'entry_type' => FormFieldType::class,
@@ -39,6 +52,19 @@ class FormDefinitionType extends AbstractType
                 'prototype_name' => '__field__',
                 'required' => false,
             ]);
+
+        // Money is stored as integer minor units on the entity; the field edits it
+        // in major units. Convert with (int) round(...) — never a bare float cast.
+        $builder->get('priceMinor')->addModelTransformer(new CallbackTransformer(
+            static fn (?int $minor): ?float => null === $minor ? null : $minor / 100,
+            static function ($major): ?int {
+                if (null === $major || '' === $major) {
+                    return null;
+                }
+
+                return (int) round(((float) $major) * 100);
+            },
+        ));
     }
 
     public function configureOptions(OptionsResolver $resolver): void

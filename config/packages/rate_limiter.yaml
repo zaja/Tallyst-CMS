@@ -1,0 +1,7 @@
+framework:
+    rate_limiter:
+        # Throttles public form submissions per client IP (spam guard, pass 2a).
+        form_submit:
+            policy: sliding_window
+            limit: 10
+            interval: '1 minute'

@@ -1,0 +1,202 @@
+<?php
+
+namespace Tallyst\FormBuilder\Entity;
+
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+use Tallyst\FormBuilder\Repository\OrderRepository;
+
+/**
+ * A payment order for a priced form submission (page-as-product). Its lifecycle is
+ * driven by the "order" state machine (pending → paid → fulfilled → refunded).
+ *
+ * Money is stored as integer minor units (e.g. cents) — never float. `paid` is the
+ * truth about money and is set ONLY by the verified Stripe webhook.
+ */
+#[ORM\Entity(repositoryClass: OrderRepository::class)]
+#[ORM\Table(name: 'fb_order')]
+#[ORM\HasLifecycleCallbacks]
+class Order
+{
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_PAID = 'paid';
+    public const STATUS_FULFILLED = 'fulfilled';
+    public const STATUS_REFUNDED = 'refunded';
+
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: FormDefinition::class)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    private ?FormDefinition $form = null;
+
+    #[ORM\ManyToOne(targetEntity: FormSubmission::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?FormSubmission $submission = null;
+
+    #[ORM\Column]
+    private int $amountMinor = 0;
+
+    #[ORM\Column(length: 3)]
+    private string $currency = 'eur';
+
+    #[ORM\Column(length: 20)]
+    private string $status = self::STATUS_PENDING;
+
+    #[ORM\Column(length: 20)]
+    private string $provider = 'stripe';
+
+    /** Provider checkout session id — how the webhook finds this order. */
+    #[ORM\Column(length: 255, nullable: true, unique: true)]
+    private ?string $providerSessionId = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $providerPaymentIntentId = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $customerEmail = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private ?\DateTimeImmutable $updatedAt = null;
+
+    #[ORM\PrePersist]
+    public function initTimestamps(): void
+    {
+        $this->createdAt ??= new \DateTimeImmutable();
+        $this->updatedAt ??= new \DateTimeImmutable();
+    }
+
+    #[ORM\PreUpdate]
+    public function bumpUpdatedAt(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getForm(): ?FormDefinition
+    {
+        return $this->form;
+    }
+
+    public function setForm(?FormDefinition $form): static
+    {
+        $this->form = $form;
+
+        return $this;
+    }
+
+    public function getSubmission(): ?FormSubmission
+    {
+        return $this->submission;
+    }
+
+    public function setSubmission(?FormSubmission $submission): static
+    {
+        $this->submission = $submission;
+
+        return $this;
+    }
+
+    public function getAmountMinor(): int
+    {
+        return $this->amountMinor;
+    }
+
+    public function setAmountMinor(int $amountMinor): static
+    {
+        $this->amountMinor = $amountMinor;
+
+        return $this;
+    }
+
+    public function getCurrency(): string
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency(string $currency): static
+    {
+        $this->currency = strtolower($currency);
+
+        return $this;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): static
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function isPaid(): bool
+    {
+        return \in_array($this->status, [self::STATUS_PAID, self::STATUS_FULFILLED], true);
+    }
+
+    public function getProvider(): string
+    {
+        return $this->provider;
+    }
+
+    public function setProvider(string $provider): static
+    {
+        $this->provider = $provider;
+
+        return $this;
+    }
+
+    public function getProviderSessionId(): ?string
+    {
+        return $this->providerSessionId;
+    }
+
+    public function setProviderSessionId(?string $providerSessionId): static
+    {
+        $this->providerSessionId = $providerSessionId;
+
+        return $this;
+    }
+
+    public function getProviderPaymentIntentId(): ?string
+    {
+        return $this->providerPaymentIntentId;
+    }
+
+    public function setProviderPaymentIntentId(?string $providerPaymentIntentId): static
+    {
+        $this->providerPaymentIntentId = $providerPaymentIntentId;
+
+        return $this;
+    }
+
+    public function getCustomerEmail(): ?string
+    {
+        return $this->customerEmail;
+    }
+
+    public function setCustomerEmail(?string $customerEmail): static
+    {
+        $this->customerEmail = $customerEmail;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+}

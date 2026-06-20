@@ -16,6 +16,17 @@
         <input type="hidden" name="_token" value="{{ csrf_token('form_submit_' ~ form.id) }}">
         <input type="hidden" name="_return" value="{{ app.request.requestUri }}">
 
+        {# Honeypot: hidden from humans; bots that fill it are silently dropped. #}
+        <div class="fb-hp" aria-hidden="true">
+            <label>Ostavite ovo polje prazno
+                <input type="text" name="_hp" tabindex="-1" autocomplete="off">
+            </label>
+        </div>
+
+        {% if form.priceMinor %}
+            <p class="fb-price">Cijena: <strong>{{ (form.priceMinor / 100)|number_format(2, ',', '.') }} {{ (form.currency ?: 'eur')|upper }}</strong></p>
+        {% endif %}
+
         {% if form.description %}<p class="fb-desc">{{ form.description }}</p>{% endif %}
 
         {% for field in form.fields %}
@@ -70,7 +81,7 @@
             </div>
         {% endfor %}
 
-        <button type="submit" class="fb-submit">Pošalji</button>
+        <button type="submit" class="fb-submit">{{ form.priceMinor ? 'Nastavi na plaćanje' : 'Pošalji' }}</button>
     </form>
 </div>
 
@@ -88,4 +99,6 @@
     .fb-submit { justify-self: start; background: #2563eb; color: #fff; border: 0; border-radius: 8px; padding: .6rem 1.1rem; font: inherit; cursor: pointer; }
     .fb-submit:hover { background: #1d4ed8; }
     .fb-field[hidden] { display: none; }
+    .fb-hp { position: absolute !important; left: -9999px !important; top: -9999px !important; height: 0; width: 0; overflow: hidden; }
+    .fb-price { font-size: 1.05rem; }
 </style>

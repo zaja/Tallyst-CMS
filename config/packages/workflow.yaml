@@ -1,0 +1,27 @@
+framework:
+    workflows:
+        order:
+            type: state_machine
+            marking_store:
+                type: method
+                property: status
+            supports:
+                - Tallyst\FormBuilder\Entity\Order
+            initial_marking: pending
+            places:
+                - pending
+                - paid
+                - fulfilled
+                - refunded
+            transitions:
+                # 'pay' is applied ONLY by the verified Stripe webhook (money truth).
+                pay:
+                    from: pending
+                    to: paid
+                # 'fulfill' is applied by the async fulfillment handler, after 'paid'.
+                fulfill:
+                    from: paid
+                    to: fulfilled
+                refund:
+                    from: [paid, fulfilled]
+                    to: refunded
