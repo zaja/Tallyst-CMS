@@ -1,9 +1,9 @@
 {# Liip "thumb" preview for the Media list/detail. field.value = imageName.
-   Use the liip route via path() → a RELATIVE URL (no absolute host/scheme), so it
-   never trips mixed-content on HTTPS; also avoids the deprecated imagine_filter. #}
-{% if field.value %}
-    <img src="{{ path('liip_imagine_filter', {filter: 'thumb', path: 'media/uploads/' ~ field.value}) }}"
-         alt="" loading="lazy"
+   media_thumb_url() returns the DIRECT cached file URL (warmed on upload) — a real
+   static file nginx serves; not the on-demand resolve URL (which nginx 404s). #}
+{% set src = media_thumb_url(field.value, 'thumb') %}
+{% if src %}
+    <img src="{{ src }}" alt="" loading="lazy"
          style="max-height: 64px; max-width: 120px; border-radius: 4px; object-fit: cover;">
 {% else %}
     <span class="text-muted">—</span>

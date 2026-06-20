@@ -3,8 +3,6 @@
 namespace Tallyst\Media\Twig;
 
 use App\Repository\SettingRepository;
-use Liip\ImagineBundle\Imagine\Cache\CacheManager;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Tallyst\Media\Entity\Media;
 use Tallyst\Media\Repository\MediaRepository;
 use Twig\Environment;
@@ -15,7 +13,6 @@ class MediaRuntime implements RuntimeExtensionInterface
     public function __construct(
         private readonly SettingRepository $settings,
         private readonly MediaRepository $media,
-        private readonly CacheManager $imagineCache,
         private readonly Environment $twig,
     ) {
     }
@@ -23,6 +20,22 @@ class MediaRuntime implements RuntimeExtensionInterface
     public function siteName(): string
     {
         return $this->settings->get('site_name', 'Tallyst') ?: 'Tallyst';
+    }
+
+    /**
+     * Deterministic RELATIVE URL of a media thumbnail's cached file. The thumbnail is
+     * warmed on upload (see ThumbnailWarmer), so this points at a real static file
+     * nginx serves directly. We build the path ourselves (Liip's web_path layout)
+     * rather than the on-demand resolve URL — which nginx 404s (image extension, not a
+     * real file) — and rather than Liip's absolute URL (scheme/mixed-content risk).
+     */
+    public function mediaThumbUrl(?string $imageName, string $filter = 'thumb'): ?string
+    {
+        if (null === $imageName || '' === $imageName) {
+            return null;
+        }
+
+        return '/media/cache/'.$filter.'/media/uploads/'.$imageName;
     }
 
     /**
@@ -42,17 +55,8 @@ class MediaRuntime implements RuntimeExtensionInterface
     public function brandingLogoUrl(string $filter = 'medium'): ?string
     {
         $logo = $this->brandingLogo();
-        if (null === $logo || null === $logo->getImageName()) {
-            return null;
-        }
 
-        return $this->imagineCache->getBrowserPath(
-            'media/uploads/'.$logo->getImageName(),
-            $filter,
-            [],
-            null,
-            UrlGeneratorInterface::ABSOLUTE_PATH,
-        );
+        return null !== $logo ? $this->mediaThumbUrl($logo->getImageName(), $filter) : null;
     }
 
     /**
@@ -65,19 +69,9 @@ class MediaRuntime implements RuntimeExtensionInterface
         $logo = $this->brandingLogo();
         $siteName = $this->siteName();
 
-        $logoUrl = null !== $logo && null !== $logo->getImageName()
-            ? $this->imagineCache->getBrowserPath(
-                'media/uploads/'.$logo->getImageName(),
-                'medium',
-                [],
-                null,
-                UrlGeneratorInterface::ABSOLUTE_PATH,
-            )
-            : null;
-
         return $this->twig->render('branding.html.twig', [
             'siteName' => $siteName,
-            'logoUrl' => $logoUrl,
+            'logoUrl' => null !== $logo ? $this->mediaThumbUrl($logo->getImageName(), 'medium') : null,
             'logoAlt' => null !== $logo ? ($logo->getAlt() ?: $siteName) : $siteName,
         ]);
     }

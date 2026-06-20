@@ -80,6 +80,12 @@ from AssetMapper (don't push theme CSS through importmap). Pattern:
   namer; Liip thumbnails to `public/media/cache/` (filters `thumb`, `medium`). Both live
   under `public/media/`, which is GIT-IGNORED — uploads are **runtime data on the
   server**, backed up separately (cloud storage is a later iteration).
+- **Thumbnails are PRE-WARMED on upload** (a Doctrine listener calls `ThumbnailWarmer`)
+  and referenced by a deterministic RELATIVE cached-file URL
+  (`/media/cache/<filter>/media/uploads/<name>`). This is mandatory under nginx: the
+  Liip on-demand "resolve" URL ends in an image extension, so the static-asset location
+  returns 404 before PHP runs. After deploying this / changing `filter_sets` / clearing
+  the cache, warm existing images with `php8.5 bin/console app:media:thumbnails:warm`.
 - Raster only (`Assert\Image`: jpeg/png/webp/gif, ≤5 MB). **SVG is intentionally
   rejected** (XSS surface; Liip doesn't thumbnail it).
 - Any entity used in an EA `AssociationField`/`EntityType` picker needs `__toString()`
