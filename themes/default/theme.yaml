@@ -1,0 +1,5 @@
+name: default
+label: Default
+author: Tallyst
+# Set to another theme's folder name to inherit its templates (child-theme behaviour).
+parent: ~

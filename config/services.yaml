@@ -14,10 +14,27 @@ services:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
+    # Auto-tag the extension points so modules self-register just by implementing
+    # the interface. Core stays decoupled from concrete tags/modules.
+    _instanceof:
+        App\Content\ShortcodeInterface:
+            tags: ['app.shortcode']
+        App\Module\ModuleInterface:
+            tags: ['app.module']
+
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+
+    # Registries receive every tagged implementation as an iterator.
+    App\Content\ShortcodeRegistry:
+        arguments:
+            $shortcodes: !tagged_iterator app.shortcode
+
+    App\Module\ModuleRegistry:
+        arguments:
+            $modules: !tagged_iterator app.module
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

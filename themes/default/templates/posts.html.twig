@@ -1,0 +1,18 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Blog — Tallyst{% endblock %}
+
+{% block body %}
+    <h1>Blog</h1>
+
+    {% for post in posts %}
+        <article>
+            <h2 style="margin-bottom:.25rem"><a href="{{ path('blog_post', {slug: post.slug}) }}">{{ post.title }}</a></h2>
+            {% if post.publishedAt %}<time datetime="{{ post.publishedAt|date('c') }}">{{ post.publishedAt|date('d.m.Y.') }}</time>{% endif %}
+            {% if post.excerpt %}<p>{{ post.excerpt }}</p>{% endif %}
+        </article>
+        <hr style="border:none;border-top:1px solid #ececec;margin:1.5rem 0">
+    {% else %}
+        <p>Još nema objava.</p>
+    {% endfor %}
+{% endblock %}
