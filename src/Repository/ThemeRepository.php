@@ -18,6 +18,8 @@ class ThemeRepository extends ServiceEntityRepository
 
     public function findActive(): ?Theme
     {
-        return $this->findOneBy(['active' => true]);
+        // Deterministic even if data somehow holds more than one active theme:
+        // always resolve to the lowest id. (CRUD also enforces a single active.)
+        return $this->findOneBy(['active' => true], ['id' => 'ASC']);
     }
 }
