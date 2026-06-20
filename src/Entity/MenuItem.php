@@ -58,6 +58,11 @@ class MenuItem
         return $this->id;
     }
 
+    public function __toString(): string
+    {
+        return $this->label;
+    }
+
     public function getMenu(): ?Menu
     {
         return $this->menu;
