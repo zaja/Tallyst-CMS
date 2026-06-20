@@ -199,4 +199,22 @@ class Order
     {
         return $this->createdAt;
     }
+
+    /** Amount formatted from integer minor units, e.g. "34,00 EUR". */
+    public function getAmountFormatted(): string
+    {
+        return number_format($this->amountMinor / 100, 2, ',', '.').' '.strtoupper($this->currency);
+    }
+
+    /** Human-readable dump of the submitted form data, for the admin detail view. */
+    public function getSubmissionSummary(): string
+    {
+        $data = $this->submission?->getData() ?? [];
+        $lines = [];
+        foreach ($data as $key => $value) {
+            $lines[] = $key.': '.(is_array($value) ? implode(', ', $value) : (string) $value);
+        }
+
+        return implode("\n", $lines);
+    }
 }

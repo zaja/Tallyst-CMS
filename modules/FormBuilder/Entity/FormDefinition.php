@@ -81,6 +81,11 @@ class FormDefinition
         return $this->id;
     }
 
+    public function __toString(): string
+    {
+        return $this->name;
+    }
+
     public function getName(): string
     {
         return $this->name;

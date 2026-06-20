@@ -46,6 +46,11 @@ class FormSubmission
         return $this->id;
     }
 
+    public function __toString(): string
+    {
+        return 'Submission #'.($this->id ?? 0);
+    }
+
     public function getForm(): ?FormDefinition
     {
         return $this->form;
