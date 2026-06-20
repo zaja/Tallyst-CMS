@@ -57,6 +57,24 @@ a per-environment build artifact and is git-ignored — never commit it.
   override the EasyAdmin theme/dark mode. Register module Stimulus controllers in
   `assets/stimulus_bootstrap.js` (shared by both entrypoints).
 
+## Themes (one folder = one theme)
+Theme STATIC assets (`themes/<name>/public/`) are served by the web server, SEPARATE
+from AssetMapper (don't push theme CSS through importmap). Pattern:
+- **Publish:** `php8.5 bin/console app:theme:assets:install` symlinks (copy fallback)
+  every `themes/<name>/public/` to `public/themes/<name>/`. Run it when adding/changing
+  a theme and on deploy. `public/themes/` is a git-ignored build artifact.
+- **Reference assets in templates** with `theme_asset('css/theme.css')` — resolves up
+  the active theme's parent chain (child→parent→…, same order as templates), checks the
+  SERVED location (`public/themes/<name>/…`) so it never points at an unpublished file,
+  and cache-busts by mtime. The default theme keeps its CSS in `public/css/theme.css`
+  and loads it via `theme_asset()` — no inline `<style>` in the layout. Copy that theme
+  as the starting point for a new one.
+- **Render menus** with `render_menu('main')` (Twig): pulls the `Menu`/`MenuItem`
+  entities for that location, resolves each URL (internal `Page` → its route, else the
+  raw URL), nests children, flags the active item (home matches `/` EXACTLY; others
+  match exactly or as a path prefix), and renders the theme-overridable
+  `menu.html.twig` + `menu_items.html.twig`. Never hardcode nav in a layout.
+
 ## Directory layout
 ```
 src/                  # CORE

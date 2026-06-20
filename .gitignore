@@ -21,4 +21,6 @@
 
 ###> project ###
 /.tmux.conf
+# Published theme assets (build artifact; run app:theme:assets:install).
+/public/themes/
 ###< project ###

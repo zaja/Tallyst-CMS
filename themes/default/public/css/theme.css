@@ -1,5 +1,26 @@
 /*
- * Default theme stylesheet.
- * Base styles currently live inline in layout.html.twig for a zero-config first
- * render; move them here once the theme asset pipeline is wired (see CLAUDE.md).
+ * Default theme stylesheet. Served statically from public/themes/default/ (publish
+ * with `php8.5 bin/console app:theme:assets:install`), loaded via theme_asset().
+ * Copy this folder for a new theme.
  */
+:root { --ink: #1a1a1a; --muted: #666; --line: #ececec; --link: #2563eb; }
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height: 1.6; margin: 0; color: var(--ink); }
+.container { max-width: 760px; margin: 0 auto; padding: 2rem 1.25rem; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+header.site, footer.site { border-color: var(--line); }
+header.site { border-bottom: 1px solid var(--line); }
+header.site .container { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; padding-bottom: 1rem; }
+footer.site { border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+
+article h1 { margin-top: 0; }
+time { color: var(--muted); }
+
+/* Navigation (render_menu) */
+.site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 1rem; }
+.site-nav li { position: relative; }
+.site-nav .menu-item.is-active > a { font-weight: 600; text-decoration: underline; }
+/* Nested submenus */
+.site-nav .menu .menu { display: block; gap: 0; padding-left: 1rem; }

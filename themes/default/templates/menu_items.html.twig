@@ -1,0 +1,11 @@
+{# Recursive menu list. items: [{label, url, active, children}]. #}
+<ul class="menu">
+    {% for item in items %}
+        <li class="menu-item{{ item.active ? ' is-active' : '' }}">
+            <a href="{{ item.url }}">{{ item.label }}</a>
+            {% if item.children is not empty %}
+                {{ include('menu_items.html.twig', {items: item.children}) }}
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>

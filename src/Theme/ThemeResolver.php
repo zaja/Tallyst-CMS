@@ -69,6 +69,33 @@ class ThemeResolver
     }
 
     /**
+     * Theme names from the given (or active) theme up its parent chain, child-first
+     * (e.g. ["child", "parent", "default"]). Cycle- and depth-guarded. This is the
+     * single fallback order shared by template resolution and theme_asset().
+     *
+     * @return string[]
+     */
+    public function getThemeChain(?string $name = null): array
+    {
+        $name ??= $this->getActiveThemeName();
+
+        $chain = [];
+        $seen = [];
+        $depth = 0;
+
+        while (null !== $name && !isset($seen[$name]) && $depth < self::MAX_PARENT_DEPTH) {
+            $seen[$name] = true;
+            $chain[] = $name;
+
+            $parent = $this->getThemeConfig($name)['parent'] ?? null;
+            $name = (is_string($parent) && '' !== $parent) ? $parent : null;
+            ++$depth;
+        }
+
+        return $chain;
+    }
+
+    /**
      * Template directories for the given (or active) theme, child-first up the
      * parent chain. Only existing directories are returned.
      *
@@ -76,23 +103,12 @@ class ThemeResolver
      */
     public function getTemplatePathChain(?string $name = null): array
     {
-        $name ??= $this->getActiveThemeName();
-
         $paths = [];
-        $seen = [];
-        $depth = 0;
-
-        while (null !== $name && !isset($seen[$name]) && $depth < self::MAX_PARENT_DEPTH) {
-            $seen[$name] = true;
-
-            $dir = $this->getThemeDir($name).'/templates';
+        foreach ($this->getThemeChain($name) as $themeName) {
+            $dir = $this->getThemeDir($themeName).'/templates';
             if (is_dir($dir)) {
                 $paths[] = $dir;
             }
-
-            $parent = $this->getThemeConfig($name)['parent'] ?? null;
-            $name = (is_string($parent) && '' !== $parent) ? $parent : null;
-            ++$depth;
         }
 
         return $paths;
