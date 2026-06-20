@@ -1,5 +1,6 @@
 {# One condition rule row. Used both for existing rules and as the collection
    prototype (ruleForm = ...rules.vars.prototype). #}
+{% form_theme ruleForm 'bootstrap_5_layout.html.twig' %}
 <div class="fb-rule" data-fb-item>
     {{ form_widget(ruleForm.field) }}
     {{ form_widget(ruleForm.operator) }}

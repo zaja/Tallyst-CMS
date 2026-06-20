@@ -18,7 +18,11 @@ use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
  * getAdminMenuItems(). The Symfony Form component is used ONLY here (admin), never
  * for the rendered end-user form.
  */
-#[Route('/admin/forms')]
+// dashboardControllerFqcn makes EasyAdmin build its AdminContext for these routes,
+// so the templates can extend @EasyAdmin/page/content.html.twig and get the admin
+// shell (sidebar + header). This string is the app's dashboard — the one explicit
+// coupling a module needs to live inside the admin chrome.
+#[Route('/admin/forms', defaults: ['dashboardControllerFqcn' => 'App\Controller\Admin\DashboardController'])]
 class FormBuilderController extends AbstractController
 {
     public function __construct(

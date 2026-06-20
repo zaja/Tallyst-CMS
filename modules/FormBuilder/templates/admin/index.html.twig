@@ -1,68 +1,41 @@
-<!DOCTYPE html>
-<html lang="hr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Forme — Tallyst Admin</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f3f4f6; color: #1a1a1a; margin: 0; }
-        .wrap { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem; }
-        a { color: #2563eb; text-decoration: none; }
-        .top { display: flex; justify-content: space-between; align-items: center; }
-        .btn { display: inline-block; background: #2563eb; color: #fff; border: 0; border-radius: 8px; padding: .55rem .9rem; cursor: pointer; font: inherit; }
-        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-top: 1rem; }
-        th, td { text-align: left; padding: .7rem 1rem; border-bottom: 1px solid #eee; }
-        th { background: #fafafa; font-size: .8rem; text-transform: uppercase; color: #555; }
-        code { background: #f3f4f6; padding: .1rem .4rem; border-radius: 5px; }
-        .flash { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: .6rem .8rem; border-radius: 8px; margin-bottom: 1rem; }
-        .muted { color: #6b7280; }
-        .badge { font-size: .75rem; padding: .1rem .5rem; border-radius: 999px; }
-        .badge.pub { background: #dcfce7; color: #166534; }
-        .badge.draft { background: #f3f4f6; color: #6b7280; }
-    </style>
-</head>
-<body>
-    <div class="wrap">
-        <p><a href="{{ path('admin') }}">&larr; Natrag na admin</a></p>
-        <div class="top">
-            <h1>Forme</h1>
-            <a class="btn" href="{{ path('form_builder_admin_new') }}">+ Nova forma</a>
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Forme{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-primary" href="{{ path('form_builder_admin_new') }}">+ Nova forma</a>
+{% endblock %}
+
+{% block main %}
+    {% if forms is empty %}
+        <div class="alert alert-light">
+            Još nema formi. Kreirajte prvu pa je ubacite u stranicu shortcodeom <code>[form id=N]</code>.
         </div>
-
-        {% for message in app.flashes('success') %}
-            <div class="flash">{{ message }}</div>
-        {% endfor %}
-
-        {% if forms is empty %}
-            <p class="muted">Još nema formi. Kreirajte prvu pa je ubacite u stranicu shortcodeom <code>[form id=N]</code>.</p>
-        {% else %}
-            <table>
-                <thead>
-                    <tr><th>Naziv</th><th>Status</th><th>Shortcode</th><th>Polja</th><th></th></tr>
-                </thead>
-                <tbody>
-                    {% for f in forms %}
-                        <tr>
-                            <td><a href="{{ path('form_builder_admin_edit', {id: f.id}) }}">{{ f.name }}</a></td>
-                            <td>
-                                {% if f.published %}<span class="badge pub">Objavljeno</span>
-                                {% else %}<span class="badge draft">Skica</span>{% endif %}
-                            </td>
-                            <td><code>[form id={{ f.id }}]</code></td>
-                            <td>{{ f.fields|length }}</td>
-                            <td>
-                                <form method="post" action="{{ path('form_builder_admin_delete', {id: f.id}) }}"
-                                      onsubmit="return confirm('Obrisati formu?');">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_form_' ~ f.id) }}">
-                                    <button class="badge draft" type="submit">Obriši</button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
-    </div>
-</body>
-</html>
+    {% else %}
+        <table class="table table-hover">
+            <thead>
+                <tr><th>Naziv</th><th>Status</th><th>Shortcode</th><th>Polja</th><th class="text-end"></th></tr>
+            </thead>
+            <tbody>
+                {% for f in forms %}
+                    <tr>
+                        <td><a href="{{ path('form_builder_admin_edit', {id: f.id}) }}">{{ f.name }}</a></td>
+                        <td>
+                            {% if f.published %}<span class="badge bg-success">Objavljeno</span>
+                            {% else %}<span class="badge bg-secondary">Skica</span>{% endif %}
+                        </td>
+                        <td><code>[form id={{ f.id }}]</code></td>
+                        <td>{{ f.fields|length }}</td>
+                        <td class="text-end">
+                            <form method="post" action="{{ path('form_builder_admin_delete', {id: f.id}) }}" class="d-inline"
+                                  onsubmit="return confirm('Obrisati formu?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_form_' ~ f.id) }}">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Obriši</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

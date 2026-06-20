@@ -1,6 +1,7 @@
 {# One field row. Used both for existing fields and as the collection prototype
    (fieldForm = form.fields.vars.prototype). The nested rules collection carries its
    own prototype + __rule__ placeholder. #}
+{% form_theme fieldForm 'bootstrap_5_layout.html.twig' %}
 <div class="fb-field-row" data-fb-item>
     <div class="fb-row-head">
         <span class="fb-handle">≡</span>

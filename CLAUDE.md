@@ -119,6 +119,23 @@ implement `ShortcodeInterface`; both interfaces are auto-tagged via
 
 Then generate + run a Doctrine migration for any new entities, and `cache:clear`.
 
+**Module admin pages MUST live inside the EasyAdmin shell** (sidebar + header) — a
+standalone page traps the user with no nav and fragments the admin. The rule:
+- The admin template **extends `@EasyAdmin/page/content.html.twig`** (put content in
+  `{% block main %}`, title in `{% block content_title %}`); use Bootstrap 5 classes
+  and `{% form_theme ... 'bootstrap_5_layout.html.twig' %}` for native styling.
+- The admin controller's `#[Route]` sets a default so EasyAdmin builds its
+  AdminContext for the route (otherwise `ea` is null and the layout errors):
+  `#[Route('/admin/<x>', defaults: ['dashboardControllerFqcn' => 'App\Controller\Admin\DashboardController'])]`.
+  (Import-level `defaults:` in routes YAML does NOT propagate to attribute routes —
+  it must be on the `#[Route]` itself. Keep the public/front routes WITHOUT it.)
+- For the module's own Stimulus controllers to boot on admin pages, the app
+  Dashboard loads the app entrypoint into EasyAdmin's single importmap:
+  `DashboardController::configureAssets(): Assets { return Assets::new()->addAssetMapperEntry('app'); }`.
+  (One importmap per page — never add a second `importmap('app')` in the template.)
+App-level custom admin pages (e.g. the module registry) are simplest as actions on
+the Dashboard controller itself.
+
 **Shared client/server logic (e.g. conditional fields):** keep ONE definition as
 data (JSON on the entity), evaluate it with a PHP class AND a mirrored pure JS module
 (`assets/condition_evaluator.js`), and test BOTH against one fixture

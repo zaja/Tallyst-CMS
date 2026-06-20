@@ -1,5 +1,7 @@
 # App-side wiring for the FormBuilder module: load its attribute routes.
 # (One of the 5 per-module touch points documented in CLAUDE.md.)
+# The admin controller pins dashboardControllerFqcn via its #[Route] default so the
+# admin pages render inside the EasyAdmin shell; the front submit route does not.
 form_builder:
     resource: '../../modules/FormBuilder/Controller/'
     type: attribute
