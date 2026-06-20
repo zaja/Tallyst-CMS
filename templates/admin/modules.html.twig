@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Moduli — Tallyst Admin</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f3f4f6; color: #1a1a1a; margin: 0; }
+        .wrap { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem; }
+        a.back { color: #2563eb; text-decoration: none; font-size: .9rem; }
+        h1 { font-size: 1.4rem; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+        th, td { text-align: left; padding: .75rem 1rem; border-bottom: 1px solid #eee; vertical-align: top; }
+        th { background: #fafafa; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; color: #555; }
+        .badge { display: inline-block; padding: .15rem .55rem; border-radius: 999px; font-size: .78rem; }
+        .badge.on { background: #dcfce7; color: #166534; }
+        .badge.off { background: #f3f4f6; color: #6b7280; }
+        button { border: 0; border-radius: 7px; padding: .4rem .75rem; cursor: pointer; font-size: .85rem; }
+        button.enable { background: #2563eb; color: #fff; }
+        button.disable { background: #fee2e2; color: #b91c1c; }
+        .flash { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: .6rem .8rem; border-radius: 8px; margin-bottom: 1rem; }
+        .empty { background: #fff; border-radius: 10px; padding: 2rem; text-align: center; color: #6b7280; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <p><a class="back" href="{{ path('admin') }}">&larr; Natrag na admin</a></p>
+        <h1>Instalirani moduli</h1>
+
+        {% for message in app.flashes('success') %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+
+        {% if modules is empty %}
+            <div class="empty">Još nema instaliranih modula. Modul se pojavljuje ovdje čim ga dodate kao bundle koji implementira <code>ModuleInterface</code>.</div>
+        {% else %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Modul</th>
+                        <th>Verzija</th>
+                        <th>Status</th>
+                        <th>Akcija</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for module in modules %}
+                        <tr>
+                            <td>
+                                <strong>{{ module.label }}</strong><br>
+                                <span style="color:#6b7280;font-size:.85rem">{{ module.description }}</span>
+                            </td>
+                            <td>{{ module.version }}</td>
+                            <td>
+                                {% if module.enabled %}
+                                    <span class="badge on">Uključen</span>
+                                {% else %}
+                                    <span class="badge off">Isključen</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="post" action="{{ path('admin_modules_toggle', {name: module.name}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('toggle-module-' ~ module.name) }}">
+                                    {% if module.enabled %}
+                                        <button class="disable" type="submit">Isključi</button>
+                                    {% else %}
+                                        <button class="enable" type="submit">Uključi</button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</body>
+</html>

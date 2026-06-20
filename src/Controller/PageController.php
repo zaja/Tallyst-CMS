@@ -28,7 +28,7 @@ class PageController extends AbstractController
     /**
      * Catch-all front route. Low priority so real routes (e.g. /blog) win.
      */
-    #[Route('/{slug}', name: 'page_show', requirements: ['slug' => '[a-zA-Z0-9\-]+'], priority: -100)]
+    #[Route('/{slug}', name: 'page_show', requirements: ['slug' => '(?!admin)[a-zA-Z0-9\-]+'], priority: -100)]
     public function show(string $slug, PageRepository $pages): Response
     {
         $page = $pages->findPublishedBySlug($slug);

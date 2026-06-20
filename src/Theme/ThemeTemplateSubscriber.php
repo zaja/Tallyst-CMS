@@ -35,6 +35,13 @@ class ThemeTemplateSubscriber implements EventSubscriberInterface
             return;
         }
 
+        // The admin (and Symfony internal routes) must never be touched by the
+        // front-end theme resolver — they use their own templates.
+        $path = $event->getRequest()->getPathInfo();
+        if (str_starts_with($path, '/admin') || str_starts_with($path, '/_')) {
+            return;
+        }
+
         $loader = $this->twig->getLoader();
         if (!$loader instanceof FilesystemLoader) {
             return;
