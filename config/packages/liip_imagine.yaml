@@ -1,5 +1,8 @@
 liip_imagine:
     driver: gd
+    # Use the non-deprecated Twig integration.
+    twig:
+        mode: lazy
     # Thumbnails are written to public/media/cache/ — kept SEPARATE from the
     # uploads at public/media/uploads/ so clearing/gitignoring one never touches
     # the other (both live under the git-ignored public/media/).

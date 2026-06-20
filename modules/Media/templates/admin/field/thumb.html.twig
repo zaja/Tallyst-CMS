@@ -1,6 +1,8 @@
-{# Liip "thumb" preview for the Media list/detail. field.value = imageName. #}
+{# Liip "thumb" preview for the Media list/detail. field.value = imageName.
+   Use the liip route via path() → a RELATIVE URL (no absolute host/scheme), so it
+   never trips mixed-content on HTTPS; also avoids the deprecated imagine_filter. #}
 {% if field.value %}
-    <img src="{{ ('media/uploads/' ~ field.value)|imagine_filter('thumb') }}"
+    <img src="{{ path('liip_imagine_filter', {filter: 'thumb', path: 'media/uploads/' ~ field.value}) }}"
          alt="" loading="lazy"
          style="max-height: 64px; max-width: 120px; border-radius: 4px; object-fit: cover;">
 {% else %}

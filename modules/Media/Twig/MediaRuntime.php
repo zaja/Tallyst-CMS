@@ -4,6 +4,7 @@ namespace Tallyst\Media\Twig;
 
 use App\Repository\SettingRepository;
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Tallyst\Media\Entity\Media;
 use Tallyst\Media\Repository\MediaRepository;
 use Twig\Environment;
@@ -45,7 +46,13 @@ class MediaRuntime implements RuntimeExtensionInterface
             return null;
         }
 
-        return $this->imagineCache->getBrowserPath('media/uploads/'.$logo->getImageName(), $filter);
+        return $this->imagineCache->getBrowserPath(
+            'media/uploads/'.$logo->getImageName(),
+            $filter,
+            [],
+            null,
+            UrlGeneratorInterface::ABSOLUTE_PATH,
+        );
     }
 
     /**
@@ -59,7 +66,13 @@ class MediaRuntime implements RuntimeExtensionInterface
         $siteName = $this->siteName();
 
         $logoUrl = null !== $logo && null !== $logo->getImageName()
-            ? $this->imagineCache->getBrowserPath('media/uploads/'.$logo->getImageName(), 'medium')
+            ? $this->imagineCache->getBrowserPath(
+                'media/uploads/'.$logo->getImageName(),
+                'medium',
+                [],
+                null,
+                UrlGeneratorInterface::ABSOLUTE_PATH,
+            )
             : null;
 
         return $this->twig->render('branding.html.twig', [
