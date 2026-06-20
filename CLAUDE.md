@@ -93,12 +93,21 @@ themes/               # THEMES — one folder = one theme
    - The end-user form is rendered and validated dynamically at runtime from that
      data. Do NOT model end-user forms with Symfony's compile-time Form component.
    - Use the Symfony Form component only for the ADMIN builder UI itself.
-4. **Page-as-product.** A `FormDefinition` may carry `price` + `currency`. On a
-   priced submission, create an `Order` and start payment.
-5. **Payments use a strategy interface.** `PaymentProcessorInterface` with
-   `StripeProcessor` and `PaypalProcessor`. Webhook controllers confirm payment.
-   Order lifecycle is managed by Symfony's **Workflow** component:
-   `pending → paid → fulfilled → refunded`. Fulfillment triggers on `paid`.
+4. **Page-as-product.** A `FormDefinition` may carry `priceMinor` (integer MINOR
+   units — cents, never float) + `currency`. A priced submission creates an `Order`
+   and starts payment; a free form behaves as before.
+5. **Payments use a strategy interface.** `PaymentProcessorInterface` + a registry
+   (Stripe done in pass 2a; PayPal is just another impl). Order lifecycle is a
+   Symfony **state_machine** workflow (`order`): `pending → paid → fulfilled →
+   refunded`. Critical rules:
+   - The **verified webhook is the SOLE source of truth for `paid`** — never the
+     submit flow or the thank-you redirect. Verify the signature (reject 400), require
+     the provider's paid status, be idempotent, and ack unknown sessions with 200.
+   - The webhook marks `paid` fast, then dispatches **async fulfillment** (Messenger).
+     Fulfillment (e-mails, then `paid→fulfilled`) is retriable and MUST NOT roll back
+     `paid` if it fails. Production needs a running `messenger:consume async` worker.
+   - A front form that 303-redirects to an external payment page MUST set
+     `data-turbo="false"` (Turbo can't follow a cross-origin redirect).
 6. **Themes resolve at runtime.** The active theme's `templates/` dir is prepended
    to Twig's loader. Support a `parent` theme for template fallback (child-theme
    behaviour). Reference: Sylius ThemeBundle is good prior art.
@@ -116,8 +125,9 @@ Copy `modules/FormBuilder/` — it is the reference module. Its bundle class
 and overrides `getPath()` to `__DIR__` (the bundle lives in `modules/<Name>/`, not a
 `src/` subdir, so the default heuristic mis-resolves it). Implement `ModuleInterface`
 (metadata → shows in the registry) and optionally `AdminModuleInterface`
-(`getAdminMenuItems()` → appears under the dashboard "Moduli" section). Content tags
-implement `ShortcodeInterface`; both interfaces are auto-tagged via
+(`getAdminMenuItems()` → appears under the dashboard "Moduli" section; build CRUD
+links with `MenuItem::linkTo(<CrudController>::class, label, icon)` — `linkToCrud()`
+is deprecated). Content tags implement `ShortcodeInterface`; both interfaces are auto-tagged via
 `#[AutoconfigureTag]`, so no `_instanceof`/services wiring is needed for them.
 
 **The 5 app-side touch points (everything else lives in the module):**
