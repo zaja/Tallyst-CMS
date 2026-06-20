@@ -29,9 +29,10 @@ class FormFieldType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('label', TextType::class, ['label' => 'Naziv polja'])
+            ->add('label', TextType::class, ['label' => 'Naziv polja', 'empty_data' => ''])
             ->add('key', TextType::class, [
                 'required' => false,
+                'empty_data' => '',
                 'label' => 'Key',
                 'help' => 'Jedinstven po formi. Prazno = generira se iz naziva.',
             ])

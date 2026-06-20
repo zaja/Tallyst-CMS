@@ -16,9 +16,10 @@ class FormDefinitionType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('name', TextType::class, ['label' => 'Naziv forme'])
+            ->add('name', TextType::class, ['label' => 'Naziv forme', 'empty_data' => ''])
             ->add('slug', TextType::class, [
                 'required' => false,
+                'empty_data' => '',
                 'label' => 'Slug',
                 'help' => 'Prazno = generira se iz naziva.',
             ])
