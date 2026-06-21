@@ -75,10 +75,13 @@ export default class extends Controller {
     }
 
     onMediaSelect(event) {
-        const { id, name, thumbUrl } = event.detail;
+        const { id, name, thumbUrl, displayUrl } = event.detail;
         this.editor.chain().focus().insertContent({
             type: 'image',
-            attrs: { id, src: thumbUrl, alt: name || '' },
+            // Use the 'medium' display URL (same filter toEditorHtml uses on load) so the
+            // fresh insert isn't a small thumb that jumps to medium after reload. The
+            // stored shortcode stays [image id=N] (default medium) regardless.
+            attrs: { id, src: displayUrl || thumbUrl, alt: name || '' },
         }).run();
     }
 }

@@ -134,6 +134,7 @@ export default class extends Controller {
         fig.dataset.id = item.id;
         fig.dataset.name = item.name || '';
         fig.dataset.thumbUrl = item.thumbUrl || '';
+        fig.dataset.displayUrl = item.displayUrl || '';
         fig.title = item.name || '';
 
         const img = document.createElement('img');
@@ -153,6 +154,9 @@ export default class extends Controller {
                 id: el.dataset.id,
                 name: el.dataset.name,
                 thumbUrl: el.dataset.thumbUrl,
+                // 'medium' Liip URL for consumers that show the image at content size
+                // (the editor) — keeps insert preview consistent with reload.
+                displayUrl: el.dataset.displayUrl,
             },
         });
         this.close();

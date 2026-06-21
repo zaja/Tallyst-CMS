@@ -51,6 +51,9 @@ class MediaLibraryController extends AbstractController
             $items[] = [
                 'id' => $media->getId(),
                 'thumbUrl' => $this->images->url($media->getImageName(), 'thumb'),
+                // Editor display size (Liip 'medium') — matches what toEditorHtml resolves
+                // on load, so a freshly inserted image isn't smaller than after reload.
+                'displayUrl' => $this->images->url($media->getImageName(), 'medium'),
                 'name' => (string) $media,
                 'alt' => $media->getAlt() ?? '',
             ];
