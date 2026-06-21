@@ -341,7 +341,13 @@ new table, no migration (encrypted values are just text in the existing `value` 
   caches the Setting row for its lifetime, so changing SMTP settings needs a worker restart.
   `DefaultFromListener` (MessageEvent) fills From/Reply-To from the email identity settings on
   any message that didn't set its own; the decorator passes the global dispatcher to the SMTP
-  transport so this fires for DB-SMTP sends too. **"Pošalji test mail"** (CSRF-protected POST)
+  transport so this fires for DB-SMTP sends too. **Handlers MUST NOT hardcode a From** — a
+  From the SMTP account isn't allowed to send as is rejected by real servers (`553 Sender
+  address rejected: not owned`), so the message silently lands in the `failed` queue and never
+  arrives. Leave From unset and let this listener apply the configured `mail_from_email` (which
+  MUST be an address the SMTP account owns). This bit FormBuilder once: `FulfillOrderHandler`
+  hardcoded `noreply@tallyst.org`, so paid orders fulfilled but no confirmation was ever
+  delivered until the hardcode was removed. **"Pošalji test mail"** (CSRF-protected POST)
   takes an editable recipient (default = sender, else the logged-in admin) and its flash
   reports BOTH which transport carried it (`activeTransportLabel()` → "DB SMTP (host)" vs
   "env MAILER_DSN (fallback)") AND, on failure, the REAL transport exception message — so
@@ -386,8 +392,14 @@ This is the SINGLE home for "what's next" — park ideas here, not scattered acr
   worker running as a DAEMON (systemd/supervisor, not a manual shell — see the Readiness Panel
   below), `APP_ENV=prod` (never dev/debug on the public domain), LIVE Stripe keys + the
   registered webhook secret in `.env.local`, a real `MAILER_DSN`/SMTP configured AND a test mail
-  delivered, and a real `SETTINGS_ENCRYPTION_KEY` provisioned (`app:install`). The Deployment
-  Readiness Panel below is the eventual in-admin surface for these checks.
+  delivered, and a real `SETTINGS_ENCRYPTION_KEY` provisioned (`app:install`). Email specifics
+  (learned the hard way): the configured **`mail_from_email` MUST be an address the SMTP account
+  is allowed to send as** (else real SMTP rejects with `553 ... not owned` and mail silently
+  fails) — and verify with a real **paid test order** end-to-end, not just the test button
+  (they share the transport but the order path is async via the worker). Set **`ORDER_ADMIN_EMAIL`
+  to a real, deliverable address** (the `admin@tallyst.local` default is a placeholder whose
+  domain bounces, so the admin-notification copy never arrives). The Deployment Readiness Panel
+  below is the eventual in-admin surface for these checks.
 
 ### Deployment Readiness Panel (installer faza — NE gradi se sad)
 Admin "Sustav/Deployment" panel: operativni go-live status + generirani setup snippeti.
