@@ -1,5 +1,6 @@
 import StarterKit from '@tiptap/starter-kit';
 import { TallystImage } from './tiptap_image_node.js';
+import { TallystDocument, Columns, Column } from './tiptap_columns_node.js';
 
 /*
  * The Tiptap schema for Tallyst content + an extension point so OTHER modules can plug in
@@ -7,7 +8,10 @@ import { TallystImage } from './tiptap_image_node.js';
  * EditorShortcodeConverterInterface IoC on the JS side.
  *
  * Base schema maps to what Trix could author: bold/italic/strike/code, headings, bullet &
- * ordered lists, blockquote, code block, link, hard breaks, history, + the image node.
+ * ordered lists, blockquote, code block, link, hard breaks, history, + the image node and
+ * the multi-column layout (columns/column, a PURE HTML node — no shortcode). Both the image
+ * and the columns are CORE editor features (Media-owned, no other module) so they are added
+ * here DIRECTLY, always present — unlike module embeds, which plug in via the gated path.
  * Anything outside the schema (tables, iframes, inline styles) is dropped by ProseMirror
  * on load — the documented Trix->Tiptap normalisation, proven by the round-trip test.
  *
@@ -33,12 +37,18 @@ export function buildExtensions() {
     const nodes = editorExtensions.map((e) => e.node).filter(Boolean);
     return [
         StarterKit.configure({
+            // Replace StarterKit's Document with ours so the top level also accepts the
+            // columns layout node (TallystDocument content = '(block | columns)+').
+            document: false,
             heading: { levels: [1, 2, 3] },
             // Keep content stable on load: don't auto-link typed URLs, don't navigate on
             // click, don't force target=_blank/rel onto existing links.
             link: { openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } },
         }),
+        TallystDocument,
         TallystImage,
+        Columns,
+        Column,
         ...nodes,
     ];
 }

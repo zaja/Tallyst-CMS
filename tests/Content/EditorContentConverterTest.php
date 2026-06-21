@@ -67,4 +67,35 @@ class EditorContentConverterTest extends TestCase
         self::assertStringContainsString('[image id=5]', $ab);
         self::assertStringContainsString('[form id=2]', $ab);
     }
+
+    /**
+     * Prolaz C: columns are a PURE HTML node — no converter touches the wrapper. But the
+     * converters run over the WHOLE HTML, so [image]/[form] embeds nested INSIDE a column
+     * must still convert in BOTH directions while the column structure passes through
+     * untouched. This is the PHP load->save round-trip for a page laid out in columns.
+     */
+    public function testColumnsWrapperPassesThroughWhileNestedEmbedsConvert(): void
+    {
+        $converter = new EditorContentConverter([$this->imageConverter(), $this->formConverter()]);
+
+        $stored = '<div class="tallyst-columns" data-columns="2">'
+            .'<div class="tallyst-column">[image id=5]</div>'
+            .'<div class="tallyst-column">[form id=2]</div></div>';
+
+        // load: shortcodes -> editor embeds, columns wrapper intact.
+        $editor = $converter->toEditorHtml($stored);
+        self::assertStringContainsString('class="tallyst-columns"', $editor);
+        self::assertStringContainsString('data-columns="2"', $editor);
+        self::assertSame(2, substr_count($editor, 'class="tallyst-column"'));
+        self::assertStringContainsString('data-tallyst-image', $editor);
+        self::assertStringContainsString('data-tallyst-form', $editor);
+
+        // save: embeds -> shortcodes, columns wrapper still intact (full round-trip).
+        $back = $converter->toStored($editor);
+        self::assertStringContainsString('class="tallyst-columns"', $back);
+        self::assertSame(2, substr_count($back, 'class="tallyst-column"'));
+        self::assertStringContainsString('[image id=5]', $back);
+        self::assertStringContainsString('[form id=2]', $back);
+        self::assertStringNotContainsString('data-tallyst-', $back);
+    }
 }

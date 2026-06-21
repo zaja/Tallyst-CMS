@@ -26,6 +26,11 @@
             <button type="button" class="tiptap__btn" title="Ukloni poveznicu" data-action="media--tiptap#unlink">&#128279;&times;</button>
             <span class="tiptap__sep"></span>
             <button type="button" class="tiptap__btn" title="Ubaci sliku" data-action="media--tiptap#insertImage">&#128247; Slika</button>
+            <span class="tiptap__sep"></span>
+            {# Multi-column layout (Prolaz C) — core editor feature, always present (not
+               module-gated): insert a fixed 2- or 3-column block at the cursor. #}
+            <button type="button" class="tiptap__btn" title="Dva stupca" data-action="media--tiptap#columns2">&#9707; 2</button>
+            <button type="button" class="tiptap__btn" title="Tri stupca" data-action="media--tiptap#columns3">&#9707; 3</button>
             {# Module-contributed insert buttons (e.g. FormBuilder "Ubaci formu") are
                appended here by the controller — the editor stays module-agnostic. #}
             <span class="tiptap__ext" data-media--tiptap-target="toolbar"></span>

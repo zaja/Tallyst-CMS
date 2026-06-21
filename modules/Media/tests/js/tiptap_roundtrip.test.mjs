@@ -81,5 +81,50 @@ ok(editorToolbarExtensions(['media', 'form_builder']).some((t) => t.label.includ
 ok(!editorToolbarExtensions(['media']).some((t) => t.label.includes('Forma')),
     'form toolbar button hidden when form_builder disabled');
 
+// --- Multi-column layout (Prolaz C): pure HTML node, round-trips with nested embeds ---
+// 2 columns, equal, survive load->save with the wrapper + data-columns intact.
+const twoCol = roundTrip(
+    '<div class="tallyst-columns" data-columns="2">'
+    + '<div class="tallyst-column"><p>Lijevo</p></div>'
+    + '<div class="tallyst-column"><p>Desno</p></div></div>'
+);
+ok(/class="tallyst-columns"/.test(twoCol) && /data-columns="2"/.test(twoCol), '2-column wrapper + count round-trips');
+ok((twoCol.match(/class="tallyst-column"/g) || []).length === 2, 'exactly two columns preserved');
+ok(twoCol.includes('Lijevo') && twoCol.includes('Desno'), 'column text preserved');
+
+// 3 columns.
+const threeCol = roundTrip(
+    '<div class="tallyst-columns" data-columns="3">'
+    + '<div class="tallyst-column"><p>A</p></div>'
+    + '<div class="tallyst-column"><p>B</p></div>'
+    + '<div class="tallyst-column"><p>C</p></div></div>'
+);
+ok(/data-columns="3"/.test(threeCol) && (threeCol.match(/class="tallyst-column"/g) || []).length === 3,
+    '3-column layout round-trips with three columns');
+
+// NESTING: an [image] node in one column and a [form] embed in another both survive in
+// place (the converters run over the whole HTML, so nested embeds still convert in PHP).
+const colEmbeds = roundTrip(
+    '<div class="tallyst-columns" data-columns="2">'
+    + '<div class="tallyst-column"><img data-tallyst-image data-id="5" data-size="medium" src="/x.jpg" alt="S"></div>'
+    + '<div class="tallyst-column"><div data-tallyst-form data-id="2" data-label="Kontakt">📋 Forma: Kontakt</div></div>'
+    + '</div>'
+);
+ok(/class="tallyst-columns"/.test(colEmbeds), 'columns wrapper survives with nested embeds');
+ok(colEmbeds.includes('data-tallyst-image') && colEmbeds.includes('data-id="5"'), 'image node inside a column preserved');
+ok(colEmbeds.includes('data-tallyst-form') && colEmbeds.includes('data-id="2"'), 'form embed inside a column preserved');
+
+// MALFORMED: nested columns are forbidden in v1 — ProseMirror lifts the inner columns out,
+// so no columns ever ends up inside a column.
+const nested = roundTrip(
+    '<div class="tallyst-columns" data-columns="2">'
+    + '<div class="tallyst-column">'
+    + '<div class="tallyst-columns" data-columns="2"><div class="tallyst-column"><p>X</p></div><div class="tallyst-column"><p>Y</p></div></div>'
+    + '</div>'
+    + '<div class="tallyst-column"><p>B</p></div></div>'
+);
+ok(!/tallyst-column"[^>]*>\s*<div class="tallyst-columns"/.test(nested), 'no columns nested inside a column (inner lifted out)');
+ok(nested.includes('X') && nested.includes('Y') && nested.includes('B'), 'content from a malformed nested layout is kept (not dropped)');
+
 console.log(`tiptap_roundtrip: ${passed} assertions passed`);
 console.log('--- round-tripped HTML ---\n' + out);

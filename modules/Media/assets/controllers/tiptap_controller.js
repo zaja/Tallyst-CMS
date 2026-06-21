@@ -97,6 +97,29 @@ export default class extends Controller {
         this.libraryTarget.dispatchEvent(new CustomEvent('media-library:open'));
     }
 
+    columns2() { this.insertColumns(2); }
+    columns3() { this.insertColumns(3); }
+
+    /**
+     * Insert a fixed N-column layout (N empty columns, each seeded with an empty paragraph
+     * so `block+` is satisfied). Guarded against nesting: no insert when the cursor is
+     * already inside a columns layout (v1 has no nested columns).
+     */
+    insertColumns(count) {
+        if (this.editor.isActive('columns') || this.editor.isActive('column')) {
+            return;
+        }
+        const columns = Array.from({ length: count }, () => ({
+            type: 'column',
+            content: [{ type: 'paragraph' }],
+        }));
+        this.editor.chain().focus().insertContent({
+            type: 'columns',
+            attrs: { count },
+            content: columns,
+        }).run();
+    }
+
     onMediaSelect(event) {
         const { id, name, thumbUrl, displayUrl } = event.detail;
         this.editor.chain().focus().insertContent({

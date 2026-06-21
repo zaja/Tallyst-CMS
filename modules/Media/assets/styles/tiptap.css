@@ -75,3 +75,25 @@
     background: var(--bs-tertiary-bg, #f1f1f1);
     overflow-x: auto;
 }
+
+/* Multi-column layout (Prolaz C) — WYSIWYG grid mirroring the theme front CSS, plus a
+   dashed outline so empty columns stay visible/selectable while editing. The theme owns the
+   real front styling (public/css/theme.css); this is the editor preview. Count-agnostic:
+   grid-auto-flow:column lays out however many columns are present. */
+.tiptap__editor .ProseMirror .tallyst-columns {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 1rem;
+}
+
+.tiptap__editor .ProseMirror .tallyst-column {
+    min-width: 0;
+    padding: 0.5rem;
+    border: 1px dashed var(--bs-border-color, #ccc);
+    border-radius: 4px;
+}
+
+.tiptap__editor .ProseMirror .tallyst-column > * + * {
+    margin-top: 0.6rem;
+}

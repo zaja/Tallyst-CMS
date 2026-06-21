@@ -248,6 +248,26 @@ Replaces the old Trix `TextEditorField` on Page/Post.
   per-converter coupling tests prove their shortcode parses identically through the real
   front pipeline. The front (`ImageShortcode`/`FormShortcode` + `render_content`) is
   UNCHANGED.
+- **Multi-column layout (Prolaz C) is a PURE HTML node — NO shortcode, NO converter.** The
+  `columns`/`column` nodes (`tiptap_columns_node.js`) are CORE editor features (Media-owned,
+  no other module) so they're added to the schema DIRECTLY in `buildExtensions` — always
+  present, like the image node — NOT via the module-gated `registerEditorExtension` path.
+  Content stores as `<div class="tallyst-columns" data-columns="N"><div class="tallyst-column">
+  …blocks…</div>…</div>` straight in the `content` HTML; Tiptap's parseHTML/renderHTML carry
+  it in/out and the EditorContentConverter chain never touches it (disjoint patterns).
+  Because the converters run over the WHOLE HTML, `[image]`/`[form]` embeds nested inside a
+  column still convert (locked by `EditorContentConverterTest::testColumnsWrapper…`). v1 =
+  FIXED 2/3 equal columns: not resizable, no per-column widths, no nesting. Nesting is
+  forbidden at the SCHEMA level — `columns` is in its own `columns` group (not `block`) and
+  StarterKit's Document is replaced by `TallystDocument` (content `(block | columns)+`), so a
+  `columns` can never land inside a `column` (a malformed inner one is lifted out, not
+  dropped). **CSS lives in TWO places, visually matched** (the Node round-trip test covers
+  the 2/3-col round-trip, nested-embeds, and nesting-lifted; the drop assertions stay green):
+  - editor preview in `modules/Media/assets/styles/tiptap.css` (grid + dashed column outline);
+  - front in the theme's `public/css/theme.css` — count-agnostic grid (`grid-auto-flow:column`
+    + `grid-auto-columns:1fr`) that stacks on narrow viewports (`@media → grid-auto-flow:row`).
+  **THEME CONTRACT:** a theme that wants columns MUST carry that `.tallyst-columns`/`.tallyst-column`
+  CSS (the default theme does); without it the columns degrade to stacked blocks on the front.
 - **The editor (Media) has ZERO references to other modules** — PHP (Core interface), JS,
   and templates. Other modules plug in app-level via `registerEditorExtension({ key, node,
   toolbar })` in `stimulus_bootstrap.js`:
@@ -272,21 +292,13 @@ Replaces the old Trix `TextEditorField` on Page/Post.
   build-free via importmap. Run JS tests: `npm run test:js`.
 
 ## Backlog (queued — agreed, NOT yet built)
-- **Prolaz C — multi-column layout in the editor.** A custom Tiptap **column node** so an
-  admin can lay content out in columns. **v1 scope: FIXED layouts (2 and 3 equal columns),
-  NOT resizable** (no drag handles / no custom widths — that's a later pass). Follows the
-  established editor IoC: register via `registerEditorExtension` (node always in schema),
-  insert button gated like the others. Three integration points to get right:
-  1. **Theme CSS** — columns render on the FRONT via the active theme (the column markup
-     must be styled by `theme_asset()` CSS in the theme, same theme-chain pattern as menus/
-     branding); the editor preview mirrors it. No inline styles baked into stored content.
-  2. **Schema + drop-test** — the column node joins the Tiptap schema; the Node round-trip
-     test MUST cover it (columns + nested content survive load→save) AND assert what
-     ProseMirror drops when column structure is malformed, so the loss is known.
-  3. **Shortcode round-trip INSIDE a column** — `[image id=N]` / `[form id=N]` nested in a
-     column must survive the full load→save round-trip through `EditorContentConverter`
-     (converters run on the whole HTML, so nested embeds must still convert), and the front
-     (`render_content`) must render columns with their embeds intact.
+- **Prolaz C — multi-column layout — DONE.** Custom Tiptap `columns`/`column` nodes (FIXED
+  2/3 equal columns; not resizable). Built as a PURE HTML node (no shortcode/converter) —
+  see the "Multi-column layout" bullet under the WYSIWYG editor section for the full design
+  (direct-in-schema like the image node, nesting forbidden via the `columns` group +
+  `TallystDocument`, CSS in two places + theme contract, round-trip tests). NOT done (later
+  passes): resizable columns, dynamic add/remove a column, nested columns, per-column
+  widths/backgrounds, >3 columns.
 
 ## Adding a new module (the pattern to follow)
 Copy `modules/FormBuilder/` — it is the reference module. Its bundle class

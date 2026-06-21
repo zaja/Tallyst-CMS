@@ -30,6 +30,19 @@ time { color: var(--muted); }
 .post-thumb { display: inline-block; margin-bottom: .5rem; }
 .post-thumb .media-img { max-height: 120px; }
 
+/* Multi-column layout (Prolaz C). Content stored as
+   <div class="tallyst-columns" data-columns="N"><div class="tallyst-column">…</div>…</div>.
+   Count-agnostic: grid-auto-flow:column + grid-auto-columns:1fr lays out however many
+   columns are present, so 2 and 3 (and any future N) just work. A theme that wants columns
+   MUST carry this CSS (theme contract) — without it the columns fall back to stacked
+   blocks. On narrow viewports they stack (grid-auto-flow:row). */
+.tallyst-columns { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 1.5rem; margin: 1.25rem 0; }
+.tallyst-column { min-width: 0; }
+.tallyst-column > :first-child { margin-top: 0; }
+@media (max-width: 640px) {
+    .tallyst-columns { grid-auto-flow: row; grid-auto-columns: auto; gap: 1rem; }
+}
+
 /* Navigation (render_menu) */
 .site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 1rem; }
 .site-nav li { position: relative; }
