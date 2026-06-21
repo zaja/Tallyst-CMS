@@ -21,6 +21,15 @@ time { color: var(--muted); }
 .site-brand { display: inline-flex; align-items: center; }
 .site-logo { max-height: 40px; width: auto; display: block; }
 
+/* Media images (featured + [image id=N]) */
+.media-img { max-width: 100%; height: auto; border-radius: 6px; }
+.featured-image { margin: 0 0 1.25rem; }
+.media-align-left { float: left; margin: 0 1rem 1rem 0; }
+.media-align-right { float: right; margin: 0 0 1rem 1rem; }
+.media-align-center { display: block; margin: 1rem auto; }
+.post-thumb { display: inline-block; margin-bottom: .5rem; }
+.post-thumb .media-img { max-height: 120px; }
+
 /* Navigation (render_menu) */
 .site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 1rem; }
 .site-nav li { position: relative; }

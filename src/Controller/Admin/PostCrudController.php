@@ -36,6 +36,7 @@ class PostCrudController extends AbstractCrudController
             ->setChoices(['Skica' => Post::STATUS_DRAFT, 'Objavljeno' => Post::STATUS_PUBLISHED])
             ->renderAsBadges([Post::STATUS_DRAFT => 'secondary', Post::STATUS_PUBLISHED => 'success']);
         yield AssociationField::new('category', 'Kategorija');
+        yield AssociationField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
         yield DateTimeField::new('publishedAt', 'Objavljeno')->hideOnIndex();
         yield TextareaField::new('excerpt', 'Sažetak')->hideOnIndex();
         yield TextEditorField::new('content', 'Sadržaj')->hideOnIndex();

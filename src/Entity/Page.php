@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\PageRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Tallyst\Media\Entity\Media;
 
 /**
  * A standalone content page. With an inline [form id=N] tag it becomes a product.
@@ -49,10 +50,27 @@ class Page
     #[ORM\Column]
     private int $position = 0;
 
+    /** Featured image. core→Media FK is the ONE allowed core→module dependency (see CLAUDE.md). */
+    #[ORM\ManyToOne(targetEntity: Media::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Media $featuredImage = null;
+
     public function __construct(string $title = '', string $slug = '')
     {
         $this->title = $title;
         $this->slug = $slug;
+    }
+
+    public function getFeaturedImage(): ?Media
+    {
+        return $this->featuredImage;
+    }
+
+    public function setFeaturedImage(?Media $featuredImage): static
+    {
+        $this->featuredImage = $featuredImage;
+
+        return $this;
     }
 
     public function getId(): ?int

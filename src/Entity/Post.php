@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\PostRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Tallyst\Media\Entity\Media;
 
 /**
  * A blog post / article, optionally filed under a Category.
@@ -46,10 +47,27 @@ class Post
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Category $category = null;
 
+    /** Featured image. core→Media FK is the ONE allowed core→module dependency (see CLAUDE.md). */
+    #[ORM\ManyToOne(targetEntity: Media::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Media $featuredImage = null;
+
     public function __construct(string $title = '', string $slug = '')
     {
         $this->title = $title;
         $this->slug = $slug;
+    }
+
+    public function getFeaturedImage(): ?Media
+    {
+        return $this->featuredImage;
+    }
+
+    public function setFeaturedImage(?Media $featuredImage): static
+    {
+        $this->featuredImage = $featuredImage;
+
+        return $this;
     }
 
     public function getId(): ?int

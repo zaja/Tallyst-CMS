@@ -5,6 +5,7 @@ namespace Tallyst\Media\Twig;
 use App\Repository\SettingRepository;
 use Tallyst\Media\Entity\Media;
 use Tallyst\Media\Repository\MediaRepository;
+use Tallyst\Media\Service\MediaImageHelper;
 use Twig\Environment;
 use Twig\Extension\RuntimeExtensionInterface;
 
@@ -13,6 +14,7 @@ class MediaRuntime implements RuntimeExtensionInterface
     public function __construct(
         private readonly SettingRepository $settings,
         private readonly MediaRepository $media,
+        private readonly MediaImageHelper $images,
         private readonly Environment $twig,
     ) {
     }
@@ -22,20 +24,16 @@ class MediaRuntime implements RuntimeExtensionInterface
         return $this->settings->get('site_name', 'Tallyst') ?: 'Tallyst';
     }
 
-    /**
-     * Deterministic RELATIVE URL of a media thumbnail's cached file. The thumbnail is
-     * warmed on upload (see ThumbnailWarmer), so this points at a real static file
-     * nginx serves directly. We build the path ourselves (Liip's web_path layout)
-     * rather than the on-demand resolve URL — which nginx 404s (image extension, not a
-     * real file) — and rather than Liip's absolute URL (scheme/mixed-content risk).
-     */
+    /** Thumbnail URL of a media by its imageName (see MediaImageHelper). */
     public function mediaThumbUrl(?string $imageName, string $filter = 'thumb'): ?string
     {
-        if (null === $imageName || '' === $imageName) {
-            return null;
-        }
+        return $this->images->url($imageName, $filter);
+    }
 
-        return '/media/cache/'.$filter.'/media/uploads/'.$imageName;
+    /** Safe <img> for a media — used by featured images, etc. (shared markup). */
+    public function mediaImg(?Media $media, string $filter = 'medium', ?string $align = null, ?string $alt = null): string
+    {
+        return $this->images->img($media, $filter, $alt, $align);
     }
 
     /**
@@ -56,7 +54,7 @@ class MediaRuntime implements RuntimeExtensionInterface
     {
         $logo = $this->brandingLogo();
 
-        return null !== $logo ? $this->mediaThumbUrl($logo->getImageName(), $filter) : null;
+        return null !== $logo ? $this->images->url($logo->getImageName(), $filter) : null;
     }
 
     /**
@@ -71,7 +69,7 @@ class MediaRuntime implements RuntimeExtensionInterface
 
         return $this->twig->render('branding.html.twig', [
             'siteName' => $siteName,
-            'logoUrl' => null !== $logo ? $this->mediaThumbUrl($logo->getImageName(), 'medium') : null,
+            'logoUrl' => null !== $logo ? $this->images->url($logo->getImageName(), 'medium') : null,
             'logoAlt' => null !== $logo ? ($logo->getAlt() ?: $siteName) : $siteName,
         ]);
     }

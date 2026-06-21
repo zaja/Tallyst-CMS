@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Page;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
@@ -34,6 +35,7 @@ class PageCrudController extends AbstractCrudController
         yield ChoiceField::new('status', 'Status')
             ->setChoices(['Skica' => Page::STATUS_DRAFT, 'Objavljeno' => Page::STATUS_PUBLISHED])
             ->renderAsBadges([Page::STATUS_DRAFT => 'secondary', Page::STATUS_PUBLISHED => 'success']);
+        yield AssociationField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
         yield TextEditorField::new('content', 'Sadržaj')->hideOnIndex();
         yield TextField::new('template', 'Predložak')->hideOnIndex()
             ->setHelp('Naziv theme predloška, npr. page.html.twig. Prazno = zadani.');

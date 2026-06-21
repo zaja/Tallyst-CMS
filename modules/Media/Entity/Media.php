@@ -76,6 +76,12 @@ class Media
         return $this->title ?: ($this->originalName ?: ('Media #'.($this->id ?? 0)));
     }
 
+    /** Ready-to-copy content shortcode for this image. */
+    public function getImageShortcode(): string
+    {
+        return '[image id='.($this->id ?? 0).']';
+    }
+
     public function getId(): ?int
     {
         return $this->id;

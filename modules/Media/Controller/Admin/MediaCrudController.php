@@ -49,6 +49,8 @@ class MediaCrudController extends AbstractCrudController
             ->hideOnForm();
 
         yield TextField::new('title', 'Naslov');
+        yield TextField::new('imageShortcode', 'Shortcode')->hideOnForm()
+            ->setHelp('Kopiraj u sadržaj stranice/objave.');
         yield TextField::new('alt', 'Alt tekst')->hideOnIndex();
         yield TextField::new('originalName', 'Datoteka')->hideOnForm();
         yield TextField::new('mimeType', 'Tip')->onlyOnDetail();

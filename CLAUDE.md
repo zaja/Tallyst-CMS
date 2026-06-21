@@ -95,6 +95,18 @@ from AssetMapper (don't push theme CSS through importmap). Pattern:
   null-safe: `render_branding()` shows the Liip-sized logo (alt = media alt or site
   name) when the Media still exists, else falls back to the site name. It renders the
   theme-overridable `branding.html.twig` (same theme-chain pattern as menus).
+- **Featured image** on Page/Post/Category is a real `ManyToOne(Media)` FK with
+  `onDelete: SET NULL` (a deleted Media nulls the column — never a 500). This is the
+  bounded core→Media exception (rule 1). Set it with an EA `AssociationField`; render
+  it in the (theme-overridable) page/post templates, null-safe (`{% if x.featuredImage %}`).
+  Why FK here but a loose Setting for the logo: featured is a per-entity relation where
+  SET NULL gives real integrity; the logo is a global Setting (string by nature).
+- **`[image id=N size=medium align=left alt="..."]`** shortcode embeds a Media in
+  content, mirroring `[form id=N]`. Missing/deleted id → nothing (a comment), never an
+  error. `size` is whitelisted to defined Liip filters (medium default), `align` to a
+  fixed CSS class, `alt` is escaped — no arbitrary attribute reaches the `<img>`.
+- **One place builds the `<img>`:** `MediaImageHelper` (`media_img()` Twig fn) — used
+  by branding, featured images AND the shortcode. Change image markup/escaping there.
 
 ## Directory layout
 ```
@@ -123,6 +135,11 @@ themes/               # THEMES — one folder = one theme
 1. **A module is a lean Symfony bundle.** Do NOT build a custom module-loading
    framework. Lean on Symfony's bundle system, DI, routing and Twig namespaces.
    Every new module mirrors the `FormBuilder` folder structure exactly.
+   **Dependency direction:** modules depend on Core (`App\`), never the reverse — with
+   ONE deliberate, bounded exception: **Media**. Because Media is foundational/
+   mandatory, Core entities MAY hold a real FK to `Tallyst\Media\Entity\Media`
+   (e.g. featured images). This is allowed for Media ONLY; no other module may be
+   referenced from Core. Keep the exception narrow so it stays a decision, not erosion.
 2. **Replacement tags go through the ShortcodeRegistry.** Core knows nothing about
    specific tags. Modules register their own (FormBuilder registers `form`).
    Content is rendered via a `render_content` Twig filter that runs the registry

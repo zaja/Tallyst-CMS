@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Tallyst\Media\Entity\Media;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 #[ORM\Table(name: 'category')]
@@ -33,11 +34,28 @@ class Category
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'category')]
     private Collection $posts;
 
+    /** Featured image. core→Media FK is the ONE allowed core→module dependency (see CLAUDE.md). */
+    #[ORM\ManyToOne(targetEntity: Media::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Media $featuredImage = null;
+
     public function __construct(string $name = '', string $slug = '')
     {
         $this->name = $name;
         $this->slug = $slug;
         $this->posts = new ArrayCollection();
+    }
+
+    public function getFeaturedImage(): ?Media
+    {
+        return $this->featuredImage;
+    }
+
+    public function setFeaturedImage(?Media $featuredImage): static
+    {
+        $this->featuredImage = $featuredImage;
+
+        return $this;
     }
 
     public function getId(): ?int
