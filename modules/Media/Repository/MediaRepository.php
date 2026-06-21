@@ -21,4 +21,32 @@ class MediaRepository extends ServiceEntityRepository
     {
         return $this->findBy([], ['id' => 'DESC']);
     }
+
+    /**
+     * Paginated, newest-first listing for the media-library grid. Optional `$q` filters
+     * (case-insensitive LIKE) on originalName/alt/title. Fetches one extra row to tell
+     * the caller whether a further page exists, then trims to `$perPage`.
+     *
+     * @return array{items: Media[], hasMore: bool}
+     */
+    public function searchPaginated(?string $q, int $page, int $perPage): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, $perPage);
+
+        $qb = $this->createQueryBuilder('m')
+            ->orderBy('m.id', 'DESC')
+            ->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage + 1);
+
+        if (null !== $q && '' !== trim($q)) {
+            $qb->andWhere('m.originalName LIKE :q OR m.alt LIKE :q OR m.title LIKE :q')
+                ->setParameter('q', '%'.trim($q).'%');
+        }
+
+        $rows = $qb->getQuery()->getResult();
+        $hasMore = \count($rows) > $perPage;
+
+        return ['items' => \array_slice($rows, 0, $perPage), 'hasMore' => $hasMore];
+    }
 }

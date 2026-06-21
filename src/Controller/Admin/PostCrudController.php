@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextEditorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Tallyst\Media\Field\MediaPickerField;
 
 class PostCrudController extends AbstractCrudController
 {
@@ -25,7 +26,8 @@ class PostCrudController extends AbstractCrudController
         return $crud
             ->setEntityLabelInSingular('Objava')
             ->setEntityLabelInPlural('Objave')
-            ->setDefaultSort(['publishedAt' => 'DESC', 'id' => 'DESC']);
+            ->setDefaultSort(['publishedAt' => 'DESC', 'id' => 'DESC'])
+            ->addFormTheme('@Media/admin/form/media_picker_widget.html.twig');
     }
 
     public function configureFields(string $pageName): iterable
@@ -36,7 +38,7 @@ class PostCrudController extends AbstractCrudController
             ->setChoices(['Skica' => Post::STATUS_DRAFT, 'Objavljeno' => Post::STATUS_PUBLISHED])
             ->renderAsBadges([Post::STATUS_DRAFT => 'secondary', Post::STATUS_PUBLISHED => 'success']);
         yield AssociationField::new('category', 'Kategorija');
-        yield AssociationField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
+        yield MediaPickerField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
         yield DateTimeField::new('publishedAt', 'Objavljeno')->hideOnIndex();
         yield TextareaField::new('excerpt', 'Sažetak')->hideOnIndex();
         yield TextEditorField::new('content', 'Sadržaj')->hideOnIndex();

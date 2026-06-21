@@ -5,6 +5,8 @@ framework:
             assets/: ''
             # FormBuilder module assets (one of the 5 per-module touch points; see CLAUDE.md).
             modules/FormBuilder/assets/: form_builder
+            # Media module assets (media-library picker + FilePond upload).
+            modules/Media/assets/: media
         missing_import_mode: strict
 
 when@prod:

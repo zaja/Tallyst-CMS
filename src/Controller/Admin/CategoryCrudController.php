@@ -5,10 +5,10 @@ namespace App\Controller\Admin;
 use App\Entity\Category;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Tallyst\Media\Field\MediaPickerField;
 
 class CategoryCrudController extends AbstractCrudController
 {
@@ -21,7 +21,8 @@ class CategoryCrudController extends AbstractCrudController
     {
         return $crud
             ->setEntityLabelInSingular('Kategorija')
-            ->setEntityLabelInPlural('Kategorije');
+            ->setEntityLabelInPlural('Kategorije')
+            ->addFormTheme('@Media/admin/form/media_picker_widget.html.twig');
     }
 
     public function configureFields(string $pageName): iterable
@@ -29,6 +30,6 @@ class CategoryCrudController extends AbstractCrudController
         yield TextField::new('name', 'Naziv');
         yield SlugField::new('slug')->setTargetFieldName('name');
         yield TextareaField::new('description', 'Opis')->hideOnIndex();
-        yield AssociationField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
+        yield MediaPickerField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
     }
 }

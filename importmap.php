@@ -28,4 +28,10 @@ return [
     '@hotwired/stimulus' => ['version' => '3.2.2'],
     '@symfony/stimulus-bundle' => ['path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js'],
     '@hotwired/turbo' => ['version' => '8.0.23'],
+    'filepond' => ['version' => '4.32.12'],
+    'filepond-plugin-image-preview' => ['version' => '4.6.12'],
+    'filepond-plugin-file-validate-type' => ['version' => '1.2.9'],
+    'filepond-plugin-file-validate-size' => ['version' => '2.2.8'],
+    'filepond/dist/filepond.min.css' => ['version' => '4.32.12', 'type' => 'css'],
+    'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css' => ['version' => '4.6.12', 'type' => 'css'],
 ];

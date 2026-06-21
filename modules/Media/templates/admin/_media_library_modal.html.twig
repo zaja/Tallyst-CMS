@@ -1,0 +1,39 @@
+{# Reusable media-library modal markup (grid + search + FilePond upload zone), driven by
+   the media--library Stimulus controller. Self-contained and decoupled: it emits a
+   `media-library:select` event on selection and listens for `media-library:open`. Kept a
+   separate partial so it stays easy to lift out for a single shared instance in Prolaz B
+   (today it is included per picker widget — fine while there's one picker per form). #}
+<div data-controller="media--library"
+     data-media--library-library-url-value="{{ path('media_library_index') }}"
+     data-media--library-upload-url-value="{{ path('media_upload') }}"
+     data-media--library-csrf-token-value="{{ csrf_token('media_upload') }}"
+     data-action="media-library:open->media--library#open"
+     {{ picker_target|default(false) ? 'data-media--picker-target=library' : '' }}>
+    <div class="media-lib__backdrop" hidden
+         data-media--library-target="modal"
+         data-action="click->media--library#backdrop">
+        <div class="media-lib__dialog" role="dialog" aria-modal="true">
+            <div class="media-lib__header">
+                <input type="search" class="form-control media-lib__search" placeholder="Pretraži po nazivu / alt tekstu…"
+                       data-media--library-target="search"
+                       data-action="input->media--library#search">
+                <button type="button" class="btn-close" aria-label="Zatvori"
+                        data-action="media--library#close"></button>
+            </div>
+
+            <div class="media-lib__upload">
+                <input type="file" multiple accept="image/*" data-media--library-target="fileInput">
+            </div>
+
+            <p class="media-lib__status text-muted" hidden data-media--library-target="status"></p>
+
+            <div class="media-lib__grid" data-media--library-target="grid"></div>
+
+            <div class="media-lib__footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" hidden
+                        data-media--library-target="more"
+                        data-action="media--library#loadMore">Učitaj još</button>
+            </div>
+        </div>
+    </div>
+</div>

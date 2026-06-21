@@ -1,0 +1,39 @@
+{# Form-theme block for MediaPickerType (block_prefix = media_picker). Renders the hidden
+   id field + a thumbnail preview + a button that opens the reusable library modal. The
+   media--picker controller keeps the hidden value and preview in sync with the library's
+   `media-library:select` event. #}
+{# Parent is HiddenType, whose `hidden_row` would drop the field label. Delegate to the
+   generic form_row so the label + row wrapper render normally around our widget. #}
+{% block media_picker_row %}
+    {{ block('form_row') }}
+{% endblock %}
+
+{% block media_picker_widget %}
+    {% set media = media|default(null) %}
+    {% set thumb = media ? media_thumb_url(media.imageName, 'thumb') : null %}
+    <div class="media-picker"
+         data-controller="media--picker"
+         data-action="media-library:select->media--picker#onSelect">
+        <input type="hidden" id="{{ id }}" name="{{ full_name }}" value="{{ value }}"
+               data-media--picker-target="input">
+
+        <div class="media-picker__preview">
+            <img src="{{ thumb }}" alt="" loading="lazy"
+                 data-media--picker-target="previewImg"{% if not thumb %} hidden{% endif %}>
+            <span class="media-picker__placeholder text-muted"
+                  data-media--picker-target="placeholder"{% if thumb %} hidden{% endif %}>
+                Nije odabrana slika
+            </span>
+        </div>
+
+        <div class="media-picker__actions">
+            <button type="button" class="btn btn-secondary btn-sm"
+                    data-action="media--picker#open">Odaberi iz biblioteke</button>
+            <button type="button" class="btn btn-link btn-sm text-danger"
+                    data-media--picker-target="clear"
+                    data-action="media--picker#clear"{% if not thumb %} hidden{% endif %}>Ukloni</button>
+        </div>
+
+        {{ include('@Media/admin/_media_library_modal.html.twig', { picker_target: true }) }}
+    </div>
+{% endblock %}

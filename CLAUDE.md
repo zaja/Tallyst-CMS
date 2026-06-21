@@ -107,6 +107,43 @@ from AssetMapper (don't push theme CSS through importmap). Pattern:
   fixed CSS class, `alt` is escaped — no arbitrary attribute reaches the `<img>`.
 - **One place builds the `<img>`:** `MediaImageHelper` (`media_img()` Twig fn) — used
   by branding, featured images AND the shortcode. Change image markup/escaping there.
+- **One place validates+persists an upload:** `MediaUploader::upload(UploadedFile)` is the
+  programmatic upload path (FilePond endpoint + bulk). It and the EA Media create
+  (VichImageType) BOTH validate the SAME `Assert\Image` on `Media::$imageFile` — that
+  entity constraint is the single source of truth (fileinfo mime + ≤5 MB), so rules can't
+  diverge; do NOT duplicate the mime list elsewhere. Vich's namer/metadata + the
+  postPersist thumbnail warm fire identically on both paths.
+- **Reusable media-library component** (Stimulus, EA-shell, admin entrypoint):
+  - Endpoints (Media module, under `^/admin` → ROLE_ADMIN, NOT EA-shell pages so no
+    `dashboardControllerFqcn` default): `GET media_library_index` (`/admin/media/library`,
+    JSON grid: id/thumbUrl/name/alt, `?q=` name·alt·title, `?page=`, 24/pg + `hasMore`)
+    and `POST media_upload` (`/admin/media/upload`, FilePond process, 1 file/req, returns
+    new Media id as PLAIN TEXT). Upload is **CSRF-protected**: page renders
+    `csrf_token('media_upload')` → JS sends it as the `X-CSRF-Token` header →
+    `isCsrfTokenValid()` (403 on mismatch).
+  - `media--library` Stimulus controller = modal (grid + debounced search + "load more" +
+    FilePond upload zone that re-fetches the grid). **Decoupled:** a thumbnail click
+    dispatches a `media-library:select` event `{id,name,thumbUrl}` — it never touches a
+    hidden field, so the editor (Prolaz B) can reuse it. Open it by dispatching
+    `media-library:open` on its element. Modal markup is the reusable partial
+    `@Media/admin/_media_library_modal.html.twig` (today included per picker widget; lift
+    to one shared instance when more consumers appear).
+  - `filepond_factory.js` is the ONE FilePond setup (plugins + process endpoint + CSRF
+    header + raster/≤5 MB client checks mirroring the server), shared by the library modal
+    and the bulk page. FilePond is via importmap (`filepond` + image-preview +
+    file-validate-type/-size, and their CSS `*.min.css` entries `import`ed from the
+    factory). Media module assets: `modules/Media/assets/: media` in asset_mapper.yaml,
+    controllers registered in `stimulus_bootstrap.js`.
+- **Featured picker = `MediaPickerField`** (EA field, reusable on Page/Post/Category):
+  swaps ONLY the widget of the existing `featuredImage` FK (no mapping change). Its
+  `MediaPickerType` extends `HiddenType` + a Media↔id `CallbackTransformer` (no full
+  EntityType choice list). The `media_picker` form-theme block renders preview + "open
+  library" button + the modal; `media--picker` controller keeps the hidden id + preview in
+  sync with the library's `select` event. Register the theme per CRUD with
+  `->addFormTheme('@Media/admin/form/media_picker_widget.html.twig')`.
+- **Bulk upload** page: `media_bulk_upload` (`/admin/media/bulk-upload`, EA-shell) — a
+  FilePond drop zone (`media--bulk-upload` controller) that creates one Media per dropped
+  image via the same factory + endpoint. Linked from the Media admin menu.
 
 ## Directory layout
 ```

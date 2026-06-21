@@ -1,0 +1,9 @@
+{# Index/detail display for a featured-image MediaPickerField. field.value = Media|null. #}
+{% set media = field.value %}
+{% set src = media ? media_thumb_url(media.imageName, 'thumb') : null %}
+{% if src %}
+    <img src="{{ src }}" alt="{{ media.alt ?? '' }}" loading="lazy"
+         style="max-height: 56px; max-width: 100px; border-radius: 4px; object-fit: cover;">
+{% else %}
+    <span class="text-muted">—</span>
+{% endif %}
