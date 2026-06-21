@@ -23,8 +23,6 @@ use Tallyst\FormBuilder\Repository\OrderRepository;
 #[AsMessageHandler]
 class FulfillOrderHandler
 {
-    private const FROM = 'Tallyst <noreply@tallyst.org>';
-
     public function __construct(
         private readonly OrderRepository $orders,
         private readonly MailerInterface $mailer,
@@ -63,9 +61,12 @@ class FulfillOrderHandler
             return;
         }
 
+        // No explicit From: the global DefaultFromListener fills it from the configured
+        // email identity (mail_from_email). Hardcoding a From here meant order mail used an
+        // address the SMTP account doesn't own (e.g. noreply@…), which real SMTP servers
+        // reject (553 "Sender address rejected"). One identity, one source of truth.
         $this->mailer->send(
             (new Email())
-                ->from(self::FROM)
                 ->to($email)
                 ->subject(\sprintf('Potvrda narudžbe #%d', $order->getId()))
                 ->text(\sprintf(
@@ -81,7 +82,6 @@ class FulfillOrderHandler
     {
         $this->mailer->send(
             (new Email())
-                ->from(self::FROM)
                 ->to($this->adminEmail)
                 ->subject(\sprintf('Nova plaćena narudžba #%d', $order->getId()))
                 ->text(\sprintf(
