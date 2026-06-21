@@ -2,6 +2,8 @@
 
 namespace Tallyst\Media\Controller\Admin;
 
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
@@ -27,7 +29,17 @@ class MediaCrudController extends AbstractCrudController
         return $crud
             ->setEntityLabelInSingular('Medij')
             ->setEntityLabelInPlural('Mediji')
-            ->setDefaultSort(['id' => 'DESC']);
+            ->setDefaultSort(['id' => 'DESC'])
+            // The index carries a FilePond bulk-upload panel (the create path); the old
+            // single-file "new" form is gone.
+            ->overrideTemplate('crud/index', '@Media/admin/index.html.twig');
+    }
+
+    public function configureActions(Actions $actions): Actions
+    {
+        // Create = bulk upload on the index panel; NEW is disabled so there's no hidden
+        // second single-file upload route. Edit stays for alt/title tweaks + image replace.
+        return $actions->disable(Action::NEW);
     }
 
     public function configureFields(string $pageName): iterable

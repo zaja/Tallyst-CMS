@@ -22,6 +22,18 @@ class MediaRepository extends ServiceEntityRepository
         return $this->findBy([], ['id' => 'DESC']);
     }
 
+    /** Media missing a title or alt (null or empty) — for the metadata backfill. */
+    /** @return Media[] */
+    public function findMissingMeta(): array
+    {
+        return $this->createQueryBuilder('m')
+            ->where('m.title IS NULL OR m.title = :empty OR m.alt IS NULL OR m.alt = :empty')
+            ->setParameter('empty', '')
+            ->orderBy('m.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     /**
      * Paginated, newest-first listing for the media-library grid. Optional `$q` filters
      * (case-insensitive LIKE) on originalName/alt/title. Fetches one extra row to tell

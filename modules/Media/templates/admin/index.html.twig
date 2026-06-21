@@ -1,0 +1,21 @@
+{# Media index = the EA list + a FilePond bulk-upload panel on top (the create path).
+   Drag/drop many images; each is created via the media_upload endpoint (shared
+   MediaUploader → auto-fills title/alt). The list reloads when the batch settles. #}
+{% extends '@EasyAdmin/crud/index.html.twig' %}
+
+{% block main %}
+    <div class="card mb-3"
+         data-controller="media--bulk-upload"
+         data-media--bulk-upload-upload-url-value="{{ path('media_upload') }}"
+         data-media--bulk-upload-csrf-token-value="{{ csrf_token('media_upload') }}">
+        <div class="card-body">
+            <p class="text-muted mb-2">
+                Povuci slike ovdje (ili klikni) za dodavanje — može više odjednom.
+                Naslov i alt se automatski popune (IPTC/EXIF ili naziv datoteke).
+            </p>
+            <input type="file" multiple accept="image/*" data-media--bulk-upload-target="fileInput">
+        </div>
+    </div>
+
+    {{ parent() }}
+{% endblock %}

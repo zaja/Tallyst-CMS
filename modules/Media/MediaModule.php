@@ -35,7 +35,6 @@ class MediaModule implements AdminModuleInterface
     public function getAdminMenuItems(): iterable
     {
         yield MenuItem::linkTo(MediaCrudController::class, 'Mediji', 'fa fa-images');
-        yield MenuItem::linkToRoute('Bulk upload', 'fa fa-cloud-arrow-up', 'media_bulk_upload');
         yield MenuItem::linkToRoute('Branding', 'fa fa-palette', 'media_branding');
     }
 }

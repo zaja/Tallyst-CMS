@@ -22,6 +22,7 @@ class MediaUploader
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ValidatorInterface $validator,
+        private readonly MediaMetadataExtractor $metadata,
     ) {
     }
 
@@ -41,6 +42,11 @@ class MediaUploader
         if (\count($violations) > 0) {
             throw new MediaUploadException($violations->get(0)->getMessage());
         }
+
+        // Auto-fill title/alt (only if empty) from IPTC/EXIF/filename, read from the temp
+        // upload BEFORE Vich moves it. Same path as the modal upload, so it applies there
+        // too.
+        $this->metadata->applyToMedia($media, $file->getPathname(), $file->getClientOriginalName());
 
         $this->em->persist($media);
         $this->em->flush();

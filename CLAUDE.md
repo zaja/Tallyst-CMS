@@ -112,7 +112,12 @@ from AssetMapper (don't push theme CSS through importmap). Pattern:
   (VichImageType) BOTH validate the SAME `Assert\Image` on `Media::$imageFile` — that
   entity constraint is the single source of truth (fileinfo mime + ≤5 MB), so rules can't
   diverge; do NOT duplicate the mime list elsewhere. Vich's namer/metadata + the
-  postPersist thumbnail warm fire identically on both paths.
+  postPersist thumbnail warm fire identically on both paths. It also **auto-fills empty
+  title/alt** (WordPress-style) via `MediaMetadataExtractor` — IPTC ObjectName/Caption →
+  EXIF ImageDescription → filename (separators→spaces); only-empty (never overwrites the
+  admin) and robust (degrades to filename if the file/EXIF is unreadable; EXIF guarded by
+  `function_exists`). Applies to every upload path (index bulk + modal). Backfill existing
+  rows with `php8.5 bin/console app:media:backfill-meta` (touches only empty fields).
 - **Reusable media-library component** (Stimulus, EA-shell, admin entrypoint):
   - Endpoints (Media module, under `^/admin` → ROLE_ADMIN, NOT EA-shell pages so no
     `dashboardControllerFqcn` default): `GET media_library_index` (`/admin/media/library`,
@@ -132,7 +137,7 @@ from AssetMapper (don't push theme CSS through importmap). Pattern:
     to one shared instance when more consumers appear).
   - `filepond_factory.js` is the ONE FilePond setup (plugins + process endpoint + CSRF
     header + raster/≤5 MB client checks mirroring the server), shared by the library modal
-    and the bulk page. FilePond is via importmap (`filepond` + image-preview +
+    and the Media index bulk panel. FilePond is via importmap (`filepond` + image-preview +
     file-validate-type/-size, and their CSS `*.min.css` entries `import`ed from the
     factory). Media module assets: `modules/Media/assets/: media` in asset_mapper.yaml,
     controllers registered in `stimulus_bootstrap.js`.
@@ -143,9 +148,13 @@ from AssetMapper (don't push theme CSS through importmap). Pattern:
   library" button + the modal; `media--picker` controller keeps the hidden id + preview in
   sync with the library's `select` event. Register the theme per CRUD with
   `->addFormTheme('@Media/admin/form/media_picker_widget.html.twig')`.
-- **Bulk upload** page: `media_bulk_upload` (`/admin/media/bulk-upload`, EA-shell) — a
-  FilePond drop zone (`media--bulk-upload` controller) that creates one Media per dropped
-  image via the same factory + endpoint. Linked from the Media admin menu.
+- **Media index = the create path:** the EA Media index template is overridden
+  (`@Media/admin/index.html.twig` extends `@EasyAdmin/crud/index.html.twig`, prepends a
+  FilePond drag&drop panel via `media--bulk-upload`) and `Action::NEW` is **disabled** —
+  so there's no single-file create form/route; drop many images at once → each created via
+  `media_upload` (shared `MediaUploader`, auto-filled meta) → the list reloads. EA **edit**
+  remains for alt/title tweaks and image replacement (replacing the file changes the image
+  everywhere that Media id is referenced — featured FK, `[image id=N]`, `logo_media_id`).
 
 ## Directory layout
 ```
