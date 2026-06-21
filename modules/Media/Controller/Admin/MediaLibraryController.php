@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tallyst\Media\Repository\MediaRepository;
 use Tallyst\Media\Service\MediaImageHelper;
 use Tallyst\Media\Service\MediaUploadException;
@@ -21,8 +22,12 @@ use Tallyst\Media\Service\MediaUploader;
  * Paths deliberately sit OUTSIDE /admin/media/ (note the hyphen): EasyAdmin's pretty
  * URLs register `/admin/media/{entityId}` for the Media CRUD, which would otherwise
  * swallow /admin/media/library as a "detail" request and 500 on getEntity().
+ *
+ * ROLE_EDITOR (NOT ROLE_ADMIN): these endpoints power content editing — the editor's image
+ * insert + the featured-image picker — so editors must reach them.
  */
 #[Route('/admin')]
+#[IsGranted('ROLE_EDITOR')]
 class MediaLibraryController extends AbstractController
 {
     /** CSRF token id shared by the page (csrf_token) and this endpoint's check. */

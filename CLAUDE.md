@@ -369,6 +369,44 @@ new table, no migration (encrypted values are just text in the existing `value` 
   `tests/Mailer/` — transport build / env-fallback / decrypt-fail-fallback + transport label.
   **GATE before working on encryption: `php8.5 -m | grep sodium`.**
 
+## Roles & access (back-office)
+Two roles: **ROLE_ADMIN** (everything) and **ROLE_EDITOR** (content only — Pages, Posts,
+Categories, Media). `role_hierarchy: ROLE_ADMIN ⊇ ROLE_EDITOR`, so existing admins keep full
+access automatically and are never demoted.
+
+- **The `^/admin` firewall requires only ROLE_EDITOR** (the minimum to enter the back-office).
+  Per-section access is enforced ON THE CONTROLLER with `#[IsGranted(...)]`, NOT by hiding the
+  menu and NOT by path `access_control` (EA routes don't map cleanly to paths). Menu
+  `->setPermission('ROLE_ADMIN')` is COSMETIC — an editor who types an admin URL directly must
+  still get 403.
+- **⚠️ FAIL-OPEN — every new `/admin` controller is editor-reachable by default.** Because the
+  firewall only requires ROLE_EDITOR, a controller WITHOUT a guard is open to editors. So:
+  **admin-only controllers MUST carry `#[IsGranted('ROLE_ADMIN')]`** (class-level for CRUD +
+  custom controllers; method-level when the class also has editor-reachable actions, e.g.
+  `DashboardController::modules()`/`toggleModule()` while the dashboard landing stays open).
+  Content controllers carry an explicit `#[IsGranted('ROLE_EDITOR')]` too (self-documenting).
+  This discipline is MACHINE-ENFORCED for CRUD controllers by
+  `tests/Security/CrudControllerAccessAnnotationTest` (fails if any `*CrudController` lacks an
+  explicit role guard), and the real 403s are verified by the functional
+  `tests/Functional/AdminAccessTest` (whose `ADMIN_ONLY` list is the COMPLETE set of
+  admin-guarded routes — keep it in sync).
+- **Editor-content endpoints MUST stay ROLE_EDITOR** even though they live under `/admin`:
+  `media_library_index` + `media_upload` (image insert + featured picker) and
+  `form_builder_picker_list` (insert `[form id=N]`). Tightening these to ROLE_ADMIN breaks
+  content editing for editors.
+- **User CRUD** (`UserCrudController`, admin-only): roles are a friendly choice
+  (Administrator/Urednik). The password field is **form-only + unmapped**, hashed via a
+  `POST_SUBMIT` listener (the EA recipe) — blank on edit = unchanged, plaintext never persisted.
+- **Lockout protection** (`AdminLockoutGuard`): you can't delete or demote the **last admin**,
+  nor remove **your own** admin role. Enforced in `updateEntity`/`deleteEntity` as
+  redirect+flash (skip `parent::` → no flush) — never a 500, never the dangerous mutation.
+- **`app:user:create --role`** defaults to ROLE_ADMIN (bootstrap admin) and rejects anything
+  other than ROLE_ADMIN/ROLE_EDITOR.
+- **Functional tests need a DB.** Default test DB = `<db>_test` (set `TEST_DB_SUFFIX`, default
+  `_test`). A machine that can't CREATE a separate DB sets `TEST_DB_SUFFIX=` (empty) in
+  `.env.test.local` to run against the main DB. NOTE: the `test` env does NOT load `.env.local`,
+  so `.env.test.local` (git-ignored) must also carry `DATABASE_URL` and `SETTINGS_ENCRYPTION_KEY`.
+
 ## Backlog (queued — agreed, NOT yet built)
 This is the SINGLE home for "what's next" — park ideas here, not scattered across chat.
 

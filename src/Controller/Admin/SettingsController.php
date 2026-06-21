@@ -22,6 +22,7 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * The friendly, grouped Settings form (replaces the raw Setting key/value CRUD in the menu).
@@ -30,6 +31,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * same as BrandingController. Admin-only (covered by the ^/admin firewall).
  */
 #[Route('/admin/settings', defaults: ['dashboardControllerFqcn' => 'App\Controller\Admin\DashboardController'])]
+#[IsGranted('ROLE_ADMIN')]
 class SettingsController extends AbstractController
 {
     public function __construct(

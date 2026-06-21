@@ -10,6 +10,10 @@ security:
                 class: App\Entity\User
                 property: email
 
+    # ROLE_ADMIN inherits ROLE_EDITOR: existing admins keep full access automatically.
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_EDITOR]
+
     firewalls:
         dev:
             # Ensure dev tools and static assets are always allowed
@@ -27,10 +31,13 @@ security:
                 path: admin_logout
                 target: admin_login
 
-    # Note: Only the *first* matching rule is applied
+    # Note: Only the *first* matching rule is applied.
+    # ^/admin requires ROLE_EDITOR just to ENTER the back-office. Per-section access
+    # (editor=content, admin=everything) is enforced on each controller via #[IsGranted]
+    # — NOT here and NOT by hiding the menu. See CLAUDE.md "Roles & access".
     access_control:
         - { path: ^/admin/login, roles: PUBLIC_ACCESS }
-        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/admin, roles: ROLE_EDITOR }
 
 when@test:
     security:

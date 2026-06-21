@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Controller\Admin;
+
+use App\Entity\User;
+use App\Security\AdminLockoutGuard;
+use Doctrine\ORM\EntityManagerInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
+use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+/**
+ * Back-office user management. Admin-only. Roles are the friendly choice between
+ * Administrator (ROLE_ADMIN) and Urednik (ROLE_EDITOR). Passwords are hashed via a form
+ * POST_SUBMIT listener (the official EA recipe): the field is form-only + unmapped, so a
+ * blank password on EDIT keeps the stored hash and plaintext is never written to the entity.
+ *
+ * Delete/role-change are guarded by AdminLockoutGuard so you can't remove the last admin or
+ * your own admin access — on a violation the operation is aborted with a flash (never a 500,
+ * never persisted).
+ */
+#[IsGranted('ROLE_ADMIN')]
+class UserCrudController extends AbstractCrudController
+{
+    public function __construct(
+        private readonly UserPasswordHasherInterface $hasher,
+        private readonly AdminLockoutGuard $guard,
+    ) {
+    }
+
+    public static function getEntityFqcn(): string
+    {
+        return User::class;
+    }
+
+    public function configureCrud(Crud $crud): Crud
+    {
+        return $crud
+            ->setEntityLabelInSingular('Korisnik')
+            ->setEntityLabelInPlural('Korisnici')
+            ->setDefaultSort(['email' => 'ASC']);
+    }
+
+    public function configureFields(string $pageName): iterable
+    {
+        $isNew = Crud::PAGE_NEW === $pageName;
+
+        yield EmailField::new('email', 'E-mail');
+        yield ChoiceField::new('roles', 'Role')
+            ->setChoices(['Administrator' => 'ROLE_ADMIN', 'Urednik' => 'ROLE_EDITOR'])
+            ->allowMultipleChoices()
+            ->renderExpanded()
+            ->renderAsBadges(['ROLE_ADMIN' => 'danger', 'ROLE_EDITOR' => 'info']);
+
+        // Form-only + unmapped: blank on edit = unchanged, plaintext never touches the entity
+        // (the POST_SUBMIT listener hashes it only when filled).
+        yield TextField::new('plainPassword', $isNew ? 'Lozinka' : 'Nova lozinka')
+            ->setFormType(PasswordType::class)
+            ->setFormTypeOptions([
+                'mapped' => false,
+                'required' => $isNew,
+                'attr' => ['autocomplete' => 'new-password'],
+            ])
+            ->setHelp($isNew ? 'Min. 8 znakova.' : 'Ostavi prazno da zadržiš trenutnu lozinku.')
+            ->onlyOnForms();
+    }
+
+    public function createNewFormBuilder(EntityDto $entityDto, KeyValueStore $formOptions, AdminContext $context): FormBuilderInterface
+    {
+        return $this->addPasswordHashing(parent::createNewFormBuilder($entityDto, $formOptions, $context));
+    }
+
+    public function createEditFormBuilder(EntityDto $entityDto, KeyValueStore $formOptions, AdminContext $context): FormBuilderInterface
+    {
+        return $this->addPasswordHashing(parent::createEditFormBuilder($entityDto, $formOptions, $context));
+    }
+
+    public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        if ($entityInstance instanceof User && null !== ($msg = $this->guard->blockRoleChange($entityManager, $entityInstance))) {
+            $this->addFlash('danger', $msg);
+            // Discard the in-memory change and DON'T flush — the demotion never happens.
+            $entityManager->refresh($entityInstance);
+
+            return;
+        }
+
+        parent::updateEntity($entityManager, $entityInstance);
+    }
+
+    public function deleteEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        if ($entityInstance instanceof User && null !== ($msg = $this->guard->blockDelete($entityInstance))) {
+            $this->addFlash('danger', $msg);
+
+            return; // no remove/flush — the account stays
+        }
+
+        parent::deleteEntity($entityManager, $entityInstance);
+    }
+
+    private function addPasswordHashing(FormBuilderInterface $builder): FormBuilderInterface
+    {
+        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event): void {
+            $form = $event->getForm();
+            if (!$form->isValid() || !$form->has('plainPassword')) {
+                return;
+            }
+            $plain = $form->get('plainPassword')->getData();
+            if (null === $plain || '' === $plain) {
+                return; // edit with a blank password → keep the existing hash
+            }
+
+            $user = $event->getData();
+            if ($user instanceof User) {
+                $user->setPassword($this->hasher->hashPassword($user, $plain));
+            }
+        });
+
+        return $builder;
+    }
+}

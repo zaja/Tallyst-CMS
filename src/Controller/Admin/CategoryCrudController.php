@@ -8,8 +8,10 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tallyst\Media\Field\MediaPickerField;
 
+#[IsGranted('ROLE_EDITOR')]
 class CategoryCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

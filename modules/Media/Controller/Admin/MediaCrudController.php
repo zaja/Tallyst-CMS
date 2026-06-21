@@ -9,6 +9,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ImageField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tallyst\Media\Entity\Media;
 use Vich\UploaderBundle\Form\Type\VichImageType;
 
@@ -17,6 +18,7 @@ use Vich\UploaderBundle\Form\Type\VichImageType;
  * Upload uses Vich via VichImageType; the entity's Assert\Image restricts to raster
  * images ≤ 5 MB (SVG rejected).
  */
+#[IsGranted('ROLE_EDITOR')]
 class MediaCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

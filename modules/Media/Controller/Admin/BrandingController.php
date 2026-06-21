@@ -7,6 +7,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tallyst\Media\Form\Model\BrandingData;
 use Tallyst\Media\Form\Type\BrandingType;
 use Tallyst\Media\Repository\MediaRepository;
@@ -19,6 +20,7 @@ use Tallyst\Media\Repository\MediaRepository;
  * Rendered inside the EasyAdmin shell via the dashboardControllerFqcn route default.
  */
 #[Route('/admin/branding', defaults: ['dashboardControllerFqcn' => 'App\Controller\Admin\DashboardController'])]
+#[IsGranted('ROLE_ADMIN')]
 class BrandingController extends AbstractController
 {
     public function __construct(

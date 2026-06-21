@@ -57,6 +57,13 @@ class CreateUserCommand extends Command
             return Command::INVALID;
         }
 
+        // Only the two real back-office roles — reject typos so no bogus role is stored.
+        if (!in_array($role, ['ROLE_ADMIN', 'ROLE_EDITOR'], true)) {
+            $io->error(sprintf('Invalid role "%s". Use ROLE_ADMIN or ROLE_EDITOR.', $role));
+
+            return Command::INVALID;
+        }
+
         if (null !== $this->users->findOneByEmail($email)) {
             $io->error(sprintf('A user with e-mail "%s" already exists.', $email));
 

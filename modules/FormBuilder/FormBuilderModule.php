@@ -34,7 +34,9 @@ class FormBuilderModule implements AdminModuleInterface
 
     public function getAdminMenuItems(): iterable
     {
-        yield MenuItem::linkToRoute('Forme', 'fa fa-wpforms', 'form_builder_admin_index');
-        yield MenuItem::linkTo(OrderCrudController::class, 'Narudžbe', 'fa fa-receipt');
+        // Form management + orders are admin-only (the controllers carry
+        // #[IsGranted('ROLE_ADMIN')]); setPermission here just hides the links from editors.
+        yield MenuItem::linkToRoute('Forme', 'fa fa-wpforms', 'form_builder_admin_index')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkTo(OrderCrudController::class, 'Narudžbe', 'fa fa-receipt')->setPermission('ROLE_ADMIN');
     }
 }

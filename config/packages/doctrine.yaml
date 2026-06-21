@@ -24,8 +24,11 @@ doctrine:
 when@test:
     doctrine:
         dbal:
-            # "TEST_TOKEN" is typically set by ParaTest
-            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+            # Test DB name = <dbname><TEST_DB_SUFFIX><TEST_TOKEN>. Default suffix "_test"
+            # (a separate test DB, the standard setup); "TEST_TOKEN" is set by ParaTest.
+            # A machine that can't CREATE a separate DB (no privilege) can set TEST_DB_SUFFIX=
+            # empty in .env.test.local to run against the main DB instead.
+            dbname_suffix: '%env(TEST_DB_SUFFIX)%%env(default::TEST_TOKEN)%'
 
 when@prod:
     doctrine:

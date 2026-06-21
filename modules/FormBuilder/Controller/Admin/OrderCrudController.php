@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tallyst\FormBuilder\Entity\Order;
 
 /**
@@ -19,6 +20,7 @@ use Tallyst\FormBuilder\Entity\Order;
  * advanced by the webhook/fulfillment — never edited by hand here — so create/edit/
  * delete are disabled and only list + detail remain.
  */
+#[IsGranted('ROLE_ADMIN')]
 class OrderCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

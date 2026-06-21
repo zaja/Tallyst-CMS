@@ -25,6 +25,23 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
+     * How many users hold ROLE_ADMIN. Filtered in PHP (the `roles` JSON column would need a
+     * DB-specific JSON_CONTAINS) — fine at back-office user scale and DB-agnostic. Used by
+     * AdminLockoutGuard to protect the last administrator.
+     */
+    public function countAdmins(): int
+    {
+        $count = 0;
+        foreach ($this->findAll() as $user) {
+            if (\in_array('ROLE_ADMIN', $user->getRoles(), true)) {
+                ++$count;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
      * Transparently rehashes passwords as hashing algorithms improve.
      */
     public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void

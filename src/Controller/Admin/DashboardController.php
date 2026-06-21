@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class DashboardController extends AbstractDashboardController
 {
@@ -28,6 +29,7 @@ class DashboardController extends AbstractDashboardController
     }
 
     #[Route('/admin/modules', name: 'admin_modules', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function modules(): Response
     {
         $rows = [];
@@ -45,6 +47,7 @@ class DashboardController extends AbstractDashboardController
     }
 
     #[Route('/admin/modules/{name}/toggle', name: 'admin_modules_toggle', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function toggleModule(string $name, Request $request): Response
     {
         if (!$this->isCsrfTokenValid('toggle-module-'.$name, (string) $request->request->get('_token'))) {
@@ -80,25 +83,30 @@ class DashboardController extends AbstractDashboardController
     {
         yield MenuItem::linkToDashboard('Nadzorna ploča', 'fa fa-gauge');
 
+        // Content — visible to ROLE_EDITOR (and admins via hierarchy).
         yield MenuItem::section('Sadržaj');
         yield MenuItem::linkTo(PageCrudController::class, 'Stranice', 'fa fa-file-lines');
         yield MenuItem::linkTo(PostCrudController::class, 'Objave', 'fa fa-newspaper');
         yield MenuItem::linkTo(CategoryCrudController::class, 'Kategorije', 'fa fa-tags');
 
-        yield MenuItem::section('Navigacija');
-        yield MenuItem::linkTo(MenuCrudController::class, 'Izbornici', 'fa fa-bars');
-        yield MenuItem::linkTo(MenuItemCrudController::class, 'Stavke izbornika', 'fa fa-list');
+        // Everything below is admin-only. setPermission() here is COSMETIC (hides the link
+        // from editors); the real gate is #[IsGranted('ROLE_ADMIN')] on each controller.
+        yield MenuItem::section('Navigacija')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkTo(MenuCrudController::class, 'Izbornici', 'fa fa-bars')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkTo(MenuItemCrudController::class, 'Stavke izbornika', 'fa fa-list')->setPermission('ROLE_ADMIN');
 
-        yield MenuItem::section('Izgled');
-        yield MenuItem::linkTo(ThemeCrudController::class, 'Teme', 'fa fa-palette');
+        yield MenuItem::section('Izgled')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkTo(ThemeCrudController::class, 'Teme', 'fa fa-palette')->setPermission('ROLE_ADMIN');
 
-        yield MenuItem::section('Sustav');
-        yield MenuItem::linkToRoute('Postavke', 'fa fa-gear', 'admin_settings');
+        yield MenuItem::section('Sustav')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToRoute('Postavke', 'fa fa-gear', 'admin_settings')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkTo(UserCrudController::class, 'Korisnici', 'fa fa-users')->setPermission('ROLE_ADMIN');
 
-        // Modules surface their own admin entries here, built dynamically from the
-        // registry. Disabled modules are skipped.
+        // Modules surface their own admin entries here, built dynamically from the registry.
+        // The section header stays visible because Media's "Mediji" (content) is editor-
+        // accessible; module-specific admin items carry their own ROLE_ADMIN permission.
         yield MenuItem::section('Moduli');
-        yield MenuItem::linkToRoute('Instalirani moduli', 'fa fa-puzzle-piece', 'admin_modules');
+        yield MenuItem::linkToRoute('Instalirani moduli', 'fa fa-puzzle-piece', 'admin_modules')->setPermission('ROLE_ADMIN');
         foreach ($this->modules->all() as $module) {
             if (!$this->moduleState->isEnabled($module->getName())) {
                 continue;

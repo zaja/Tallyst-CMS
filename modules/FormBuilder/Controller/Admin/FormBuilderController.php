@@ -7,6 +7,7 @@ use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Form\Type\FormDefinitionType;
@@ -23,6 +24,7 @@ use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 // shell (sidebar + header). This string is the app's dashboard — the one explicit
 // coupling a module needs to live inside the admin chrome.
 #[Route('/admin/forms', defaults: ['dashboardControllerFqcn' => 'App\Controller\Admin\DashboardController'])]
+#[IsGranted('ROLE_ADMIN')]
 class FormBuilderController extends AbstractController
 {
     public function __construct(
