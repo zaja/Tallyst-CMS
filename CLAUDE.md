@@ -402,10 +402,15 @@ access automatically and are never demoted.
   redirect+flash (skip `parent::` → no flush) — never a 500, never the dangerous mutation.
 - **`app:user:create --role`** defaults to ROLE_ADMIN (bootstrap admin) and rejects anything
   other than ROLE_ADMIN/ROLE_EDITOR.
-- **Functional tests need a DB.** Default test DB = `<db>_test` (set `TEST_DB_SUFFIX`, default
-  `_test`). A machine that can't CREATE a separate DB sets `TEST_DB_SUFFIX=` (empty) in
-  `.env.test.local` to run against the main DB. NOTE: the `test` env does NOT load `.env.local`,
-  so `.env.test.local` (git-ignored) must also carry `DATABASE_URL` and `SETTINGS_ENCRYPTION_KEY`.
+- **Functional tests need a migrated test DB.** This server uses a separate `tallystcmstest`
+  database (its own MySQL user); the connection lives in **`.env.test.local`** (git-ignored).
+  The `test` env does NOT load `.env.local`, so `.env.test.local` must carry `DATABASE_URL`
+  AND `SETTINGS_ENCRYPTION_KEY`. The test DB name is `<DATABASE_URL db><TEST_DB_SUFFIX>`
+  (`TEST_DB_SUFFIX` default `_test`; set it empty when the URL already names the test DB, as
+  here). Provision once: create the DB + user, then `APP_ENV=test php8.5 bin/console
+  doctrine:migrations:migrate -n`. (Fallback for a box that can't create a separate DB: point
+  `DATABASE_URL` at the main DB with `TEST_DB_SUFFIX=` empty — tests self-clean, but it's not
+  isolated.)
 
 ## Backlog (queued — agreed, NOT yet built)
 This is the SINGLE home for "what's next" — park ideas here, not scattered across chat.
