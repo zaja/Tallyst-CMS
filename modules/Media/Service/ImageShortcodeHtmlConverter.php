@@ -2,6 +2,7 @@
 
 namespace Tallyst\Media\Service;
 
+use App\Content\EditorShortcodeConverterInterface;
 use App\Content\ShortcodeAttributeParser;
 use Tallyst\Media\Repository\MediaRepository;
 
@@ -16,7 +17,7 @@ use Tallyst\Media\Repository\MediaRepository;
  * additionally proves a converter-produced [image …] renders identically to a hand-made
  * one through the real ImageShortcode.
  */
-class ImageShortcodeHtmlConverter
+class ImageShortcodeHtmlConverter implements EditorShortcodeConverterInterface
 {
     /** Matches [image …] (optionally self-closing). Mirrors ContentRenderer's tag shape. */
     private const SHORTCODE_RE = '/\[image((?:\s+[\w\-]+(?:=(?:"[^"]*"|\'[^\']*\'|[^\s\]]+))?)*)\s*(?:\/\]|\])/s';

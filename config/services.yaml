@@ -32,5 +32,10 @@ services:
         arguments:
             $modules: !tagged_iterator app.module
 
+    # Editor shortcode<->node converters (Media [image], FormBuilder [form], …).
+    App\Content\EditorContentConverter:
+        arguments:
+            $converters: !tagged_iterator app.editor_shortcode_converter
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

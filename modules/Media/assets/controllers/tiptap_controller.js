@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 import { Editor } from '@tiptap/core';
-import { buildExtensions } from '../tiptap_extensions.js';
+import { buildExtensions, editorToolbarExtensions } from '../tiptap_extensions.js';
 import 'prosemirror-view/style/prosemirror.min.css';
 import 'prosemirror-gapcursor/style/gapcursor.min.css';
 import '../styles/tiptap.css';
@@ -17,7 +17,8 @@ import '../styles/tiptap.css';
  * library instance, so the two never cross.
  */
 export default class extends Controller {
-    static targets = ['editor', 'input', 'library'];
+    static targets = ['editor', 'input', 'library', 'toolbar'];
+    static values = { modules: String };
 
     connect() {
         this.editor = new Editor({
@@ -26,8 +27,30 @@ export default class extends Controller {
             content: this.inputTarget.value,
             onUpdate: () => this.sync(),
         });
+        this.renderExtensionButtons();
         // Sync once so an unedited save still stores the normalised HTML (Trix div->p).
         this.sync();
+    }
+
+    /**
+     * Append toolbar buttons contributed by enabled modules (e.g. FormBuilder's "Ubaci
+     * formu"). The editor knows nothing about those modules — each provides label +
+     * action(editor); gating is by the server's enabled-module list.
+     */
+    renderExtensionButtons() {
+        if (!this.hasToolbarTarget) {
+            return;
+        }
+        const enabled = (this.modulesValue || '').split(/\s+/).filter(Boolean);
+        for (const ext of editorToolbarExtensions(enabled)) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'tiptap__btn';
+            btn.title = ext.title || ext.label;
+            btn.textContent = ext.label;
+            btn.addEventListener('click', () => ext.action(this.editor));
+            this.toolbarTarget.appendChild(btn);
+        }
     }
 
     disconnect() {

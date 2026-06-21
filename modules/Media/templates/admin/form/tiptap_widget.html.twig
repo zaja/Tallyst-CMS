@@ -6,6 +6,7 @@
 {% block tiptap_widget %}
     <div class="tiptap"
          data-controller="media--tiptap"
+         data-media--tiptap-modules-value="{{ enabled_modules() }}"
          data-action="media-library:select->media--tiptap#onMediaSelect">
 
         <div class="tiptap__toolbar" role="toolbar">
@@ -25,6 +26,9 @@
             <button type="button" class="tiptap__btn" title="Ukloni poveznicu" data-action="media--tiptap#unlink">&#128279;&times;</button>
             <span class="tiptap__sep"></span>
             <button type="button" class="tiptap__btn" title="Ubaci sliku" data-action="media--tiptap#insertImage">&#128247; Slika</button>
+            {# Module-contributed insert buttons (e.g. FormBuilder "Ubaci formu") are
+               appended here by the controller — the editor stays module-agnostic. #}
+            <span class="tiptap__ext" data-media--tiptap-target="toolbar"></span>
             <span class="tiptap__sep"></span>
             <button type="button" class="tiptap__btn" title="Poništi" data-action="media--tiptap#undo">&#8630;</button>
             <button type="button" class="tiptap__btn" title="Ponovi" data-action="media--tiptap#redo">&#8631;</button>

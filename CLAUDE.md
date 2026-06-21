@@ -223,24 +223,42 @@ Replaces the old Trix `TextEditorField` on Page/Post.
   semantic `<p>` on re-save** (content changes in the DB only when the page is re-saved).
   **ProseMirror SILENTLY DROPS anything outside the schema** (tables, iframes, inline
   styles) — the Node round-trip test asserts this so the loss is known, not a surprise.
-- **Image = shortcode⇄node:** `ImageShortcodeHtmlConverter` (Media service) converts at the
-  form boundary — `[image id=N size align alt]` ⇄ `<img data-tallyst-image data-id=N …>`.
-  Forward resolves the Liip URL via `MediaImageHelper` (null-safe: deleted Media → empty
-  src but id kept, so the shortcode survives). The front pipeline (ImageShortcode +
-  `render_content`) is UNCHANGED. The `[image]` attribute grammar is shared with
-  ContentRenderer via `ShortcodeAttributeParser`, and a PHPUnit coupling test proves a
-  converter-produced `[image …]` renders identically through the real ImageShortcode.
-  `[form id=N]` passes through as plain text (a `[form]` node is Prolaz B2).
-- **Insert reuses Pass A:** "Ubaci sliku" dispatches `media-library:open`; the controller
-  inserts an image node from the `media-library:select` event. **Scoping:** each consumer
-  (featured `media--picker` and editor `media--tiptap`) listens for `media-library:select`
-  on its OWN wrapper (never document/window) and includes its OWN library modal instance,
-  so on a form with both (Post edit) the two never cross-talk.
-- **Tests:** `tests/Media/ImageShortcodeHtmlConverterTest.php` (PHP boundary + coupling)
-  and `modules/Media/tests/js/tiptap_roundtrip.test.mjs` (real Tiptap schema via
-  `@tiptap/html`, rich round-trip + drop detection). JS test deps are dev-only
-  (`package.json`, `node_modules` git-ignored); the app still ships build-free via
-  importmap. Run JS tests: `npm run test:js`.
+- **Shortcode⇄node is an extension point (IoC), NOT hardcoded:** Core defines
+  `EditorShortcodeConverterInterface` (auto-tagged `app.editor_shortcode_converter`, like
+  `ShortcodeInterface`); `EditorContentConverter` aggregates every tagged converter and
+  `TiptapType` depends only on that Core aggregator. Each module supplies its own:
+  - Media → `ImageShortcodeHtmlConverter`: `[image id=N size align alt]` ⇄
+    `<img data-tallyst-image data-id=N …>` (forward resolves the Liip URL via
+    `MediaImageHelper`; null-safe — deleted Media → empty src, id kept).
+  - FormBuilder → `FormShortcodeHtmlConverter`: `[form id=N]` ⇄
+    `<div data-tallyst-form data-id=N data-label=…>` card (null-safe label "Forma #N").
+  Each converter touches ONLY its disjoint pattern, so the chain is **order-independent**
+  (locked by `EditorContentConverterTest`). Both share `ShortcodeAttributeParser`, and
+  per-converter coupling tests prove their shortcode parses identically through the real
+  front pipeline. The front (`ImageShortcode`/`FormShortcode` + `render_content`) is
+  UNCHANGED.
+- **The editor (Media) has ZERO references to other modules** — PHP (Core interface), JS,
+  and templates. Other modules plug in app-level via `registerEditorExtension({ key, node,
+  toolbar })` in `stimulus_bootstrap.js`:
+  - the **node** is ALWAYS added to the schema (so existing embeds round-trip safely even
+    when the module is toggled off — only authoring is gated);
+  - the **toolbar button** is gated by the editor against `enabled_modules()` (Core Twig
+    fn → space-separated enabled module names; `key` MUST equal the module's `getName()`,
+    e.g. `form_builder`). Disabled module → no button, but content stays safe.
+  FormBuilder ships `tiptap_form_node.js` (atom block) + `form_picker.js` (a client-built
+  modal, no server template/mount — fetches `/admin/forms-list`, inserts a `formEmbed`
+  node into the editor it's handed). Image insert is Media's own (`media-library:open`).
+- **Scoping / no cross-talk:** each consumer (featured `media--picker`, editor image
+  insert) listens for `media-library:select` on its OWN wrapper (never document/window)
+  with its OWN library modal; the form picker is handed the editor directly (no event). So
+  Post edit (featured picker + image insert + form insert) has no cross-talk.
+- **Tests:** PHPUnit — `tests/Media/ImageShortcodeHtmlConverterTest.php`,
+  `tests/FormBuilder/FormShortcodeHtmlConverterTest.php` (boundary + coupling),
+  `tests/Content/EditorContentConverterTest.php` (order-independence). Node —
+  `modules/Media/tests/js/tiptap_roundtrip.test.mjs` (real Tiptap schema incl. the form
+  node via `@tiptap/html`: rich round-trip, drop detection, toolbar gating). JS test deps
+  are dev-only (`package.json`, `node_modules` git-ignored); the app still ships
+  build-free via importmap. Run JS tests: `npm run test:js`.
 
 ## Adding a new module (the pattern to follow)
 Copy `modules/FormBuilder/` — it is the reference module. Its bundle class
