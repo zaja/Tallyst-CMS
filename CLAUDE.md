@@ -123,8 +123,10 @@ from AssetMapper (don't push theme CSS through importmap). Pattern:
     `isCsrfTokenValid()` (403 on mismatch).
   - `media--library` Stimulus controller = modal (grid + debounced search + "load more" +
     FilePond upload zone that re-fetches the grid). **Decoupled:** a thumbnail click
-    dispatches a `media-library:select` event `{id,name,thumbUrl}` — it never touches a
-    hidden field, so the editor (Prolaz B) can reuse it. Open it by dispatching
+    dispatches a `media-library:select` event `{id,name,thumbUrl,displayUrl}` (thumb for
+    tiles, `displayUrl`=Liip medium for content-size previews like the editor) — it never
+    touches a hidden field, so consumers reuse it (the featured picker AND the editor's
+    image insert both do). Open it by dispatching
     `media-library:open` on its element. Modal markup is the reusable partial
     `@Media/admin/_media_library_modal.html.twig` (today included per picker widget; lift
     to one shared instance when more consumers appear).
