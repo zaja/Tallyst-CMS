@@ -90,6 +90,25 @@ class SettingsManagerTest extends TestCase
         self::assertSame('s3cret', $m->get('smtp_password'));
     }
 
+    public function testUndecryptableSecretIsGracefulNotFatal(): void
+    {
+        $m = $this->manager();
+        // A value encrypted with a DIFFERENT (lost/rotated) key — the manager's key can't open it.
+        $this->store['smtp_password'] = (new SettingsEncryptor(sodium_crypto_secretbox_keygen()))->encrypt('old');
+
+        self::assertNull($m->get('smtp_password'), 'undecryptable secret reads as default, never throws');
+        self::assertFalse($m->isEncryptedValueReadable('smtp_password'));
+    }
+
+    public function testReadableAndUnsetSecretsReportReadable(): void
+    {
+        $m = $this->manager();
+        self::assertTrue($m->isEncryptedValueReadable('smtp_password'), 'nothing stored => trivially readable');
+
+        $m->set('smtp_password', 's3cret');
+        self::assertTrue($m->isEncryptedValueReadable('smtp_password'));
+    }
+
     public function testGetForFormNeverReturnsSecret(): void
     {
         $m = $this->manager();

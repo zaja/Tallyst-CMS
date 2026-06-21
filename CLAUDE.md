@@ -311,7 +311,14 @@ new table, no migration (encrypted values are just text in the existing `value` 
   env processor; real key in `.env.local`, empty placeholder in `.env`). Stored form is
   `base64(nonce.cipher)` — fresh nonce per write, so the same plaintext never repeats. Key
   length is validated lazily, so an unconfigured env still boots. Only the SMTP password is
-  encrypted today.
+  encrypted today. **`app:install` generates a key into `.env.local` if one is missing** (via
+  `EncryptionKeyProvisioner`) and NEVER overwrites an existing one — so a fresh deploy is
+  self-provisioning (admin runs `app:install` as the server user, same as the rest of the seed).
+- **Decrypt failure is graceful, never a 500.** If an encrypted setting can't be decrypted
+  (key rotated/lost/corrupt), `SettingsManager::get()` returns the schema default (treats it as
+  unset) and `isEncryptedValueReadable($key)` reports `false`. The mailer then treats DB SMTP as
+  incomplete and falls back to env `MAILER_DSN`; the settings page shows a warning ("SMTP lozinku
+  nije moguće dekriptirati, upiši ponovno"). It never sends unauthenticated or throws.
 - **Friendly form** = `SettingsController` (`/admin/settings`, in the EA shell via the
   `dashboardControllerFqcn` route default, same pattern as BrandingController). Fields are
   built dynamically from the schema, grouped into Bootstrap tabs per section, saved through
@@ -334,12 +341,17 @@ new table, no migration (encrypted values are just text in the existing `value` 
   caches the Setting row for its lifetime, so changing SMTP settings needs a worker restart.
   `DefaultFromListener` (MessageEvent) fills From/Reply-To from the email identity settings on
   any message that didn't set its own; the decorator passes the global dispatcher to the SMTP
-  transport so this fires for DB-SMTP sends too. "Pošalji test mail" (CSRF-protected POST on
-  the settings page) sends through this same path.
+  transport so this fires for DB-SMTP sends too. **"Pošalji test mail"** (CSRF-protected POST)
+  takes an editable recipient (default = sender, else the logged-in admin) and its flash
+  reports BOTH which transport carried it (`activeTransportLabel()` → "DB SMTP (host)" vs
+  "env MAILER_DSN (fallback)") AND, on failure, the REAL transport exception message — so
+  there's no guessing where a message went.
 - **Tests:** `tests/Settings/` — encryptor round-trip (ciphertext≠plaintext, wrong-key fails,
   bad-key-length throws), manager typed get/set + defaults + password write-only + secret
-  never prefilled, `app_date` tz/format, `LocaleSubscriber`; `tests/Mailer/` — transport
-  build-vs-env-fallback branch. **GATE before working on encryption: `php8.5 -m | grep sodium`.**
+  never prefilled + undecryptable-secret-is-graceful, `isEncryptedValueReadable`, `app_date`
+  tz/format, `LocaleSubscriber`, `EncryptionKeyProvisioner` (gen-if-missing / never-overwrite);
+  `tests/Mailer/` — transport build / env-fallback / decrypt-fail-fallback + transport label.
+  **GATE before working on encryption: `php8.5 -m | grep sodium`.**
 
 ## Backlog (queued — agreed, NOT yet built)
 - **Prolaz C — multi-column layout — DONE.** Custom Tiptap `columns`/`column` nodes (FIXED

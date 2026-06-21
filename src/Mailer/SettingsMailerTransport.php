@@ -46,17 +46,46 @@ class SettingsMailerTransport implements TransportInterface
     }
 
     /**
+     * A human label for which transport is actually in use — surfaced in the "send test mail"
+     * result so there's no guessing where a message went.
+     */
+    public function activeTransportLabel(): string
+    {
+        return $this->isDbSmtpActive()
+            ? \sprintf('DB SMTP (%s)', (string) $this->settings->get('smtp_host'))
+            : 'env MAILER_DSN (fallback)';
+    }
+
+    /**
+     * DB SMTP is usable only when a host is set AND the encrypted password can be decrypted.
+     * A set-but-undecryptable password (lost/rotated key) makes the whole DB SMTP "incomplete"
+     * so we fall back to env rather than send unauthenticated — see resolveTransport().
+     */
+    private function isDbSmtpActive(): bool
+    {
+        if ('' === (string) $this->settings->get('smtp_host')) {
+            return false;
+        }
+
+        return $this->settings->isEncryptedValueReadable('smtp_password');
+    }
+
+    /**
      * Build the SMTP transport from the DB settings, or fall back to the env transport when
-     * SMTP is not configured (no host). Protected so the branch logic (build vs. fallback)
-     * is unit-testable without opening a socket.
+     * SMTP is not configured (no host) or its password can't be decrypted. Protected so the
+     * branch logic (build vs. fallback) is unit-testable without opening a socket.
      */
     protected function resolveTransport(): TransportInterface
     {
-        $host = (string) $this->settings->get('smtp_host');
-        if ('' === $host) {
+        if (!$this->isDbSmtpActive()) {
+            if ('' !== (string) $this->settings->get('smtp_host')) {
+                $this->logger?->warning('SMTP password could not be decrypted; falling back to env MAILER_DSN.');
+            }
+
             return $this->inner;
         }
 
+        $host = (string) $this->settings->get('smtp_host');
         $port = (int) ($this->settings->get('smtp_port') ?: 587);
         $encryption = (string) ($this->settings->get('smtp_encryption') ?: 'tls');
         // ssl => implicit TLS (465); tls => opportunistic STARTTLS (587); none => no TLS.

@@ -11,6 +11,7 @@ use App\Repository\MenuRepository;
 use App\Repository\PageRepository;
 use App\Repository\PostRepository;
 use App\Repository\ThemeRepository;
+use App\Settings\EncryptionKeyProvisioner;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -31,6 +32,7 @@ class InstallCommand extends Command
         private readonly PageRepository $pages,
         private readonly PostRepository $posts,
         private readonly MenuRepository $menus,
+        private readonly EncryptionKeyProvisioner $keyProvisioner,
     ) {
         parent::__construct();
     }
@@ -39,6 +41,7 @@ class InstallCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
+        $this->ensureEncryptionKey($io);
         $this->ensureDefaultTheme($io);
         $homePage = $this->ensureHomePage($io);
         $this->ensureSamplePost($io);
@@ -49,6 +52,17 @@ class InstallCommand extends Command
         $io->success('Tallyst install complete.');
 
         return Command::SUCCESS;
+    }
+
+    private function ensureEncryptionKey(SymfonyStyle $io): void
+    {
+        if (null === $this->keyProvisioner->ensure()) {
+            $io->writeln('• Encryption key already set in .env.local.');
+
+            return;
+        }
+
+        $io->writeln('• Generated SETTINGS_ENCRYPTION_KEY in .env.local.');
     }
 
     private function ensureDefaultTheme(SymfonyStyle $io): void

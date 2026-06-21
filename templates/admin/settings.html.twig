@@ -5,6 +5,14 @@
 {% block content_title %}Postavke{% endblock %}
 
 {% block main %}
+    {% if smtp_password_unreadable %}
+        <div class="alert alert-warning">
+            <i class="fa fa-triangle-exclamation"></i>
+            SMTP lozinku nije moguće dekriptirati (ključ promijenjen ili izgubljen). Mailovi
+            privremeno koriste <code>MAILER_DSN</code> iz okoline. Upiši lozinku ponovno i spremi.
+        </div>
+    {% endif %}
+
     {{ form_start(form) }}
     <ul class="nav nav-tabs mb-3" role="tablist">
         {% for section in sections %}
@@ -38,13 +46,22 @@
     </div>
     {{ form_end(form) }}
 
-    {# Separate form: send a test e-mail through the current DB SMTP configuration. #}
+    {# Separate form: send a test e-mail through the current transport (DB SMTP or env). #}
     <hr class="my-4">
-    <form method="post" action="{{ path('admin_settings_test_email') }}">
+    <form method="post" action="{{ path('admin_settings_test_email') }}" class="row g-2 align-items-center">
         <input type="hidden" name="_token" value="{{ csrf_token('settings_test_email') }}">
-        <button class="btn btn-secondary" type="submit">
-            <i class="fa fa-paper-plane"></i> Pošalji test mail
-        </button>
-        <span class="text-muted ms-2">Šalje na adresu pošiljatelja iz Email sekcije (spremi prvo).</span>
+        <div class="col-auto">
+            <label for="test_to" class="col-form-label">Pošalji na</label>
+        </div>
+        <div class="col-auto">
+            <input type="email" id="test_to" name="test_to" class="form-control"
+                   value="{{ test_to_default }}" placeholder="email@primjer.hr" style="min-width: 18rem;">
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-secondary" type="submit">
+                <i class="fa fa-paper-plane"></i> Pošalji test mail
+            </button>
+        </div>
+        <div class="col-12"><small class="text-muted">Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.</small></div>
     </form>
 {% endblock %}

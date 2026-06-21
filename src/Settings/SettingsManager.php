@@ -35,10 +35,41 @@ class SettingsManager
         }
 
         if ($def?->encrypted) {
-            $raw = $this->encryptor->decrypt($raw);
+            try {
+                $raw = $this->encryptor->decrypt($raw);
+            } catch (\RuntimeException) {
+                // A lost/rotated/corrupt key must never 500 the app: treat an undecryptable
+                // secret as unset (the schema default). Callers that need to react to the
+                // failure use isEncryptedValueReadable().
+                return $def->default;
+            }
         }
 
         return $this->cast($raw, $def?->type);
+    }
+
+    /**
+     * Whether an encrypted setting can actually be decrypted with the current key. True when
+     * there is nothing encrypted stored (trivially fine); false only when a ciphertext IS
+     * stored but the key can't decrypt it (lost/rotated/corrupt). Lets the mailer fall back
+     * to env and the UI warn, instead of silently sending without auth or crashing.
+     */
+    public function isEncryptedValueReadable(string $key): bool
+    {
+        $def = $this->registry->getDefinition($key);
+        $raw = $this->settings->get($key);
+
+        if (!$def?->encrypted || null === $raw || '' === $raw) {
+            return true;
+        }
+
+        try {
+            $this->encryptor->decrypt($raw);
+
+            return true;
+        } catch (\RuntimeException) {
+            return false;
+        }
     }
 
     /**
