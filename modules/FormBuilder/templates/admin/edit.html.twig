@@ -62,8 +62,17 @@
 
     <style>
         .fb-field-row { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; background: #fcfcfd; }
-        .fb-row-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
+        .fb-row-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: .5rem; }
         .fb-handle { color: #9ca3af; }
+        /* Collapsed-by-default field rows: a clickable summary toggles the config open. */
+        .fb-row-summary { display: flex; align-items: center; gap: .5rem; cursor: pointer; flex: 1; min-width: 0; }
+        .fb-summary-label { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .fb-row-controls { display: flex; gap: .25rem; flex-shrink: 0; }
+        .fb-chevron::before { content: '▾'; color: #6b7280; font-size: .8rem; }
+        .fb-field-row--collapsed .fb-chevron::before { content: '▸'; }
+        .fb-field-row--collapsed .fb-row-head { margin-bottom: 0; }
+        .fb-field-row--collapsed .fb-grid,
+        .fb-field-row--collapsed .fb-cond { display: none; }
         .fb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem 1rem; }
         .fb-cond { margin-top: 1rem; border: 1px dashed #d1d5db; border-radius: 8px; padding: .75rem; }
         .fb-cond legend { font-size: .85rem; color: #555; width: auto; padding: 0 .4rem; }

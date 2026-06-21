@@ -197,6 +197,13 @@ themes/               # THEMES — one folder = one theme
    - The end-user form is rendered and validated dynamically at runtime from that
      data. Do NOT model end-user forms with Symfony's compile-time Form component.
    - Use the Symfony Form component only for the ADMIN builder UI itself.
+   - **Builder UX:** each field row is **collapsed by default** (WP-Simple-Pay style) — the
+     row head is a clickable summary (chevron + label + type badge) that toggles the config
+     open; `.fb-grid`/`.fb-cond` hide via CSS (inputs stay in the DOM → submit + the ↑/↓
+     reorder unaffected). The `formbuilder--builder` Stimulus controller keeps the summary in
+     sync as you type (`refreshSummary`/`updateSummary`) and auto-expands a freshly ADDED
+     field; a field with a validation error renders expanded so the error is visible. Pure
+     presentation — no data-model/submit change. Builder CSS is inline in `edit.html.twig`.
 4. **Page-as-product.** A `FormDefinition` may carry `priceMinor` (integer MINOR
    units — cents, never float) + `currency`. A priced submission creates an `Order`
    and starts payment; a free form behaves as before.

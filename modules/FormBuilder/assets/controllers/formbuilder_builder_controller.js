@@ -2,9 +2,11 @@ import { Controller } from '@hotwired/stimulus';
 
 /*
  * Admin builder UX: add/remove/reorder collection rows (fields and, nested within
- * each field, condition rules). Pure Symfony prototype mechanics — each collection
- * carries its own data-prototype + placeholder + running index, so the same `add`
- * action serves both levels via the nearest [data-fb-collection] ancestor.
+ * each field, condition rules), plus collapse/expand of field rows. Pure Symfony
+ * prototype mechanics — each collection carries its own data-prototype + placeholder +
+ * running index, so the same `add` action serves both levels via the nearest
+ * [data-fb-collection] ancestor. Field rows are collapsed by default (CSS); the row's
+ * clickable summary toggles, and the label/type summary stays in sync as you edit.
  */
 export default class extends Controller {
     add(event) {
@@ -23,7 +25,42 @@ export default class extends Controller {
         items.appendChild(node);
 
         if (collection.dataset.fbLevel === 'fields') {
+            // A new field opens expanded so you configure it right away; its summary
+            // starts from the prototype defaults ("Novo polje" + default type).
+            node.classList.remove('fb-field-row--collapsed');
             this.renumber(collection);
+            this.updateSummary(node);
+        }
+    }
+
+    /** Toggle a field row open/closed; refresh its summary so the head reflects edits. */
+    toggle(event) {
+        const row = event.currentTarget.closest('[data-fb-item]');
+        if (!row) {
+            return;
+        }
+        row.classList.toggle('fb-field-row--collapsed');
+        this.updateSummary(row);
+    }
+
+    /** Live-update the collapsed summary while the label/type inputs change. */
+    refreshSummary(event) {
+        this.updateSummary(event.target.closest('[data-fb-item]'));
+    }
+
+    updateSummary(row) {
+        if (!row) {
+            return;
+        }
+        const labelInput = row.querySelector('[data-fb-label-input]');
+        const typeSelect = row.querySelector('[data-fb-type-input]');
+        const labelOut = row.querySelector('[data-fb-summary-label]');
+        const typeOut = row.querySelector('[data-fb-summary-type]');
+        if (labelOut && labelInput) {
+            labelOut.textContent = labelInput.value.trim() || 'Novo polje';
+        }
+        if (typeOut && typeSelect && typeSelect.selectedIndex >= 0) {
+            typeOut.textContent = typeSelect.options[typeSelect.selectedIndex].text;
         }
     }
 

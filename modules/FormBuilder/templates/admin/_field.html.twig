@@ -1,10 +1,28 @@
 {# One field row. Used both for existing fields and as the collection prototype
    (fieldForm = form.fields.vars.prototype). The nested rules collection carries its
-   own prototype + __rule__ placeholder. #}
+   own prototype + __rule__ placeholder.
+
+   Collapsed by default (WP-Simple-Pay style): the head is a clickable summary
+   (chevron + label + type badge) that toggles open; .fb-grid + .fb-cond are hidden when
+   collapsed (CSS). A field that has a validation error renders EXPANDED so the error is
+   visible after a failed save. The builder controller auto-expands a freshly ADDED field
+   and keeps the summary (label + type badge) in sync as you type. #}
 {% form_theme fieldForm 'bootstrap_5_layout.html.twig' %}
-<div class="fb-field-row" data-fb-item>
+{% set fieldValue = fieldForm.vars.value %}
+{% set fieldHasErrors = fieldForm.vars.errors|length > 0
+    or fieldForm|filter(c => c.vars.errors|length > 0)|length > 0 %}
+{% set typeValue = fieldValue ? fieldValue.type : null %}
+{% set typeChoice = fieldForm.type.vars.choices|filter(c => c.value == typeValue)|first %}
+{% set typeLabel = typeChoice ? typeChoice.label : '' %}
+{% set summaryLabel = (fieldValue ? fieldValue.label : '') ?: 'Novo polje' %}
+<div class="fb-field-row{% if not fieldHasErrors %} fb-field-row--collapsed{% endif %}" data-fb-item>
     <div class="fb-row-head">
-        <span class="fb-handle">≡</span>
+        <div class="fb-row-summary" data-action="click->formbuilder--builder#toggle">
+            <span class="fb-chevron"></span>
+            <span class="fb-handle">≡</span>
+            <span class="fb-summary-label" data-fb-summary-label>{{ summaryLabel }}</span>
+            <span class="badge badge-secondary fb-summary-type" data-fb-summary-type>{{ typeLabel }}</span>
+        </div>
         <div class="fb-row-controls">
             <button type="button" data-action="formbuilder--builder#moveUp" title="Gore">↑</button>
             <button type="button" data-action="formbuilder--builder#moveDown" title="Dolje">↓</button>
@@ -15,9 +33,9 @@
     {{ form_widget(fieldForm.position, {attr: {'data-fb-position': ''}}) }}
 
     <div class="fb-grid">
-        {{ form_row(fieldForm.label) }}
+        {{ form_row(fieldForm.label, {attr: {'data-fb-label-input': '', 'data-action': 'input->formbuilder--builder#refreshSummary'}}) }}
         {{ form_row(fieldForm.key) }}
-        {{ form_row(fieldForm.type) }}
+        {{ form_row(fieldForm.type, {attr: {'data-fb-type-input': '', 'data-action': 'change->formbuilder--builder#refreshSummary'}}) }}
         {{ form_row(fieldForm.placeholder) }}
         {{ form_row(fieldForm.options) }}
         {{ form_row(fieldForm.required) }}
