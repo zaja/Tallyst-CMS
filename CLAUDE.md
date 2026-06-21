@@ -271,6 +271,23 @@ Replaces the old Trix `TextEditorField` on Page/Post.
   are dev-only (`package.json`, `node_modules` git-ignored); the app still ships
   build-free via importmap. Run JS tests: `npm run test:js`.
 
+## Backlog (queued — agreed, NOT yet built)
+- **Prolaz C — multi-column layout in the editor.** A custom Tiptap **column node** so an
+  admin can lay content out in columns. **v1 scope: FIXED layouts (2 and 3 equal columns),
+  NOT resizable** (no drag handles / no custom widths — that's a later pass). Follows the
+  established editor IoC: register via `registerEditorExtension` (node always in schema),
+  insert button gated like the others. Three integration points to get right:
+  1. **Theme CSS** — columns render on the FRONT via the active theme (the column markup
+     must be styled by `theme_asset()` CSS in the theme, same theme-chain pattern as menus/
+     branding); the editor preview mirrors it. No inline styles baked into stored content.
+  2. **Schema + drop-test** — the column node joins the Tiptap schema; the Node round-trip
+     test MUST cover it (columns + nested content survive load→save) AND assert what
+     ProseMirror drops when column structure is malformed, so the loss is known.
+  3. **Shortcode round-trip INSIDE a column** — `[image id=N]` / `[form id=N]` nested in a
+     column must survive the full load→save round-trip through `EditorContentConverter`
+     (converters run on the whole HTML, so nested embeds must still convert), and the front
+     (`render_content`) must render columns with their embeds intact.
+
 ## Adding a new module (the pattern to follow)
 Copy `modules/FormBuilder/` — it is the reference module. Its bundle class
 (`AbstractBundle`) self-registers its Doctrine mapping and its `config/services.php`,
