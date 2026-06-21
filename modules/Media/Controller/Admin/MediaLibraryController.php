@@ -17,8 +17,12 @@ use Tallyst\Media\Service\MediaUploader;
  * AJAX/JSON backend for the reusable media-library component. These are NOT EA-shell
  * pages (no dashboardControllerFqcn default) — they return JSON / plain text. They live
  * under ^/admin so security.yaml already enforces ROLE_ADMIN (logged-out → 302 login).
+ *
+ * Paths deliberately sit OUTSIDE /admin/media/ (note the hyphen): EasyAdmin's pretty
+ * URLs register `/admin/media/{entityId}` for the Media CRUD, which would otherwise
+ * swallow /admin/media/library as a "detail" request and 500 on getEntity().
  */
-#[Route('/admin/media')]
+#[Route('/admin')]
 class MediaLibraryController extends AbstractController
 {
     /** CSRF token id shared by the page (csrf_token) and this endpoint's check. */
@@ -34,7 +38,7 @@ class MediaLibraryController extends AbstractController
     /**
      * Paginated grid feed for the library. ?q= filters name/alt/title, ?page= paginates.
      */
-    #[Route('/library', name: 'media_library_index', methods: ['GET'])]
+    #[Route('/media-library', name: 'media_library_index', methods: ['GET'])]
     public function library(Request $request): JsonResponse
     {
         $q = $request->query->get('q');
@@ -64,7 +68,7 @@ class MediaLibraryController extends AbstractController
      * PLAIN TEXT (what FilePond stores as the server id). CSRF protected via the
      * X-CSRF-Token header (token rendered into the page).
      */
-    #[Route('/upload', name: 'media_upload', methods: ['POST'])]
+    #[Route('/media-upload', name: 'media_upload', methods: ['POST'])]
     public function upload(Request $request): Response
     {
         if (!$this->isCsrfTokenValid(self::UPLOAD_CSRF_ID, (string) $request->headers->get('X-CSRF-Token'))) {
