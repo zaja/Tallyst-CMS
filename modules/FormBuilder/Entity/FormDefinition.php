@@ -6,6 +6,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 
 /**
@@ -46,6 +48,21 @@ class FormDefinition
 
     #[ORM\Column(length: 3, nullable: true)]
     private ?string $currency = null;
+
+    /**
+     * Submission-notification config for FREE forms (priced forms use the order/fulfilment
+     * mails). When enabled, a notification e-mail is sent on each valid submit.
+     */
+    #[ORM\Column(name: 'notify_enabled')]
+    private bool $notifyEnabled = false;
+
+    /** One or more e-mails, comma/semicolon separated. */
+    #[ORM\Column(name: 'notify_recipient', length: 255, nullable: true)]
+    private ?string $notifyRecipient = null;
+
+    /** Optional override; empty falls back to "Nova prijava: <form name>". */
+    #[ORM\Column(name: 'notify_subject', length: 255, nullable: true)]
+    private ?string $notifySubject = null;
 
     /** @var Collection<int, FormField> */
     #[ORM\OneToMany(targetEntity: FormField::class, mappedBy: 'form', cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -167,6 +184,78 @@ class FormDefinition
         $this->currency = $currency;
 
         return $this;
+    }
+
+    public function isNotifyEnabled(): bool
+    {
+        return $this->notifyEnabled;
+    }
+
+    public function setNotifyEnabled(bool $notifyEnabled): static
+    {
+        $this->notifyEnabled = $notifyEnabled;
+
+        return $this;
+    }
+
+    public function getNotifyRecipient(): ?string
+    {
+        return $this->notifyRecipient;
+    }
+
+    public function setNotifyRecipient(?string $notifyRecipient): static
+    {
+        $this->notifyRecipient = $notifyRecipient;
+
+        return $this;
+    }
+
+    /** @return list<string> recipients split from the comma/semicolon list (trimmed, non-empty) */
+    public function getNotifyRecipientList(): array
+    {
+        return array_values(array_filter(array_map(
+            'trim',
+            preg_split('/[,;]/', (string) $this->notifyRecipient) ?: [],
+        )));
+    }
+
+    public function getNotifySubject(): ?string
+    {
+        return $this->notifySubject;
+    }
+
+    public function setNotifySubject(?string $notifySubject): static
+    {
+        $this->notifySubject = $notifySubject;
+
+        return $this;
+    }
+
+    /**
+     * When notifications are on, require at least one recipient and reject any malformed
+     * e-mail — so the admin gets feedback instead of the notifier silently skipping.
+     */
+    #[Assert\Callback]
+    public function validateNotification(ExecutionContextInterface $context): void
+    {
+        if (!$this->notifyEnabled) {
+            return;
+        }
+
+        $recipients = $this->getNotifyRecipientList();
+        if ([] === $recipients) {
+            $context->buildViolation('Unesi barem jednog primatelja kad je notifikacija uključena.')
+                ->atPath('notifyRecipient')->addViolation();
+
+            return;
+        }
+
+        foreach ($recipients as $recipient) {
+            if (false === filter_var($recipient, \FILTER_VALIDATE_EMAIL)) {
+                $context->buildViolation('Neispravna e-mail adresa: '.$recipient)
+                    ->atPath('notifyRecipient')->addViolation();
+            }
+        }
     }
 
     /** @return Collection<int, FormField> */

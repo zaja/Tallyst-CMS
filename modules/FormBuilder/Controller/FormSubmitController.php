@@ -10,16 +10,16 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Tallyst\FormBuilder\Condition\ConditionEvaluator;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
 use Tallyst\FormBuilder\Entity\FormSubmission;
 use Tallyst\FormBuilder\Entity\Order;
-use Tallyst\FormBuilder\Form\FormSchemaFactory;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 use Tallyst\FormBuilder\Repository\FormSubmissionRepository;
 use Tallyst\FormBuilder\Repository\OrderRepository;
+use Tallyst\FormBuilder\Service\SubmissionNotifier;
+use Tallyst\FormBuilder\Service\SubmissionValidator;
 
 /**
  * Public form submission endpoint. Two-segment path (/form/...) so the /{slug}
@@ -39,8 +39,8 @@ class FormSubmitController extends AbstractController
         private readonly FormDefinitionRepository $forms,
         private readonly FormSubmissionRepository $submissions,
         private readonly OrderRepository $orders,
-        private readonly FormSchemaFactory $schemas,
-        private readonly ConditionEvaluator $evaluator,
+        private readonly SubmissionValidator $validator,
+        private readonly SubmissionNotifier $notifier,
         private readonly PaymentProcessorRegistry $payments,
         #[Autowire(service: 'limiter.form_submit')]
         private readonly RateLimiterFactory $formSubmitLimiter,
@@ -79,25 +79,7 @@ class FormSubmitController extends AbstractController
             $raw[$field->getKey()] = $this->readValue($request, $field);
         }
 
-        $visible = array_flip($this->evaluator->visibleKeys($this->schemas->condition($form), $raw));
-
-        $errors = [];
-        $data = [];
-        foreach ($fields as $field) {
-            $key = $field->getKey();
-            if (!isset($visible[$key])) {
-                continue; // hidden by conditions — not required, not validated, dropped
-            }
-
-            $value = $raw[$key];
-            $error = $this->validateField($field, $value);
-            if (null !== $error) {
-                $errors[$key] = $error;
-                continue;
-            }
-
-            $data[$key] = $value;
-        }
+        ['errors' => $errors, 'data' => $data] = $this->validator->validate($form, $raw);
 
         if ([] !== $errors) {
             $bag = $request->getSession()->getFlashBag();
@@ -116,6 +98,14 @@ class FormSubmitController extends AbstractController
 
         // Free form: done. Priced form: go to payment.
         if (!$form->isProduct()) {
+            // Notify (async via $mailer->send()). A notification hiccup must never fail the
+            // submitter's success — the submission is already saved.
+            try {
+                $this->notifier->notify($submission);
+            } catch (\Throwable) {
+                // swallow — best-effort notification
+            }
+
             $separator = str_contains($return, '?') ? '&' : '?';
 
             return $this->redirect($return.$separator.'fb_success='.$id);
@@ -158,29 +148,6 @@ class FormSubmitController extends AbstractController
         }
 
         return (string) $request->request->get($field->getKey(), '');
-    }
-
-    private function validateField(FormField $field, mixed $value): ?string
-    {
-        $blank = '' === $value || false === $value || null === $value;
-
-        if ($field->isRequired() && $blank) {
-            return 'Ovo polje je obavezno.';
-        }
-
-        if ($blank) {
-            return null;
-        }
-
-        return match ($field->getType()) {
-            FormField::TYPE_EMAIL => false === filter_var((string) $value, \FILTER_VALIDATE_EMAIL)
-                ? 'Unesite ispravan e-mail.' : null,
-            FormField::TYPE_NUMBER => !is_numeric((string) $value)
-                ? 'Unesite broj.' : null,
-            FormField::TYPE_SELECT, FormField::TYPE_RADIO => !in_array((string) $value, $field->getOptions(), true)
-                ? 'Neispravan odabir.' : null,
-            default => null,
-        };
     }
 
     /** Only allow same-site path redirects (no open redirect). */

@@ -204,6 +204,22 @@ themes/               # THEMES — one folder = one theme
      sync as you type (`refreshSummary`/`updateSummary`) and auto-expands a freshly ADDED
      field; a field with a validation error renders expanded so the error is visible. Pure
      presentation — no data-model/submit change. Builder CSS is inline in `edit.html.twig`.
+   - **Conditional-required:** a field hidden by its display conditions is NOT required (nor
+     validated, nor stored). The SERVER is authoritative — `SubmissionValidator` runs
+     `ConditionEvaluator::visibleKeys()` (a CASCADING fixed point: a field whose condition
+     depends on an already-hidden field is hidden too) over the submitted values and skips
+     hidden fields before checking `required`. The client (`formbuilder--conditions`) mirrors
+     this by removing `required` from hidden inputs. Locked by `SubmissionValidatorTest`
+     (incl. the chained case) + the functional `FormSubmitConditionalRequiredTest`.
+   - **Email-on-submit (free forms):** per-form notification config on `FormDefinition`
+     (`notifyEnabled` + `notifyRecipient` comma-list + optional `notifySubject`; an
+     `Assert\Callback` validates the e-mails in the admin form). On a valid FREE submit,
+     `SubmissionNotifier` sends a label:value summary e-mail with **From left empty** (so
+     `DefaultFromListener` applies `mail_from_email` — never hardcode From, the 553 lesson),
+     `To` = the recipient(s). It's **async** via `$mailer->send()` (routes to the Messenger
+     worker like the order mails → **needs a running `messenger:consume async` worker** to
+     actually deliver); the controller wraps it in try/catch so a notification hiccup never
+     fails the submit. PRICED forms are skipped — they keep the order/fulfilment mails.
 4. **Page-as-product.** A `FormDefinition` may carry `priceMinor` (integer MINOR
    units — cents, never float) + `currency`. A priced submission creates an `Order`
    and starts payment; a free form behaves as before.
@@ -418,6 +434,10 @@ access automatically and are never demoted.
   doctrine:migrations:migrate -n`. (Fallback for a box that can't create a separate DB: point
   `DATABASE_URL` at the main DB with `TEST_DB_SUFFIX=` empty — tests self-clean, but it's not
   isolated.)
+- **Test-cache gotcha:** after changing PHP/config the cold `test` container recompile can throw
+  in phpunit's kernel-boot path (a FormBuilder prototype-loader quirk), failing every functional
+  (WebTestCase) test with a container error. `cache:warmup` compiles it cleanly, so **warm the
+  test cache first**: `APP_ENV=test php8.5 bin/console cache:warmup && php8.5 bin/phpunit`.
 
 ## Backlog (queued — agreed, NOT yet built)
 This is the SINGLE home for "what's next" — park ideas here, not scattered across chat.

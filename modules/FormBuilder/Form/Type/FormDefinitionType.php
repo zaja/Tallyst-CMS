@@ -4,6 +4,7 @@ namespace Tallyst\FormBuilder\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\MoneyType;
@@ -41,6 +42,22 @@ class FormDefinitionType extends AbstractType
                 'label' => 'Valuta',
                 'choices' => ['EUR' => 'eur', 'USD' => 'usd', 'GBP' => 'gbp'],
                 'placeholder' => '—',
+            ])
+            // Submission notification (free forms only — priced forms use order mails).
+            ->add('notifyEnabled', CheckboxType::class, [
+                'required' => false,
+                'label' => 'Pošalji e-mail na prijavu',
+                'help' => 'Samo za besplatne forme. Plaćene forme šalju potvrdu narudžbe.',
+            ])
+            ->add('notifyRecipient', TextType::class, [
+                'required' => false,
+                'label' => 'Primatelj(i)',
+                'help' => 'E-mail; više njih odvoji zarezom.',
+            ])
+            ->add('notifySubject', TextType::class, [
+                'required' => false,
+                'label' => 'Subject (opcionalno)',
+                'help' => 'Prazno = "Nova prijava: <naziv forme>".',
             ])
             ->add('fields', CollectionType::class, [
                 'label' => false,

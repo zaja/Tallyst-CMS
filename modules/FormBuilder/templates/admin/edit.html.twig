@@ -24,6 +24,15 @@
 
         <div class="card mb-3">
             <div class="card-body">
+                <h2 class="h5">Notifikacija</h2>
+                {{ form_row(form.notifyEnabled) }}
+                {{ form_row(form.notifyRecipient) }}
+                {{ form_row(form.notifySubject) }}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
                 <h2 class="h5">Polja</h2>
                 {{ form_errors(form.fields) }}
 
