@@ -1,0 +1,15 @@
+{
+    "name": "tallyst-cms",
+    "private": true,
+    "type": "module",
+    "description": "Dev-only JS test harness. The app itself uses AssetMapper/importmap (no build step); these packages exist solely so Node tests can exercise the real Tiptap schema server-side.",
+    "scripts": {
+        "test:js": "node modules/FormBuilder/tests/js/condition_evaluator.test.mjs && node modules/Media/tests/js/tiptap_roundtrip.test.mjs"
+    },
+    "devDependencies": {
+        "@tiptap/core": "3.27.1",
+        "@tiptap/extension-image": "3.27.1",
+        "@tiptap/html": "3.27.1",
+        "@tiptap/starter-kit": "3.27.1"
+    }
+}

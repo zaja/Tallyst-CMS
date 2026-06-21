@@ -9,9 +9,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\TextEditorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Tallyst\Media\Field\MediaPickerField;
+use Tallyst\Media\Field\TiptapField;
 
 class PageCrudController extends AbstractCrudController
 {
@@ -26,7 +26,8 @@ class PageCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('Stranica')
             ->setEntityLabelInPlural('Stranice')
             ->setDefaultSort(['position' => 'ASC', 'id' => 'DESC'])
-            ->addFormTheme('@Media/admin/form/media_picker_widget.html.twig');
+            ->addFormTheme('@Media/admin/form/media_picker_widget.html.twig')
+            ->addFormTheme('@Media/admin/form/tiptap_widget.html.twig');
     }
 
     public function configureFields(string $pageName): iterable
@@ -37,7 +38,7 @@ class PageCrudController extends AbstractCrudController
             ->setChoices(['Skica' => Page::STATUS_DRAFT, 'Objavljeno' => Page::STATUS_PUBLISHED])
             ->renderAsBadges([Page::STATUS_DRAFT => 'secondary', Page::STATUS_PUBLISHED => 'success']);
         yield MediaPickerField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
-        yield TextEditorField::new('content', 'Sadržaj')->hideOnIndex();
+        yield TiptapField::new('content', 'Sadržaj')->hideOnIndex();
         yield TextField::new('template', 'Predložak')->hideOnIndex()
             ->setHelp('Naziv theme predloška, npr. page.html.twig. Prazno = zadani.');
         yield TextField::new('metaTitle', 'Meta naslov')->hideOnIndex();

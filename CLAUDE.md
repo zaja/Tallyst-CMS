@@ -205,12 +205,42 @@ themes/               # THEMES — one folder = one theme
    to Twig's loader. Support a `parent` theme for template fallback (child-theme
    behaviour). Reference: Sylius ThemeBundle is good prior art.
 
-## WYSIWYG editor
-No editor ships natively with Symfony. Load a permissively-licensed editor
-(**Trix** — MIT, or **Tiptap** — MIT) via AssetMapper + a Stimulus controller
-bound to a textarea. AVOID CKEditor 5 / TinyMCE for the shipped product (GPL or
-commercial dual license). A Tiptap custom button can insert the `[form id=N]`
-tag for good UX.
+## WYSIWYG editor (Tiptap — content fields)
+The content editor is **Tiptap** (MIT; `@tiptap/*` v3 via importmap — core/starter-kit/
+extension-image; StarterKit v3 already bundles Link, so it's configured, not re-added).
+AVOID CKEditor 5 / TinyMCE (GPL / commercial). It lives in the **Media module**
+(`TiptapField` EA field + `TiptapType` + `media--tiptap` Stimulus controller) because it
+hard-depends on the media library for image insert (the bounded Core→Media exception).
+Replaces the old Trix `TextEditorField` on Page/Post.
+- **Form-bound, drop-in:** `TiptapType` extends `TextareaType`; the controller mounts
+  Tiptap on a hidden textarea and writes `editor.getHTML()` back on every change (and once
+  on connect, so an unedited save also re-normalises). Storage stays HTML + shortcodes —
+  same `content` column, no schema change.
+- **Schema = what Trix could author** (`tiptap_extensions.js`, the ONE schema shared by
+  the controller AND the Node test): bold/italic/strike/code, headings, bullet+ordered
+  lists, blockquote, code block, link (plain `<a href>` — target/rel not forced),
+  hard breaks, history, + the custom image node. **Trix `<div>` soup normalises to
+  semantic `<p>` on re-save** (content changes in the DB only when the page is re-saved).
+  **ProseMirror SILENTLY DROPS anything outside the schema** (tables, iframes, inline
+  styles) — the Node round-trip test asserts this so the loss is known, not a surprise.
+- **Image = shortcode⇄node:** `ImageShortcodeHtmlConverter` (Media service) converts at the
+  form boundary — `[image id=N size align alt]` ⇄ `<img data-tallyst-image data-id=N …>`.
+  Forward resolves the Liip URL via `MediaImageHelper` (null-safe: deleted Media → empty
+  src but id kept, so the shortcode survives). The front pipeline (ImageShortcode +
+  `render_content`) is UNCHANGED. The `[image]` attribute grammar is shared with
+  ContentRenderer via `ShortcodeAttributeParser`, and a PHPUnit coupling test proves a
+  converter-produced `[image …]` renders identically through the real ImageShortcode.
+  `[form id=N]` passes through as plain text (a `[form]` node is Prolaz B2).
+- **Insert reuses Pass A:** "Ubaci sliku" dispatches `media-library:open`; the controller
+  inserts an image node from the `media-library:select` event. **Scoping:** each consumer
+  (featured `media--picker` and editor `media--tiptap`) listens for `media-library:select`
+  on its OWN wrapper (never document/window) and includes its OWN library modal instance,
+  so on a form with both (Post edit) the two never cross-talk.
+- **Tests:** `tests/Media/ImageShortcodeHtmlConverterTest.php` (PHP boundary + coupling)
+  and `modules/Media/tests/js/tiptap_roundtrip.test.mjs` (real Tiptap schema via
+  `@tiptap/html`, rich round-trip + drop detection). JS test deps are dev-only
+  (`package.json`, `node_modules` git-ignored); the app still ships build-free via
+  importmap. Run JS tests: `npm run test:js`.
 
 ## Adding a new module (the pattern to follow)
 Copy `modules/FormBuilder/` — it is the reference module. Its bundle class

@@ -1,0 +1,41 @@
+{# Form-theme block for TiptapType (block_prefix = tiptap). Renders the real textarea
+   (form-bound, visually hidden) + a toolbar + the editor mount, plus the reusable Pass A
+   media-library modal for "insert image". The media--tiptap controller mounts Tiptap,
+   syncs the editor HTML into the textarea, and listens for media-library:select scoped to
+   THIS subtree (so it never crosses with the featured-image picker on the same form). #}
+{% block tiptap_widget %}
+    <div class="tiptap"
+         data-controller="media--tiptap"
+         data-action="media-library:select->media--tiptap#onMediaSelect">
+
+        <div class="tiptap__toolbar" role="toolbar">
+            <button type="button" class="tiptap__btn" title="Podebljano" data-action="media--tiptap#bold"><b>B</b></button>
+            <button type="button" class="tiptap__btn" title="Kurziv" data-action="media--tiptap#italic"><i>I</i></button>
+            <button type="button" class="tiptap__btn" title="Precrtano" data-action="media--tiptap#strike"><s>S</s></button>
+            <span class="tiptap__sep"></span>
+            <button type="button" class="tiptap__btn" title="Naslov 2" data-action="media--tiptap#h2">H2</button>
+            <button type="button" class="tiptap__btn" title="Naslov 3" data-action="media--tiptap#h3">H3</button>
+            <button type="button" class="tiptap__btn" title="Citat" data-action="media--tiptap#blockquote">&rdquo;</button>
+            <button type="button" class="tiptap__btn" title="Kod" data-action="media--tiptap#code">&lt;/&gt;</button>
+            <span class="tiptap__sep"></span>
+            <button type="button" class="tiptap__btn" title="Lista" data-action="media--tiptap#bulletList">&bull; lista</button>
+            <button type="button" class="tiptap__btn" title="Numerirana lista" data-action="media--tiptap#orderedList">1. lista</button>
+            <span class="tiptap__sep"></span>
+            <button type="button" class="tiptap__btn" title="Poveznica" data-action="media--tiptap#link">&#128279;</button>
+            <button type="button" class="tiptap__btn" title="Ukloni poveznicu" data-action="media--tiptap#unlink">&#128279;&times;</button>
+            <span class="tiptap__sep"></span>
+            <button type="button" class="tiptap__btn" title="Ubaci sliku" data-action="media--tiptap#insertImage">&#128247; Slika</button>
+            <span class="tiptap__sep"></span>
+            <button type="button" class="tiptap__btn" title="Poništi" data-action="media--tiptap#undo">&#8630;</button>
+            <button type="button" class="tiptap__btn" title="Ponovi" data-action="media--tiptap#redo">&#8631;</button>
+        </div>
+
+        <div class="tiptap__editor" data-media--tiptap-target="editor"></div>
+
+        {# The real form field — kept in the DOM, hidden, synced from the editor. #}
+        <textarea {{ block('widget_attributes') }} data-media--tiptap-target="input"
+                  hidden>{{ value }}</textarea>
+
+        {{ include('@Media/admin/_media_library_modal.html.twig', { tiptap_target: true }) }}
+    </div>
+{% endblock %}

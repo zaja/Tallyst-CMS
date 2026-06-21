@@ -1,0 +1,3 @@
+{# Detail view for a TiptapField: render the stored content through the shortcode
+   pipeline (same as the front) so images/forms show as they will publicly. #}
+<div class="tiptap-detail">{{ field.value|render_content|raw }}</div>

@@ -4,6 +4,7 @@ import FormbuilderBuilderController from '../modules/FormBuilder/assets/controll
 import MediaLibraryController from '../modules/Media/assets/controllers/media_library_controller.js';
 import MediaPickerController from '../modules/Media/assets/controllers/media_picker_controller.js';
 import MediaBulkUploadController from '../modules/Media/assets/controllers/media_bulk_upload_controller.js';
+import MediaTiptapController from '../modules/Media/assets/controllers/tiptap_controller.js';
 
 const app = startStimulusApp();
 
@@ -16,3 +17,4 @@ app.register('formbuilder--builder', FormbuilderBuilderController);
 app.register('media--library', MediaLibraryController);
 app.register('media--picker', MediaPickerController);
 app.register('media--bulk-upload', MediaBulkUploadController);
+app.register('media--tiptap', MediaTiptapController);

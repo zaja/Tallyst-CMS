@@ -26,3 +26,4 @@
 # Media uploads + Liip thumbnail cache (runtime data; back up separately).
 /public/media/
 ###< project ###
+/node_modules/

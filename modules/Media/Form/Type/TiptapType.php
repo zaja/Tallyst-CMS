@@ -1,0 +1,43 @@
+<?php
+
+namespace Tallyst\Media\Form\Type;
+
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\CallbackTransformer;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Tallyst\Media\Service\ImageShortcodeHtmlConverter;
+
+/**
+ * Content field backed by the Tiptap editor. Stays a plain textarea form field (so it's
+ * form-bound exactly like the old TextEditorField); the Stimulus controller mounts Tiptap
+ * on top and writes the editor HTML back into the textarea on every change.
+ *
+ * A view transformer converts at the storage boundary: stored `[image id=N]` <-> editor
+ * <img> (ImageShortcodeHtmlConverter). The model/DB value stays HTML + shortcodes.
+ */
+class TiptapType extends AbstractType
+{
+    public function __construct(
+        private readonly ImageShortcodeHtmlConverter $converter,
+    ) {
+    }
+
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder->addViewTransformer(new CallbackTransformer(
+            fn (?string $stored): string => $this->converter->toEditorHtml($stored),
+            fn (?string $editorHtml): string => $this->converter->toStored($editorHtml),
+        ));
+    }
+
+    public function getParent(): string
+    {
+        return TextareaType::class;
+    }
+
+    public function getBlockPrefix(): string
+    {
+        return 'tiptap';
+    }
+}

@@ -8,7 +8,8 @@
      data-media--library-upload-url-value="{{ path('media_upload') }}"
      data-media--library-csrf-token-value="{{ csrf_token('media_upload') }}"
      data-action="media-library:open->media--library#open"
-     {{ picker_target|default(false) ? 'data-media--picker-target=library' : '' }}>
+     {{ picker_target|default(false) ? 'data-media--picker-target=library' : '' }}
+     {{ tiptap_target|default(false) ? 'data-media--tiptap-target=library' : '' }}>
     <div class="media-lib__backdrop" hidden
          data-media--library-target="modal"
          data-action="click->media--library#backdrop">
