@@ -345,7 +345,17 @@ new table, no migration (encrypted values are just text in the existing `value` 
   takes an editable recipient (default = sender, else the logged-in admin) and its flash
   reports BOTH which transport carried it (`activeTransportLabel()` → "DB SMTP (host)" vs
   "env MAILER_DSN (fallback)") AND, on failure, the REAL transport exception message — so
-  there's no guessing where a message went.
+  there's no guessing where a message went. **The test send is SYNCHRONOUS — it calls the
+  transport directly, NOT `$mailer->send()`** — because the app routes `SendEmailMessage` to
+  Messenger `async`, so a bus send would only ENQUEUE (needing a running worker, and SMTP
+  errors would surface in the worker, not the flash). Bypassing the bus means the bus-only
+  `DelayedEnvelope` that lets `DefaultFromListener` fill an empty From isn't used, so the test
+  message sets From/Reply-To from settings EXPLICITLY (`buildTestEmail()`; From falls back to
+  the recipient) — else `Envelope::create()` throws on an empty From and some SMTP servers
+  reject a missing From. Scope: the test checks SMTP config only; it does NOT verify the
+  worker is running for real (async) order mail — that's a separate concern (a future
+  readiness/heartbeat panel). Real order/payment mail still (correctly) goes async via the
+  worker; only the test button is synchronous.
 - **Tests:** `tests/Settings/` — encryptor round-trip (ciphertext≠plaintext, wrong-key fails,
   bad-key-length throws), manager typed get/set + defaults + password write-only + secret
   never prefilled + undecryptable-secret-is-graceful, `isEncryptedValueReadable`, `app_date`

@@ -19,7 +19,7 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -62,7 +62,7 @@ class SettingsController extends AbstractController
     }
 
     #[Route('/test-email', name: 'admin_settings_test_email', methods: ['POST'])]
-    public function testEmail(Request $request, MailerInterface $mailer, SettingsMailerTransport $transport): Response
+    public function testEmail(Request $request, SettingsMailerTransport $transport): Response
     {
         if (!$this->isCsrfTokenValid('settings_test_email', (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException('Invalid CSRF token.');
@@ -84,14 +84,15 @@ class SettingsController extends AbstractController
         // guessing whether DB SMTP or the env fallback was used.
         $via = $transport->activeTransportLabel();
 
-        // From/Reply-To are filled by DefaultFromListener.
-        $email = (new Email())
-            ->to($to)
-            ->subject('Tallyst — test e-pošte')
-            ->text('Ovo je test poruka iz Tallyst Postavki. Ako je vidiš, konfiguracija radi.');
-
+        // Send SYNCHRONOUSLY, straight to the transport — the app routes SendEmailMessage to
+        // Messenger async, so $mailer->send() would only ENQUEUE (needing a running worker,
+        // and any SMTP error would surface in the worker, not here). A test must verify SMTP
+        // here and now. Because we bypass the bus, the bus-only DelayedEnvelope that lets
+        // DefaultFromListener fill an empty From is NOT in play, so buildTestEmail() sets
+        // From/Reply-To from settings explicitly (else Envelope::create() throws on an empty
+        // From, and some SMTP servers reject a missing/mismatched From — a false failure).
         try {
-            $mailer->send($email);
+            $transport->send($this->buildTestEmail($to));
             $this->addFlash('success', \sprintf('Poslano na %s preko %s.', $to, $via));
         } catch (TransportExceptionInterface $e) {
             // The REAL transport error (auth failed, connection refused, …), not a generic one.
@@ -101,6 +102,29 @@ class SettingsController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_settings');
+    }
+
+    /**
+     * Build the test message with the From/Reply-To identity from settings explicitly set
+     * (see testEmail() — DefaultFromListener can't be relied on for a direct transport send).
+     * From falls back to the recipient so the message always has a valid sender.
+     */
+    protected function buildTestEmail(string $to): Email
+    {
+        $fromEmail = (string) $this->settings->get('mail_from_email') ?: $to;
+
+        $email = (new Email())
+            ->from(new Address($fromEmail, (string) $this->settings->get('mail_from_name')))
+            ->to($to)
+            ->subject('Tallyst — test e-pošte')
+            ->text('Ovo je test poruka iz Tallyst Postavki. Ako je vidiš, SMTP konfiguracija radi.');
+
+        $replyTo = (string) $this->settings->get('mail_reply_to');
+        if ('' !== $replyTo) {
+            $email->replyTo($replyTo);
+        }
+
+        return $email;
     }
 
     /**
