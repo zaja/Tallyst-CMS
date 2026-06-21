@@ -93,7 +93,7 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(ThemeCrudController::class, 'Teme', 'fa fa-palette');
 
         yield MenuItem::section('Sustav');
-        yield MenuItem::linkTo(SettingCrudController::class, 'Postavke', 'fa fa-gear');
+        yield MenuItem::linkToRoute('Postavke', 'fa fa-gear', 'admin_settings');
 
         // Modules surface their own admin entries here, built dynamically from the
         // registry. Disabled modules are skipped.

@@ -6,7 +6,7 @@
     <article>
         <h1>{{ post.title }}</h1>
         {% if post.publishedAt %}
-            <p><time datetime="{{ post.publishedAt|date('c') }}">{{ post.publishedAt|date('d.m.Y.') }}</time></p>
+            <p><time datetime="{{ post.publishedAt|date('c') }}">{{ app_date(post.publishedAt) }}</time></p>
         {% endif %}
         {% if post.featuredImage %}<p class="featured-image">{{ media_img(post.featuredImage, 'medium') }}</p>{% endif %}
         {{ post.content|render_content }}

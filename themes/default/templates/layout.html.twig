@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="hr">
+<html lang="{{ setting('app_locale')|default('hr') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Tallyst{% endblock %}</title>
+    <title>{% block title %}{{ setting('site_name')|default('Tallyst') }}{% endblock %}</title>
+    {% if setting('site_tagline') %}<meta name="description" content="{{ setting('site_tagline') }}">{% endif %}
     {% block meta %}{% endblock %}
     <link rel="stylesheet" href="{{ theme_asset('css/theme.css') }}">
     {% block stylesheets %}{% endblock %}

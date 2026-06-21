@@ -31,7 +31,6 @@ class BrandingController extends AbstractController
     public function index(Request $request): Response
     {
         $data = new BrandingData();
-        $data->siteName = $this->settings->get('site_name', 'Tallyst') ?? 'Tallyst';
         $logoId = $this->settings->get('logo_media_id');
         $data->logo = $logoId ? $this->media->find((int) $logoId) : null;
 
@@ -39,7 +38,6 @@ class BrandingController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->settings->set('site_name', '' !== $data->siteName ? $data->siteName : 'Tallyst');
             $this->settings->set('logo_media_id', null !== $data->logo ? (string) $data->logo->getId() : '');
             $this->addFlash('success', 'Branding je spremljen.');
 

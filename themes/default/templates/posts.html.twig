@@ -9,7 +9,7 @@
         <article>
             {% if post.featuredImage %}<a href="{{ path('blog_post', {slug: post.slug}) }}" class="post-thumb">{{ media_img(post.featuredImage, 'thumb') }}</a>{% endif %}
             <h2 style="margin-bottom:.25rem"><a href="{{ path('blog_post', {slug: post.slug}) }}">{{ post.title }}</a></h2>
-            {% if post.publishedAt %}<time datetime="{{ post.publishedAt|date('c') }}">{{ post.publishedAt|date('d.m.Y.') }}</time>{% endif %}
+            {% if post.publishedAt %}<time datetime="{{ post.publishedAt|date('c') }}">{{ app_date(post.publishedAt) }}</time>{% endif %}
             {% if post.excerpt %}<p>{{ post.excerpt }}</p>{% endif %}
         </article>
         <hr style="border:none;border-top:1px solid #ececec;margin:1.5rem 0">

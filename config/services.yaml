@@ -37,5 +37,23 @@ services:
         arguments:
             $converters: !tagged_iterator app.editor_shortcode_converter
 
+    # Settings layer: registry aggregates every tagged section provider; the encryptor key
+    # comes from env (base64-decoded to 32 raw bytes — the real key lives in .env.local).
+    App\Settings\SettingsRegistry:
+        arguments:
+            $providers: !tagged_iterator app.settings_section
+
+    App\Settings\SettingsEncryptor:
+        arguments:
+            $key: '%env(base64:SETTINGS_ENCRYPTION_KEY)%'
+
+    # One source of truth for "how mail is sent": decorate the mailer transport so both
+    # synchronous and async (Messenger) mail go through the admin-configured SMTP, with the
+    # env MAILER_DSN as fallback. $inner is the original (env) transport.
+    App\Mailer\SettingsMailerTransport:
+        decorates: mailer.transports
+        arguments:
+            $inner: '@.inner'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

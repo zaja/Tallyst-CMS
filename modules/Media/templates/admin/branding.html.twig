@@ -8,8 +8,8 @@
     <div class="card">
         <div class="card-body" style="max-width: 32rem;">
             {{ form_start(form) }}
-            {{ form_row(form.siteName) }}
             {{ form_row(form.logo) }}
+            <p class="text-muted small">Naziv sajta se uređuje u <a href="{{ path('admin_settings') }}">Postavke → Općenito</a>.</p>
             <button class="btn btn-primary" type="submit">Spremi</button>
             {{ form_end(form) }}
         </div>

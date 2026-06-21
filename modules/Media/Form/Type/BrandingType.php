@@ -4,7 +4,6 @@ namespace Tallyst\Media\Form\Type;
 
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Tallyst\Media\Entity\Media;
@@ -15,10 +14,6 @@ class BrandingType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('siteName', TextType::class, [
-                'label' => 'Naziv sajta',
-                'empty_data' => '',
-            ])
             ->add('logo', EntityType::class, [
                 'class' => Media::class,
                 // Labels come from Media::__toString() (title ?: originalName).

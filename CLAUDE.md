@@ -291,6 +291,56 @@ Replaces the old Trix `TextEditorField` on Page/Post.
   are dev-only (`package.json`, `node_modules` git-ignored); the app still ships
   build-free via importmap. Run JS tests: `npm run test:js`.
 
+## Settings (typed layer over the Setting store) & email
+A typed, grouped settings layer sits ON TOP of the untyped `Setting` key/value store — no
+new table, no migration (encrypted values are just text in the existing `value` column).
+- **Schema is IoC**, like the shortcode/module registries. `SettingsSectionProviderInterface`
+  (`#[AutoconfigureTag('app.settings_section')]`) → `SettingsRegistry` aggregates sections.
+  Core ships `CoreSettingsProvider` (sections: **General**, **Lokalizacija**, **Email**);
+  modules MAY add sections later via the same interface (mechanism only — none built yet). A
+  `SettingDefinition` (key, `SettingType`, label, help, default, choices, `encrypted`) is the
+  single description used to BUILD the form AND cast values.
+- **`SettingsManager`** is the only typed read/write path over `SettingRepository`: casts by
+  type (bool→'1'/'0', int), applies schema defaults, and encrypts/decrypts `encrypted`
+  settings. **Write-only secrets:** an empty incoming value for an encrypted setting is a
+  NO-OP (keeps the stored value) — that's what lets the UI render the SMTP password field
+  empty ("•••• nepromijenjeno") and only overwrite when the admin types a new one.
+  `getForForm()` NEVER returns a secret.
+- **`SettingsEncryptor`** = libsodium `crypto_secretbox` (authenticated), key from
+  `SETTINGS_ENCRYPTION_KEY` env (base64 of 32 bytes, injected pre-decoded via the `base64:`
+  env processor; real key in `.env.local`, empty placeholder in `.env`). Stored form is
+  `base64(nonce.cipher)` — fresh nonce per write, so the same plaintext never repeats. Key
+  length is validated lazily, so an unconfigured env still boots. Only the SMTP password is
+  encrypted today.
+- **Friendly form** = `SettingsController` (`/admin/settings`, in the EA shell via the
+  `dashboardControllerFqcn` route default, same pattern as BrandingController). Fields are
+  built dynamically from the schema, grouped into Bootstrap tabs per section, saved through
+  `SettingsManager`. It REPLACES the raw `SettingCrudController` in the menu (the CRUD class
+  stays as a raw fallback, just unlinked). `site_name` + `site_tagline` live HERE (General)
+  as their single editable home; **Branding owns only the logo** (its form dropped
+  `site_name`). The front reads the same `site_name` key, so `render_branding()` is unchanged.
+- **Settings take effect** (not just save): `LocaleSubscriber` (kernel.request, priority 100)
+  applies `app_locale` to the request + `app_timezone` to PHP's default tz; the
+  `SettingsExtension` Twig `setting('key')` + `app_date(date, format?)` apply locale/timezone/
+  date-format on the front (the theme's hardcoded `|date('d.m.Y.')` were swapped to `app_date`).
+- **DB-driven mailer = ONE source of truth.** `SettingsMailerTransport` **decorates the
+  mailer transport** (`mailer.transports`), which BOTH the synchronous Mailer AND the async
+  Messenger `MessageHandler` resolve through — so sync and async mail (incl. FormBuilder
+  order/payment confirmations) all use the admin-configured SMTP, with env `MAILER_DSN` as
+  fallback when `smtp_host` is empty. The transport is built per-send via `EsmtpTransport`
+  constructed PROGRAMMATICALLY (host/port/tls from `smtp_encryption`: ssl→implicit TLS/465,
+  tls→STARTTLS/587, none→off; username; **password decrypted only in-memory**) — never via a
+  DSN string, so the password can't leak into logs/profiler. A long-running Messenger worker
+  caches the Setting row for its lifetime, so changing SMTP settings needs a worker restart.
+  `DefaultFromListener` (MessageEvent) fills From/Reply-To from the email identity settings on
+  any message that didn't set its own; the decorator passes the global dispatcher to the SMTP
+  transport so this fires for DB-SMTP sends too. "Pošalji test mail" (CSRF-protected POST on
+  the settings page) sends through this same path.
+- **Tests:** `tests/Settings/` — encryptor round-trip (ciphertext≠plaintext, wrong-key fails,
+  bad-key-length throws), manager typed get/set + defaults + password write-only + secret
+  never prefilled, `app_date` tz/format, `LocaleSubscriber`; `tests/Mailer/` — transport
+  build-vs-env-fallback branch. **GATE before working on encryption: `php8.5 -m | grep sodium`.**
+
 ## Backlog (queued — agreed, NOT yet built)
 - **Prolaz C — multi-column layout — DONE.** Custom Tiptap `columns`/`column` nodes (FIXED
   2/3 equal columns; not resizable). Built as a PURE HTML node (no shortcode/converter) —

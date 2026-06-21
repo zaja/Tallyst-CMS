@@ -1,0 +1,50 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% form_theme form 'bootstrap_5_layout.html.twig' %}
+
+{% block content_title %}Postavke{% endblock %}
+
+{% block main %}
+    {{ form_start(form) }}
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        {% for section in sections %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link{{ loop.first ? ' active' : '' }}" id="tab-{{ section.key }}"
+                        data-bs-toggle="tab" data-bs-target="#pane-{{ section.key }}"
+                        type="button" role="tab">
+                    <i class="fa {{ section.icon }}"></i> {{ section.label }}
+                </button>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <div class="tab-content">
+        {% for section in sections %}
+            <div class="tab-pane fade{{ loop.first ? ' show active' : '' }}" id="pane-{{ section.key }}"
+                 role="tabpanel" aria-labelledby="tab-{{ section.key }}">
+                <div class="card">
+                    <div class="card-body" style="max-width: 36rem;">
+                        {% for def in section.definitions %}
+                            {{ form_row(form[def.key]) }}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-3">
+        <button class="btn btn-primary" type="submit">Spremi postavke</button>
+    </div>
+    {{ form_end(form) }}
+
+    {# Separate form: send a test e-mail through the current DB SMTP configuration. #}
+    <hr class="my-4">
+    <form method="post" action="{{ path('admin_settings_test_email') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('settings_test_email') }}">
+        <button class="btn btn-secondary" type="submit">
+            <i class="fa fa-paper-plane"></i> Pošalji test mail
+        </button>
+        <span class="text-muted ms-2">Šalje na adresu pošiljatelja iz Email sekcije (spremi prvo).</span>
+    </form>
+{% endblock %}
