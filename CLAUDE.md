@@ -364,6 +364,8 @@ new table, no migration (encrypted values are just text in the existing `value` 
   **GATE before working on encryption: `php8.5 -m | grep sodium`.**
 
 ## Backlog (queued — agreed, NOT yet built)
+This is the SINGLE home for "what's next" — park ideas here, not scattered across chat.
+
 - **Prolaz C — multi-column layout — DONE.** Custom Tiptap `columns`/`column` nodes (FIXED
   2/3 equal columns; not resizable). Built as a PURE HTML node (no shortcode/converter) —
   see the "Multi-column layout" bullet under the WYSIWYG editor section for the full design
@@ -371,6 +373,46 @@ new table, no migration (encrypted values are just text in the existing `value` 
   `TallystDocument`, CSS in two places + theme contract, round-trip tests). NOT done (later
   passes): resizable columns, dynamic add/remove a column, nested columns, per-column
   widths/backgrounds, >3 columns.
+- **FormBuilder Pass 2b — PayPal + refund (NOT built).** PayPal is just another
+  `PaymentProcessorInterface` impl alongside Stripe (pass 2a done) — add it and register it in
+  the processor registry. Refund: the `order` state_machine already has the `refunded` state;
+  wire a trigger (admin action → provider refund call → transition) into it. Keep rule 5 (the
+  verified webhook stays the sole source of truth for `paid`).
+- **Product delivery model — decision + build (NOT built).** Tallyst sells both services AND
+  digital products (apps); today `paid→fulfilled` only sends e-mails. DECIDE the delivery model
+  per product type before building (e.g. nothing/manual hand-off for services vs. a download /
+  license key for apps). This is the "real product delivery" half of Pass 2b.
+- **Go-live checklist (a release GATE, not a feature).** Before the public domain goes live:
+  worker running as a DAEMON (systemd/supervisor, not a manual shell — see the Readiness Panel
+  below), `APP_ENV=prod` (never dev/debug on the public domain), LIVE Stripe keys + the
+  registered webhook secret in `.env.local`, a real `MAILER_DSN`/SMTP configured AND a test mail
+  delivered, and a real `SETTINGS_ENCRYPTION_KEY` provisioned (`app:install`). The Deployment
+  Readiness Panel below is the eventual in-admin surface for these checks.
+
+### Deployment Readiness Panel (installer faza — NE gradi se sad)
+Admin "Sustav/Deployment" panel: operativni go-live status + generirani setup snippeti.
+Dizajn-dogovor za installer fazu.
+
+- Worker aktivacija: generira stvarnu komandu/config za messenger worker. ODLUKA:
+  daemon (systemd/supervisor), NE cron (odabran trajni worker). Generira s detektiranim
+  putanjama (php8.5, project dir, bin/console messenger:consume async). CMS GENERIRA,
+  admin POKRENE kao server user — CMS nikad ne izvršava (web app ne smije instalirati
+  system servise = sigurnosna granica). Napomena: daemon setup traži root. (PRAKSA, naučeno
+  2026-06-21: user-level systemd unit u `~/.config/systemd/user/` + `loginctl enable-linger`
+  radi BEZ roota i preživi logout/reboot — tako je i pokrenut trenutni worker; system-level
+  `/etc/systemd/system` s `User=` i dalje traži root.)
+- Worker status indikator: preko HEARTBEATA, NE detekcije procesa (bez shell_exec/ps —
+  često ugašeno, krhko, security smell). Worker piše "last seen" timestamp na Messenger
+  WorkerRunningEvent (throttlano, u cache/status store); panel čita → ✓ aktivan ako svjež,
+  ✗ ako star. Dopuna: health red (broj pending + dob najstarije, iz Doctrine transport tablice).
+- Vidljivost komande: de-emfazirana (collapsible) kad radi, istaknuta kad ne radi — NE
+  skrivati potpuno (stari heartbeat ≠ sigurno mrtav; komanda je korisna referenca i kad radi).
+- Enkripcijski ključ u istom panelu: status SETTINGS_ENCRYPTION_KEY (postavljen/fali →
+  app:install); rotacija = jedan secret (SMTP lozinka), promijeni ključ + ponovno upiši
+  lozinku (write-only re-enkriptira); rotate-key komanda tek ako se enkriptirani settingsi
+  namnože; decrypt-fail graciozno (env fallback + upozorenje).
+- Ostali readiness checkovi (future): APP_ENV=prod provjera, mailer konfiguriran + test.
+- Preduvjet: heartbeat subscriber je mali enabling dio (može se dodati i ranije ako zatreba).
 
 ## Adding a new module (the pattern to follow)
 Copy `modules/FormBuilder/` — it is the reference module. Its bundle class
