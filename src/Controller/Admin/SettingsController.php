@@ -194,8 +194,11 @@ class SettingsController extends AbstractController
 
         if (SettingType::PASSWORD === $def->type) {
             // Write-only: never prefilled, empty submit keeps the stored value.
+            // autocomplete=new-password STOPS the browser password manager from autofilling
+            // this field — an autofilled (non-empty) value would bypass the empty=keep guard and
+            // overwrite the real secret on Save (it silently broke the SMTP password before).
             $options['always_empty'] = true;
-            $options['attr'] = ['placeholder' => '•••• nepromijenjeno'];
+            $options['attr'] = ['placeholder' => '•••• nepromijenjeno', 'autocomplete' => 'new-password'];
         }
 
         return $options;
