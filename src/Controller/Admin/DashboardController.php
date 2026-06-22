@@ -102,6 +102,7 @@ class DashboardController extends AbstractDashboardController
 
         yield MenuItem::section('Sustav')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkToRoute('Postavke', 'fa fa-gear', 'admin_settings')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToRoute('Email predlošci', 'fa fa-envelope-open-text', 'admin_email_templates')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkTo(UserCrudController::class, 'Korisnici', 'fa fa-users')->setPermission('ROLE_ADMIN');
 
         // Modules surface their own admin entries here, built dynamically from the registry.

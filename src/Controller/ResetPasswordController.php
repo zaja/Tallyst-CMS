@@ -2,18 +2,18 @@
 
 namespace App\Controller;
 
+use App\Email\EmailSender;
 use App\Entity\User;
 use App\Form\ChangePasswordFormType;
 use App\Form\ResetPasswordRequestFormType;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
@@ -34,7 +34,7 @@ class ResetPasswordController extends AbstractController
      * Display & process form to request a password reset.
      */
     #[Route('', name: 'app_forgot_password_request')]
-    public function request(Request $request, MailerInterface $mailer, TranslatorInterface $translator): Response
+    public function request(Request $request, EmailSender $emails, UrlGeneratorInterface $urls, TranslatorInterface $translator): Response
     {
         $form = $this->createForm(ResetPasswordRequestFormType::class);
         $form->handleRequest($request);
@@ -43,8 +43,7 @@ class ResetPasswordController extends AbstractController
             /** @var string $email */
             $email = $form->get('email')->getData();
 
-            return $this->processSendingPasswordResetEmail($email, $mailer, $translator
-            );
+            return $this->processSendingPasswordResetEmail($email, $emails, $urls, $translator);
         }
 
         return $this->render('reset_password/request.html.twig', [
@@ -128,7 +127,7 @@ class ResetPasswordController extends AbstractController
         ]);
     }
 
-    private function processSendingPasswordResetEmail(string $emailFormData, MailerInterface $mailer, TranslatorInterface $translator): RedirectResponse
+    private function processSendingPasswordResetEmail(string $emailFormData, EmailSender $emails, UrlGeneratorInterface $urls, TranslatorInterface $translator): RedirectResponse
     {
         $user = $this->entityManager->getRepository(User::class)->findOneBy([
             'email' => $emailFormData,
@@ -155,19 +154,17 @@ class ResetPasswordController extends AbstractController
             return $this->redirectToRoute('app_check_email');
         }
 
-        // No ->from(): DefaultFromListener applies the configured mail_from_email. Hardcoding a
-        // From the SMTP account doesn't own gets rejected (553 not-owned). Sent async via the
-        // hardened mailer (SendEmailMessage → Messenger worker), like the other app mails.
-        $email = (new TemplatedEmail())
-            ->to((string) $user->getEmail())
-            ->subject('Promjena lozinke — Tallyst')
-            ->htmlTemplate('reset_password/email.html.twig')
-            ->context([
-                'resetToken' => $resetToken,
-            ])
-        ;
+        // Through the editable email engine (password_reset type). The reset link MUST be an
+        // ABSOLUTE URL — generated here in the web request (ABSOLUTE_URL → request host); in the
+        // worker the same generator would use default_uri (the localhost-link lesson). From is left
+        // unset (DefaultFromListener / 553) and the send is async, both handled by EmailSender.
+        $resetUrl = $urls->generate(
+            'app_reset_password',
+            ['token' => $resetToken->getToken()],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
 
-        $mailer->send($email);
+        $emails->send('password_reset', ['reset_url' => $resetUrl], (string) $user->getEmail());
 
         // Store the token object in session for retrieval in check-email route.
         $this->setTokenObjectInSession($resetToken);

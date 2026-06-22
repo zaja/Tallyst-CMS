@@ -2,15 +2,18 @@
 
 namespace App\Tests\FormBuilder;
 
+use App\Email\EmailSender;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
-use Symfony\Component\Mime\RawMessage;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
 use Tallyst\FormBuilder\Entity\FormSubmission;
 use Tallyst\FormBuilder\Service\SubmissionNotifier;
 
+/**
+ * The notifier now delegates to the EmailSender engine (form_notification type). These assert it
+ * calls the engine with the right type / tags / recipients / per-form subject override — and that
+ * it does NOT send for disabled / no-recipient / priced forms.
+ */
 class SubmissionNotifierTest extends TestCase
 {
     private function freeForm(): FormDefinition
@@ -33,56 +36,57 @@ class SubmissionNotifierTest extends TestCase
 
     public function testSendsNotificationForEnabledFreeForm(): void
     {
-        $captured = null;
-        $mailer = $this->createMock(MailerInterface::class);
-        $mailer->expects(self::once())->method('send')
-            ->willReturnCallback(function (RawMessage $m) use (&$captured): void { $captured = $m; });
+        $args = null;
+        $sender = $this->createMock(EmailSender::class);
+        $sender->expects(self::once())->method('send')
+            ->willReturnCallback(function (...$a) use (&$args): void { $args = $a; });
 
-        (new SubmissionNotifier($mailer))->notify($this->submission($this->freeForm(), ['name' => 'Ana']));
+        (new SubmissionNotifier($sender))->notify($this->submission($this->freeForm(), ['name' => 'Ana']));
 
-        self::assertInstanceOf(Email::class, $captured);
-        self::assertSame('inbox@site.test', $captured->getTo()[0]->getAddress());
-        self::assertSame([], $captured->getFrom(), 'From left empty so DefaultFromListener applies mail_from_email');
-        self::assertSame('Nova prijava: Kontakt', $captured->getSubject());
-        self::assertStringContainsString('Ime: Ana', (string) $captured->getTextBody());
+        [$type, $tags, $to, $subjectOverride] = $args;
+        self::assertSame('form_notification', $type);
+        self::assertSame('Kontakt', $tags['form_name']);
+        self::assertStringContainsString('Ime: Ana', $tags['submission_summary']);
+        self::assertSame(['inbox@site.test'], $to);
+        self::assertNull($subjectOverride, 'no per-form subject → engine default');
     }
 
     public function testUsesConfiguredSubjectAndMultipleRecipients(): void
     {
         $form = $this->freeForm()->setNotifyRecipient('a@x.test, b@y.test')->setNotifySubject('Upit!');
-        $captured = null;
-        $mailer = $this->createMock(MailerInterface::class);
-        $mailer->expects(self::once())->method('send')
-            ->willReturnCallback(function (RawMessage $m) use (&$captured): void { $captured = $m; });
+        $args = null;
+        $sender = $this->createMock(EmailSender::class);
+        $sender->expects(self::once())->method('send')
+            ->willReturnCallback(function (...$a) use (&$args): void { $args = $a; });
 
-        (new SubmissionNotifier($mailer))->notify($this->submission($form, []));
+        (new SubmissionNotifier($sender))->notify($this->submission($form, []));
 
-        self::assertInstanceOf(Email::class, $captured);
-        self::assertSame('Upit!', $captured->getSubject());
-        self::assertCount(2, $captured->getTo());
+        [, , $to, $subjectOverride] = $args;
+        self::assertSame(['a@x.test', 'b@y.test'], $to);
+        self::assertSame('Upit!', $subjectOverride, 'per-form notifySubject preserved as override');
     }
 
     public function testDoesNotSendWhenDisabled(): void
     {
-        $mailer = $this->createMock(MailerInterface::class);
-        $mailer->expects(self::never())->method('send');
+        $sender = $this->createMock(EmailSender::class);
+        $sender->expects(self::never())->method('send');
 
-        (new SubmissionNotifier($mailer))->notify($this->submission($this->freeForm()->setNotifyEnabled(false), []));
+        (new SubmissionNotifier($sender))->notify($this->submission($this->freeForm()->setNotifyEnabled(false), []));
     }
 
     public function testDoesNotSendWhenNoValidRecipient(): void
     {
-        $mailer = $this->createMock(MailerInterface::class);
-        $mailer->expects(self::never())->method('send');
+        $sender = $this->createMock(EmailSender::class);
+        $sender->expects(self::never())->method('send');
 
-        (new SubmissionNotifier($mailer))->notify($this->submission($this->freeForm()->setNotifyRecipient('not-an-email'), []));
+        (new SubmissionNotifier($sender))->notify($this->submission($this->freeForm()->setNotifyRecipient('not-an-email'), []));
     }
 
     public function testDoesNotSendForPricedForm(): void
     {
-        $mailer = $this->createMock(MailerInterface::class);
-        $mailer->expects(self::never())->method('send');
+        $sender = $this->createMock(EmailSender::class);
+        $sender->expects(self::never())->method('send');
 
-        (new SubmissionNotifier($mailer))->notify($this->submission($this->freeForm()->setPriceMinor(500), []));
+        (new SubmissionNotifier($sender))->notify($this->submission($this->freeForm()->setPriceMinor(500), []));
     }
 }

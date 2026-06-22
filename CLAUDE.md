@@ -65,9 +65,9 @@ built now.
   FormBuilder + Stripe, Settings/SMTP, and production-grade auth (roles, user CRUD, lockout, reset,
   2FA, throttling, self-service password). Per-area implementation detail is documented below.
 - **Phase 1 — CMS-complete polish (CURRENT).** Theme + demo + page layout/hero + footer config +
-  branding-in-Postavke + favicon + blog archives/pagination + post author/byline — all **DONE**
-  (see the sections below). **Only remaining Phase 1 pass: email templates** (scoped as above) —
-  the final Phase 1 item.
+  branding-in-Postavke + favicon + blog archives/pagination + post author/byline + email-templates
+  engine (PASS 1) — all **DONE** (see the sections below). **Remaining Phase 1 pass: email templates
+  PASS 2** (Tiptap-lite body editor + "insert tag" UI) — the final Phase 1 item.
 - **Phase 2 — E-commerce finish (manual-fulfilment model).** PayPal processor alongside Stripe;
   refund (the `refunded` state exists); order-flow / order-mail polish. **NOT** automated delivery.
 - **Phase 3 — Standalone installer + deployment readiness.** WordPress-like install procedure;
@@ -566,6 +566,45 @@ new table, no migration (encrypted values are just text in the existing `value` 
   `tests/Mailer/` — transport build / env-fallback / decrypt-fail-fallback + transport label.
   **GATE before working on encryption: `php8.5 -m | grep sodium`.**
 
+## Email templates engine (editable mails) — PASS 1 DONE
+All 4 customer/admin mails are admin-editable (subject + HTML body + enabled) via one engine.
+**The rich editor is PASS 2 (queued)** — pass 1 ships a plain-textarea editor + tag reference.
+- **Model = override-only.** `EmailTemplate` (`identifier` unique = type key, `subject`, `body`,
+  `enabled`) holds ONLY the admin's override per type. Known types + DEFAULT subject/body + tag
+  inventory live in CODE (the registry). LAZY: send/edit uses `DB override ?? registry default`,
+  nothing is seeded.
+- **Type registry is IoC** (`app.email_type`, like settings sections): `EmailTypeProviderInterface`
+  → `EmailTypeRegistry`. Core (`CoreEmailTypeProvider`) ships `password_reset`; **FormBuilder owns
+  its own mail types** (`order_confirmation`, `order_admin`, `form_notification`) so Core never
+  touches `Order`. An `EmailType` carries key/label/tags(name=>desc)/requiredTags/canDisable/
+  defaultSubject/defaultBody. The send SITE builds the `{tag}` VALUES from its context (the registry
+  only declares the inventory).
+- **Rendering = SAFE placeholder replacement, NOT Twig-eval of admin content (no SSTI).**
+  `EmailRenderer`: only the type's ADVERTISED `{tags}` are replaced — a known tag with NO value →
+  EMPTY (never a literal `{tag}`), an unknown `{x}` is left as typed. BODY tag values are
+  `htmlspecialchars`-escaped (admin markup passes raw — admin trusted for markup); SUBJECT values are
+  stripped of CR/LF (header-injection safety), not HTML-escaped. Only the base layout
+  (`templates/emails/base.html.twig`) is real (trusted) Twig; the rendered body is injected `|raw`.
+- **Absolute URLs (the reset-link lesson).** The base layout + reset link use ABSOLUTE URLs from the
+  router CONTEXT (request host in web, `default_uri` in the worker) — mail is sent without a request.
+  The logo is `base_url ~ branding_logo_url(...)`.
+- **`EmailSender` is the ONE send path** (`send(type, tagValues, to, ?subjectOverride)`): skip if the
+  template is disabled — EXCEPT a non-`canDisable` type (reset) always sends (a stale DB row can't
+  break reset); render → `Email` with **From UNSET** (DefaultFromListener / 553) + html + text
+  fallback → `$mailer->send()` (async via the worker). All 4 call sites are one-liners, so the
+  From/async/absolute-URL discipline can't drift. (`subjectOverride` preserves a form's own
+  `notifySubject`.)
+- **Reset guard (3×):** `password_reset` has `requiredTags=['reset_url']`, `canDisable=false`; the
+  admin editor rejects a save whose body lacks `{reset_url}` AND forces `enabled=true`; `EmailSender`
+  treats non-`canDisable` as always-send.
+- **Admin:** `EmailTemplateController` (`/admin/email`, class-level `ROLE_ADMIN`, EA shell) — list from
+  the registry → per-type edit (subject + plain textarea body + enabled toggle, hidden/forced for
+  reset) with the type's tags listed as reference. Linked under the dashboard **Sustav** section; in
+  `AdminAccessTest::ADMIN_ONLY`.
+- **Tests:** `tests/Email/EmailRendererTest` (value HTML-escaping = security, empty-on-missing-tag,
+  subject CRLF-strip, required-tag detection); `SubmissionNotifierTest` retargeted to the engine.
+  Queued: **PASS 2** — Tiptap-lite body editor + an "insert tag" UI.
+
 ## Roles & access (back-office)
 Two roles: **ROLE_ADMIN** (everything) and **ROLE_EDITOR** (content only — Pages, Posts,
 Categories, Media). `role_hierarchy: ROLE_ADMIN ⊇ ROLE_EDITOR`, so existing admins keep full
@@ -720,12 +759,12 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   renderer). The demo seed creates a **dedicated demo author** (`demo-author@tallyst.local`, nickname
   "Tallyst tim", ROLE_EDITOR, unusable random password) so the byline shows without touching the real
   admin; removed by `--fresh`.
-- **Email templates — SCOPED (NOT built) — the LAST & only remaining Phase 1 pass.** Light admin
-  editability for CUSTOMER-FACING mail (order confirmation, free-form notification): editable
-  subject + body + a few variables (`{name}`, `{total}`…) + sensible defaults. System mail (reset,
-  2FA) stays Twig in code. **NOT** a full admin email-template editor (variables/preview/per-type
-  IDE) — that's over-build. (The demo Create/Delete admin panel is NOT a Phase 1 item — it moved to
-  "Import / content packs" in Post-v1, below.)
+- **Email templates — PASS 1 (engine + wiring) DONE.** All 4 mails (order confirmation, order-admin,
+  form notification, password reset) are admin-editable via the engine (subject + HTML body +
+  enabled), safe placeholder render, branded base layout, reset guard, basic admin editor. Full
+  design in "Email templates engine". **Queued: PASS 2** — Tiptap-lite body editor + "insert tag" UI.
+  (2FA is TOTP — no mail. The demo Create/Delete admin panel is NOT Phase 1 — it's in "Import /
+  content packs", Post-v1.)
 
 ### Phase 2 — E-commerce finish (manual-fulfilment model)
 - **FormBuilder Pass 2b — PayPal + refund (NOT built).** PayPal is just another

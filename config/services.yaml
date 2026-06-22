@@ -43,6 +43,11 @@ services:
         arguments:
             $providers: !tagged_iterator app.settings_section
 
+    # Email engine: registry aggregates every tagged email-type provider (Core + modules).
+    App\Email\EmailTypeRegistry:
+        arguments:
+            $providers: !tagged_iterator app.email_type
+
     App\Settings\SettingsEncryptor:
         arguments:
             $key: '%env(base64:SETTINGS_ENCRYPTION_KEY)%'

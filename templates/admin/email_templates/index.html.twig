@@ -1,0 +1,36 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Email predlošci{% endblock %}
+
+{% block main %}
+    <p class="text-muted">Uredi naslov i sadržaj e-mailova koje sustav šalje. Zadane vrijednosti
+        koriste se dok ih ne urediš.</p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tip</th>
+                <th>Status</th>
+                <th>Uređeno</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.type.label }}</td>
+                    <td>
+                        {% if row.enabled %}
+                            <span class="badge badge-success">Omogućeno</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Onemogućeno</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.overridden ? 'Da' : '— (zadano)' }}</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-secondary" href="{{ path('admin_email_template_edit', {key: row.type.key}) }}">Uredi</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

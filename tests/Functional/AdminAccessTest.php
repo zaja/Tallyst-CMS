@@ -27,7 +27,7 @@ class AdminAccessTest extends WebTestCase
     private const ADMIN_ONLY = [
         '/admin/settings', '/admin/modules', '/admin/user', '/admin/order',
         '/admin/theme', '/admin/menu', '/admin/menu-item', '/admin/setting',
-        '/admin/forms',
+        '/admin/forms', '/admin/email',
     ];
 
     /** @var string[] */

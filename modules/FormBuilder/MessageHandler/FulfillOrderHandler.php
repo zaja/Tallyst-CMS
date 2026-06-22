@@ -2,11 +2,10 @@
 
 namespace Tallyst\FormBuilder\MessageHandler;
 
+use App\Email\EmailSender;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\Workflow\WorkflowInterface;
 use Tallyst\FormBuilder\Entity\Order;
 use Tallyst\FormBuilder\Message\FulfillOrderMessage;
@@ -18,6 +17,9 @@ use Tallyst\FormBuilder\Repository\OrderRepository;
  * processed. If the mailer throws, the message is retried and the order STAYS paid;
  * fulfillment never rolls back the money truth.
  *
+ * Mails go through the EmailSender engine (editable templates); From stays unset
+ * (DefaultFromListener / 553 lesson) and the send is async via the worker.
+ *
  * Real product delivery (downloads/access) is a later iteration.
  */
 #[AsMessageHandler]
@@ -25,7 +27,7 @@ class FulfillOrderHandler
 {
     public function __construct(
         private readonly OrderRepository $orders,
-        private readonly MailerInterface $mailer,
+        private readonly EmailSender $emails,
         private readonly EntityManagerInterface $em,
         private readonly WorkflowInterface $orderStateMachine,
         #[Autowire('%env(ORDER_ADMIN_EMAIL)%')]
@@ -61,37 +63,26 @@ class FulfillOrderHandler
             return;
         }
 
-        // No explicit From: the global DefaultFromListener fills it from the configured
-        // email identity (mail_from_email). Hardcoding a From here meant order mail used an
-        // address the SMTP account doesn't own (e.g. noreply@…), which real SMTP servers
-        // reject (553 "Sender address rejected"). One identity, one source of truth.
-        $this->mailer->send(
-            (new Email())
-                ->to($email)
-                ->subject(\sprintf('Potvrda narudžbe #%d', $order->getId()))
-                ->text(\sprintf(
-                    "Hvala na narudžbi!\n\nNarudžba #%d\nIznos: %s %s\nStatus: plaćeno\n\nTallyst",
-                    $order->getId(),
-                    number_format($order->getAmountMinor() / 100, 2, ',', '.'),
-                    strtoupper($order->getCurrency()),
-                )),
-        );
+        $this->emails->send('order_confirmation', $this->tags($order), $email);
     }
 
     private function sendAdminEmail(Order $order): void
     {
-        $this->mailer->send(
-            (new Email())
-                ->to($this->adminEmail)
-                ->subject(\sprintf('Nova plaćena narudžba #%d', $order->getId()))
-                ->text(\sprintf(
-                    "Nova plaćena narudžba.\n\nNarudžba #%d\nForma: %s\nIznos: %s %s\nKupac: %s",
-                    $order->getId(),
-                    $order->getForm()?->getName() ?? '-',
-                    number_format($order->getAmountMinor() / 100, 2, ',', '.'),
-                    strtoupper($order->getCurrency()),
-                    $order->getCustomerEmail() ?? '-',
-                )),
-        );
+        $this->emails->send('order_admin', $this->tags($order) + [
+            'customer_email' => $order->getCustomerEmail() ?? '-',
+        ], $this->adminEmail);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function tags(Order $order): array
+    {
+        return [
+            'order_id' => (string) $order->getId(),
+            'amount' => number_format($order->getAmountMinor() / 100, 2, ',', '.'),
+            'currency' => strtoupper($order->getCurrency()),
+            'form_name' => $order->getForm()?->getName() ?? '-',
+        ];
     }
 }
