@@ -477,6 +477,22 @@ access automatically and are never demoted.
     `tests/Functional/TwoFactorTest` (no-2FA straight-in, valid/invalid TOTP, backup-code consume,
     reset-still-challenges, enrol confirm). NOT done: required-2FA-for-admins, trusted devices,
     SMS/e-mail 2FA, WebAuthn, full self-profile.
+- **Login throttling** (brute-force): `login_throttling: { max_attempts: 5, interval: '15 minutes' }`
+  on the `main` firewall. Symfony registers TWO limiters — LOCAL (username+IP, 5/15min) AND GLOBAL
+  (IP only, 5×max = 25/15min); a successful login resets them. Storage = `cache.rate_limiter`
+  (filesystem). E-mail reset is the escape if locked out. Enabled in ALL envs (incl. test) — the
+  throttle message shows on the login form (English, like "Invalid credentials"; no hr security-domain
+  translations). Locked by `tests/Functional/LoginThrottlingTest` which CLEARS the `cache.rate_limiter`
+  pool (setUp/tearDown) and uses a unique username so it's deterministic via the local limiter and
+  doesn't pollute other functional logins (which succeed → reset anyway).
+- **Self-service password change** lives on the "Sigurnost" page (`SecurityController::index`, GET|POST,
+  `ChangeOwnPasswordType`): `currentPassword` re-auths via `#[SecurityAssert\UserPassword]` (a hijacked
+  session can't change it without the current one); the new password reuses the reset form's rules
+  (Length≥12 + PasswordStrength + NotCompromisedPassword, the last disabled `when@test`). **Gotcha
+  handled:** changing your OWN password must mutate the SAME instance `getUser()` returns (the token's
+  user) then flush — so the refreshed token keeps the new hash and the session SURVIVES; hashing onto a
+  re-fetched User would log you out on the next request. Asserted by `tests/Functional/PasswordChangeTest`
+  (still-authenticated-after-change + wrong-current + weak-new). **Auth thread is parked here.**
 - **Functional tests need a migrated test DB.** This server uses a separate `tallystcmstest`
   database (its own MySQL user); the connection lives in **`.env.test.local`** (git-ignored).
   The `test` env does NOT load `.env.local`, so `.env.test.local` must carry `DATABASE_URL`

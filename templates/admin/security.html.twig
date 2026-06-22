@@ -1,5 +1,7 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
+{% form_theme passwordForm 'bootstrap_5_layout.html.twig' %}
+
 {% block content_title %}Sigurnost{% endblock %}
 
 {% block main %}
@@ -27,6 +29,18 @@
                    Dodaj drugi faktor (kod iz aplikacije) za jaču zaštitu računa.</p>
                 <a class="btn btn-primary" href="{{ path('admin_security_2fa_enable') }}">Uključi 2FA</a>
             {% endif %}
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body" style="max-width: 36rem;">
+            <h2 class="h5">Promjena lozinke</h2>
+            {{ form_start(passwordForm) }}
+                {{ form_row(passwordForm.currentPassword) }}
+                {{ form_row(passwordForm.newPassword.first) }}
+                {{ form_row(passwordForm.newPassword.second) }}
+                <button class="btn btn-primary" type="submit">Promijeni lozinku</button>
+            {{ form_end(passwordForm) }}
         </div>
     </div>
 {% endblock %}

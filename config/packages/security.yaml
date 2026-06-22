@@ -30,6 +30,12 @@ security:
             logout:
                 path: admin_logout
                 target: admin_login
+            # Brute-force protection: throttles failed logins. Symfony registers TWO limiters —
+            # local (username+IP, 5 / 15 min) AND global (IP only, 5×max = 25 / 15 min). A
+            # successful login resets them. E-mail reset stays the escape hatch if locked out.
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
             # TOTP 2FA (scheb): after the password, users with 2FA enabled hit the challenge
             # before full auth. The firewall is stateful (no `stateless: true`), so the
             # IS_AUTHENTICATED_2FA_IN_PROGRESS state survives in the session between steps.

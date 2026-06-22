@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\User;
+use App\Form\ChangeOwnPasswordType;
 use Doctrine\ORM\EntityManagerInterface;
 use Endroid\QrCode\Builder\Builder;
 use Scheb\TwoFactorBundle\Security\TwoFactor\Provider\Totp\TotpAuthenticatorInterface;
@@ -33,13 +34,30 @@ class SecurityController extends AbstractController
     ) {
     }
 
-    #[Route('', name: 'admin_security', methods: ['GET'])]
-    public function index(): Response
+    #[Route('', name: 'admin_security', methods: ['GET', 'POST'])]
+    public function index(Request $request): Response
     {
         /** @var User $user */
         $user = $this->getUser();
 
-        return $this->render('admin/security.html.twig', ['enabled' => $user->isTotpAuthenticationEnabled()]);
+        $passwordForm = $this->createForm(ChangeOwnPasswordType::class);
+        $passwordForm->handleRequest($request);
+        if ($passwordForm->isSubmitted() && $passwordForm->isValid()) {
+            // Mutate the SAME instance the security token holds (getUser()), then flush — so the
+            // token carries the new hash and the session SURVIVES the change. Re-fetching a fresh
+            // User and hashing onto that would leave the token on the OLD hash → next request's
+            // refreshUser sees a mismatch and logs the user out (the classic gotcha).
+            $user->setPassword($this->hasher->hashPassword($user, (string) $passwordForm->get('newPassword')->getData()));
+            $this->em->flush();
+            $this->addFlash('success', 'Lozinka je promijenjena.');
+
+            return $this->redirectToRoute('admin_security');
+        }
+
+        return $this->render('admin/security.html.twig', [
+            'enabled' => $user->isTotpAuthenticationEnabled(),
+            'passwordForm' => $passwordForm,
+        ]);
     }
 
     /**
