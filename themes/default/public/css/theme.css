@@ -424,6 +424,44 @@ th { font-weight: 650; }
 .post-card .post-meta { color: var(--muted); font-size: var(--fs-sm); }
 .post-card .post-excerpt { margin: 0; color: var(--ink); }
 
+/* ----------------------------------------------------------- Pagination --- */
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-2);
+    margin-top: var(--s-7);
+}
+.pagination-num,
+.pagination-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    padding: var(--s-2) var(--s-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    background: var(--bg);
+    font-size: var(--fs-sm);
+}
+.pagination-num:hover,
+.pagination-step:hover { background: var(--surface); color: var(--brand); text-decoration: none; }
+.pagination-num.is-current {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: var(--brand-ink);
+    font-weight: 600;
+}
+.pagination-step.is-disabled {
+    color: var(--muted);
+    background: var(--surface);
+    opacity: .6;
+    cursor: default;
+}
+.pagination-gap { padding: 0 var(--s-1); color: var(--muted); }
+.pagination-step { margin-inline: var(--s-1); }
+
 /* ----------------------------------------------------------- Post meta --- */
 .post-meta time { color: var(--muted); }
 

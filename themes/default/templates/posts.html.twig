@@ -7,29 +7,6 @@
         <h1>Blog</h1>
     </header>
 
-    {% if posts is empty %}
-        <p>Još nema objava.</p>
-    {% else %}
-        <ul class="post-list">
-            {% for post in posts %}
-                <li class="post-card">
-                    {% if post.featuredImage %}
-                        <a href="{{ path('blog_post', {slug: post.slug}) }}" class="post-card-media" aria-hidden="true" tabindex="-1">
-                            {{ media_img(post.featuredImage, 'medium') }}
-                        </a>
-                    {% endif %}
-                    <div class="post-card-body">
-                        <h2><a href="{{ path('blog_post', {slug: post.slug}) }}">{{ post.title }}</a></h2>
-                        {% if post.publishedAt %}
-                            <p class="post-meta">
-                                <time datetime="{{ post.publishedAt|date('c') }}">{{ app_date(post.publishedAt) }}</time>
-                                {% if post.category %} · {{ post.category.name }}{% endif %}
-                            </p>
-                        {% endif %}
-                        {% if post.excerpt %}<p class="post-excerpt">{{ post.excerpt }}</p>{% endif %}
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+    {{ include('_posts_list.html.twig', {posts: page.items}) }}
+    {{ include('_pagination.html.twig', {page: page.page, lastPage: page.lastPage, route: 'blog_index', routeParams: {}}) }}
 {% endblock %}

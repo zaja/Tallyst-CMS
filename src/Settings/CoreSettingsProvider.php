@@ -31,6 +31,10 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
             new SettingDefinition('favicon_media_id', SettingType::MEDIA, 'Favicon', 'Ikona u kartici preglednika (PNG/JPG, kvadratna ~64px).'),
         ]);
 
+        yield new SettingsSection('blog', 'Blog', 'fa-newspaper', [
+            new SettingDefinition('blog_posts_per_page', SettingType::INT, 'Objava po stranici', 'Koliko objava prikazati po stranici na blogu i arhivama (1–50).', 9),
+        ]);
+
         yield new SettingsSection('localization', 'Lokalizacija', 'fa-globe', [
             new SettingDefinition('app_locale', SettingType::CHOICE, 'Jezik', 'Zadani jezik sučelja i prijevoda.', 'en', [
                 'English' => 'en',

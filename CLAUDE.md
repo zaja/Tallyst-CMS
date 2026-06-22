@@ -702,8 +702,17 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
 - **Footer config + branding-in-Postavke + favicon — DONE.** Branding (logo) moved into Postavke
   → Branding (standalone page removed) + favicon; configurable footer (columns/text/menu/
   copyright/powered-by) replacing the hardcoded one. Design in the "Settings" section.
+- **Blog archives + pagination — DONE.** Category archives at **`/kategorija/{slug}`**
+  (`CategoryController`, `category_show`; two-segment so the `/{slug}` catch-all can't swallow it).
+  Pagination via the Doctrine ORM **`Paginator`** (`PostRepository::paginatePublished` — `status`
+  filter + optional `category`, `ORDER BY publishedAt DESC, id DESC` stable tiebreaker, to-ONE
+  join-fetch of category+featuredImage to avoid N+1, `fetchJoinCollection: false`). **`App\Blog\
+  PostPaginator`** is the ONE shared orchestrator (both controllers call it): reads
+  `blog_posts_per_page` (clamped [1,50], default 9), clamps `?page` (junk→1, out-of-range→last,
+  never a 500), returns a `BlogPage` DTO. Shared theme partials `_posts_list.html.twig` (card grid)
+  + `_pagination.html.twig` (windowed 1 … current±2 … last) reused by `posts.html.twig` (index) and
+  `category.html.twig` (archive). Category links (cards + post page) now point to `category_show`.
 - **Remaining CMS-complete items (NOT built, queued — agreed scope, keep this list honest):**
-  - **Blog archives + pagination** — paginate the blog index; category/date archive listings.
   - **Post author + user display name** — show the author on posts; add a display name to `User`.
   - **Demo-in-admin** — a Create/Delete demo-content control in the back-office (wraps
     `app:demo:seed` / its `--fresh` teardown) so it's not CLI-only.

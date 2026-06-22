@@ -1,0 +1,37 @@
+{# Shared pagination control. Inputs: `page`, `lastPage`, `route`, `routeParams`.
+   Windowed: 1 … (current ± 2) … last, with ellipsis for gaps. Renders nothing on a single
+   page. Links keep the existing route params (e.g. the category slug) and only swap ?page. #}
+{% if lastPage > 1 %}
+    {% set window = 2 %}
+    <nav class="pagination" aria-label="Stranice">
+        {% if page > 1 %}
+            <a class="pagination-step" rel="prev" href="{{ path(route, routeParams|merge({page: page - 1})) }}">‹ Prethodna</a>
+        {% else %}
+            <span class="pagination-step is-disabled" aria-disabled="true">‹ Prethodna</span>
+        {% endif %}
+
+        {% set shown = [] %}
+        {% for p in 1..lastPage %}
+            {% if p == 1 or p == lastPage or (p >= page - window and p <= page + window) %}
+                {% set shown = shown|merge([p]) %}
+            {% endif %}
+        {% endfor %}
+
+        {% set prev = 0 %}
+        {% for p in shown %}
+            {% if prev and p - prev > 1 %}<span class="pagination-gap" aria-hidden="true">…</span>{% endif %}
+            {% if p == page %}
+                <span class="pagination-num is-current" aria-current="page">{{ p }}</span>
+            {% else %}
+                <a class="pagination-num" href="{{ path(route, routeParams|merge({page: p})) }}">{{ p }}</a>
+            {% endif %}
+            {% set prev = p %}
+        {% endfor %}
+
+        {% if page < lastPage %}
+            <a class="pagination-step" rel="next" href="{{ path(route, routeParams|merge({page: page + 1})) }}">Sljedeća ›</a>
+        {% else %}
+            <span class="pagination-step is-disabled" aria-disabled="true">Sljedeća ›</span>
+        {% endif %}
+    </nav>
+{% endif %}

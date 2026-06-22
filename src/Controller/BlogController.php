@@ -2,18 +2,21 @@
 
 namespace App\Controller;
 
+use App\Blog\PostPaginator;
 use App\Repository\PostRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 class BlogController extends AbstractController
 {
     #[Route('/blog', name: 'blog_index')]
-    public function index(PostRepository $posts): Response
+    public function index(Request $request, PostPaginator $paginator): Response
     {
         return $this->render('posts.html.twig', [
-            'posts' => $posts->findPublished(),
+            // Tolerant cast (not getInt, which 400s on non-numeric): 'abc' → 0 → clamped to 1.
+            'page' => $paginator->paginate(null, (int) $request->query->get('page', 1)),
         ]);
     }
 
