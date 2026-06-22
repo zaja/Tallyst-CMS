@@ -1,0 +1,19 @@
+{% extends 'reset_password/_layout.html.twig' %}
+
+{% block title %}Zaboravljena lozinka — Tallyst{% endblock %}
+
+{% block body %}
+    <h1>Zaboravljena lozinka</h1>
+
+    {% for flash_error in app.flashes('reset_password_error') %}
+        <div class="error">{{ flash_error }}</div>
+    {% endfor %}
+
+    {{ form_start(requestForm) }}
+        {{ form_row(requestForm.email, {label: 'E-mail'}) }}
+        <p class="muted">Pošaljemo ti link za postavljanje nove lozinke.</p>
+        <button type="submit">Pošalji link</button>
+    {{ form_end(requestForm) }}
+
+    <p class="muted"><a href="{{ path('admin_login') }}">← Natrag na prijavu</a></p>
+{% endblock %}

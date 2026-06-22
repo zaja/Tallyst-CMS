@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Prijava — Tallyst Admin</title>
+    <title>{% block title %}Tallyst Admin{% endblock %}</title>
+    {# Standalone page styled to match templates/security/login.html.twig (not the front layout). #}
     <style>
         * { box-sizing: border-box; }
         body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f3f4f6; color: #1a1a1a; margin: 0; display: flex; min-height: 100vh; align-items: center; justify-content: center; }
@@ -14,29 +15,15 @@
         button { width: 100%; margin-top: 1.25rem; padding: .65rem; border: 0; border-radius: 8px; background: #2563eb; color: #fff; font-size: 1rem; cursor: pointer; }
         button:hover { background: #1d4ed8; }
         .error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; padding: .6rem .7rem; border-radius: 8px; font-size: .9rem; margin-bottom: 1rem; }
+        .muted { color: #666; font-size: .9rem; margin: .75rem 0 0; }
+        a { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        ul { margin: .3rem 0 0; padding-left: 1.1rem; color: #b91c1c; font-size: .85rem; }
     </style>
 </head>
 <body>
-    <form class="card" method="post" action="{{ path('admin_login') }}">
-        <h1>Tallyst Admin</h1>
-
-        {% if error %}
-            <div class="error">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-        {% endif %}
-
-        <label for="username">E-mail</label>
-        <input type="email" id="username" name="_username" value="{{ last_username }}" autocomplete="username" required autofocus>
-
-        <label for="password">Lozinka</label>
-        <input type="password" id="password" name="_password" autocomplete="current-password" required>
-
-        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
-
-        <button type="submit">Prijava</button>
-
-        <p style="text-align: center; margin: 1rem 0 0; font-size: .9rem;">
-            <a href="{{ path('app_forgot_password_request') }}" style="color: #2563eb; text-decoration: none;">Zaboravljena lozinka?</a>
-        </p>
-    </form>
+    <div class="card">
+        {% block body %}{% endblock %}
+    </div>
 </body>
 </html>

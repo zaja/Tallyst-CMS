@@ -1,0 +1,15 @@
+{% extends 'reset_password/_layout.html.twig' %}
+
+{% block title %}Provjeri e-mail — Tallyst{% endblock %}
+
+{% block body %}
+    <h1>Provjeri e-mail</h1>
+    <p class="muted">
+        Ako za tu adresu postoji račun, upravo smo poslali e-mail s linkom za promjenu lozinke.
+        Link vrijedi {{ resetToken.expirationMessageKey|trans(resetToken.expirationMessageData, 'ResetPasswordBundle') }}.
+    </p>
+    <p class="muted">
+        Ako e-mail ne stigne, provjeri spam ili <a href="{{ path('app_forgot_password_request') }}">pokušaj ponovno</a>.
+    </p>
+    <p class="muted"><a href="{{ path('admin_login') }}">← Natrag na prijavu</a></p>
+{% endblock %}

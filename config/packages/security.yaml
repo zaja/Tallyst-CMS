@@ -37,6 +37,9 @@ security:
     # — NOT here and NOT by hiding the menu. See CLAUDE.md "Roles & access".
     access_control:
         - { path: ^/admin/login, roles: PUBLIC_ACCESS }
+        # Forgot-password flow must be reachable by someone who CAN'T log in — so PUBLIC,
+        # and it MUST come before ^/admin (first-match) or it would demand ROLE_EDITOR.
+        - { path: ^/admin/reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_EDITOR }
 
 when@test:

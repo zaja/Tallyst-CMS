@@ -425,6 +425,21 @@ access automatically and are never demoted.
   redirect+flash (skip `parent::` → no flush) — never a 500, never the dangerous mutation.
 - **`app:user:create --role`** defaults to ROLE_ADMIN (bootstrap admin) and rejects anything
   other than ROLE_ADMIN/ROLE_EDITOR.
+- **Forgot-password** = SymfonyCasts ResetPasswordBundle. Flow lives under **`/admin/reset-password`**
+  (next to `/admin/login`): request e-mail → `app_forgot_password_request`, tokenised link →
+  `app_reset_password` (`/reset/{token}`), set new password (same `UserPasswordHasher`), token
+  consumed. The routes are **PUBLIC_ACCESS** and that rule MUST come BEFORE `^/admin` in
+  `security.yaml` (first-match) — the page is for someone who can't log in. The reset templates are
+  STANDALONE pages styled like the login (`templates/reset_password/_layout.html.twig`), not the
+  front layout; the login has a "Zaboravljena lozinka?" link. The reset e-mail goes through the
+  hardened mailer with **From left empty** (the generated `->from()` was removed → `DefaultFromListener`
+  applies `mail_from_email`; 553 lesson) and is **async** (`$mailer->send()` → `SendEmailMessage` →
+  needs the `messenger:consume async` worker to deliver). Security defaults are KEPT, do NOT weaken:
+  token single-use + **hashed in the DB** (`reset_password_request`) + 1h expiry, request throttling,
+  and **anti-enumeration** (an unknown e-mail gets the SAME `check-email` redirect and sends nothing).
+  `not_compromised_password` is disabled only `when@test` (no HIBP network call in tests). Locked by
+  `tests/Functional/ResetPasswordTest.php` (request+queued-email, anti-enum, valid-token reset,
+  invalid-token reject).
 - **Functional tests need a migrated test DB.** This server uses a separate `tallystcmstest`
   database (its own MySQL user); the connection lives in **`.env.test.local`** (git-ignored).
   The `test` env does NOT load `.env.local`, so `.env.test.local` must carry `DATABASE_URL`

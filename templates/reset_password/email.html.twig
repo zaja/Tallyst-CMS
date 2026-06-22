@@ -1,0 +1,11 @@
+<p>Bok,</p>
+
+<p>Zatražena je promjena lozinke za tvoj Tallyst račun. Za postavljanje nove lozinke otvori link:</p>
+
+<p><a href="{{ url('app_reset_password', {token: resetToken.token}) }}">{{ url('app_reset_password', {token: resetToken.token}) }}</a></p>
+
+<p>Link vrijedi {{ resetToken.expirationMessageKey|trans(resetToken.expirationMessageData, 'ResetPasswordBundle') }}.</p>
+
+<p>Ako nisi ti zatražio/la promjenu, slobodno zanemari ovaj e-mail.</p>
+
+<p>Tallyst</p>
