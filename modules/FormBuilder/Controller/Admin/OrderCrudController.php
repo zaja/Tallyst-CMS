@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Workflow\WorkflowInterface;
 use Tallyst\FormBuilder\Entity\Order;
+use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Service\OrderMailer;
 
 /**
@@ -34,6 +35,7 @@ class OrderCrudController extends AbstractCrudController
         private readonly WorkflowInterface $orderStateMachine,
         private readonly OrderMailer $mailer,
         private readonly EntityManagerInterface $em,
+        private readonly PaymentProcessorRegistry $payments,
     ) {
     }
 
@@ -63,13 +65,20 @@ class OrderCrudController extends AbstractCrudController
             ->displayIf(static fn (Order $order): bool => \in_array($order->getStatus(), [Order::STATUS_PAID, Order::STATUS_FULFILLED], true))
             ->setHtmlAttributes(['onclick' => "return confirm('Ponovno poslati potvrdu kupcu?')"]);
 
+        $refund = Action::new('refundOrder', 'Refundiraj', 'fa fa-rotate-left')
+            ->linkToCrudAction('refundOrder')
+            ->displayIf(static fn (Order $order): bool => \in_array($order->getStatus(), [Order::STATUS_PAID, Order::STATUS_FULFILLED], true))
+            ->setHtmlAttributes(['onclick' => "return confirm('Refundirati ovu narudžbu? Novac se vraća kupcu.')"]);
+
         return $actions
             ->disable(Action::NEW, Action::EDIT, Action::DELETE, Action::BATCH_DELETE)
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->add(Crud::PAGE_INDEX, $markFulfilled)
             ->add(Crud::PAGE_DETAIL, $markFulfilled)
             ->add(Crud::PAGE_INDEX, $resend)
-            ->add(Crud::PAGE_DETAIL, $resend);
+            ->add(Crud::PAGE_DETAIL, $resend)
+            ->add(Crud::PAGE_INDEX, $refund)
+            ->add(Crud::PAGE_DETAIL, $refund);
     }
 
     public function configureFields(string $pageName): iterable
@@ -131,6 +140,38 @@ class OrderCrudController extends AbstractCrudController
         } else {
             $this->mailer->sendConfirmation($order);
             $this->addFlash('success', \sprintf('Potvrda za narudžbu #%d ponovno poslana.', $order->getId()));
+        }
+
+        return $this->redirect($this->backToDetail($urls, $order));
+    }
+
+    public function refundOrder(AdminContext $context, AdminUrlGenerator $urls): Response
+    {
+        $order = $context->getEntity()->getInstance();
+        if (!$order instanceof Order) {
+            throw $this->createNotFoundException();
+        }
+
+        // 1) Provider refund first. On any provider error → flash + bail (no state change, no 500).
+        try {
+            $this->payments->get($order->getProvider())->refund($order);
+        } catch (\Throwable $e) {
+            $this->addFlash('danger', \sprintf('Refund nije uspio: %s', $e->getMessage()));
+
+            return $this->redirect($this->backToDetail($urls, $order));
+        }
+
+        // 2) Re-read committed state: if the resulting charge.refunded webhook already flipped the
+        //    order (rare race), can('refund') is false → we skip apply+mail and avoid a 2nd mail.
+        $this->em->refresh($order);
+
+        if ($this->orderStateMachine->can($order, 'refund')) {
+            $this->orderStateMachine->apply($order, 'refund');
+            $this->em->flush();
+            $this->mailer->sendRefunded($order);
+            $this->addFlash('success', \sprintf('Narudžba #%d je refundirana.', $order->getId()));
+        } else {
+            $this->addFlash('info', \sprintf('Narudžba #%d je već refundirana.', $order->getId()));
         }
 
         return $this->redirect($this->backToDetail($urls, $order));

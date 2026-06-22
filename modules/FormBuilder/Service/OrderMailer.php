@@ -55,6 +55,16 @@ class OrderMailer
         $this->emails->send('order_delivered', $this->tags($order), $email);
     }
 
+    /** Customer "your order was refunded", sent on a full refund (admin- or Stripe-initiated). */
+    public function sendRefunded(Order $order): void
+    {
+        $email = $order->getCustomerEmail();
+        if (null === $email || '' === $email) {
+            return;
+        }
+        $this->emails->send('order_refunded', $this->tags($order), $email);
+    }
+
     /**
      * @return array<string, string>
      */

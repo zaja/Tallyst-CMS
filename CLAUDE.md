@@ -605,7 +605,7 @@ All 4 customer/admin mails are admin-editable (subject + HTML body + enabled) vi
   nothing is seeded.
 - **Type registry is IoC** (`app.email_type`, like settings sections): `EmailTypeProviderInterface`
   → `EmailTypeRegistry`. Core (`CoreEmailTypeProvider`) ships `password_reset`; **FormBuilder owns
-  its own mail types** (`order_confirmation`, `order_admin`, `order_delivered`, `form_notification`) so Core never
+  its own mail types** (`order_confirmation`, `order_admin`, `order_delivered`, `order_refunded`, `form_notification`) so Core never
   touches `Order`. An `EmailType` carries key/label/tags(name=>desc)/requiredTags/canDisable/
   defaultSubject/defaultBody. The send SITE builds the `{tag}` VALUES from its context (the registry
   only declares the inventory).
@@ -815,16 +815,22 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   isporučeno" (paid→fulfilled via the state machine + `order_delivered` mail) and "Pošalji ponovno
   potvrdu"; badge semantics (paid=warning "Čeka isporuku", fulfilled=success "Isporučeno"). See rule 5.
   (No data migration — old `fulfilled` rows were dev/demo only; `--fresh` resets.)
+- **Refund — DONE (pass 2).** Two paths, both via the `refund` workflow transition, full refunds only:
+  (a) admin "Refundiraj" action → `PaymentProcessorInterface::refund(Order)` → `StripeProcessor`
+  `refunds->create(payment_intent)` → apply `refund` + `order_refunded` mail; (b) Stripe-dashboard
+  refund → `charge.refunded` webhook (full only, `amount_refunded >= amount`) → finds order by
+  `providerPaymentIntentId` → apply `refund` + mail. **Idempotent / single mail:** the webhook no-ops
+  an already-refunded order, and the admin action `em->refresh`es before apply (closes the reverse
+  race), so a Tallyst-initiated refund (+ the `charge.refunded` it triggers) never double-applies or
+  double-mails. `PaymentProcessorInterface::refund` is provider-agnostic (PayPal: not-supported until
+  pass 4). Errors → flash, never 500.
 - **Queued (this order):**
-  1. **Refund.** The `order` state_machine already has `refunded` (declared-dead). Wire: admin action
-     → Stripe refund API call (uses `providerPaymentIntentId`, already captured) → `refund` transition.
-     Keep rule 5 (verified webhook stays the sole source of truth for `paid`).
-  2. **Stripe config in Postavke** — move keys env→Settings + a **test/live badge** + **checkout
+  1. **Stripe config in Postavke** — move keys env→Settings + a **test/live badge** + **checkout
      `locale`** (currently none passed). (Settings/encrypted-secret infra already exists.)
-  3. **PayPal** — a second `PaymentProcessorInterface` impl + provider selection (checkout/webhook
-     currently hardcode `stripe`); registry already supports it.
-  4. **Price variants** (price options per form — none today).
-  5. **Tax rate** (single rate — none today).
+  2. **PayPal** — a second `PaymentProcessorInterface` impl (incl. `refund`) + provider selection
+     (checkout/webhook currently hardcode `stripe`); registry already supports it.
+  3. **Price variants** (price options per form — none today).
+  4. **Tax rate** (single rate — none today).
 - **Subscriptions & recurring (future epic, post-v1).** Stripe runs the billing/retries + the
   **Customer Portal** for self-service cancel/update (we do NOT build that UI); OUR job is the
   subscription-lifecycle webhooks (created/updated/`invoice.paid`/`canceled`) + access/licence

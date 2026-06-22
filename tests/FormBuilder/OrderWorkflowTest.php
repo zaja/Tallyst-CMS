@@ -24,4 +24,20 @@ class OrderWorkflowTest extends KernelTestCase
         $pending = (new Order())->setStatus(Order::STATUS_PENDING);
         self::assertFalse($workflow->can($pending, 'fulfill'), 'pending → fulfilled must NOT be allowed');
     }
+
+    public function testRefundAllowedFromPaidAndFulfilledOnly(): void
+    {
+        self::bootKernel();
+        /** @var WorkflowInterface $workflow */
+        $workflow = self::getContainer()->get('state_machine.order');
+
+        $paid = (new Order())->setStatus(Order::STATUS_PAID);
+        self::assertTrue($workflow->can($paid, 'refund'), 'paid → refunded must be allowed');
+
+        $fulfilled = (new Order())->setStatus(Order::STATUS_FULFILLED);
+        self::assertTrue($workflow->can($fulfilled, 'refund'), 'fulfilled → refunded must be allowed');
+
+        $pending = (new Order())->setStatus(Order::STATUS_PENDING);
+        self::assertFalse($workflow->can($pending, 'refund'), 'pending → refunded must NOT be allowed');
+    }
 }

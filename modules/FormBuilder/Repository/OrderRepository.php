@@ -21,6 +21,15 @@ class OrderRepository extends ServiceEntityRepository
         return $this->findOneBy(['providerSessionId' => $sessionId]);
     }
 
+    /**
+     * Match a refund webhook (charge.refunded carries the payment_intent). The PI column isn't
+     * unique, but in this flow one PI = one payment = one order, so the first match is correct.
+     */
+    public function findOneByProviderPaymentIntentId(string $paymentIntentId): ?Order
+    {
+        return $this->findOneBy(['providerPaymentIntentId' => $paymentIntentId]);
+    }
+
     public function save(Order $order, bool $flush = true): void
     {
         $this->getEntityManager()->persist($order);

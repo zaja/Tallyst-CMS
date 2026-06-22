@@ -51,6 +51,18 @@ class StripeProcessor implements PaymentProcessorInterface
         return (string) $session->url;
     }
 
+    public function refund(Order $order): void
+    {
+        $paymentIntentId = $order->getProviderPaymentIntentId();
+        if (null === $paymentIntentId || '' === $paymentIntentId) {
+            throw new \RuntimeException('Order has no payment intent to refund.');
+        }
+
+        // Full refund of the captured payment. Throws \Stripe\Exception\* on a provider error
+        // (e.g. already refunded) — the caller catches it and shows a flash.
+        (new StripeClient($this->secretKey))->refunds->create(['payment_intent' => $paymentIntentId]);
+    }
+
     public function parseSignedWebhook(string $payload, string $signatureHeader): WebhookResult
     {
         // Throws \Stripe\Exception\SignatureVerificationException on a bad signature.
@@ -66,12 +78,22 @@ class StripeProcessor implements PaymentProcessorInterface
 
         $email = $object->customer_details->email ?? $object->customer_email ?? null;
 
+        // charge.refunded: the object is the Charge (carries payment_intent). Flag a refund ONLY
+        // when it's FULL (amount_refunded >= amount) — partial refunds are ignored (v1 = full only).
+        $isRefund = false;
+        if ('charge.refunded' === $event->type) {
+            $amount = $object->amount ?? null;
+            $refunded = $object->amount_refunded ?? null;
+            $isRefund = is_int($amount) && is_int($refunded) && $refunded >= $amount && $amount > 0;
+        }
+
         return new WebhookResult(
             eventType: $event->type,
             sessionId: $sessionId,
             paymentIntentId: $paymentIntentId,
             isPaid: $isPaid,
             customerEmail: is_string($email) ? $email : null,
+            isRefund: $isRefund,
         );
     }
 }

@@ -10,9 +10,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Workflow\WorkflowInterface;
+use Tallyst\FormBuilder\Entity\Order;
 use Tallyst\FormBuilder\Message\FulfillOrderMessage;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\OrderRepository;
+use Tallyst\FormBuilder\Service\OrderMailer;
 
 /**
  * Stripe webhook — the SOLE source of truth for "paid". Public, two-segment path
@@ -35,6 +37,7 @@ class StripeWebhookController extends AbstractController
         private readonly MessageBusInterface $bus,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
+        private readonly OrderMailer $orderMailer,
     ) {
     }
 
@@ -52,51 +55,79 @@ class StripeWebhookController extends AbstractController
             return new Response('Invalid signature', Response::HTTP_BAD_REQUEST);
         }
 
-        // Only completed checkout sessions matter here; ack everything else.
-        if (!$result->isCheckoutCompleted()) {
-            return new Response('Ignored', Response::HTTP_OK);
+        // Payment captured: checkout.session.completed + paid → mark the order paid (money truth).
+        if ($result->isCheckoutCompleted()) {
+            // Guard: a session can "complete" while still unpaid (async payment methods).
+            if (!$result->isPaid) {
+                $this->logger->info('Stripe checkout completed but not paid.', ['session' => $result->sessionId]);
+
+                return new Response('Not paid', Response::HTTP_OK);
+            }
+
+            if (null === $result->sessionId) {
+                return new Response('No session id', Response::HTTP_OK);
+            }
+
+            $order = $this->orders->findOneByProviderSessionId($result->sessionId);
+            if (null === $order) {
+                // Unknown session (e.g. another integration) — ack so Stripe stops retrying.
+                $this->logger->info('Stripe webhook for unknown session.', ['session' => $result->sessionId]);
+
+                return new Response('Unknown order', Response::HTTP_OK);
+            }
+
+            // Idempotent: duplicate delivery, or thank-you race already handled — no-op.
+            if ($order->isPaid()) {
+                return new Response('Already processed', Response::HTTP_OK);
+            }
+
+            if ($result->paymentIntentId) {
+                $order->setProviderPaymentIntentId($result->paymentIntentId);
+            }
+            if ($result->customerEmail) {
+                $order->setCustomerEmail($result->customerEmail);
+            }
+
+            // Money truth: mark paid synchronously (a fast DB write).
+            if ($this->orderStateMachine->can($order, 'pay')) {
+                $this->orderStateMachine->apply($order, 'pay');
+            }
+            $this->em->flush();
+
+            // Fulfillment (e-mails) is a separate, retriable async step.
+            $this->bus->dispatch(new FulfillOrderMessage((int) $order->getId()));
+
+            return new Response('OK', Response::HTTP_OK);
         }
 
-        // Guard: a session can "complete" while still unpaid (async payment methods).
-        if (!$result->isPaid) {
-            $this->logger->info('Stripe checkout completed but not paid.', ['session' => $result->sessionId]);
+        // Full refund (admin-initiated OR done in the Stripe dashboard) → flip the order to
+        // refunded. Idempotent: an already-refunded order is a no-op, so an admin-initiated refund
+        // (which applies + mails synchronously) isn't double-applied / double-mailed by the
+        // charge.refunded webhook that follows.
+        if ($result->isRefund) {
+            if (null === $result->paymentIntentId) {
+                return new Response('No payment intent', Response::HTTP_OK);
+            }
 
-            return new Response('Not paid', Response::HTTP_OK);
+            $order = $this->orders->findOneByProviderPaymentIntentId($result->paymentIntentId);
+            if (null === $order) {
+                return new Response('Unknown order', Response::HTTP_OK);
+            }
+
+            if (Order::STATUS_REFUNDED === $order->getStatus()) {
+                return new Response('Already refunded', Response::HTTP_OK);
+            }
+
+            if ($this->orderStateMachine->can($order, 'refund')) {
+                $this->orderStateMachine->apply($order, 'refund');
+                $this->em->flush();
+                $this->orderMailer->sendRefunded($order);
+            }
+
+            return new Response('OK', Response::HTTP_OK);
         }
 
-        if (null === $result->sessionId) {
-            return new Response('No session id', Response::HTTP_OK);
-        }
-
-        $order = $this->orders->findOneByProviderSessionId($result->sessionId);
-        if (null === $order) {
-            // Unknown session (e.g. another integration) — ack so Stripe stops retrying.
-            $this->logger->info('Stripe webhook for unknown session.', ['session' => $result->sessionId]);
-
-            return new Response('Unknown order', Response::HTTP_OK);
-        }
-
-        // Idempotent: duplicate delivery, or thank-you race already handled — no-op.
-        if ($order->isPaid()) {
-            return new Response('Already processed', Response::HTTP_OK);
-        }
-
-        if ($result->paymentIntentId) {
-            $order->setProviderPaymentIntentId($result->paymentIntentId);
-        }
-        if ($result->customerEmail) {
-            $order->setCustomerEmail($result->customerEmail);
-        }
-
-        // Money truth: mark paid synchronously (a fast DB write).
-        if ($this->orderStateMachine->can($order, 'pay')) {
-            $this->orderStateMachine->apply($order, 'pay');
-        }
-        $this->em->flush();
-
-        // Fulfillment (e-mails) is a separate, retriable async step.
-        $this->bus->dispatch(new FulfillOrderMessage((int) $order->getId()));
-
-        return new Response('OK', Response::HTTP_OK);
+        // Anything else — ack so Stripe doesn't retry.
+        return new Response('Ignored', Response::HTTP_OK);
     }
 }

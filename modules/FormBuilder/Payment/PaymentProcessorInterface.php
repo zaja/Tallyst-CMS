@@ -28,4 +28,12 @@ interface PaymentProcessorInterface
      * @throws \Throwable when the signature is invalid (caller returns 400)
      */
     public function parseSignedWebhook(string $payload, string $signatureHeader): WebhookResult;
+
+    /**
+     * Issue a FULL refund for the order's captured payment. Provider-agnostic — the processor
+     * uses its own stored reference (Stripe: the payment intent). v1 supports full refunds only.
+     *
+     * @throws \Throwable on a provider error (caller catches → flash, never 500)
+     */
+    public function refund(Order $order): void;
 }

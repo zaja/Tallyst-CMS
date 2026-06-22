@@ -81,6 +81,28 @@ class FormBuilderEmailTypeProvider implements EmailTypeProviderInterface
         );
 
         yield new EmailType(
+            key: 'order_refunded',
+            label: 'Narudžba refundirana (kupcu)',
+            tags: [
+                'order_id' => 'Broj narudžbe.',
+                'amount' => 'Iznos (formatiran).',
+                'form_name' => 'Naziv forme/proizvoda.',
+                'site_name' => 'Naziv sajta.',
+            ],
+            requiredTags: [],
+            canDisable: true,
+            defaultSubject: 'Povrat za narudžbu #{order_id}',
+            defaultBody: <<<HTML
+                <p>Vaša narudžba je refundirana.</p>
+                <p><strong>Narudžba #{order_id}</strong><br>
+                Proizvod: {form_name}<br>
+                Vraćeni iznos: {amount}</p>
+                <p>Sredstva će se vratiti na vaš način plaćanja u uobičajenom roku.</p>
+                <p>{site_name}</p>
+                HTML,
+        );
+
+        yield new EmailType(
             key: 'form_notification',
             label: 'Obavijest o prijavi forme',
             tags: [

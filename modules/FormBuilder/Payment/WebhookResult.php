@@ -15,6 +15,8 @@ final class WebhookResult
         /** True only when the provider confirms the money was actually captured. */
         public readonly bool $isPaid,
         public readonly ?string $customerEmail,
+        /** True only for a confirmed FULL refund (partial refunds are ignored — v1 = full only). */
+        public readonly bool $isRefund = false,
     ) {
     }
 
