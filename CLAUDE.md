@@ -362,6 +362,12 @@ new table, no migration (encrypted values are just text in the existing `value` 
   tls→STARTTLS/587, none→off; username; **password decrypted only in-memory**) — never via a
   DSN string, so the password can't leak into logs/profiler. A long-running Messenger worker
   caches the Setting row for its lifetime, so changing SMTP settings needs a worker restart.
+  **OPS GOTCHA (dev): running `cache:clear` (or any deploy that rebuilds the cache) while the
+  worker is running CRASHES it** — in dev the long-running process holds the old split container
+  (`var/cache/dev/ContainerXXXX/*`), which `cache:clear` deletes, so it dies on its next message
+  (and a reserved message stays stuck until the redeliver timeout). ALWAYS
+  `systemctl --user restart tallyst-messenger` after `cache:clear`. (Goes away under `APP_ENV=prod`
+  — one compiled container.)
   `DefaultFromListener` (MessageEvent) fills From/Reply-To from the email identity settings on
   any message that didn't set its own; the decorator passes the global dispatcher to the SMTP
   transport so this fires for DB-SMTP sends too. **Handlers MUST NOT hardcode a From** — a
@@ -439,7 +445,10 @@ access automatically and are never demoted.
   and **anti-enumeration** (an unknown e-mail gets the SAME `check-email` redirect and sends nothing).
   `not_compromised_password` is disabled only `when@test` (no HIBP network call in tests). Locked by
   `tests/Functional/ResetPasswordTest.php` (request+queued-email, anti-enum, valid-token reset,
-  invalid-token reject).
+  invalid-token reject). **The reset link is an ABSOLUTE URL rendered in the WORKER (no HTTP
+  request), so it uses `framework.router.default_uri` = `%env(DEFAULT_URI)%` — set `DEFAULT_URI`
+  to the real public URL in `.env.local` (e.g. `https://tallyst.org`), else the link defaults to
+  `http://localhost`.** (Web-context URLs are fine — they use the real request host.)
 - **Functional tests need a migrated test DB.** This server uses a separate `tallystcmstest`
   database (its own MySQL user); the connection lives in **`.env.test.local`** (git-ignored).
   The `test` env does NOT load `.env.local`, so `.env.test.local` must carry `DATABASE_URL`
@@ -483,8 +492,10 @@ This is the SINGLE home for "what's next" — park ideas here, not scattered acr
   fails) — and verify with a real **paid test order** end-to-end, not just the test button
   (they share the transport but the order path is async via the worker). Set **`ORDER_ADMIN_EMAIL`
   to a real, deliverable address** (the `admin@tallyst.local` default is a placeholder whose
-  domain bounces, so the admin-notification copy never arrives). The Deployment Readiness Panel
-  below is the eventual in-admin surface for these checks.
+  domain bounces, so the admin-notification copy never arrives). Set **`DEFAULT_URI` to the real
+  public URL** (e.g. `https://tallyst.org`) so worker-rendered absolute links (password-reset link,
+  etc.) aren't `http://localhost`. The Deployment Readiness Panel below is the eventual in-admin
+  surface for these checks.
 
 ### Deployment Readiness Panel (installer faza — NE gradi se sad)
 Admin "Sustav/Deployment" panel: operativni go-live status + generirani setup snippeti.
