@@ -470,10 +470,21 @@ A typed, grouped settings layer sits ON TOP of the untyped `Setting` key/value s
 new table, no migration (encrypted values are just text in the existing `value` column).
 - **Schema is IoC**, like the shortcode/module registries. `SettingsSectionProviderInterface`
   (`#[AutoconfigureTag('app.settings_section')]`) → `SettingsRegistry` aggregates sections.
-  Core ships `CoreSettingsProvider` (sections: **General**, **Lokalizacija**, **Email**);
-  modules MAY add sections later via the same interface (mechanism only — none built yet). A
+  Core ships `CoreSettingsProvider` (sections: **General**, **Branding**, **Lokalizacija**,
+  **Email**, **Footer**); modules MAY add sections later via the same interface. A
   `SettingDefinition` (key, `SettingType`, label, help, default, choices, `encrypted`) is the
-  single description used to BUILD the form AND cast values.
+  single description used to BUILD the form AND cast values. `footer_menu`'s choices are built
+  dynamically from `MenuRepository` (name → menu **location**, which `render_menu` consumes).
+- **Field types beyond text/bool/int/choice/email/password:** `SettingType::MEDIA` (a Media
+  reference stored as its id string — logo, favicon) and `SettingType::RICH_TEXT` (HTML +
+  shortcodes — footer text). `SettingsController::formType()` maps MEDIA → `MediaIdPickerType`
+  and RICH_TEXT → `TiptapType` (both Media-module form types — same Core-admin→Media precedent as
+  `PageCrudController`; their form themes are added in `settings.html.twig`). Both are
+  **string-backed**, so `SettingsManager` needs no special casting. `MediaIdPickerType` reuses the
+  `media_picker` widget + `media--picker` controller + library modal but keeps the model as the id
+  string (no Media↔id transformer; `buildView` resolves the preview). `TiptapType` brings the same
+  shortcode⇄HTML round-trip as page/post content, so `footer_text` renders via `render_content`.
+  The settings page is in the EA shell (admin Stimulus entrypoint), so both widgets boot.
 - **`SettingsManager`** is the only typed read/write path over `SettingRepository`: casts by
   type (bool→'1'/'0', int), applies schema defaults, and encrypts/decrypts `encrypted`
   settings. **Write-only secrets:** an empty incoming value for an encrypted setting is a
@@ -494,12 +505,20 @@ new table, no migration (encrypted values are just text in the existing `value` 
   incomplete and falls back to env `MAILER_DSN`; the settings page shows a warning ("SMTP lozinku
   nije moguće dekriptirati, upiši ponovno"). It never sends unauthenticated or throws.
 - **Friendly form** = `SettingsController` (`/admin/settings`, in the EA shell via the
-  `dashboardControllerFqcn` route default, same pattern as BrandingController). Fields are
+  `dashboardControllerFqcn` route default). Fields are
   built dynamically from the schema, grouped into Bootstrap tabs per section, saved through
-  `SettingsManager`. It REPLACES the raw `SettingCrudController` in the menu (the CRUD class
-  stays as a raw fallback, just unlinked). `site_name` + `site_tagline` live HERE (General)
-  as their single editable home; **Branding owns only the logo** (its form dropped
-  `site_name`). The front reads the same `site_name` key, so `render_branding()` is unchanged.
+  `SettingsManager` (admin-only, class-level `ROLE_ADMIN`). It REPLACES the raw
+  `SettingCrudController` in the menu. `site_name` + `site_tagline` live in **General**.
+  **Branding** holds `logo_media_id` + `favicon_media_id` (the old standalone `/admin/branding`
+  page + `BrandingController`/`BrandingType` were REMOVED; the logo editor moved here). The front
+  reads the same `logo_media_id` key, so `render_branding()` is unchanged. **Footer** holds
+  `footer_columns` (1/2), `footer_text` (rich), `footer_menu` (a menu location), `footer_copyright`
+  (empty → auto `© {year} {site_name}`), `footer_show_powered_by` (bool). **Favicon** renders via
+  `favicon_url()` (`MediaRuntime`) → a DETERMINISTIC cached URL through `MediaImageHelper` (NOT an
+  on-demand Liip resolve — nginx pre-warm gotcha), using a new `favicon` Liip filter (~64px) added
+  to ALL THREE allowlists (liip config + `ThumbnailWarmer::FILTERS` + `MediaImageHelper::FILTERS`).
+  The theme footer is driven by these settings (`render_menu(location, {template:
+  'footer_menu.html.twig'})` for the menu column — `render_menu` now takes an optional options arg).
 - **Settings take effect** (not just save): `LocaleSubscriber` (kernel.request, priority 100)
   applies `app_locale` to the request + `app_timezone` to PHP's default tz; the
   `SettingsExtension` Twig `setting('key')` + `app_date(date, format?)` apply locale/timezone/
@@ -680,8 +699,10 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
 - **Page layout + per-page hero — DONE (pass B).** Full-width pages (text capped to the readable
   measure) / narrow blog, and an opt-in per-page hero with overlay text + scrim. Design in
   "Default theme & demo content".
+- **Footer config + branding-in-Postavke + favicon — DONE.** Branding (logo) moved into Postavke
+  → Branding (standalone page removed) + favicon; configurable footer (columns/text/menu/
+  copyright/powered-by) replacing the hardcoded one. Design in the "Settings" section.
 - **Remaining CMS-complete items (NOT built, queued — agreed scope, keep this list honest):**
-  - **Footer config** — admin-editable footer (columns/links/copyright) replacing the placeholder.
   - **Blog archives + pagination** — paginate the blog index; category/date archive listings.
   - **Post author + user display name** — show the author on posts; add a display name to `User`.
   - **Demo-in-admin** — a Create/Delete demo-content control in the back-office (wraps

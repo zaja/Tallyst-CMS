@@ -20,6 +20,7 @@ class MediaExtension extends AbstractExtension
             new TwigFunction('render_branding', [MediaRuntime::class, 'renderBranding'], ['is_safe' => ['html']]),
             new TwigFunction('site_name', [MediaRuntime::class, 'siteName']),
             new TwigFunction('branding_logo_url', [MediaRuntime::class, 'brandingLogoUrl']),
+            new TwigFunction('favicon_url', [MediaRuntime::class, 'faviconUrl']),
             new TwigFunction('media_thumb_url', [MediaRuntime::class, 'mediaThumbUrl']),
             new TwigFunction('media_img', [MediaRuntime::class, 'mediaImg'], ['is_safe' => ['html']]),
         ];

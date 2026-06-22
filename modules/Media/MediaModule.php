@@ -34,9 +34,8 @@ class MediaModule implements AdminModuleInterface
 
     public function getAdminMenuItems(): iterable
     {
-        // "Mediji" (the media library) is content — visible to ROLE_EDITOR. Branding is
-        // visual identity (admin-only); its controller carries #[IsGranted('ROLE_ADMIN')].
+        // "Mediji" (the media library) is content — visible to ROLE_EDITOR. Branding (logo +
+        // favicon) moved into Postavke → Branding (admin-only), so no standalone item here.
         yield MenuItem::linkTo(MediaCrudController::class, 'Mediji', 'fa fa-images');
-        yield MenuItem::linkToRoute('Branding', 'fa fa-palette', 'media_branding')->setPermission('ROLE_ADMIN');
     }
 }

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ setting('site_name')|default('Tallyst') }}{% endblock %}</title>
     {% if setting('site_tagline') %}<meta name="description" content="{{ setting('site_tagline') }}">{% endif %}
+    {% if favicon_url() %}<link rel="icon" href="{{ favicon_url() }}">{% endif %}
     {% block meta %}{% endblock %}
     <link rel="stylesheet" href="{{ theme_asset('css/theme.css') }}">
     {% block stylesheets %}{% endblock %}
@@ -31,10 +32,30 @@
         </div>
     </main>
 
+    {# Configurable footer (Postavke → Footer). 1 col = text only; 2 cols = text + menu.
+       Below: branding line = copyright (or auto) + optional "Pokreće Tallyst CMS". #}
+    {% set footer_cols = setting('footer_columns')|default('2') %}
+    {% set footer_text = setting('footer_text') %}
+    {% set footer_menu = setting('footer_menu') %}
+    {% set footer_copyright = setting('footer_copyright') %}
     <footer class="site-footer">
         <div class="container">
-            <span>&copy; {{ 'now'|date('Y') }} {{ setting('site_name')|default('Tallyst') }}</span>
-            <span>Pokreće <a href="https://github.com/zaja/Tallyst-CMS" rel="noopener">Tallyst CMS</a></span>
+            {% if footer_text or (footer_cols == '2' and footer_menu) %}
+                <div class="footer-cols footer-cols--{{ footer_cols }}">
+                    {% if footer_text %}
+                        <div class="footer-col footer-col--text">{{ footer_text|render_content }}</div>
+                    {% endif %}
+                    {% if footer_cols == '2' and footer_menu %}
+                        <div class="footer-col footer-col--menu">{{ render_menu(footer_menu, {template: 'footer_menu.html.twig'}) }}</div>
+                    {% endif %}
+                </div>
+            {% endif %}
+            <div class="footer-branding">
+                <span>{{ footer_copyright ?: '© ' ~ 'now'|date('Y') ~ ' ' ~ (setting('site_name')|default('Tallyst')) }}</span>
+                {% if setting('footer_show_powered_by') %}
+                    <span>Pokreće <a href="https://github.com/zaja/Tallyst-CMS" rel="noopener">Tallyst CMS</a></span>
+                {% endif %}
+            </div>
         </div>
     </footer>
 

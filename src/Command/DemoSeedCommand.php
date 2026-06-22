@@ -24,6 +24,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
+use App\Settings\SettingsManager;
 use Tallyst\Media\Entity\Media;
 use Tallyst\Media\Repository\MediaRepository;
 use Tallyst\Media\Service\MediaUploader;
@@ -72,6 +73,7 @@ class DemoSeedCommand extends Command
         private readonly MediaRepository $mediaRepo,
         private readonly FormDefinitionRepository $forms,
         private readonly MediaUploader $uploader,
+        private readonly SettingsManager $settings,
     ) {
         parent::__construct();
     }
@@ -109,6 +111,9 @@ class DemoSeedCommand extends Command
 
         $io->section('Izbornik (2-razinski) — demo ga uvijek iznova gradi');
         $this->rebuildMenu($io, $pages);
+
+        $io->section('Footer + favicon postavke');
+        $this->ensureSiteSettings($io, $media);
 
         $this->em->flush();
 
@@ -552,6 +557,28 @@ class DemoSeedCommand extends Command
 
         $this->em->persist($menu);
         $io->writeln('• Izgrađen 2-razinski glavni izbornik.');
+    }
+
+    // ------------------------------------------------------------------ footer ---
+
+    /**
+     * Configure a populated demo footer (2 columns: short text + the main menu) and a demo
+     * favicon so both features are visible. The demo owns this presentation, like the menu.
+     * (Logo is left unset — the site-name text header reads cleaner than a gradient blob.)
+     *
+     * @param array<int, Media> $media
+     */
+    private function ensureSiteSettings(SymfonyStyle $io, array $media): void
+    {
+        $this->settings->setMany([
+            'footer_columns' => '2',
+            'footer_text' => '<p><strong>Tallyst</strong> — jednostavan, self-hosted CMS za samostalne autore aplikacija i usluga. Predstavi i prodaj na vlastitoj domeni.</p>',
+            'footer_menu' => self::MENU_LOCATION,
+            'footer_copyright' => '',
+            'footer_show_powered_by' => true,
+            'favicon_media_id' => null !== ($media[2] ?? null) ? (string) $media[2]->getId() : '',
+        ]);
+        $io->writeln('• Postavljen demo footer (2 kolone: tekst + izbornik) + favicon.');
     }
 
     // -------------------------------------------------------------- content ---

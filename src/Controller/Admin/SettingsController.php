@@ -23,12 +23,14 @@ use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Tallyst\Media\Form\Type\MediaIdPickerType;
+use Tallyst\Media\Form\Type\TiptapType;
 
 /**
  * The friendly, grouped Settings form (replaces the raw Setting key/value CRUD in the menu).
  * Fields are built dynamically from the SettingsRegistry schema and saved through the typed
- * SettingsManager. Lives inside the EasyAdmin shell via the dashboardControllerFqcn default,
- * same as BrandingController. Admin-only (covered by the ^/admin firewall).
+ * SettingsManager. Lives inside the EasyAdmin shell via the dashboardControllerFqcn default.
+ * Admin-only (class-level ROLE_ADMIN) — Branding (logo + favicon) and Footer tabs live here.
  */
 #[Route('/admin/settings', defaults: ['dashboardControllerFqcn' => 'App\Controller\Admin\DashboardController'])]
 #[IsGranted('ROLE_ADMIN')]
@@ -166,6 +168,11 @@ class SettingsController extends AbstractController
             SettingType::CHOICE => ChoiceType::class,
             SettingType::EMAIL => EmailType::class,
             SettingType::PASSWORD => PasswordType::class,
+            // Media module form types (Core-admin → Media, same precedent as PageCrudController):
+            // the media-library id picker and the Tiptap editor, both string-backed so they fit
+            // the Setting store. Their form themes are added in settings.html.twig.
+            SettingType::MEDIA => MediaIdPickerType::class,
+            SettingType::RICH_TEXT => TiptapType::class,
             default => TextType::class,
         };
     }

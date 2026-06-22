@@ -22,3 +22,9 @@ liip_imagine:
             quality: 82
             filters:
                 thumbnail: { size: [1600, 1600], mode: inset }
+        # Favicon (<link rel="icon">). Small square-ish. Keep in sync with the other two
+        # filter allowlists (ThumbnailWarmer::FILTERS + MediaImageHelper::FILTERS).
+        favicon:
+            quality: 90
+            filters:
+                thumbnail: { size: [64, 64], mode: inset }

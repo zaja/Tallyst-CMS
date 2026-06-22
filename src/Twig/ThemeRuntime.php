@@ -47,8 +47,13 @@ class ThemeRuntime implements RuntimeExtensionInterface
 
     /**
      * Render a menu by its location through a theme-overridable template.
+     *
+     * @param array<string, mixed> $options optional overrides — `template` (default
+     *                                       'menu.html.twig'; e.g. 'footer_menu.html.twig' for a
+     *                                       footer-styled menu) plus any extra vars passed to it.
+     *                                       The header call render_menu('main') keeps the defaults.
      */
-    public function renderMenu(string $location): string
+    public function renderMenu(string $location, array $options = []): string
     {
         $menu = $this->menus->findOneByLocation($location);
         if (null === $menu) {
@@ -60,10 +65,13 @@ class ThemeRuntime implements RuntimeExtensionInterface
             return '';
         }
 
-        return $this->twig->render('menu.html.twig', [
+        $template = $options['template'] ?? 'menu.html.twig';
+        unset($options['template']);
+
+        return $this->twig->render($template, array_merge([
             'items' => $items,
             'location' => $location,
-        ]);
+        ], $options));
     }
 
     /**

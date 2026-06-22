@@ -58,6 +58,23 @@ class MediaRuntime implements RuntimeExtensionInterface
     }
 
     /**
+     * Deterministic cached URL of the configured favicon (the pre-warmed `favicon` Liip
+     * filter, NOT an on-demand resolve — see the nginx pre-warm gotcha), or null.
+     * NULL-SAFE: favicon_media_id is a loose Setting reference (deleted Media → null → no tag).
+     */
+    public function faviconUrl(): ?string
+    {
+        $id = $this->settings->get('favicon_media_id');
+        if (null === $id || '' === $id) {
+            return null;
+        }
+
+        $favicon = $this->media->find((int) $id);
+
+        return null !== $favicon ? $this->images->url($favicon->getImageName(), 'favicon') : null;
+    }
+
+    /**
      * Render the theme-overridable brand for the header: the logo (Liip-sized) when set
      * and still present, otherwise the site name as text. alt = the media's alt or the
      * site name (a11y).

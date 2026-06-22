@@ -1,0 +1,21 @@
+{# Footer menu (render_menu(location, {template: 'footer_menu.html.twig'})). A simple link
+   list — NO site-nav id, NO hamburger/accordion toggles (that's the header's job). Renders
+   the top level + one nested level as plain links. items: [{label, url, active, children}]. #}
+<nav class="footer-nav" aria-label="{{ location }}">
+    <ul class="footer-menu">
+        {% for item in items %}
+            <li class="footer-menu-item{{ item.active ? ' is-active' : '' }}">
+                <a href="{{ item.url }}">{{ item.label }}</a>
+                {% if item.children is not empty %}
+                    <ul class="footer-submenu">
+                        {% for child in item.children %}
+                            <li class="footer-menu-item{{ child.active ? ' is-active' : '' }}">
+                                <a href="{{ child.url }}">{{ child.label }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</nav>

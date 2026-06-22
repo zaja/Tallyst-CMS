@@ -16,6 +16,10 @@ enum SettingType: string
     case CHOICE = 'choice';
     case EMAIL = 'email';
     case PASSWORD = 'password';
+    /** A Media reference stored as its id (string); edited with the media-library picker. */
+    case MEDIA = 'media';
+    /** Rich content (HTML + shortcodes) edited with Tiptap, rendered via render_content. */
+    case RICH_TEXT = 'rich_text';
 
     /** A secret value: write-only in the UI, never rendered back. */
     public function isSecret(): bool

@@ -17,7 +17,7 @@ use Tallyst\Media\Entity\Media;
 class MediaImageHelper
 {
     /** Defined + warmed Liip filters (see liip_imagine.yaml + ThumbnailWarmer). */
-    private const FILTERS = ['thumb', 'medium', 'hero'];
+    private const FILTERS = ['thumb', 'medium', 'hero', 'favicon'];
     private const DEFAULT_FILTER = 'medium';
 
     /** Whitelisted alignment → CSS class. */

@@ -2,20 +2,33 @@
 
 namespace App\Settings;
 
+use App\Repository\MenuRepository;
+
 /**
- * The Core settings sections (v1): General, Localization, Email. Modules may add their own
- * sections later via SettingsSectionProviderInterface; only Core sections exist for now.
+ * The Core settings sections (v1): General, Branding, Localization, Email, Footer. Modules may
+ * add their own sections later via SettingsSectionProviderInterface.
  *
- * `site_name` lives HERE (General) as its single editable home — Branding owns only the
- * logo (visual identity). The front reads the same `site_name` Setting key regardless.
+ * `site_name` lives in General (its single editable home). Branding holds the visual identity
+ * (logo + favicon, Media references stored as loose ids). Footer holds the configurable site
+ * footer. The front reads the same Setting keys regardless.
  */
 class CoreSettingsProvider implements SettingsSectionProviderInterface
 {
+    public function __construct(
+        private readonly MenuRepository $menus,
+    ) {
+    }
+
     public function getSettingsSections(): iterable
     {
         yield new SettingsSection('general', 'Općenito', 'fa-sliders', [
             new SettingDefinition('site_name', SettingType::STRING, 'Naziv sajta', 'Prikazuje se u zaglavlju i naslovu.', 'Tallyst'),
             new SettingDefinition('site_tagline', SettingType::STRING, 'Slogan', 'Kratak opis sajta (meta opis).', ''),
+        ]);
+
+        yield new SettingsSection('branding', 'Branding', 'fa-palette', [
+            new SettingDefinition('logo_media_id', SettingType::MEDIA, 'Logo', 'Prikazuje se u zaglavlju. Prazno = naziv sajta kao tekst.'),
+            new SettingDefinition('favicon_media_id', SettingType::MEDIA, 'Favicon', 'Ikona u kartici preglednika (PNG/JPG, kvadratna ~64px).'),
         ]);
 
         yield new SettingsSection('localization', 'Lokalizacija', 'fa-globe', [
@@ -41,6 +54,17 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
                 'Bez enkripcije' => 'none',
             ]),
         ]);
+
+        yield new SettingsSection('footer', 'Footer', 'fa-window-minimize', [
+            new SettingDefinition('footer_columns', SettingType::CHOICE, 'Broj kolona', 'Jedna kolona = samo tekst; dvije = tekst + izbornik.', '2', [
+                '1 kolona' => '1',
+                '2 kolone' => '2',
+            ]),
+            new SettingDefinition('footer_text', SettingType::RICH_TEXT, 'Tekst', 'Prikazuje se u prvoj koloni footera.'),
+            new SettingDefinition('footer_menu', SettingType::CHOICE, 'Izbornik (2. kolona)', 'Postojeći izbornik prikazan u drugoj koloni (kad su 2 kolone).', '', $this->menuChoices()),
+            new SettingDefinition('footer_copyright', SettingType::STRING, 'Copyright', 'Prazno = automatski "© {godina} {naziv sajta}".', ''),
+            new SettingDefinition('footer_show_powered_by', SettingType::BOOL, 'Prikaži "Pokreće Tallyst CMS"', '', true),
+        ]);
     }
 
     /**
@@ -51,6 +75,22 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
         $choices = [];
         foreach (\DateTimeZone::listIdentifiers() as $tz) {
             $choices[$tz] = $tz;
+        }
+
+        return $choices;
+    }
+
+    /**
+     * Existing menus as choices: label = menu name, value = menu LOCATION (what render_menu
+     * consumes). The non-required ChoiceType auto-adds an empty "none" option.
+     *
+     * @return array<string, string> name => location
+     */
+    private function menuChoices(): array
+    {
+        $choices = [];
+        foreach ($this->menus->findAll() as $menu) {
+            $choices[$menu->getName()] = $menu->getLocation();
         }
 
         return $choices;

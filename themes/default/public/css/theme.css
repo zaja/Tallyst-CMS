@@ -459,7 +459,8 @@ th { font-weight: 650; }
 }
 
 /* --------------------------------------------------------------- Footer --- */
-/* Placeholder only — full footer config is a later pass. */
+/* Configurable footer (Postavke → Footer): optional columns (text + menu) above a
+   branding line (copyright + optional powered-by). */
 .site-footer {
     border-top: 1px solid var(--line);
     background: var(--surface);
@@ -467,13 +468,36 @@ th { font-weight: 650; }
     font-size: var(--fs-sm);
     margin-top: var(--s-8);
 }
-.site-footer .container {
+.site-footer .container { padding-block: var(--s-6); }
+.site-footer a { color: var(--muted); }
+.site-footer a:hover { color: var(--brand); }
+
+/* Columns: 1 = single text column; 2 = text + menu side by side, stacking on mobile. */
+.footer-cols { display: grid; gap: var(--s-5); margin-bottom: var(--s-5); }
+.footer-cols--2 { grid-template-columns: 2fr 1fr; }
+.footer-col--text > :first-child { margin-top: 0; }
+.footer-col--text > :last-child { margin-bottom: 0; }
+@media (max-width: 40rem) {
+    .footer-cols--2 { grid-template-columns: 1fr; }
+}
+
+/* Footer menu (footer_menu.html.twig) — plain link list, no header nav styling. */
+.footer-nav ul { list-style: none; margin: 0; padding: 0; }
+.footer-menu > .footer-menu-item { margin-bottom: var(--s-2); }
+.footer-menu > .footer-menu-item > a { color: var(--ink); font-weight: 550; }
+.footer-submenu { margin-top: var(--s-1) !important; padding-left: var(--s-3) !important; }
+.footer-menu-item.is-active > a { color: var(--brand); }
+
+/* Branding line: copyright + optional powered-by. */
+.footer-branding {
     display: flex;
     flex-wrap: wrap;
     gap: var(--s-2) var(--s-4);
     align-items: center;
     justify-content: space-between;
-    padding-block: var(--s-6);
+    padding-top: var(--s-4);
+    border-top: 1px solid var(--line);
 }
-.site-footer a { color: var(--muted); }
-.site-footer a:hover { color: var(--brand); }
+/* When there are no columns above, drop the divider/extra space. */
+.footer-cols + .footer-branding { margin-top: 0; }
+.site-footer .container > .footer-branding:first-child { border-top: none; padding-top: 0; }
