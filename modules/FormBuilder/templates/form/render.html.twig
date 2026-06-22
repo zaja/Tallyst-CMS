@@ -85,7 +85,31 @@
             </div>
         {% endfor %}
 
-        <button type="submit" class="fb-submit">{{ form.priceMinor ? 'Nastavi na plaćanje' : 'Pošalji' }}</button>
+        {% if form.priceMinor %}
+            {% set methods = payment_methods|default([]) %}
+            {% if methods is empty %}
+                <p class="fb-error">Plaćanje trenutno nije dostupno.</p>
+            {% else %}
+                {% if methods|length > 1 %}
+                    <div class="fb-field fb-payment">
+                        <label>Način plaćanja <span class="fb-req">*</span></label>
+                        <div class="fb-choices">
+                            {% for m in methods %}
+                                <label class="fb-choice">
+                                    <input type="radio" name="payment_method" value="{{ m.name }}"{{ loop.first ? ' checked' : '' }} required>
+                                    {{ m.label }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% else %}
+                    <input type="hidden" name="payment_method" value="{{ methods[0].name }}">
+                {% endif %}
+                <button type="submit" class="fb-submit">Nastavi na plaćanje</button>
+            {% endif %}
+        {% else %}
+            <button type="submit" class="fb-submit">Pošalji</button>
+        {% endif %}
     </form>
 </div>
 

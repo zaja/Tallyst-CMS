@@ -5,6 +5,7 @@ namespace Tallyst\FormBuilder\Shortcode;
 use App\Content\ShortcodeInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Tallyst\FormBuilder\Form\FormSchemaFactory;
+use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 use Twig\Environment;
 
@@ -15,11 +16,14 @@ use Twig\Environment;
  */
 class FormShortcode implements ShortcodeInterface
 {
+    private const PROVIDER_LABELS = ['stripe' => 'Stripe', 'paypal' => 'PayPal'];
+
     public function __construct(
         private readonly FormDefinitionRepository $forms,
         private readonly FormSchemaFactory $schemas,
         private readonly Environment $twig,
         private readonly RequestStack $requestStack,
+        private readonly PaymentProcessorRegistry $payments,
     ) {
     }
 
@@ -47,7 +51,25 @@ class FormShortcode implements ShortcodeInterface
             'schema' => $this->schemas->client($form),
             'errors' => $errors,
             'old' => $old,
+            'payment_methods' => $form->isProduct() ? $this->paymentMethods($form->getAllowedPaymentMethods()) : [],
         ]);
+    }
+
+    /**
+     * Usable providers for the buy button: configured ∩ allowed, as {name,label} for the radios.
+     *
+     * @param string[]|null $allowed
+     *
+     * @return array<int, array{name: string, label: string}>
+     */
+    private function paymentMethods(?array $allowed): array
+    {
+        $methods = [];
+        foreach ($this->payments->availableFor($allowed) as $name) {
+            $methods[] = ['name' => $name, 'label' => self::PROVIDER_LABELS[$name] ?? ucfirst($name)];
+        }
+
+        return $methods;
     }
 
     /**

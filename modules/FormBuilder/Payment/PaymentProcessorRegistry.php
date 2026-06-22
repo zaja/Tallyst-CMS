@@ -31,4 +31,39 @@ class PaymentProcessorRegistry
         return $this->processors[$name]
             ?? throw new \InvalidArgumentException(\sprintf('Unknown payment provider "%s".', $name));
     }
+
+    /**
+     * All known provider names (configured or not) — the choice list for the per-product limit.
+     *
+     * @return string[]
+     */
+    public function names(): array
+    {
+        return array_keys($this->processors);
+    }
+
+    /**
+     * Providers actually usable for a form: CONFIGURED (has credentials) ∩ ALLOWED (the form's
+     * limit; null/empty = all). Order follows registration. The single source for both the form
+     * render (offer a choice) and the submit (validate the chosen method).
+     *
+     * @param string[]|null $allowed
+     *
+     * @return string[]
+     */
+    public function availableFor(?array $allowed = null): array
+    {
+        $allowed = $allowed ?: null; // empty array means "no limit", same as null
+        $names = [];
+        foreach ($this->processors as $name => $processor) {
+            if (null !== $allowed && !in_array($name, $allowed, true)) {
+                continue;
+            }
+            if ($processor->isConfigured()) {
+                $names[] = $name;
+            }
+        }
+
+        return $names;
+    }
 }

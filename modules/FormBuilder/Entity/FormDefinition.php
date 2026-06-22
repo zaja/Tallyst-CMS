@@ -50,6 +50,15 @@ class FormDefinition
     private ?string $currency = null;
 
     /**
+     * Per-product payment-method limit (provider names, e.g. ["stripe","paypal"]). NULL/empty =
+     * all configured providers. The checkout offers configured ∩ this.
+     *
+     * @var string[]|null
+     */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $allowedPaymentMethods = null;
+
+    /**
      * Submission-notification config for FREE forms (priced forms use the order/fulfilment
      * mails). When enabled, a notification e-mail is sent on each valid submit.
      */
@@ -182,6 +191,20 @@ class FormDefinition
     public function setCurrency(?string $currency): static
     {
         $this->currency = $currency;
+
+        return $this;
+    }
+
+    /** @return string[]|null */
+    public function getAllowedPaymentMethods(): ?array
+    {
+        return $this->allowedPaymentMethods;
+    }
+
+    /** @param string[]|null $allowedPaymentMethods */
+    public function setAllowedPaymentMethods(?array $allowedPaymentMethods): static
+    {
+        $this->allowedPaymentMethods = $allowedPaymentMethods ?: null;
 
         return $this;
     }

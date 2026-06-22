@@ -13,11 +13,23 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Tallyst\FormBuilder\Entity\FormDefinition;
+use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 
 class FormDefinitionType extends AbstractType
 {
+    private const PROVIDER_LABELS = ['stripe' => 'Stripe', 'paypal' => 'PayPal'];
+
+    public function __construct(private readonly PaymentProcessorRegistry $payments)
+    {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $methodChoices = [];
+        foreach ($this->payments->names() as $name) {
+            $methodChoices[self::PROVIDER_LABELS[$name] ?? ucfirst($name)] = $name;
+        }
+
         $builder
             ->add('name', TextType::class, ['label' => 'Naziv forme', 'empty_data' => ''])
             ->add('slug', TextType::class, [
@@ -42,6 +54,14 @@ class FormDefinitionType extends AbstractType
                 'label' => 'Valuta',
                 'choices' => ['EUR' => 'eur', 'USD' => 'usd', 'GBP' => 'gbp'],
                 'placeholder' => '—',
+            ])
+            ->add('allowedPaymentMethods', ChoiceType::class, [
+                'required' => false,
+                'label' => 'Dozvoljeni načini plaćanja',
+                'choices' => $methodChoices,
+                'multiple' => true,
+                'expanded' => true,
+                'help' => 'Prazno = svi konfigurirani. Kupcu se nudi presjek odabranih i konfiguriranih.',
             ])
             // Submission notification (free forms only — priced forms use order mails).
             ->add('notifyEnabled', CheckboxType::class, [

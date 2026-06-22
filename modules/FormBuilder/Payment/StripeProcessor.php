@@ -33,6 +33,21 @@ class StripeProcessor implements PaymentProcessorInterface
         return 'stripe';
     }
 
+    public function isConfigured(): bool
+    {
+        return '' !== $this->secretKey();
+    }
+
+    public function getWebhookEvents(): array
+    {
+        return ['checkout.session.completed', 'charge.refunded'];
+    }
+
+    /** Stripe Checkout auto-captures, so there's nothing to do on return. */
+    public function finalizeReturn(Order $order): void
+    {
+    }
+
     /** Effective secret key: the Postavke setting wins, else the env fallback. */
     private function secretKey(): string
     {
@@ -102,15 +117,17 @@ class StripeProcessor implements PaymentProcessorInterface
         (new StripeClient($this->secretKey()))->refunds->create(['payment_intent' => $paymentIntentId]);
     }
 
-    public function parseSignedWebhook(string $payload, string $signatureHeader): WebhookResult
+    public function parseSignedWebhook(string $payload, array $headers): WebhookResult
     {
         // Throws \Stripe\Exception\SignatureVerificationException on a bad signature.
-        $event = Webhook::constructEvent($payload, $signatureHeader, $this->webhookSecret());
+        $event = Webhook::constructEvent($payload, $headers['stripe-signature'] ?? '', $this->webhookSecret());
 
         $object = $event->data->object ?? null;
 
         $sessionId = is_string($object->id ?? null) ? $object->id : null;
-        $isPaid = 'paid' === ($object->payment_status ?? null);
+        // isPaid means "this event confirms the order's payment" → gated on the checkout-completed
+        // event (OrderPaymentSync keys the paid branch on isPaid alone).
+        $isPaid = 'checkout.session.completed' === $event->type && 'paid' === ($object->payment_status ?? null);
 
         $intent = $object->payment_intent ?? null;
         $paymentIntentId = is_string($intent) ? $intent : (is_object($intent) ? ($intent->id ?? null) : null);

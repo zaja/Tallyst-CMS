@@ -1,6 +1,7 @@
-{# Stripe info block shown in Postavke → Stripe (included by the Core settings template for the
-   'stripe' section). Read-only: mode badge from the effective key + the webhook setup guide. #}
-{% set mode = stripe_mode() %}
+{# Per-provider info block for Postavke (included by the Core settings template per payment section).
+   Params: provider (machine name), webhook_route (route name), dashboard (display name).
+   Read-only: mode badge from the effective config + the webhook setup guide. #}
+{% set mode = payment_mode(provider) %}
 <hr>
 <div class="mb-3">
     {% if mode == 'live' %}
@@ -11,27 +12,27 @@
         <span class="text-muted small">— testni ključevi, nema stvarne naplate.</span>
     {% else %}
         <span class="badge text-bg-secondary">Nije konfigurirano</span>
-        <span class="text-muted small">— upiši tajni ključ (ili postavi STRIPE_SECRET_KEY).</span>
+        <span class="text-muted small">— upiši ključeve (ili postavi env varijable).</span>
     {% endif %}
 </div>
 
 <div class="card bg-body-tertiary">
     <div class="card-body">
         <h3 class="h6">Webhook postavljanje</h3>
-        <p class="small mb-1">Webhook URL (zalijepi u Stripe):</p>
+        <p class="small mb-1">Webhook URL (zalijepi u {{ dashboard }}):</p>
         <input type="text" class="form-control form-control-sm mb-2" readonly
-               value="{{ url('form_builder_webhook_stripe') }}"
+               value="{{ url(webhook_route) }}"
                onclick="this.select()">
         <p class="small mb-1">Obavezni eventi:</p>
         <ul class="small mb-2">
-            {% for event in stripe_webhook_events() %}
+            {% for event in payment_webhook_events(provider) %}
                 <li><code>{{ event }}</code></li>
             {% endfor %}
         </ul>
         <p class="small text-muted mb-0">
-            Stripe dashboard → Developers → Webhooks → <strong>Add endpoint</strong> → zalijepi URL →
-            odaberi evente. <strong>Test i live imaju ODVOJENE endpointe</strong> (svaki sa svojim
-            webhook secretom).
+            {{ dashboard }} dashboard → Webhooks → <strong>Add endpoint</strong> → zalijepi URL →
+            odaberi evente. <strong>Test/sandbox i live imaju ODVOJENE endpointe</strong> (svaki sa
+            svojim ključevima/secretom).
         </p>
     </div>
 </div>

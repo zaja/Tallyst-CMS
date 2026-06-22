@@ -11,15 +11,12 @@ use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Service\OrderPaymentSync;
 
 /**
- * Stripe webhook — the SOLE source of truth for "paid". Public, two-segment path
- * (outside /{slug} and /admin), no CSRF (it's a server-to-server call verified by
- * signature instead).
- *
- * Thin: this controller does only Stripe's signature verification (in StripeProcessor) then hands
- * the provider-agnostic result to OrderPaymentSync, which holds the paid/refund transitions + the
- * idempotency guards shared with the PayPal webhook.
+ * PayPal webhook — its own endpoint (PayPal verification differs from Stripe: an API call with
+ * several PAYPAL-* headers + the configured webhook id, done inside PayPalProcessor). Public, no
+ * CSRF (verified by signature). After verification it hands the agnostic result to the SAME
+ * OrderPaymentSync as Stripe, so paid/refund go through identical idempotency guards.
  */
-class StripeWebhookController extends AbstractController
+class PayPalWebhookController extends AbstractController
 {
     public function __construct(
         private readonly PaymentProcessorRegistry $payments,
@@ -28,16 +25,16 @@ class StripeWebhookController extends AbstractController
     ) {
     }
 
-    #[Route('/webhook/stripe', name: 'form_builder_webhook_stripe', methods: ['POST'])]
+    #[Route('/webhook/paypal', name: 'form_builder_webhook_paypal', methods: ['POST'])]
     public function handle(Request $request): Response
     {
         try {
-            $result = $this->payments->get('stripe')->parseSignedWebhook(
+            $result = $this->payments->get('paypal')->parseSignedWebhook(
                 $request->getContent(),
                 $this->flattenHeaders($request),
             );
         } catch (\Throwable $e) {
-            $this->logger->warning('Stripe webhook signature verification failed.', ['error' => $e->getMessage()]);
+            $this->logger->warning('PayPal webhook verification failed.', ['error' => $e->getMessage()]);
 
             return new Response('Invalid signature', Response::HTTP_BAD_REQUEST);
         }

@@ -2,6 +2,7 @@
 
 namespace Tallyst\FormBuilder\Controller;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,6 +43,7 @@ class FormSubmitController extends AbstractController
         private readonly SubmissionValidator $validator,
         private readonly SubmissionNotifier $notifier,
         private readonly PaymentProcessorRegistry $payments,
+        private readonly LoggerInterface $logger,
         #[Autowire(service: 'limiter.form_submit')]
         private readonly RateLimiterFactory $formSubmitLimiter,
     ) {
@@ -117,19 +119,47 @@ class FormSubmitController extends AbstractController
     #[Route('/form/order/{id}/thank-you', name: 'form_builder_order_thankyou', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function thankYou(Order $order): Response
     {
-        // UX only — the real paid/fulfilled status is driven by the webhook. This
-        // page may legitimately show "processing" if the webhook hasn't landed yet.
+        // Finalize the provider's return: Stripe = no-op (Checkout auto-captures); PayPal captures
+        // the approved order. The webhook still drives paid/fulfilled, so this page may show
+        // "processing" until it lands. A capture failure (declined/expired/abandoned) must stay
+        // graceful — the order stays pending and the page shows "processing", never a 500.
+        try {
+            $this->payments->get($order->getProvider())->finalizeReturn($order);
+            $this->orders->save($order); // persist the capture id / buyer e-mail set during capture
+        } catch (\Throwable $e) {
+            $this->logger->warning('Payment finalize-return failed.', ['order' => $order->getId(), 'error' => $e->getMessage()]);
+        }
+
         return $this->render('@FormBuilder/form/thank_you.html.twig', ['order' => $order]);
     }
 
     private function startCheckout(FormDefinition $form, FormSubmission $submission, Request $request, string $return): Response
     {
+        // Provider = the buyer's choice ∩ what's configured-and-allowed. Never a dead end / 500.
+        $available = $this->payments->availableFor($form->getAllowedPaymentMethods());
+        if ([] === $available) {
+            $this->addFlash('danger', 'Plaćanje trenutno nije dostupno.');
+
+            return $this->redirect($return);
+        }
+
+        $chosen = (string) $request->request->get('payment_method', '');
+        if (!in_array($chosen, $available, true)) {
+            if (1 === count($available)) {
+                $chosen = $available[0]; // single option → the form sends it hidden
+            } else {
+                $this->addFlash('danger', 'Odaberite ispravan način plaćanja.');
+
+                return $this->redirect($return);
+            }
+        }
+
         $order = (new Order())
             ->setForm($form)
             ->setSubmission($submission)
             ->setAmountMinor((int) $form->getPriceMinor())
             ->setCurrency($form->getCurrency() ?: 'eur')
-            ->setProvider('stripe');
+            ->setProvider($chosen);
         $this->orders->save($order); // persist to obtain an id
 
         $successUrl = $this->generateUrl('form_builder_order_thankyou', ['id' => $order->getId()], UrlGeneratorInterface::ABSOLUTE_URL);

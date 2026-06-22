@@ -53,9 +53,11 @@
                             <small class="text-muted d-block mt-1">Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.</small>
                         {% endif %}
 
-                        {# Stripe section: mode badge + webhook setup guide (FormBuilder-owned partial). #}
+                        {# Payment sections: mode badge + webhook setup guide (FormBuilder-owned partial). #}
                         {% if section.key == 'stripe' %}
-                            {{ include('@FormBuilder/admin/_stripe_info.html.twig') }}
+                            {{ include('@FormBuilder/admin/_payment_info.html.twig', {provider: 'stripe', webhook_route: 'form_builder_webhook_stripe', dashboard: 'Stripe'}) }}
+                        {% elseif section.key == 'paypal' %}
+                            {{ include('@FormBuilder/admin/_payment_info.html.twig', {provider: 'paypal', webhook_route: 'form_builder_webhook_paypal', dashboard: 'PayPal'}) }}
                         {% endif %}
                     </div>
                 </div>

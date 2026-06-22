@@ -371,9 +371,24 @@ themes/               # THEMES — one folder = one theme
 4. **Page-as-product.** A `FormDefinition` may carry `priceMinor` (integer MINOR
    units — cents, never float) + `currency`. A priced submission creates an `Order`
    and starts payment; a free form behaves as before.
-5. **Payments use a strategy interface.** `PaymentProcessorInterface` + a registry
-   (Stripe done in pass 2a; PayPal is just another impl). Order lifecycle is a
-   Symfony **state_machine** workflow (`order`): `pending → paid → fulfilled →
+5. **Payments use a strategy interface.** `PaymentProcessorInterface` + a registry —
+   **Stripe AND PayPal** are both impls; `order.provider` routes checkout/refund/webhook.
+   The interface is `getName / isConfigured / getMode / createCheckout / finalizeReturn /
+   parseSignedWebhook(payload, headers[]) / refund / getWebhookEvents` — kept agnostic so each
+   provider's specifics stay inside it (Stripe local-HMAC verify + auto-capture; PayPal OAuth +
+   verify-API + an explicit capture-on-return + sandbox/live host + explicit mode). **PayPal
+   = direct REST via HttpClient** (official PHP SDK archived; server SDK too partial).
+   - **`finalizeReturn(Order)`** runs on the buyer's return for EVERY provider (Stripe no-op;
+     PayPal captures the approved order). It is idempotent and MUST NOT set `paid` — the webhook
+     stays sole truth. A capture failure is graceful (thank-you try/catch → "processing" view, no 500).
+   - **`OrderPaymentSync`** holds the paid+refund transitions and their idempotency guards in ONE
+     place; BOTH webhook controllers (`/webhook/stripe`, `/webhook/paypal`) call it after their own
+     verification, so every provider goes through identical guards (can't drift/bypass).
+   - **Provider choice + per-product limit:** `FormDefinition.allowedPaymentMethods` (JSON, empty =
+     all); `PaymentProcessorRegistry::availableFor(allowed)` = configured ∩ allowed — the one source
+     for the form render (radios / hidden / "unavailable") and the submit (validate the chosen method,
+     set `order.provider`). Keys live in Postavke (Stripe + PayPal sections), settings ?: env.
+   Order lifecycle is a Symfony **state_machine** workflow (`order`): `pending → paid → fulfilled →
    refunded`. Critical rules:
    - The **verified webhook is the SOLE source of truth for `paid`** — never the
      submit flow or the thank-you redirect. Verify the signature (reject 400), require
@@ -488,9 +503,11 @@ new table, no migration (encrypted values are just text in the existing `value` 
 - **Schema is IoC**, like the shortcode/module registries. `SettingsSectionProviderInterface`
   (`#[AutoconfigureTag('app.settings_section')]`) → `SettingsRegistry` aggregates sections.
   Core ships `CoreSettingsProvider` (sections: **General**, **Branding**, **Lokalizacija**,
-  **Email**, **Footer**); modules add their own — **FormBuilder ships the "Stripe" section**
-  (`StripeSettingsProvider`: `stripe_secret_key`/`stripe_webhook_secret` PASSWORD-encrypted +
-  `checkout_locale`), so Stripe config lives in its module, not Core. A
+  **Email**, **Footer**); modules add their own — **FormBuilder ships the "Stripe" + "PayPal"
+  sections** (`StripeSettingsProvider`: `stripe_secret_key`/`stripe_webhook_secret` PASSWORD-encrypted
+  + `checkout_locale`; `PayPalSettingsProvider`: `paypal_client_id` + `paypal_client_secret`
+  PASSWORD-encrypted + `paypal_webhook_id` + explicit `paypal_mode`), so payment config lives in the
+  module, not Core. A
   `SettingDefinition` (key, `SettingType`, label, help, default, choices, `encrypted`) is the
   single description used to BUILD the form AND cast values. `footer_menu`'s choices are built
   dynamically from `MenuRepository` (name → menu **location**, which `render_menu` consumes).
@@ -835,11 +852,21 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   (`StripeWebhookController::REQUIRED_WEBHOOK_EVENTS`, one source) + a setup guide, via a FormBuilder
   Twig extension + `@FormBuilder/admin/_stripe_info.html.twig` partial the Core settings template
   includes (loose Twig coupling, no Core→FormBuilder PHP dep). Env support retained.
+- **PayPal + provider choice + per-product limit — DONE (pass 4).** PayPal is a second
+  `PaymentProcessorInterface` impl (Orders v2, direct REST via HttpClient — official SDK archived).
+  Interface evolved (agnostic): `isConfigured/getMode/finalizeReturn/parseSignedWebhook(payload,
+  headers[])/getWebhookEvents`; PayPal's OAuth + capture-on-return + verify-API + sandbox/live host +
+  explicit `paypal_mode` stay inside `PayPalProcessor`. `finalizeReturn` (thank-you, every provider:
+  Stripe no-op, PayPal capture) is idempotent + never sets paid (webhook stays sole truth) + graceful
+  on failure. `OrderPaymentSync` (FormBuilder/Service) holds the paid+refund transitions + idempotency
+  guards; both `/webhook/stripe` + `/webhook/paypal` call it (same guards, no drift). Buyer chooses
+  the provider: `FormDefinition.allowedPaymentMethods` (migration) + `registry.availableFor()` =
+  configured ∩ allowed, used by the form render (radios/hidden/unavailable) + the submit. PayPal keys
+  in Postavke → PayPal. DTO reuses `providerSessionId` (PayPal order id) + `providerPaymentIntentId`
+  (capture id). PayPal full-refund only (partial out of scope).
 - **Queued (this order):**
-  1. **PayPal** — a second `PaymentProcessorInterface` impl (incl. `refund`) + provider selection
-     (checkout/webhook currently hardcode `stripe`); registry already supports it.
-  2. **Price variants** (price options per form — none today).
-  3. **Tax rate** (single rate — none today).
+  1. **Price variants** (price options per form — none today).
+  2. **Tax rate** (single rate — none today).
 - **Subscriptions & recurring (future epic, post-v1).** Stripe runs the billing/retries + the
   **Customer Portal** for self-service cancel/update (we do NOT build that UI); OUR job is the
   subscription-lifecycle webhooks (created/updated/`invoice.paid`/`canceled`) + access/licence
@@ -858,7 +885,11 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   below), `APP_ENV=prod` (never dev/debug on the public domain), LIVE Stripe keys + the webhook
   secret in **Postavke → Stripe (or `.env.local`)** — the badge should read **LIVE MOD** — with a
   **LIVE webhook endpoint (separate from test)** subscribed to `checkout.session.completed` +
-  `charge.refunded` (the URL + event list are shown in Postavke → Stripe), a real `MAILER_DSN`/SMTP
+  `charge.refunded` (the URL + event list are shown in Postavke → Stripe). If using **PayPal**:
+  live `paypal_client_id`/`secret` + `paypal_mode=live` (badge LIVE) + a live webhook endpoint
+  (`/webhook/paypal`, separate from sandbox) subscribed to `PAYMENT.CAPTURE.COMPLETED` +
+  `PAYMENT.CAPTURE.REFUNDED`, and its `paypal_webhook_id` set (verification needs it). A real
+  `MAILER_DSN`/SMTP
   configured AND a test mail delivered, and a real `SETTINGS_ENCRYPTION_KEY` provisioned
   (`app:install`). Email specifics
   (learned the hard way): the configured **`mail_from_email` MUST be an address the SMTP account
