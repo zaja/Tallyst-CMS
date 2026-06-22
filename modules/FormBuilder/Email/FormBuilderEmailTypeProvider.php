@@ -61,6 +61,26 @@ class FormBuilderEmailTypeProvider implements EmailTypeProviderInterface
         );
 
         yield new EmailType(
+            key: 'order_delivered',
+            label: 'Narudžba isporučena (kupcu)',
+            tags: [
+                'order_id' => 'Broj narudžbe.',
+                'form_name' => 'Naziv forme/proizvoda.',
+                'site_name' => 'Naziv sajta.',
+            ],
+            requiredTags: [],
+            canDisable: true,
+            defaultSubject: 'Vaša narudžba #{order_id} je isporučena',
+            defaultBody: <<<HTML
+                <p>Dobre vijesti — vaša narudžba je isporučena.</p>
+                <p><strong>Narudžba #{order_id}</strong><br>
+                Proizvod: {form_name}</p>
+                <p>Hvala na povjerenju!</p>
+                <p>{site_name}</p>
+                HTML,
+        );
+
+        yield new EmailType(
             key: 'form_notification',
             label: 'Obavijest o prijavi forme',
             tags: [

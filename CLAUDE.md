@@ -378,9 +378,16 @@ themes/               # THEMES — one folder = one theme
    - The **verified webhook is the SOLE source of truth for `paid`** — never the
      submit flow or the thank-you redirect. Verify the signature (reject 400), require
      the provider's paid status, be idempotent, and ack unknown sessions with 200.
-   - The webhook marks `paid` fast, then dispatches **async fulfillment** (Messenger).
-     Fulfillment (e-mails, then `paid→fulfilled`) is retriable and MUST NOT roll back
-     `paid` if it fails. Production needs a running `messenger:consume async` worker.
+   - The webhook marks `paid` fast, then dispatches an **async confirmation** (Messenger).
+     `FulfillOrderHandler` sends the customer confirmation + admin notice (via `OrderMailer`) and is
+     retriable; it MUST NOT roll back `paid`. Production needs a running `messenger:consume async` worker.
+   - **MANUAL FULFILMENT (Option B):** the handler does NOT advance to `fulfilled` — the order stays
+     **`paid` = "awaiting delivery"** (the admin's to-do). **`fulfilled` = the admin manually marked
+     delivered** via the `OrderCrudController` "Označi isporučeno" action, which applies `fulfill`
+     through the state machine (never a manual status set) and sends the `order_delivered` mail. The
+     admin can also re-send the confirmation. `OrderMailer` (FormBuilder/Service) builds order-mail
+     tags/recipients in ONE place so the auto and manual paths send identical mail. Order badges:
+     paid = `warning` "Čeka isporuku", fulfilled = `success` "Isporučeno".
    - A front form that 303-redirects to an external payment page MUST set
      `data-turbo="false"` (Turbo can't follow a cross-origin redirect).
 6. **Themes resolve at runtime.** The active theme's `templates/` dir is prepended
@@ -598,7 +605,7 @@ All 4 customer/admin mails are admin-editable (subject + HTML body + enabled) vi
   nothing is seeded.
 - **Type registry is IoC** (`app.email_type`, like settings sections): `EmailTypeProviderInterface`
   → `EmailTypeRegistry`. Core (`CoreEmailTypeProvider`) ships `password_reset`; **FormBuilder owns
-  its own mail types** (`order_confirmation`, `order_admin`, `form_notification`) so Core never
+  its own mail types** (`order_confirmation`, `order_admin`, `order_delivered`, `form_notification`) so Core never
   touches `Order`. An `EmailType` carries key/label/tags(name=>desc)/requiredTags/canDisable/
   defaultSubject/defaultBody. The send SITE builds the `{tag}` VALUES from its context (the registry
   only declares the inventory).
@@ -802,14 +809,27 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
 - **Phase 1 (CMS-complete polish) is COMPLETE.** Next: Phase 2 — e-commerce finish.
 
 ### Phase 2 — E-commerce finish (manual-fulfilment model) (CURRENT)
-- **FormBuilder Pass 2b — PayPal + refund (NOT built).** PayPal is just another
-  `PaymentProcessorInterface` impl alongside Stripe (pass 2a done) — add it and register it in
-  the processor registry. Refund: the `order` state_machine already has the `refunded` state;
-  wire a trigger (admin action → provider refund call → transition) into it. Keep rule 5 (the
-  verified webhook stays the sole source of truth for `paid`).
-- **Order-flow / order-mail polish (NOT built).** Tidy the order lifecycle and the order /
-  confirmation mails on the manual-fulfilment model (the delivery model is DECIDED — see the
-  Delivery section at the top; automated delivery is Post-v1, below).
+- **Order lifecycle (manual fulfilment) + admin actions — DONE (pass 1).** Option B: `fulfilled`
+  now = admin manually delivered (no longer auto-on-mail); `FulfillOrderHandler` sends confirmation +
+  admin notice via `OrderMailer` and leaves the order `paid`; `OrderCrudController` actions "Označi
+  isporučeno" (paid→fulfilled via the state machine + `order_delivered` mail) and "Pošalji ponovno
+  potvrdu"; badge semantics (paid=warning "Čeka isporuku", fulfilled=success "Isporučeno"). See rule 5.
+  (No data migration — old `fulfilled` rows were dev/demo only; `--fresh` resets.)
+- **Queued (this order):**
+  1. **Refund.** The `order` state_machine already has `refunded` (declared-dead). Wire: admin action
+     → Stripe refund API call (uses `providerPaymentIntentId`, already captured) → `refund` transition.
+     Keep rule 5 (verified webhook stays the sole source of truth for `paid`).
+  2. **Stripe config in Postavke** — move keys env→Settings + a **test/live badge** + **checkout
+     `locale`** (currently none passed). (Settings/encrypted-secret infra already exists.)
+  3. **PayPal** — a second `PaymentProcessorInterface` impl + provider selection (checkout/webhook
+     currently hardcode `stripe`); registry already supports it.
+  4. **Price variants** (price options per form — none today).
+  5. **Tax rate** (single rate — none today).
+- **Subscriptions & recurring (future epic, post-v1).** Stripe runs the billing/retries + the
+  **Customer Portal** for self-service cancel/update (we do NOT build that UI); OUR job is the
+  subscription-lifecycle webhooks (created/updated/`invoice.paid`/`canceled`) + access/licence
+  teardown on cancel/lapse. Depends on automated access-management (the deferred automated-delivery
+  work), so it sits with Post-v1, not the manual-fulfilment v1.
 
 ### Phase 3 — Standalone installer + deployment readiness
 - **Standalone installer — WordPress-like (NOT built).** A guided first-run install procedure
