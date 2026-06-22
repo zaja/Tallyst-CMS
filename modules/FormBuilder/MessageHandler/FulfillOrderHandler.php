@@ -3,6 +3,7 @@
 namespace Tallyst\FormBuilder\MessageHandler;
 
 use App\Email\EmailSender;
+use App\Settings\SettingsManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -30,6 +31,7 @@ class FulfillOrderHandler
         private readonly EmailSender $emails,
         private readonly EntityManagerInterface $em,
         private readonly WorkflowInterface $orderStateMachine,
+        private readonly SettingsManager $settings,
         #[Autowire('%env(ORDER_ADMIN_EMAIL)%')]
         private readonly string $adminEmail,
     ) {
@@ -68,9 +70,14 @@ class FulfillOrderHandler
 
     private function sendAdminEmail(Order $order): void
     {
+        // Admin recipient: the editable setting wins, else the ORDER_ADMIN_EMAIL env fallback
+        // (so a fresh deploy works before anything is configured). Read per message — messenger
+        // resets services between messages, so a settings change applies without a worker restart.
+        $to = ((string) $this->settings->get('order_admin_email')) ?: $this->adminEmail;
+
         $this->emails->send('order_admin', $this->tags($order) + [
             'customer_email' => $order->getCustomerEmail() ?? '-',
-        ], $this->adminEmail);
+        ], $to);
     }
 
     /**

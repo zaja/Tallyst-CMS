@@ -787,9 +787,13 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   (learned the hard way): the configured **`mail_from_email` MUST be an address the SMTP account
   is allowed to send as** (else real SMTP rejects with `553 ... not owned` and mail silently
   fails) — and verify with a real **paid test order** end-to-end, not just the test button
-  (they share the transport but the order path is async via the worker). Set **`ORDER_ADMIN_EMAIL`
-  to a real, deliverable address** (the `admin@tallyst.local` default is a placeholder whose
-  domain bounces, so the admin-notification copy never arrives). Set **`DEFAULT_URI` to the real
+  (they share the transport but the order path is async via the worker). The order-admin
+  notification recipient is the **`order_admin_email`** Setting (Postavke → Email), falling back to
+  the **`ORDER_ADMIN_EMAIL`** env when empty — set ONE of them to a real, deliverable address (the
+  `admin@tallyst.local` env default is a placeholder whose domain bounces, so the notification never
+  arrives). `FulfillOrderHandler` reads the setting per message (messenger resets services between
+  messages), so changing it needs no worker restart — unlike SMTP, cached for the worker's lifetime.
+  Set **`DEFAULT_URI` to the real
   public URL** (e.g. `https://tallyst.org`) so worker-rendered absolute links (password-reset link,
   etc.) aren't `http://localhost`. The Deployment Readiness Panel below is the eventual in-admin
   surface for these checks.

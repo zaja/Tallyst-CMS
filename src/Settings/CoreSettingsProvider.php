@@ -48,6 +48,7 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
             new SettingDefinition('mail_from_name', SettingType::STRING, 'Pošiljatelj (ime)', 'Ime u polju From odlaznih mailova.', 'Tallyst'),
             new SettingDefinition('mail_from_email', SettingType::EMAIL, 'Pošiljatelj (email)', 'Adresa u polju From.', ''),
             new SettingDefinition('mail_reply_to', SettingType::EMAIL, 'Reply-To', 'Neobavezno; odgovori idu na ovu adresu.', ''),
+            new SettingDefinition('order_admin_email', SettingType::EMAIL, 'Email za narudžbe (admin)', 'Prima obavijest o novoj plaćenoj narudžbi. Prazno = ORDER_ADMIN_EMAIL iz okoline.', ''),
             new SettingDefinition('smtp_host', SettingType::STRING, 'SMTP host', 'Npr. smtp.mailtrap.io. Prazno = koristi MAILER_DSN iz okoline.', ''),
             new SettingDefinition('smtp_port', SettingType::INT, 'SMTP port', '587 za STARTTLS, 465 za SSL.', 587),
             new SettingDefinition('smtp_username', SettingType::STRING, 'SMTP korisnik', '', ''),
