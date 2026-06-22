@@ -1,11 +1,81 @@
 # Tallyst CMS — Claude Code Project Guide
 
-## WHY
-Tallyst is a deliberately simple, modular CMS for a single developer who wants to
-sell their own services and digital products (apps) directly. It exists because
-off-the-shelf options (WordPress + paid form/payment plugins) are too heavy, carry
-recurring license costs, and miss a few specific features — most importantly the
-ability to turn any content page into a sellable product via an inline form tag.
+## Vision & product (WHY)
+Tallyst is a deliberately simple, self-hosted CMS for **solo developers** who want to
+present AND sell their own app or services **in-house** — without paying recurring fees to
+external "sell-your-stuff" SaaS (Gumroad, Lemon Squeezy, paid WordPress form/payment plugins).
+The bet: that niche is underserved. Off-the-shelf options are either heavy and bloated
+(WordPress + plugins) or hosted services that take a cut and own the customer relationship.
+Tallyst is the clean, opinionated, everything-yours alternative.
+
+It started as a personal CMS; the goal is a well-made basic CMS plus a lean e-commerce layer,
+polished enough to offer to that community.
+
+**Signature feature:** an admin builds a payment-enabled form and inserts it into any page via
+`[form id=N]` — that page becomes a sellable product. (Architecture in WHAT, below.)
+
+## Guiding principle — simple IS the product
+
+For the target user, **simplicity is the value proposition, not a limitation.** Tallyst must NOT
+try to out-feature WordPress; it wins by being clean, lean, opinionated. The constant filter for
+every proposed feature:
+
+> "Does a solo developer selling their app/service need this for v1?"
+
+If no → defer or drop. The auth layer went deep BECAUSE Tallyst is multi-user and handles
+payments — depth is justified there. Do NOT repeat depth-for-its-own-sake elsewhere; keep CMS
+features lean. The danger is endless "polish until done"; the cure is the closed v1 scope below.
+
+## v1 scope (a CLOSED list — resist creep)
+
+**In v1:**
+- Core CMS engine + production-grade auth — **DONE** (Roadmap Phase 0).
+- CMS-complete polish: a neutral, well-designed **default theme**; **demo content** (~15 pages +
+  ~15 posts in a 2-level menu, to see the front-end whole incl. mobile); site **footer** config;
+  per-page **hero** section; **email templates**.
+  - Email templates are SCOPED: customer-facing mail (order confirmation, free-form notification)
+    gets *light* admin editability — editable subject + body with a few variables (`{name}`,
+    `{total}`…) + sensible defaults. System mail (reset, 2FA) stays as good Twig templates in code.
+    **NOT** a full admin email-template editor (variables/preview/per-type IDE) — that's over-build.
+- E-commerce finish on the **manual-fulfilment** model (see Delivery): PayPal alongside Stripe,
+  refund, order-flow polish.
+- A standalone **installer** (WordPress-like) + the deployment readiness panel.
+
+**Explicitly NOT in v1 (later versions / never):**
+- Automated digital delivery — download-file handoff, licence-key generation, access grants on
+  `fulfilled`. **The admin fulfils manually in v1** (see Delivery). Deferred to a later version.
+- Full email-template editor, multilingual/i18n, comments, dynamic/custom RBAC roles,
+  required-2FA-for-admins, trusted devices, SMS/e-mail 2FA, WebAuthn, full self-profile, custom
+  fields/widgets — none unless the target-user filter later demands one.
+
+## Delivery model — DECIDED (resolves the long-open fork)
+
+**v1 = manual fulfilment.** A purchase flows: payment (Stripe/PayPal) → order recorded →
+confirmation e-mail → **the admin delivers manually** (sends the file, grants access, issues the
+licence, performs the service). This is enough for BOTH services and digital products at v1, and
+it means the e-commerce CORE is essentially already built (payment + order + confirmation work).
+
+**Post-v1 = automated delivery.** On `fulfilled`: download links / licence keys / access grants,
+with the verified webhook staying the sole source of truth for `paid`. Explicitly deferred — NOT
+built now.
+
+## Roadmap / phases
+
+- **Phase 0 — Core CMS + auth — DONE & parked.** Content engine, modules, Media, Tiptap editor,
+  FormBuilder + Stripe, Settings/SMTP, and production-grade auth (roles, user CRUD, lockout, reset,
+  2FA, throttling, self-service password). Per-area implementation detail is documented below.
+- **Phase 1 — CMS-complete polish (CURRENT).** Order matters:
+  1. **Neutral default theme + demo content FIRST** — the *lens*. Building it reveals what the
+     footer/hero/menu actually need (and what they don't) instead of guessing; also surfaces mobile.
+  2. **Footer + per-page hero** — informed by what the theme/demo surface.
+  3. **Email templates** (scoped as above).
+- **Phase 2 — E-commerce finish (manual-fulfilment model).** PayPal processor alongside Stripe;
+  refund (the `refunded` state exists); order-flow / order-mail polish. **NOT** automated delivery.
+- **Phase 3 — Standalone installer + deployment readiness.** WordPress-like install procedure;
+  the Deployment Readiness Panel (worker activation snippet + heartbeat status + encryption-key
+  status + go-live checks).
+- **Post-v1 / future.** Automated digital delivery (downloads/licences), and any deferred item
+  that later passes the target-user filter.
 
 ## WHAT
 A Symfony 8 application built on three pillars:
@@ -508,9 +578,11 @@ access automatically and are never demoted.
   (idempotent — recompiles only when sources changed, compiles cleanly), so plain `php8.5 bin/phpunit`
   just works — no manual warmup step. (If you ever bypass the bootstrap, warm it yourself first.)
 
-## Backlog (queued — agreed, NOT yet built)
-This is the SINGLE home for "what's next" — park ideas here, not scattered across chat.
+## Backlog (queued — grouped by Roadmap phase)
+The SINGLE home for "what's next" — park ideas here, not scattered across chat. Phases mirror the
+Roadmap at the top of this doc; nothing here is built unless marked DONE.
 
+### Phase 0 — done (reference)
 - **Prolaz C — multi-column layout — DONE.** Custom Tiptap `columns`/`column` nodes (FIXED
   2/3 equal columns; not resizable). Built as a PURE HTML node (no shortcode/converter) —
   see the "Multi-column layout" bullet under the WYSIWYG editor section for the full design
@@ -518,15 +590,31 @@ This is the SINGLE home for "what's next" — park ideas here, not scattered acr
   `TallystDocument`, CSS in two places + theme contract, round-trip tests). NOT done (later
   passes): resizable columns, dynamic add/remove a column, nested columns, per-column
   widths/backgrounds, >3 columns.
+
+### Phase 1 — CMS-complete polish (CURRENT)
+Order matters (see Roadmap): theme + demo content are the *lens*, then footer/hero, then email.
+- **Neutral default theme + demo content FIRST (NOT built).** A clean, well-designed default theme
+  + ~15 pages and ~15 posts in a 2-level menu, so the whole front-end (incl. mobile) can be seen.
+  This reveals what footer/hero/menu actually need instead of guessing.
+- **Footer config + per-page hero (NOT built).** Informed by what the theme/demo surface.
+- **Email templates — SCOPED (NOT built).** Light admin editability for CUSTOMER-FACING mail
+  (order confirmation, free-form notification): editable subject + body + a few variables
+  (`{name}`, `{total}`…) + sensible defaults. System mail (reset, 2FA) stays Twig in code.
+  **NOT** a full admin email-template editor (variables/preview/per-type IDE) — that's over-build.
+
+### Phase 2 — E-commerce finish (manual-fulfilment model)
 - **FormBuilder Pass 2b — PayPal + refund (NOT built).** PayPal is just another
   `PaymentProcessorInterface` impl alongside Stripe (pass 2a done) — add it and register it in
   the processor registry. Refund: the `order` state_machine already has the `refunded` state;
   wire a trigger (admin action → provider refund call → transition) into it. Keep rule 5 (the
   verified webhook stays the sole source of truth for `paid`).
-- **Product delivery model — decision + build (NOT built).** Tallyst sells both services AND
-  digital products (apps); today `paid→fulfilled` only sends e-mails. DECIDE the delivery model
-  per product type before building (e.g. nothing/manual hand-off for services vs. a download /
-  license key for apps). This is the "real product delivery" half of Pass 2b.
+- **Order-flow / order-mail polish (NOT built).** Tidy the order lifecycle and the order /
+  confirmation mails on the manual-fulfilment model (the delivery model is DECIDED — see the
+  Delivery section at the top; automated delivery is Post-v1, below).
+
+### Phase 3 — Standalone installer + deployment readiness
+- **Standalone installer — WordPress-like (NOT built).** A guided first-run install procedure
+  (DB, admin user, encryption key, base config) for the target solo-dev user.
 - **Go-live checklist (a release GATE, not a feature).** Before the public domain goes live:
   worker running as a DAEMON (systemd/supervisor, not a manual shell — see the Readiness Panel
   below), `APP_ENV=prod` (never dev/debug on the public domain), LIVE Stripe keys + the
@@ -542,7 +630,7 @@ This is the SINGLE home for "what's next" — park ideas here, not scattered acr
   etc.) aren't `http://localhost`. The Deployment Readiness Panel below is the eventual in-admin
   surface for these checks.
 
-### Deployment Readiness Panel (installer faza — NE gradi se sad)
+### Deployment Readiness Panel (Phase 3 — installer faza — NE gradi se sad)
 Admin "Sustav/Deployment" panel: operativni go-live status + generirani setup snippeti.
 Dizajn-dogovor za installer fazu.
 
@@ -566,6 +654,19 @@ Dizajn-dogovor za installer fazu.
   namnože; decrypt-fail graciozno (env fallback + upozorenje).
 - Ostali readiness checkovi (future): APP_ENV=prod provjera, mailer konfiguriran + test.
 - Preduvjet: heartbeat subscriber je mali enabling dio (može se dodati i ranije ako zatreba).
+
+### Post-v1 / future (deferred — NOT v1)
+- **Automated digital delivery (deferred — model DECIDED).** The delivery model is settled: **v1 is
+  manual fulfilment** (payment → order recorded → confirmation e-mail → the admin delivers manually:
+  sends the file, grants access, issues the licence, performs the service — enough for BOTH services
+  AND digital products, and the e-commerce CORE is already built). Post-v1 builds AUTOMATED delivery:
+  on `paid→fulfilled`, download links / licence-key generation / access grants, with the verified
+  webhook staying the SOLE source of truth for `paid`. (This was the open "decide the delivery
+  model" fork — now DECIDED; only the automated build remains, deferred.)
+- **Everything under "Explicitly NOT in v1"** at the top of this doc — full email-template editor,
+  multilingual/i18n, comments, dynamic/custom RBAC roles, required-2FA-for-admins, trusted devices,
+  SMS/e-mail 2FA, WebAuthn, full self-profile, custom fields/widgets — none unless the target-user
+  filter later demands it. (Prolaz C's own later passes are noted in its DONE entry above.)
 
 ## Adding a new module (the pattern to follow)
 Copy `modules/FormBuilder/` — it is the reference module. Its bundle class
