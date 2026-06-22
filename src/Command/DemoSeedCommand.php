@@ -8,11 +8,13 @@ use App\Entity\MenuItem;
 use App\Entity\Page;
 use App\Entity\Post;
 use App\Entity\Theme;
+use App\Entity\User;
 use App\Repository\CategoryRepository;
 use App\Repository\MenuRepository;
 use App\Repository\PageRepository;
 use App\Repository\PostRepository;
 use App\Repository\ThemeRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -25,6 +27,7 @@ use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 use App\Settings\SettingsManager;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Tallyst\Media\Entity\Media;
 use Tallyst\Media\Repository\MediaRepository;
 use Tallyst\Media\Service\MediaUploader;
@@ -63,6 +66,9 @@ class DemoSeedCommand extends Command
 
     private const FORM_SLUGS = ['demo-kontakt', 'demo-pro-licenca'];
 
+    /** Dedicated demo author (so the real admin's nickname is never touched). */
+    private const AUTHOR_EMAIL = 'demo-author@tallyst.local';
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ThemeRepository $themes,
@@ -74,6 +80,8 @@ class DemoSeedCommand extends Command
         private readonly FormDefinitionRepository $forms,
         private readonly MediaUploader $uploader,
         private readonly SettingsManager $settings,
+        private readonly UserRepository $users,
+        private readonly UserPasswordHasherInterface $hasher,
     ) {
         parent::__construct();
     }
@@ -103,11 +111,14 @@ class DemoSeedCommand extends Command
         $io->section('Kategorije');
         $categories = $this->ensureCategories($io, $media);
 
+        $io->section('Demo autor');
+        $author = $this->ensureDemoAuthor($io);
+
         $io->section('Stranice');
         $pages = $this->ensurePages($io, $media, $forms);
 
         $io->section('Objave');
-        $this->ensurePosts($io, $media, $categories);
+        $this->ensurePosts($io, $media, $categories, $author);
 
         $io->section('Izbornik (2-razinski) — demo ga uvijek iznova gradi');
         $this->rebuildMenu($io, $pages);
@@ -178,6 +189,12 @@ class DemoSeedCommand extends Command
             }
         }
         $io->writeln(sprintf('• Obrisano slika: %d.', $n));
+
+        // Demo author (posts are already gone above; SET NULL would protect anyway).
+        if (null !== $author = $this->users->findOneBy(['email' => self::AUTHOR_EMAIL])) {
+            $this->em->remove($author);
+            $io->writeln('• Obrisan demo autor.');
+        }
 
         $this->em->flush();
     }
@@ -371,6 +388,34 @@ class DemoSeedCommand extends Command
         return $out;
     }
 
+    // ------------------------------------------------------------------ author ---
+
+    /**
+     * A dedicated demo author so every demo post has a visible byline WITHOUT touching the real
+     * admin's nickname. ROLE_EDITOR, and an unusable random password (nobody knows it → no login
+     * vector). Idempotent: reused if it already exists; removed by --fresh (clearDemo).
+     */
+    private function ensureDemoAuthor(SymfonyStyle $io): User
+    {
+        $author = $this->users->findOneBy(['email' => self::AUTHOR_EMAIL]);
+        if (null !== $author) {
+            $io->writeln('• Demo autor već postoji.');
+
+            return $author;
+        }
+
+        $author = (new User(self::AUTHOR_EMAIL))
+            ->setNickname('Tallyst tim')
+            ->setName('Demo Autor')
+            ->setRoles(['ROLE_EDITOR']);
+        $author->setPassword($this->hasher->hashPassword($author, bin2hex(random_bytes(32))));
+        $this->em->persist($author);
+        $this->em->flush();
+        $io->writeln('• Kreiran demo autor (nadimak "Tallyst tim").');
+
+        return $author;
+    }
+
     // ------------------------------------------------------------------- pages ---
 
     /**
@@ -448,7 +493,7 @@ class DemoSeedCommand extends Command
      * @param array<int, Media>     $media
      * @param array<string, Category> $categories
      */
-    private function ensurePosts(SymfonyStyle $io, array $media, array $categories): void
+    private function ensurePosts(SymfonyStyle $io, array $media, array $categories, User $author): void
     {
         $catKeys = array_keys($categories);
         $titles = [
@@ -485,6 +530,7 @@ class DemoSeedCommand extends Command
                 ->setPublishedAt(new \DateTimeImmutable('-'.($idx * 4 + 1).' days'))
                 ->setExcerpt($this->excerptFor($title))
                 ->setCategory($cat)
+                ->setAuthor($author)
                 ->setFeaturedImage($mediaForPost)
                 ->setContent($rich ? $this->contentRichPost($title) : $this->contentSimplePost($title));
             $this->em->persist($post);

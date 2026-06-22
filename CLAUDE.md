@@ -712,8 +712,17 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   never a 500), returns a `BlogPage` DTO. Shared theme partials `_posts_list.html.twig` (card grid)
   + `_pagination.html.twig` (windowed 1 … current±2 … last) reused by `posts.html.twig` (index) and
   `category.html.twig` (archive). Category links (cards + post page) now point to `category_show`.
+- **Post author + byline + user name/nickname — DONE.** `Post.author` = nullable `ManyToOne(User)`,
+  `onDelete: 'SET NULL'` (deleting a user nulls the FK, never breaks/deletes posts — locked by the
+  FK mapping, not a test). `PostCrudController::createEntity()` pre-fills the author with the current
+  user on the NEW form (editable; not called on edit, so an existing author is never clobbered); the
+  author `AssociationField` dropdown label is `nickname ?: email`. **Byline** (`post.html.twig`) shows
+  `Autor: {nickname}` ONLY when `author` AND `author.nickname` exist — never the email; cards have no
+  byline. `User` gained `nickname` (display name) + `name` (**dormant** — reserved for e-commerce, no
+  renderer). The demo seed creates a **dedicated demo author** (`demo-author@tallyst.local`, nickname
+  "Tallyst tim", ROLE_EDITOR, unusable random password) so the byline shows without touching the real
+  admin; removed by `--fresh`.
 - **Remaining CMS-complete items (NOT built, queued — agreed scope, keep this list honest):**
-  - **Post author + user display name** — show the author on posts; add a display name to `User`.
   - **Demo-in-admin** — a Create/Delete demo-content control in the back-office (wraps
     `app:demo:seed` / its `--fresh` teardown) so it's not CLI-only.
 - **Email templates — SCOPED (NOT built).** Light admin editability for CUSTOMER-FACING mail

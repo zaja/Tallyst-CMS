@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Post;
+use App\Entity\User;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
@@ -11,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tallyst\Media\Field\MediaPickerField;
 use Tallyst\Media\Field\TiptapField;
@@ -18,9 +20,29 @@ use Tallyst\Media\Field\TiptapField;
 #[IsGranted('ROLE_EDITOR')]
 class PostCrudController extends AbstractCrudController
 {
+    public function __construct(
+        private readonly Security $security,
+    ) {
+    }
+
     public static function getEntityFqcn(): string
     {
         return Post::class;
+    }
+
+    /**
+     * Pre-fill the author with the current user on the NEW form (editable / changeable to
+     * another user). createEntity is NOT called on edit, so an existing author is never clobbered.
+     */
+    public function createEntity(string $entityFqcn): Post
+    {
+        $post = new Post();
+        $user = $this->security->getUser();
+        if ($user instanceof User) {
+            $post->setAuthor($user);
+        }
+
+        return $post;
     }
 
     public function configureCrud(Crud $crud): Crud
@@ -41,6 +63,9 @@ class PostCrudController extends AbstractCrudController
             ->setChoices(['Skica' => Post::STATUS_DRAFT, 'Objavljeno' => Post::STATUS_PUBLISHED])
             ->renderAsBadges([Post::STATUS_DRAFT => 'secondary', Post::STATUS_PUBLISHED => 'success']);
         yield AssociationField::new('category', 'Kategorija');
+        yield AssociationField::new('author', 'Autor')
+            ->setFormTypeOption('choice_label', static fn (User $u): string => $u->getNickname() ?: $u->getEmail())
+            ->setHelp('Zadano: ti. Promjenjivo.');
         yield MediaPickerField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
         yield DateTimeField::new('publishedAt', 'Objavljeno')->hideOnIndex();
         yield TextareaField::new('excerpt', 'Sažetak')->hideOnIndex();

@@ -50,6 +50,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
     #[ORM\Column(name: 'backup_codes', type: Types::JSON, nullable: true)]
     private ?array $backupCodes = null;
 
+    /** Display name for the public blog byline (never the email). */
+    #[ORM\Column(length: 191, nullable: true)]
+    private ?string $nickname = null;
+
+    /** Full/real name — DORMANT in v1, reserved for e-commerce (no renderer yet). */
+    #[ORM\Column(length: 191, nullable: true)]
+    private ?string $name = null;
+
     public function __construct(string $email = '')
     {
         $this->email = $email;
@@ -75,6 +83,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
     public function getUserIdentifier(): string
     {
         return $this->email;
+    }
+
+    public function getNickname(): ?string
+    {
+        return $this->nickname;
+    }
+
+    public function setNickname(?string $nickname): static
+    {
+        $this->nickname = $nickname;
+
+        return $this;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(?string $name): static
+    {
+        $this->name = $name;
+
+        return $this;
     }
 
     /**

@@ -57,6 +57,11 @@ class UserCrudController extends AbstractCrudController
         $isNew = Crud::PAGE_NEW === $pageName;
 
         yield EmailField::new('email', 'E-mail');
+        yield TextField::new('nickname', 'Nadimak (prikazno ime)')
+            ->setHelp('Prikazuje se kao autor objava. Prazno = bez bylinea.');
+        yield TextField::new('name', 'Ime i prezime')
+            ->setHelp('Rezervirano — koristit će se kasnije (npr. naplata).')
+            ->hideOnIndex();
         yield ChoiceField::new('roles', 'Role')
             ->setChoices(['Administrator' => 'ROLE_ADMIN', 'Urednik' => 'ROLE_EDITOR'])
             ->allowMultipleChoices()

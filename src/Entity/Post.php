@@ -52,10 +52,27 @@ class Post
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Media $featuredImage = null;
 
+    /** Author. Nullable + SET NULL so deleting a user never breaks/deletes their posts. */
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?User $author = null;
+
     public function __construct(string $title = '', string $slug = '')
     {
         $this->title = $title;
         $this->slug = $slug;
+    }
+
+    public function getAuthor(): ?User
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?User $author): static
+    {
+        $this->author = $author;
+
+        return $this;
     }
 
     public function getFeaturedImage(): ?Media

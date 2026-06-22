@@ -6,9 +6,11 @@
     <article class="prose">
         <header class="page-header">
             <h1>{{ post.title }}</h1>
-            {% if post.publishedAt %}
+            {% set has_byline = post.author and post.author.nickname %}
+            {% if post.publishedAt or post.category or has_byline %}
                 <p class="page-meta post-meta">
-                    <time datetime="{{ post.publishedAt|date('c') }}">{{ app_date(post.publishedAt) }}</time>
+                    {% if post.publishedAt %}<time datetime="{{ post.publishedAt|date('c') }}">{{ app_date(post.publishedAt) }}</time>{% endif %}
+                    {% if has_byline %}{{ post.publishedAt ? ' · ' : '' }}Autor: {{ post.author.nickname }}{% endif %}
                     {% if post.category %} · <a href="{{ path('category_show', {slug: post.category.slug}) }}">{{ post.category.name }}</a>{% endif %}
                 </p>
             {% endif %}
