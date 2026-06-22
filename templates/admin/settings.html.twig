@@ -35,6 +35,23 @@
                         {% for def in section.definitions %}
                             {{ form_row(form[def.key]) }}
                         {% endfor %}
+
+                        {% if section.key == 'email' %}
+                            {# Test-mail controls live in the Email tab. The inputs belong to a
+                               separate <form> (rendered after the main form via the HTML5 form=
+                               attribute) so we don't nest forms. #}
+                            <hr>
+                            <label for="test_to" class="form-label fw-semibold">Pošalji test mail</label>
+                            <div class="input-group">
+                                <input type="hidden" name="_token" value="{{ csrf_token('settings_test_email') }}" form="settings-test-email">
+                                <input type="email" id="test_to" name="test_to" class="form-control" form="settings-test-email"
+                                       value="{{ test_to_default }}" placeholder="email@primjer.hr">
+                                <button class="btn btn-secondary" type="submit" form="settings-test-email">
+                                    <i class="fa fa-paper-plane"></i> Pošalji
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-1">Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.</small>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -46,22 +63,7 @@
     </div>
     {{ form_end(form) }}
 
-    {# Separate form: send a test e-mail through the current transport (DB SMTP or env). #}
-    <hr class="my-4">
-    <form method="post" action="{{ path('admin_settings_test_email') }}" class="row g-2 align-items-center">
-        <input type="hidden" name="_token" value="{{ csrf_token('settings_test_email') }}">
-        <div class="col-auto">
-            <label for="test_to" class="col-form-label">Pošalji na</label>
-        </div>
-        <div class="col-auto">
-            <input type="email" id="test_to" name="test_to" class="form-control"
-                   value="{{ test_to_default }}" placeholder="email@primjer.hr" style="min-width: 18rem;">
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-secondary" type="submit">
-                <i class="fa fa-paper-plane"></i> Pošalji test mail
-            </button>
-        </div>
-        <div class="col-12"><small class="text-muted">Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.</small></div>
-    </form>
+    {# The test-mail form: empty here (no nested forms); its inputs sit in the Email tab above
+       and bind to it via the HTML5 form="settings-test-email" attribute. #}
+    <form id="settings-test-email" method="post" action="{{ path('admin_settings_test_email') }}"></form>
 {% endblock %}
