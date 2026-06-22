@@ -67,6 +67,10 @@ export default class extends Controller {
     bold() { this.editor.chain().focus().toggleBold().run(); }
     italic() { this.editor.chain().focus().toggleItalic().run(); }
     strike() { this.editor.chain().focus().toggleStrike().run(); }
+    paragraph() { this.editor.chain().focus().setParagraph().run(); }
+    // Clear formatting: drop inline marks + reset the selected block(s) to paragraph. Operates
+    // only on the selection, so [image]/[form]/columns elsewhere in the doc are untouched.
+    clearFormatting() { this.editor.chain().focus().unsetAllMarks().clearNodes().run(); }
     h2() { this.editor.chain().focus().toggleHeading({ level: 2 }).run(); }
     h3() { this.editor.chain().focus().toggleHeading({ level: 3 }).run(); }
     blockquote() { this.editor.chain().focus().toggleBlockquote().run(); }

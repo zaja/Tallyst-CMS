@@ -405,6 +405,19 @@ Replaces the old Trix `TextEditorField` on Page/Post.
   semantic `<p>` on re-save** (content changes in the DB only when the page is re-saved).
   **ProseMirror SILENTLY DROPS anything outside the schema** (tables, iframes, inline
   styles) — the Node round-trip test asserts this so the loss is known, not a surprise.
+- **Toolbar has Paragraph + Clear formatting (editor-wide).** Both the page/post/footer editor
+  (`media--tiptap` + `tiptap_widget.html.twig`) and the email-lite editor (`email-editor`) expose a
+  Paragraph button (`setParagraph`) and a Clear-formatting button
+  (`unsetAllMarks().clearNodes()` — selection-only, so nodes elsewhere are untouched; clearing an
+  explicitly-selected columns block flattens it, standard "clear" behaviour).
+- **Paste sanitization = the schema itself; NO custom scrubber.** The same ProseMirror DOMParser
+  runs on paste as on load, so pasted colours/fonts/`<span>`/inline-`style`/classes/tables are
+  dropped to the schema for FREE (both editors), while bold/italic/link/lists/headings survive.
+  Do NOT add a `transformPastedHTML` HTML-scrubber that strips `style`/`class`/`data-*` — it would
+  break the [image]/[form]/columns `parseDOM` on the page/post path (the very shortcode integrity we
+  protect). Existing shortcode nodes are untouched by a paste (it only inserts at the cursor). Clear
+  formatting handles any residual marks. (A bespoke schema-aware scrubber is a possible later
+  belt-and-suspenders, not worth the shortcode risk now.)
 - **Shortcode⇄node is an extension point (IoC), NOT hardcoded:** Core defines
   `EditorShortcodeConverterInterface` (auto-tagged `app.editor_shortcode_converter`, like
   `ShortcodeInterface`); `EditorContentConverter` aggregates every tagged converter and

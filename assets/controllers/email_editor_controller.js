@@ -48,6 +48,8 @@ export default class extends Controller {
     h3() { this.editor.chain().focus().toggleHeading({ level: 3 }).run(); }
     bulletList() { this.editor.chain().focus().toggleBulletList().run(); }
     orderedList() { this.editor.chain().focus().toggleOrderedList().run(); }
+    // Clear formatting: drop inline marks + reset the selected block(s) to paragraph.
+    clearFormatting() { this.editor.chain().focus().unsetAllMarks().clearNodes().run(); }
 
     /** Add / edit / remove a link: pre-fills the current href; empty URL removes it. */
     link() {
