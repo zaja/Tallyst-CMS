@@ -52,6 +52,11 @@
                             </div>
                             <small class="text-muted d-block mt-1">Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.</small>
                         {% endif %}
+
+                        {# Stripe section: mode badge + webhook setup guide (FormBuilder-owned partial). #}
+                        {% if section.key == 'stripe' %}
+                            {{ include('@FormBuilder/admin/_stripe_info.html.twig') }}
+                        {% endif %}
                     </div>
                 </div>
             </div>

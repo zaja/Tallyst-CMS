@@ -488,7 +488,9 @@ new table, no migration (encrypted values are just text in the existing `value` 
 - **Schema is IoC**, like the shortcode/module registries. `SettingsSectionProviderInterface`
   (`#[AutoconfigureTag('app.settings_section')]`) → `SettingsRegistry` aggregates sections.
   Core ships `CoreSettingsProvider` (sections: **General**, **Branding**, **Lokalizacija**,
-  **Email**, **Footer**); modules MAY add sections later via the same interface. A
+  **Email**, **Footer**); modules add their own — **FormBuilder ships the "Stripe" section**
+  (`StripeSettingsProvider`: `stripe_secret_key`/`stripe_webhook_secret` PASSWORD-encrypted +
+  `checkout_locale`), so Stripe config lives in its module, not Core. A
   `SettingDefinition` (key, `SettingType`, label, help, default, choices, `encrypted`) is the
   single description used to BUILD the form AND cast values. `footer_menu`'s choices are built
   dynamically from `MenuRepository` (name → menu **location**, which `render_menu` consumes).
@@ -824,13 +826,20 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   race), so a Tallyst-initiated refund (+ the `charge.refunded` it triggers) never double-applies or
   double-mails. `PaymentProcessorInterface::refund` is provider-agnostic (PayPal: not-supported until
   pass 4). Errors → flash, never 500.
+- **Stripe config in Postavke — DONE (pass 3).** FormBuilder ships the "Stripe" settings section
+  (`StripeSettingsProvider`): `stripe_secret_key` + `stripe_webhook_secret` (PASSWORD/encrypted) +
+  `checkout_locale`. `StripeProcessor` reads keys **settings ?: env** (decrypted; env fallback so a
+  fresh deploy works) for checkout/refund/webhook-verify; `getMode()` → test/live/unconfigured from
+  the effective key prefix (admin **mode badge**). Checkout passes `locale` unless `auto`. Postavke →
+  Stripe shows the **webhook URL** (`url('form_builder_webhook_stripe')`) + the required events
+  (`StripeWebhookController::REQUIRED_WEBHOOK_EVENTS`, one source) + a setup guide, via a FormBuilder
+  Twig extension + `@FormBuilder/admin/_stripe_info.html.twig` partial the Core settings template
+  includes (loose Twig coupling, no Core→FormBuilder PHP dep). Env support retained.
 - **Queued (this order):**
-  1. **Stripe config in Postavke** — move keys env→Settings + a **test/live badge** + **checkout
-     `locale`** (currently none passed). (Settings/encrypted-secret infra already exists.)
-  2. **PayPal** — a second `PaymentProcessorInterface` impl (incl. `refund`) + provider selection
+  1. **PayPal** — a second `PaymentProcessorInterface` impl (incl. `refund`) + provider selection
      (checkout/webhook currently hardcode `stripe`); registry already supports it.
-  3. **Price variants** (price options per form — none today).
-  4. **Tax rate** (single rate — none today).
+  2. **Price variants** (price options per form — none today).
+  3. **Tax rate** (single rate — none today).
 - **Subscriptions & recurring (future epic, post-v1).** Stripe runs the billing/retries + the
   **Customer Portal** for self-service cancel/update (we do NOT build that UI); OUR job is the
   subscription-lifecycle webhooks (created/updated/`invoice.paid`/`canceled`) + access/licence
@@ -840,11 +849,18 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
 ### Phase 3 — Standalone installer + deployment readiness
 - **Standalone installer — WordPress-like (NOT built).** A guided first-run install procedure
   (DB, admin user, encryption key, base config) for the target solo-dev user.
+- **Stripe auto-webhook-setup + config diagnostics (NOT built).** Beyond the pass-3 copy-paste guide:
+  Tallyst creates/updates the Stripe webhook endpoint via the API (so the admin doesn't hand-add it),
+  and a "check Stripe config" diagnostic that reads the configured endpoint and warns if
+  `charge.refunded` (or any `REQUIRED_WEBHOOK_EVENTS`) is missing.
 - **Go-live checklist (a release GATE, not a feature).** Before the public domain goes live:
   worker running as a DAEMON (systemd/supervisor, not a manual shell — see the Readiness Panel
-  below), `APP_ENV=prod` (never dev/debug on the public domain), LIVE Stripe keys + the
-  registered webhook secret in `.env.local`, a real `MAILER_DSN`/SMTP configured AND a test mail
-  delivered, and a real `SETTINGS_ENCRYPTION_KEY` provisioned (`app:install`). Email specifics
+  below), `APP_ENV=prod` (never dev/debug on the public domain), LIVE Stripe keys + the webhook
+  secret in **Postavke → Stripe (or `.env.local`)** — the badge should read **LIVE MOD** — with a
+  **LIVE webhook endpoint (separate from test)** subscribed to `checkout.session.completed` +
+  `charge.refunded` (the URL + event list are shown in Postavke → Stripe), a real `MAILER_DSN`/SMTP
+  configured AND a test mail delivered, and a real `SETTINGS_ENCRYPTION_KEY` provisioned
+  (`app:install`). Email specifics
   (learned the hard way): the configured **`mail_from_email` MUST be an address the SMTP account
   is allowed to send as** (else real SMTP rejects with `553 ... not owned` and mail silently
   fails) — and verify with a real **paid test order** end-to-end, not just the test button

@@ -30,6 +30,9 @@ use Tallyst\FormBuilder\Service\OrderMailer;
  */
 class StripeWebhookController extends AbstractController
 {
+    /** Stripe events this endpoint acts on — the single source for the admin setup guide. */
+    public const REQUIRED_WEBHOOK_EVENTS = ['checkout.session.completed', 'charge.refunded'];
+
     public function __construct(
         private readonly PaymentProcessorRegistry $payments,
         private readonly OrderRepository $orders,

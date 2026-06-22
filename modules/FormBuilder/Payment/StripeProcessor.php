@@ -2,6 +2,7 @@
 
 namespace Tallyst\FormBuilder\Payment;
 
+use App\Settings\SettingsManager;
 use Stripe\StripeClient;
 use Stripe\Webhook;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -10,14 +11,20 @@ use Tallyst\FormBuilder\Entity\Order;
 /**
  * Stripe hosted Checkout. Amount is taken straight from the order's integer minor
  * units, so no float math happens here.
+ *
+ * Keys come from Postavke → Stripe (encrypted) with an env FALLBACK: the admin-set setting wins,
+ * else the env var (so a fresh deploy works before configuration). Read per call via SettingsManager
+ * (decrypts; falls back to env on empty/undecryptable) — works in every HTTP context (checkout,
+ * refund, webhook verification).
  */
 class StripeProcessor implements PaymentProcessorInterface
 {
     public function __construct(
+        private readonly SettingsManager $settings,
         #[Autowire('%env(STRIPE_SECRET_KEY)%')]
-        private readonly string $secretKey,
+        private readonly string $secretKeyEnv,
         #[Autowire('%env(STRIPE_WEBHOOK_SECRET)%')]
-        private readonly string $webhookSecret,
+        private readonly string $webhookSecretEnv,
     ) {
     }
 
@@ -26,11 +33,35 @@ class StripeProcessor implements PaymentProcessorInterface
         return 'stripe';
     }
 
+    /** Effective secret key: the Postavke setting wins, else the env fallback. */
+    private function secretKey(): string
+    {
+        return ((string) $this->settings->get('stripe_secret_key')) ?: $this->secretKeyEnv;
+    }
+
+    /** Effective webhook secret: the Postavke setting wins, else the env fallback. */
+    private function webhookSecret(): string
+    {
+        return ((string) $this->settings->get('stripe_webhook_secret')) ?: $this->webhookSecretEnv;
+    }
+
+    /** test / live / unconfigured — from the EFFECTIVE (decrypted) secret key prefix. */
+    public function getMode(): string
+    {
+        $key = $this->secretKey();
+
+        return match (true) {
+            str_starts_with($key, 'sk_live_') => 'live',
+            str_starts_with($key, 'sk_test_') => 'test',
+            default => 'unconfigured',
+        };
+    }
+
     public function createCheckout(Order $order, string $successUrl, string $cancelUrl): string
     {
-        $stripe = new StripeClient($this->secretKey);
+        $stripe = new StripeClient($this->secretKey());
 
-        $session = $stripe->checkout->sessions->create([
+        $params = [
             'mode' => 'payment',
             'line_items' => [[
                 'quantity' => 1,
@@ -44,7 +75,15 @@ class StripeProcessor implements PaymentProcessorInterface
             'cancel_url' => $cancelUrl,
             'client_reference_id' => (string) $order->getId(),
             'metadata' => ['order_id' => (string) $order->getId()],
-        ]);
+        ];
+
+        // Locale: only when explicitly chosen ('auto' → omit so Stripe follows the buyer's browser).
+        $locale = (string) $this->settings->get('checkout_locale');
+        if ('' !== $locale && 'auto' !== $locale) {
+            $params['locale'] = $locale;
+        }
+
+        $session = $stripe->checkout->sessions->create($params);
 
         $order->setProviderSessionId($session->id);
 
@@ -60,13 +99,13 @@ class StripeProcessor implements PaymentProcessorInterface
 
         // Full refund of the captured payment. Throws \Stripe\Exception\* on a provider error
         // (e.g. already refunded) — the caller catches it and shows a flash.
-        (new StripeClient($this->secretKey))->refunds->create(['payment_intent' => $paymentIntentId]);
+        (new StripeClient($this->secretKey()))->refunds->create(['payment_intent' => $paymentIntentId]);
     }
 
     public function parseSignedWebhook(string $payload, string $signatureHeader): WebhookResult
     {
         // Throws \Stripe\Exception\SignatureVerificationException on a bad signature.
-        $event = Webhook::constructEvent($payload, $signatureHeader, $this->webhookSecret);
+        $event = Webhook::constructEvent($payload, $signatureHeader, $this->webhookSecret());
 
         $object = $event->data->object ?? null;
 
