@@ -3,7 +3,10 @@
 namespace Tallyst\FormBuilder\Payment;
 
 use App\Settings\SettingsManager;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 use Tallyst\FormBuilder\Entity\Order;
@@ -11,11 +14,15 @@ use Tallyst\FormBuilder\Entity\Order;
 /**
  * PayPal via the Orders v2 REST API (direct HttpClient — the official PHP SDK is archived and the
  * new server SDK is too partial). Every PayPal-specific concern (OAuth, the capture-on-return step
- * Stripe doesn't have, the verify-webhook-signature API call, sandbox/live base host, explicit mode)
+ * Stripe doesn't have, LOCAL offline webhook verification, sandbox/live base host, explicit mode)
  * is contained HERE; the rest of the app sees only PaymentProcessorInterface + WebhookResult.
  *
  * Keys come from Postavke → PayPal (encrypted) with an env fallback. Mode is EXPLICIT (sandbox/live)
  * — PayPal credentials carry no test/live marker, unlike Stripe's sk_ prefix.
+ *
+ * Webhook verification is OFFLINE (local RSA cert-verify), NOT the verify-webhook-signature API —
+ * that API needs a webhooks token scope this app's client-credentials token doesn't get (403
+ * NOT_AUTHORIZED). Offline needs no token/scope, so it can't 403; symmetric with Stripe's local HMAC.
  */
 class PayPalProcessor implements PaymentProcessorInterface
 {
@@ -27,6 +34,8 @@ class PayPalProcessor implements PaymentProcessorInterface
     public function __construct(
         private readonly HttpClientInterface $http,
         private readonly SettingsManager $settings,
+        private readonly CacheInterface $certCache,
+        private readonly LoggerInterface $logger,
         #[Autowire('%env(PAYPAL_CLIENT_ID)%')]
         private readonly string $clientIdEnv,
         #[Autowire('%env(PAYPAL_CLIENT_SECRET)%')]
@@ -136,24 +145,22 @@ class PayPalProcessor implements PaymentProcessorInterface
 
     public function parseSignedWebhook(string $payload, array $headers): WebhookResult
     {
+        // LOCAL offline verification over the RAW body — no API/token/scope (the verify API 403s).
+        $this->verifyWebhook($payload, $headers);
+
         $event = json_decode($payload, true) ?: [];
-
-        $verify = $this->json('POST', '/v1/notifications/verify-webhook-signature', [
-            'auth_algo' => $headers['paypal-auth-algo'] ?? '',
-            'cert_url' => $headers['paypal-cert-url'] ?? '',
-            'transmission_id' => $headers['paypal-transmission-id'] ?? '',
-            'transmission_sig' => $headers['paypal-transmission-sig'] ?? '',
-            'transmission_time' => $headers['paypal-transmission-time'] ?? '',
-            'webhook_id' => $this->webhookId(),
-            'webhook_event' => $event,
-        ]);
-
-        if ('SUCCESS' !== ($verify['verification_status'] ?? null)) {
-            throw new \RuntimeException('PayPal webhook verification failed.');
-        }
 
         $type = (string) ($event['event_type'] ?? '');
         $resource = $event['resource'] ?? [];
+
+        // Visibility: surface WHY a capture is pending/denied (helps the sandbox-PENDING case + admin).
+        if (in_array($type, ['PAYMENT.CAPTURE.PENDING', 'PAYMENT.CAPTURE.DENIED'], true)) {
+            $this->logger->warning('PayPal capture {type}: {reason}', [
+                'type' => $type,
+                'reason' => $resource['status_details']['reason'] ?? '(none)',
+                'capture_id' => $resource['id'] ?? null,
+            ]);
+        }
 
         $isPaid = 'PAYMENT.CAPTURE.COMPLETED' === $type;
         $isRefund = 'PAYMENT.CAPTURE.REFUNDED' === $type;
@@ -194,6 +201,61 @@ class PayPalProcessor implements PaymentProcessorInterface
     }
 
     // --- internals -------------------------------------------------------------------------------
+
+    /**
+     * Offline webhook verification (PayPal's documented algorithm) — no API, no token, no scope.
+     *
+     * @param array<string, string> $headers lowercased header bag
+     *
+     * @throws \RuntimeException when the signature can't be verified
+     */
+    private function verifyWebhook(string $rawBody, array $headers): void
+    {
+        $transmissionId = $headers['paypal-transmission-id'] ?? '';
+        $transmissionTime = $headers['paypal-transmission-time'] ?? '';
+        $sig = $headers['paypal-transmission-sig'] ?? '';
+        $certUrl = $headers['paypal-cert-url'] ?? '';
+
+        if ('' === $transmissionId || '' === $transmissionTime || '' === $sig || '' === $certUrl) {
+            throw new \RuntimeException('PayPal webhook is missing transmission headers.');
+        }
+
+        $this->assertPayPalCertUrl($certUrl);
+
+        // Signed message: id|time|webhookId|crc32(rawBody). CRC32 over the RAW bytes PayPal signed
+        // (NOT re-encoded JSON); %u for the unsigned value (32/64-bit safe).
+        $message = $transmissionId.'|'.$transmissionTime.'|'.$this->webhookId().'|'.sprintf('%u', crc32($rawBody));
+
+        $publicKey = openssl_pkey_get_public($this->fetchCert($certUrl));
+        if (false === $publicKey) {
+            throw new \RuntimeException('PayPal cert is not a valid public key.');
+        }
+
+        $verified = openssl_verify($message, base64_decode($sig), $publicKey, \OPENSSL_ALGO_SHA256);
+        if (1 !== $verified) {
+            throw new \RuntimeException('PayPal webhook signature verification failed.');
+        }
+    }
+
+    /** Anti-SSRF: only ever fetch a cert from https://*.paypal.com — never an arbitrary header URL. */
+    private function assertPayPalCertUrl(string $url): void
+    {
+        $parts = parse_url($url);
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        if ('https' !== ($parts['scheme'] ?? '') || ('paypal.com' !== $host && !str_ends_with($host, '.paypal.com'))) {
+            throw new \RuntimeException('Refusing to fetch PayPal cert from a non-PayPal URL.');
+        }
+    }
+
+    /** Fetch + cache the PEM cert by URL (certs rotate rarely). */
+    private function fetchCert(string $certUrl): string
+    {
+        return $this->certCache->get('paypal_cert_'.sha1($certUrl), function (ItemInterface $item) use ($certUrl): string {
+            $item->expiresAfter(86400);
+
+            return $this->http->request('GET', $certUrl)->getContent();
+        });
+    }
 
     private function clientId(): string
     {

@@ -4,6 +4,8 @@ namespace App\Tests\FormBuilder;
 
 use App\Settings\SettingsManager;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Tallyst\FormBuilder\Payment\PayPalProcessor;
 
@@ -24,6 +26,8 @@ class PayPalProcessorModeTest extends TestCase
         return new PayPalProcessor(
             $this->createStub(HttpClientInterface::class),
             $manager,
+            new ArrayAdapter(),
+            new NullLogger(),
             $idEnv,
             $secretEnv,
             '',

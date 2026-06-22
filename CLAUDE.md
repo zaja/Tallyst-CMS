@@ -375,9 +375,16 @@ themes/               # THEMES — one folder = one theme
    **Stripe AND PayPal** are both impls; `order.provider` routes checkout/refund/webhook.
    The interface is `getName / isConfigured / getMode / createCheckout / finalizeReturn /
    parseSignedWebhook(payload, headers[]) / refund / getWebhookEvents` — kept agnostic so each
-   provider's specifics stay inside it (Stripe local-HMAC verify + auto-capture; PayPal OAuth +
-   verify-API + an explicit capture-on-return + sandbox/live host + explicit mode). **PayPal
-   = direct REST via HttpClient** (official PHP SDK archived; server SDK too partial).
+   provider's specifics stay inside it (Stripe local-HMAC verify + auto-capture; PayPal
+   local-RSA-cert verify + OAuth-for-API + an explicit capture-on-return + sandbox/live host +
+   explicit mode). **PayPal = direct REST via HttpClient** (official PHP SDK archived; server SDK
+   too partial).
+   - **PayPal webhook verification is LOCAL/offline (RSA cert), NOT the verify-webhook-signature
+     API** — that API 403s NOT_AUTHORIZED because the app's client-credentials token has no webhooks
+     scope (proven: real & bogus webhook_id → identical 403). Offline needs no token/scope: SSRF-guard
+     `cert_url` (https + `*.paypal.com` only), fetch+cache the cert, `openssl_verify` over
+     `transmissionId|transmissionTime|webhookId|crc32(RAW body)` (SHA256). Symmetric with Stripe's
+     local HMAC; the OAuth token is still used for create/capture/refund, just not verification.
    - **`finalizeReturn(Order)`** runs on the buyer's return for EVERY provider (Stripe no-op;
      PayPal captures the approved order). It is idempotent and MUST NOT set `paid` — the webhook
      stays sole truth. A capture failure is graceful (thank-you try/catch → "processing" view, no 500).
@@ -855,7 +862,7 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
 - **PayPal + provider choice + per-product limit — DONE (pass 4).** PayPal is a second
   `PaymentProcessorInterface` impl (Orders v2, direct REST via HttpClient — official SDK archived).
   Interface evolved (agnostic): `isConfigured/getMode/finalizeReturn/parseSignedWebhook(payload,
-  headers[])/getWebhookEvents`; PayPal's OAuth + capture-on-return + verify-API + sandbox/live host +
+  headers[])/getWebhookEvents`; PayPal's OAuth + capture-on-return + local-cert webhook verify + sandbox/live host +
   explicit `paypal_mode` stay inside `PayPalProcessor`. `finalizeReturn` (thank-you, every provider:
   Stripe no-op, PayPal capture) is idempotent + never sets paid (webhook stays sole truth) + graceful
   on failure. `OrderPaymentSync` (FormBuilder/Service) holds the paid+refund transitions + idempotency
