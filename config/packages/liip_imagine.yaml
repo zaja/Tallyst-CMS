@@ -15,3 +15,10 @@ liip_imagine:
             quality: 85
             filters:
                 thumbnail: { size: [600, 600], mode: inset }
+        # Full-width page hero. inset (never upscales) so large uploads are capped and small
+        # ones aren't blown up. Keep in sync with ThumbnailWarmer::FILTERS AND
+        # MediaImageHelper::FILTERS (both allowlist filters separately).
+        hero:
+            quality: 82
+            filters:
+                thumbnail: { size: [1600, 1600], mode: inset }

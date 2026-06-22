@@ -66,9 +66,11 @@ built now.
   2FA, throttling, self-service password). Per-area implementation detail is documented below.
 - **Phase 1 — CMS-complete polish (CURRENT).** Order matters:
   1. **Neutral default theme + demo content FIRST** — the *lens*. **DONE (pass 1)** — see
-     "Default theme & demo content". Footer config + per-page hero deliberately deferred to step 2.
-  2. **Footer + per-page hero (NEXT)** — informed by what the theme/demo surface.
-  3. **Email templates** (scoped as above).
+     "Default theme & demo content".
+  2. **Page layout (full-width pages / narrow blog) + per-page hero (overlay) — DONE (pass B)** —
+     see "Default theme & demo content".
+  3. **Footer config + remaining CMS-complete items (NEXT)** — see the Phase 1 backlog list.
+  4. **Email templates** (scoped as above).
 - **Phase 2 — E-commerce finish (manual-fulfilment model).** PayPal processor alongside Stripe;
   refund (the `refunded` state exists); order-flow / order-mail polish. **NOT** automated delivery.
 - **Phase 3 — Standalone installer + deployment readiness.** WordPress-like install procedure;
@@ -185,11 +187,26 @@ This pass is intentionally scoped: **footer config, per-page hero, dark mode are
   `render_content`, `media_img`, `app_date`, null-safe `featuredImage`) — only markup/classes
   changed, so nothing regresses. Page/post bodies use a `.prose` measure; `page.html.twig`/
   `post.html.twig` have a simple **page header (NO hero — hero is a later pass)**.
-  - **Single-column bodies are CENTERED.** `.prose` is `max-width: var(--measure)` (~65ch) **+
-    `margin-inline: auto`** so page/post content sits centered in the wider shell (`--container`
-    ~68rem) with balanced margins — no dead space on one side. The measure stays ~65ch; do NOT
-    widen prose to full container width (hurts readability). The blog grid already uses the full
-    `--container` width.
+  - **Page vs blog layout (pass B).** Split at the template level: **`page.html.twig` uses
+    `.page-content` = FULL-WIDTH** (images, `.tallyst-columns`, `.fb-form-wrap` span the shell)
+    while **textual blocks are capped to `var(--measure)` and centered** — done with a child
+    selector list plus `p:not(:has(img))` / `p:has(img)` so image-only paragraphs go full-width
+    automatically (graceful if `:has()` is unsupported: image `<p>` merely caps). **`post.html.twig`
+    + blog index stay NARROW (`.prose`) — do not change.** The non-hero `.page-header` is capped to
+    the measure + centered so a plain page title aligns with its centered text column.
+  - **Per-page hero (pass B, opt-in, OVERLAY).** `Page` has optional `heroEnabled`/`heroImage`
+    (Media FK, `SET NULL`, reuses `MediaPickerField`)/`heroTitle`/`heroText`/`heroCtaLabel`/
+    `heroCtaUrl`, edited under a collapsible **"Hero" fieldset** in `PageCrudController`. Rendered
+    in `page.html.twig` only when `heroEnabled` AND (`heroImage` or `heroTitle`): a background
+    `<img>` (`media_img(..., 'hero', null, '')` → `alt=""`, decorative; the `<h1>` carries meaning)
+    under a CSS `::after` **dark gradient scrim** so title/text/CTA are legible over ANY image
+    (incl. light photos); CTA shows only when label AND url are both set. Null-safe (deleted Media →
+    no `<img>`, dark fallback keeps text readable; no hero → plain `.page-header`). **Hero is Page-only
+    (not Post).** Uses a dedicated **`hero` Liip filter (~1600px inset)** so full-width heroes aren't
+    upscaled-`medium` blur — and that filter name MUST be added in **THREE** places or it silently
+    falls back to `medium`/404s: `config/packages/liip_imagine.yaml`, `ThumbnailWarmer::FILTERS`,
+    AND `MediaImageHelper::FILTERS` (the helper has its OWN allowlist that drives the URL). Page
+    featured image also uses `hero`; post featured stays `medium`.
 - **`app:demo:seed`** (`src/Command/DemoSeedCommand.php`) is the demo lens. Re-runnable:
   default is additive (create-if-missing by a FIXED slug set, skip existing, **always rebuilds
   the `main` menu** — the demo OWNS it); `--fresh` deletes the whole demo set first (by the fixed
@@ -204,6 +221,7 @@ This pass is intentionally scoped: **footer config, per-page hero, dark mode are
   `app:media:thumbnails:warm` after if thumbs are missing. Page/post bodies are written FULL
   (multiple `<h2>`/`<h3>` sections + several paragraphs per page) so the theme is honestly
   exercised and pages don't read as empty — keep that bar when editing the `content*()` builders.
+  The seed also sets a demo **hero** on `home` + `usluge` (so the overlay is visible after `--fresh`).
 
 ## Media & uploads (Media module)
 - Uploads (VichUploaderBundle) go to `public/media/uploads/` with a sanitised, unique
@@ -655,10 +673,16 @@ Roadmap at the top of this doc; nothing here is built unless marked DONE.
 Order matters (see Roadmap): theme + demo content are the *lens*, then footer/hero, then email.
 - **Neutral default theme + demo content FIRST — DONE (pass 1).** Tokens-first design-system
   default theme + `app:demo:seed` (~16 pages / 15 posts, 2-level menu, free + priced demo forms,
-  GD-generated demo images). Full design in "Default theme & demo content". Footer/hero NOT in
-  this pass (next). Open: final VISUAL look is judged rendered (esp. mobile nav) — surfaces what
-  footer/hero need.
-- **Footer config + per-page hero (NEXT, NOT built).** Informed by what the theme/demo surface.
+  GD-generated demo images). Full design in "Default theme & demo content".
+- **Page layout + per-page hero — DONE (pass B).** Full-width pages (text capped to the readable
+  measure) / narrow blog, and an opt-in per-page hero with overlay text + scrim. Design in
+  "Default theme & demo content".
+- **Remaining CMS-complete items (NOT built, queued — agreed scope, keep this list honest):**
+  - **Footer config** — admin-editable footer (columns/links/copyright) replacing the placeholder.
+  - **Blog archives + pagination** — paginate the blog index; category/date archive listings.
+  - **Post author + user display name** — show the author on posts; add a display name to `User`.
+  - **Demo-in-admin** — a Create/Delete demo-content control in the back-office (wraps
+    `app:demo:seed` / its `--fresh` teardown) so it's not CLI-only.
 - **Email templates — SCOPED (NOT built).** Light admin editability for CUSTOMER-FACING mail
   (order confirmation, free-form notification): editable subject + body + a few variables
   (`{name}`, `{total}`…) + sensible defaults. System mail (reset, 2FA) stays Twig in code.

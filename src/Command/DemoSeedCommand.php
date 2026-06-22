@@ -382,11 +382,12 @@ class DemoSeedCommand extends Command
 
         // [slug => [title, featuredMediaIndex|null, metaDescription, contentHtml]]
         $defs = [
-            'home' => ['Dobrodošli', 1, 'Tallyst — gradimo i prodajemo vlastite aplikacije i usluge.', $this->contentHome($img(3))],
+            // home + usluge use a hero instead of a featured image (mi=null) — see $heroes below.
+            'home' => ['Dobrodošli', null, 'Tallyst — gradimo i prodajemo vlastite aplikacije i usluge.', $this->contentHome($img(3))],
             'o-nama' => ['O nama', 5, 'Mali tim posvećen jednostavnim, kvalitetnim proizvodima.', $this->contentONama()],
             'tim' => ['Naš tim', 2, 'Ljudi iza Tallysta.', $this->contentTim($img(4))],
             'kontakt' => ['Kontakt', null, 'Javite nam se.', $this->contentKontakt($kontaktId)],
-            'usluge' => ['Usluge', 6, 'Što radimo za klijente.', $this->contentUsluge()],
+            'usluge' => ['Usluge', null, 'Što radimo za klijente.', $this->contentUsluge()],
             'web-razvoj' => ['Web razvoj', 1, 'Izrada modernih web aplikacija.', $this->contentWebRazvoj()],
             'konzalting' => ['Konzalting', 3, 'Savjetovanje o arhitekturi i proizvodu.', $this->contentKonzalting()],
             'dizajn' => ['Dizajn', 4, 'Dizajn sučelja i korisničkog iskustva.', $this->contentDizajn()],
@@ -400,6 +401,13 @@ class DemoSeedCommand extends Command
             'uvjeti' => ['Uvjeti korištenja', null, 'Uvjeti korištenja usluge.', $this->contentTextPage('Uvjeti korištenja', 'Ovo je demo tekst uvjeta korištenja. Zamijenite ga vlastitim.')],
         ];
 
+        // Demo heroes (opt-in, overlay) on a couple of pages so the feature is visible.
+        // [slug => [mediaIndex, title, text, ctaLabel, ctaUrl]]
+        $heroes = [
+            'home' => [1, 'Predstavi i prodaj — sve na svojoj domeni', 'Tallyst je jednostavan, self-hosted CMS za samostalne autore aplikacija i usluga. Bez provizija, bez mjesečne pretplate.', 'Pogledaj usluge', '/usluge'],
+            'usluge' => [6, 'Usluge po mjeri, bez nepotrebne težine', 'Od ideje do objavljenog proizvoda — web razvoj, konzalting i dizajn.', 'Zatraži ponudu', '/kontakt'],
+        ];
+
         $out = [];
         foreach ($defs as $slug => [$title, $mi, $meta, $content]) {
             $page = $this->pages->findOneBy(['slug' => $slug]);
@@ -409,6 +417,17 @@ class DemoSeedCommand extends Command
                     ->setContent($content)
                     ->setMetaDescription($meta)
                     ->setFeaturedImage(null === $mi ? null : ($media[$mi] ?? null));
+
+                if (isset($heroes[$slug])) {
+                    [$hi, $ht, $htext, $hcl, $hcu] = $heroes[$slug];
+                    $page->setHeroEnabled(true)
+                        ->setHeroImage($media[$hi] ?? null)
+                        ->setHeroTitle($ht)
+                        ->setHeroText($htext)
+                        ->setHeroCtaLabel($hcl)
+                        ->setHeroCtaUrl($hcu);
+                }
+
                 $this->em->persist($page);
                 $io->writeln('• Kreirana stranica "'.$title.'".');
             }

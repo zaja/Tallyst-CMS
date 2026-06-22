@@ -7,11 +7,30 @@
 {% endblock %}
 
 {% block body %}
-    <article class="prose">
+    {% if page.heroEnabled and (page.heroImage or page.heroTitle) %}
+        {# Per-page hero: overlay text on an image with a contrast scrim (CSS ::after).
+           Image is decorative (the <h1> carries meaning) → alt="". Null-safe: a deleted
+           heroImage renders nothing and the scrim over the dark fallback keeps text legible. #}
+        <header class="page-hero{{ page.heroImage ? ' has-image' : '' }}">
+            {% if page.heroImage %}{{ media_img(page.heroImage, 'hero', null, '') }}{% endif %}
+            <div class="page-hero-inner">
+                <h1>{{ page.heroTitle ?: page.title }}</h1>
+                {% if page.heroText %}<p class="page-hero-text">{{ page.heroText }}</p>{% endif %}
+                {% if page.heroCtaLabel and page.heroCtaUrl %}
+                    <a class="page-hero-cta" href="{{ page.heroCtaUrl }}">{{ page.heroCtaLabel }}</a>
+                {% endif %}
+            </div>
+        </header>
+    {% else %}
         <header class="page-header">
             <h1>{{ page.title }}</h1>
         </header>
-        {% if page.featuredImage %}<p class="featured-image">{{ media_img(page.featuredImage, 'medium') }}</p>{% endif %}
+    {% endif %}
+
+    {# Full-width page content: images, .tallyst-columns and the [form] embed span the
+       shell; textual blocks are capped to the readable measure (see .page-content CSS). #}
+    <article class="page-content">
+        {% if page.featuredImage %}<p class="featured-image">{{ media_img(page.featuredImage, 'hero') }}</p>{% endif %}
         {{ page.content|render_content }}
     </article>
 {% endblock %}

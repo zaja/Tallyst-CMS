@@ -17,7 +17,7 @@ use Tallyst\Media\Entity\Media;
 class ThumbnailWarmer
 {
     /** Keep in sync with config/packages/liip_imagine.yaml filter_sets. */
-    private const FILTERS = ['thumb', 'medium'];
+    private const FILTERS = ['thumb', 'medium', 'hero'];
 
     public function __construct(
         private readonly DataManager $dataManager,

@@ -5,7 +5,9 @@ namespace App\Controller\Admin;
 use App\Entity\Page;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
@@ -46,5 +48,16 @@ class PageCrudController extends AbstractCrudController
         yield TextField::new('metaTitle', 'Meta naslov')->hideOnIndex();
         yield TextareaField::new('metaDescription', 'Meta opis')->hideOnIndex();
         yield IntegerField::new('position', 'Pozicija')->hideOnIndex();
+
+        yield FormField::addFieldset('Hero')->setIcon('image')->collapsible()->renderCollapsed()
+            ->setHelp('Opcionalni hero s tekstom preko slike, na vrhu stranice. Prikazuje se samo kad je uključen i postavljena je slika ili naslov.');
+        yield BooleanField::new('heroEnabled', 'Hero uključen')->hideOnIndex();
+        yield MediaPickerField::new('heroImage', 'Hero slika')->hideOnIndex();
+        yield TextField::new('heroTitle', 'Hero naslov')->hideOnIndex()
+            ->setHelp('Prazno = koristi se naslov stranice.');
+        yield TextareaField::new('heroText', 'Hero tekst')->hideOnIndex();
+        yield TextField::new('heroCtaLabel', 'CTA labela')->hideOnIndex();
+        yield TextField::new('heroCtaUrl', 'CTA poveznica')->hideOnIndex()
+            ->setHelp('Npr. /kontakt ili https://… Gumb se prikazuje samo kad su labela I poveznica postavljene.');
     }
 }

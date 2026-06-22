@@ -55,6 +55,30 @@ class Page
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Media $featuredImage = null;
 
+    /**
+     * Per-page hero (opt-in, overlay). All optional; rendered only when heroEnabled and there's
+     * an image or a title (see page.html.twig). heroImage mirrors the featuredImage FK pattern
+     * (nullable, SET NULL so a deleted Media never 500s).
+     */
+    #[ORM\Column]
+    private bool $heroEnabled = false;
+
+    #[ORM\ManyToOne(targetEntity: Media::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Media $heroImage = null;
+
+    #[ORM\Column(length: 191, nullable: true)]
+    private ?string $heroTitle = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $heroText = null;
+
+    #[ORM\Column(length: 191, nullable: true)]
+    private ?string $heroCtaLabel = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $heroCtaUrl = null;
+
     public function __construct(string $title = '', string $slug = '')
     {
         $this->title = $title;
@@ -69,6 +93,78 @@ class Page
     public function setFeaturedImage(?Media $featuredImage): static
     {
         $this->featuredImage = $featuredImage;
+
+        return $this;
+    }
+
+    public function isHeroEnabled(): bool
+    {
+        return $this->heroEnabled;
+    }
+
+    public function setHeroEnabled(bool $heroEnabled): static
+    {
+        $this->heroEnabled = $heroEnabled;
+
+        return $this;
+    }
+
+    public function getHeroImage(): ?Media
+    {
+        return $this->heroImage;
+    }
+
+    public function setHeroImage(?Media $heroImage): static
+    {
+        $this->heroImage = $heroImage;
+
+        return $this;
+    }
+
+    public function getHeroTitle(): ?string
+    {
+        return $this->heroTitle;
+    }
+
+    public function setHeroTitle(?string $heroTitle): static
+    {
+        $this->heroTitle = $heroTitle;
+
+        return $this;
+    }
+
+    public function getHeroText(): ?string
+    {
+        return $this->heroText;
+    }
+
+    public function setHeroText(?string $heroText): static
+    {
+        $this->heroText = $heroText;
+
+        return $this;
+    }
+
+    public function getHeroCtaLabel(): ?string
+    {
+        return $this->heroCtaLabel;
+    }
+
+    public function setHeroCtaLabel(?string $heroCtaLabel): static
+    {
+        $this->heroCtaLabel = $heroCtaLabel;
+
+        return $this;
+    }
+
+    public function getHeroCtaUrl(): ?string
+    {
+        return $this->heroCtaUrl;
+    }
+
+    public function setHeroCtaUrl(?string $heroCtaUrl): static
+    {
+        $this->heroCtaUrl = $heroCtaUrl;
 
         return $this;
     }
