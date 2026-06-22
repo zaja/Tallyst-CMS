@@ -10,7 +10,33 @@
             {{ form_start(form) }}
             <div class="card"><div class="card-body">
                 {{ form_row(form.subject) }}
-                {{ form_row(form.body) }}
+
+                {# Body: Tiptap-lite editor (email-editor controller) mounted on the textarea.
+                   Raw HTML in/out — no shortcode converter. Tag buttons insert the literal {tag}. #}
+                <div class="mb-3" data-controller="email-editor">
+                    {{ form_label(form.body) }}
+                    <div class="email-editor__toolbar">
+                        <button type="button" class="email-editor__btn" data-action="email-editor#bold" title="Podebljano"><strong>B</strong></button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#italic" title="Kurziv"><em>I</em></button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#link" title="Poveznica">🔗</button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#bulletList" title="Lista">• Lista</button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#orderedList" title="Numerirana lista">1. Lista</button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#h2" title="Naslov 2">H2</button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#h3" title="Naslov 3">H3</button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#paragraph" title="Paragraf">¶</button>
+                        <span class="email-editor__sep" aria-hidden="true"></span>
+                        {% for tag, desc in type.tags %}
+                            <button type="button" class="email-editor__btn email-editor__btn--tag"
+                                    data-action="email-editor#insertTag"
+                                    data-email-editor-tag-param="{{ '{' ~ tag ~ '}' }}"
+                                    title="Ubaci: {{ desc }}">{{ '{' ~ tag ~ '}' }}</button>
+                        {% endfor %}
+                    </div>
+                    <div class="email-editor__editor" data-email-editor-target="editor"></div>
+                    {{ form_widget(form.body, {attr: {'data-email-editor-target': 'input', hidden: 'hidden'}}) }}
+                    {{ form_errors(form.body) }}
+                </div>
+
                 {% if form.enabled is defined %}
                     {{ form_row(form.enabled) }}
                 {% else %}

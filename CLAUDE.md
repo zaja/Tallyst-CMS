@@ -64,11 +64,10 @@ built now.
 - **Phase 0 — Core CMS + auth — DONE & parked.** Content engine, modules, Media, Tiptap editor,
   FormBuilder + Stripe, Settings/SMTP, and production-grade auth (roles, user CRUD, lockout, reset,
   2FA, throttling, self-service password). Per-area implementation detail is documented below.
-- **Phase 1 — CMS-complete polish (CURRENT).** Theme + demo + page layout/hero + footer config +
-  branding-in-Postavke + favicon + blog archives/pagination + post author/byline + email-templates
-  engine (PASS 1) — all **DONE** (see the sections below). **Remaining Phase 1 pass: email templates
-  PASS 2** (Tiptap-lite body editor + "insert tag" UI) — the final Phase 1 item.
-- **Phase 2 — E-commerce finish (manual-fulfilment model).** PayPal processor alongside Stripe;
+- **Phase 1 — CMS-complete polish — DONE.** Theme + demo + page layout/hero + footer config +
+  branding-in-Postavke + favicon + blog archives/pagination + post author/byline + email templates
+  (engine PASS 1 + Tiptap-lite editor PASS 2) — all complete (see the sections below).
+- **Phase 2 — E-commerce finish (manual-fulfilment model) (CURRENT).** PayPal processor alongside Stripe;
   refund (the `refunded` state exists); order-flow / order-mail polish. **NOT** automated delivery.
 - **Phase 3 — Standalone installer + deployment readiness.** WordPress-like install procedure;
   the Deployment Readiness Panel (worker activation snippet + heartbeat status + encryption-key
@@ -609,12 +608,23 @@ All 4 customer/admin mails are admin-editable (subject + HTML body + enabled) vi
   admin editor rejects a save whose body lacks `{reset_url}` AND forces `enabled=true`; `EmailSender`
   treats non-`canDisable` as always-send.
 - **Admin:** `EmailTemplateController` (`/admin/email`, class-level `ROLE_ADMIN`, EA shell) — list from
-  the registry → per-type edit (subject + plain textarea body + enabled toggle, hidden/forced for
-  reset) with the type's tags listed as reference. Linked under the dashboard **Sustav** section; in
-  `AdminAccessTest::ADMIN_ONLY`.
+  the registry → per-type edit with the type's tags as reference. Linked under the dashboard **Sustav**
+  section; in `AdminAccessTest::ADMIN_ONLY`.
+- **Body editor (PASS 2 — DONE).** The body is a **Tiptap-LITE** editor (`email-editor` Stimulus
+  controller, `assets/controllers/email_editor_controller.js`), **Option A: raw HTML in/out, NO
+  EditorContentConverter and NONE of the page-content nodes** (columns/`[form]`/media image) — email
+  has no shortcode concept. It is NOT `TiptapType` (whose PHP transformer runs the converter): the
+  body stays a plain `TextareaType` and the controller mounts Tiptap on it (`@tiptap/starter-kit`,
+  headings limited to h2/h3), syncing `getHTML()` → the textarea. Toolbar: bold/italic/link/lists/
+  h2/h3/paragraph. **"Insert tag"** buttons (per type, from the registry) drop the **literal `{tag}`
+  text** at the cursor — a bare placeholder, NOT a custom node, so the Pass-1 replacement engine is
+  untouched. **Reset guard survives** the editor: validation runs on the SUBMITTED HTML
+  (`bodyMissingRequiredTags`), and Tiptap leaves `{…}` literal (not HTML-special) — locked by
+  `EmailRendererTest` asserting `<p>{reset_url}</p>` passes. Mandatory after JS edits:
+  `asset-map:compile` + `app:theme:assets:install` (else the editor won't boot).
 - **Tests:** `tests/Email/EmailRendererTest` (value HTML-escaping = security, empty-on-missing-tag,
-  subject CRLF-strip, required-tag detection); `SubmissionNotifierTest` retargeted to the engine.
-  Queued: **PASS 2** — Tiptap-lite body editor + an "insert tag" UI.
+  subject CRLF-strip, required-tag detection incl. the editor-output `<p>{reset_url}</p>` case);
+  `SubmissionNotifierTest` retargeted to the engine.
 
 ## Roles & access (back-office)
 Two roles: **ROLE_ADMIN** (everything) and **ROLE_EDITOR** (content only — Pages, Posts,
@@ -739,7 +749,7 @@ Roadmap at the top of this doc; nothing here is built unless marked DONE.
   passes): resizable columns, dynamic add/remove a column, nested columns, per-column
   widths/backgrounds, >3 columns.
 
-### Phase 1 — CMS-complete polish (CURRENT)
+### Phase 1 — CMS-complete polish (DONE)
 Order matters (see Roadmap): theme + demo content are the *lens*, then footer/hero, then email.
 - **Neutral default theme + demo content FIRST — DONE (pass 1).** Tokens-first design-system
   default theme + `app:demo:seed` (~16 pages / 15 posts, 2-level menu, free + priced demo forms,
@@ -770,14 +780,15 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   renderer). The demo seed creates a **dedicated demo author** (`demo-author@tallyst.local`, nickname
   "Tallyst tim", ROLE_EDITOR, unusable random password) so the byline shows without touching the real
   admin; removed by `--fresh`.
-- **Email templates — PASS 1 (engine + wiring) DONE.** All 4 mails (order confirmation, order-admin,
-  form notification, password reset) are admin-editable via the engine (subject + HTML body +
-  enabled), safe placeholder render, branded base layout, reset guard, basic admin editor. Full
-  design in "Email templates engine". **Queued: PASS 2** — Tiptap-lite body editor + "insert tag" UI.
+- **Email templates — DONE (PASS 1 engine + PASS 2 editor).** All 4 mails (order confirmation,
+  order-admin, form notification, password reset) admin-editable via the engine (safe placeholder
+  render, branded base layout, reset guard); the body uses a Tiptap-lite editor (raw HTML, no
+  converter) with clickable "insert tag" from the registry. Full design in "Email templates engine".
   (2FA is TOTP — no mail. The demo Create/Delete admin panel is NOT Phase 1 — it's in "Import /
   content packs", Post-v1.)
+- **Phase 1 (CMS-complete polish) is COMPLETE.** Next: Phase 2 — e-commerce finish.
 
-### Phase 2 — E-commerce finish (manual-fulfilment model)
+### Phase 2 — E-commerce finish (manual-fulfilment model) (CURRENT)
 - **FormBuilder Pass 2b — PayPal + refund (NOT built).** PayPal is just another
   `PaymentProcessorInterface` impl alongside Stripe (pass 2a done) — add it and register it in
   the processor registry. Refund: the `order` state_machine already has the `refunded` state;
