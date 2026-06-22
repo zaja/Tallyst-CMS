@@ -1,5 +1,6 @@
 {# Menu wrapper for render_menu(location). Override in a child theme by placing your
-   own themes/<name>/templates/menu.html.twig. #}
-<nav class="site-nav" aria-label="{{ location }}">
-    {{ include('menu_items.html.twig', {items: items}) }}
+   own themes/<name>/templates/menu.html.twig. id="site-nav" is referenced by the
+   header's hamburger (aria-controls) — keep it if you keep the default layout. #}
+<nav id="site-nav" class="site-nav" aria-label="{{ location }}">
+    {{ include('menu_items.html.twig', {items: items, depth: 0}) }}
 </nav>

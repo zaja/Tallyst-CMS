@@ -1,10 +1,17 @@
-{# Recursive menu list. items: [{label, url, active, children}]. #}
-<ul class="menu">
+{# Recursive menu list. items: [{label, url, active, children}]. depth: nesting level.
+   Parents with children get a .submenu-toggle button driving the desktop dropdown /
+   mobile accordion (see theme.css + nav.js). Degrades to a plain nested list with no JS. #}
+<ul class="menu{{ depth > 0 ? ' submenu' : '' }}">
     {% for item in items %}
-        <li class="menu-item{{ item.active ? ' is-active' : '' }}">
+        {% set has_children = item.children is not empty %}
+        <li class="menu-item{{ has_children ? ' has-children' : '' }}{{ item.active ? ' is-active' : '' }}">
             <a href="{{ item.url }}">{{ item.label }}</a>
-            {% if item.children is not empty %}
-                {{ include('menu_items.html.twig', {items: item.children}) }}
+            {% if has_children %}
+                <button class="submenu-toggle" type="button" aria-expanded="false"
+                        aria-label="Prikaži podizbornik: {{ item.label }}">
+                    <span class="caret" aria-hidden="true"></span>
+                </button>
+                {{ include('menu_items.html.twig', {items: item.children, depth: depth + 1}) }}
             {% endif %}
         </li>
     {% endfor %}

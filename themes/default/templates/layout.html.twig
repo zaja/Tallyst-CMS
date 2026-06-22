@@ -11,19 +11,33 @@
     {% block javascripts %}{{ importmap('app') }}{% endblock %}
 </head>
 <body>
-    <header class="site">
+    <a class="skip-link" href="#main">Prijeđi na sadržaj</a>
+
+    {# is-nav-open is toggled by nav.js (progressive enhancement); without JS the nav
+       falls back to a visible nested list. #}
+    <header class="site-header" data-nav>
         <div class="container">
             {{ render_branding() }}
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Otvori izbornik" aria-controls="site-nav">
+                <span class="bars" aria-hidden="true"></span>
+            </button>
             {{ render_menu('main') }}
         </div>
     </header>
 
-    <main class="container">
-        {% block body %}{% endblock %}
+    <main id="main" class="site-main">
+        <div class="container">
+            {% block body %}{% endblock %}
+        </div>
     </main>
 
-    <footer class="site">
-        <div class="container">&copy; {{ 'now'|date('Y') }} Tallyst</div>
+    <footer class="site-footer">
+        <div class="container">
+            <span>&copy; {{ 'now'|date('Y') }} {{ setting('site_name')|default('Tallyst') }}</span>
+            <span>Pokreće <a href="https://github.com/zaja/Tallyst-CMS" rel="noopener">Tallyst CMS</a></span>
+        </div>
     </footer>
+
+    <script src="{{ theme_asset('js/nav.js') }}" defer></script>
 </body>
 </html>

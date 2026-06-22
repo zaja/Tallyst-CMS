@@ -1,16 +1,21 @@
 {% extends 'layout.html.twig' %}
 
-{% block title %}{{ post.title }} — Tallyst{% endblock %}
+{% block title %}{{ post.title }} — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
 
 {% block body %}
-    <article>
-        <h1>{{ post.title }}</h1>
-        {% if post.publishedAt %}
-            <p><time datetime="{{ post.publishedAt|date('c') }}">{{ app_date(post.publishedAt) }}</time></p>
-        {% endif %}
+    <article class="prose">
+        <header class="page-header">
+            <h1>{{ post.title }}</h1>
+            {% if post.publishedAt %}
+                <p class="page-meta post-meta">
+                    <time datetime="{{ post.publishedAt|date('c') }}">{{ app_date(post.publishedAt) }}</time>
+                    {% if post.category %} · <a href="{{ path('blog_index') }}">{{ post.category.name }}</a>{% endif %}
+                </p>
+            {% endif %}
+        </header>
         {% if post.featuredImage %}<p class="featured-image">{{ media_img(post.featuredImage, 'medium') }}</p>{% endif %}
         {{ post.content|render_content }}
     </article>
 
-    <p><a href="{{ path('blog_index') }}">&larr; Natrag na blog</a></p>
+    <p class="prose"><a href="{{ path('blog_index') }}">&larr; Natrag na blog</a></p>
 {% endblock %}

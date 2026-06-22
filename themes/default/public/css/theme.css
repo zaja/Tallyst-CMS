@@ -1,51 +1,402 @@
 /*
- * Default theme stylesheet. Served statically from public/themes/default/ (publish
- * with `php8.5 bin/console app:theme:assets:install`), loaded via theme_asset().
- * Copy this folder for a new theme.
+ * Tallyst — default theme stylesheet.
+ *
+ * Served statically from public/themes/default/ (publish with
+ * `php8.5 bin/console app:theme:assets:install`), loaded via theme_asset(). Copy this
+ * folder as the starting point for a new theme.
+ *
+ * This is a small DESIGN SYSTEM, not bland defaults: semantic tokens (CSS custom
+ * properties) drive colour, type, spacing, radius, shadow and layout, so the whole
+ * theme re-themes by editing :root. No external web fonts (system stack only).
+ *
+ * THEME CONTRACT (see CLAUDE.md): a theme MUST style render_branding()/render_menu()
+ * output, featured images, the [image] align classes, the .tallyst-columns/.tallyst-column
+ * column layout, and the [form id=N] embed surface. All of that lives below.
  */
-:root { --ink: #1a1a1a; --muted: #666; --line: #ececec; --link: #2563eb; }
-* { box-sizing: border-box; }
-body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height: 1.6; margin: 0; color: var(--ink); }
-.container { max-width: 760px; margin: 0 auto; padding: 2rem 1.25rem; }
-a { color: var(--link); text-decoration: none; }
-a:hover { text-decoration: underline; }
 
-header.site, footer.site { border-color: var(--line); }
-header.site { border-bottom: 1px solid var(--line); }
-header.site .container { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; padding-bottom: 1rem; }
-footer.site { border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+/* ---------------------------------------------------------------- Tokens --- */
+:root {
+    /* Colour — neutral, professional; works for a service seller AND an app seller.
+       Re-brand by changing --brand (+ --brand-strong for hover). */
+    --ink:          #1f2328;   /* primary text                 */
+    --muted:        #5c6570;   /* secondary text / meta        */
+    --bg:           #ffffff;   /* page background              */
+    --surface:      #f6f7f9;   /* cards / raised panels        */
+    --surface-2:    #eef0f3;   /* subtler fill (code, hover)   */
+    --line:         #e4e7ec;   /* hairlines / borders          */
+    --brand:        #2563eb;   /* links, primary actions       */
+    --brand-strong: #1d4ed8;   /* brand hover/active           */
+    --brand-ink:    #ffffff;   /* text on a brand surface      */
+    --brand-tint:   #eff4ff;   /* brand-tinted background      */
 
-article h1 { margin-top: 0; }
-time { color: var(--muted); }
+    /* Type — system stack, fluid-ish scale. */
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --fs-base: 1.0625rem;      /* 17px body                    */
+    --fs-sm:   0.875rem;
+    --fs-lg:   1.1875rem;
+    --lh:      1.65;
+    --lh-tight:1.25;
 
-.site-brand { display: inline-flex; align-items: center; }
-.site-logo { max-height: 40px; width: auto; display: block; }
+    /* Spacing scale (modular, 4px base). */
+    --s-1: 0.25rem;
+    --s-2: 0.5rem;
+    --s-3: 0.75rem;
+    --s-4: 1rem;
+    --s-5: 1.5rem;
+    --s-6: 2rem;
+    --s-7: 3rem;
+    --s-8: 4.5rem;
 
-/* Media images (featured + [image id=N]) */
-.media-img { max-width: 100%; height: auto; border-radius: 6px; }
-.featured-image { margin: 0 0 1.25rem; }
-.media-align-left { float: left; margin: 0 1rem 1rem 0; }
-.media-align-right { float: right; margin: 0 0 1rem 1rem; }
-.media-align-center { display: block; margin: 1rem auto; }
-.post-thumb { display: inline-block; margin-bottom: .5rem; }
-.post-thumb .media-img { max-height: 120px; }
+    /* Shape & depth. */
+    --radius:    12px;
+    --radius-sm: 8px;
+    --shadow:    0 1px 2px rgba(16, 24, 40, .04), 0 6px 20px rgba(16, 24, 40, .07);
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, .06);
 
-/* Multi-column layout (Prolaz C). Content stored as
-   <div class="tallyst-columns" data-columns="N"><div class="tallyst-column">…</div>…</div>.
-   Count-agnostic: grid-auto-flow:column + grid-auto-columns:1fr lays out however many
-   columns are present, so 2 and 3 (and any future N) just work. A theme that wants columns
-   MUST carry this CSS (theme contract) — without it the columns fall back to stacked
-   blocks. On narrow viewports they stack (grid-auto-flow:row). */
-.tallyst-columns { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 1.5rem; margin: 1.25rem 0; }
-.tallyst-column { min-width: 0; }
-.tallyst-column > :first-child { margin-top: 0; }
-@media (max-width: 640px) {
-    .tallyst-columns { grid-auto-flow: row; grid-auto-columns: auto; gap: 1rem; }
+    /* Layout. */
+    --container: 64rem;        /* outer shell (header/footer/blog) */
+    --measure:   44rem;        /* readable prose width             */
+    --nav-bp:    52rem;        /* below this → mobile nav           */
 }
 
-/* Navigation (render_menu) */
-.site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 1rem; }
-.site-nav li { position: relative; }
-.site-nav .menu-item.is-active > a { font-weight: 600; text-decoration: underline; }
-/* Nested submenus */
-.site-nav .menu .menu { display: block; gap: 0; padding-left: 1rem; }
+/* ----------------------------------------------------------------- Reset --- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    margin: 0;
+    font-family: var(--font);
+    font-size: var(--fs-base);
+    line-height: var(--lh);
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+img { max-width: 100%; height: auto; }
+
+/* Accessible skip link (hidden until focused). */
+.skip-link {
+    position: absolute;
+    left: var(--s-3);
+    top: var(--s-3);
+    transform: translateY(-150%);
+    background: var(--ink);
+    color: #fff;
+    padding: var(--s-2) var(--s-4);
+    border-radius: var(--radius-sm);
+    z-index: 100;
+    transition: transform .15s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 3px; }
+
+/* ------------------------------------------------------------- Typography --- */
+h1, h2, h3, h4, h5, h6 {
+    line-height: var(--lh-tight);
+    font-weight: 680;
+    letter-spacing: -0.01em;
+    margin: 1.6em 0 0.55em;
+    color: var(--ink);
+}
+h1 { font-size: clamp(1.9rem, 1.4rem + 1.8vw, 2.55rem); margin-top: 0; }
+h2 { font-size: clamp(1.45rem, 1.2rem + 1vw, 1.85rem); }
+h3 { font-size: 1.35rem; }
+h4 { font-size: 1.15rem; }
+h5 { font-size: 1rem; }
+h6 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+p { margin: 0 0 1.15em; }
+
+a { color: var(--brand); text-decoration: none; }
+a:hover { color: var(--brand-strong); text-decoration: underline; text-underline-offset: 2px; }
+
+strong { font-weight: 650; }
+
+ul, ol { margin: 0 0 1.15em; padding-left: 1.4em; }
+li { margin: 0.3em 0; }
+li > ul, li > ol { margin: 0.3em 0; }
+
+blockquote {
+    margin: 1.5em 0;
+    padding: var(--s-2) var(--s-5);
+    border-left: 3px solid var(--brand);
+    background: var(--surface);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: var(--ink);
+    font-size: var(--fs-lg);
+}
+blockquote p:last-child { margin-bottom: 0; }
+
+code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--surface-2);
+    padding: 0.15em 0.4em;
+    border-radius: 5px;
+}
+pre {
+    margin: 1.5em 0;
+    padding: var(--s-4) var(--s-5);
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+}
+pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+
+hr { border: none; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
+
+table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: var(--fs-sm); }
+th, td { padding: var(--s-2) var(--s-3); border-bottom: 1px solid var(--line); text-align: left; }
+th { font-weight: 650; }
+
+/* -------------------------------------------------------------- Layout --- */
+.container {
+    width: 100%;
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--s-5);
+}
+
+.site-main { padding-block: var(--s-7); min-height: 50vh; }
+
+/* Readable prose column for page/post bodies. Featured images, columns and the
+   form embed sit inside and span this measure. */
+.prose { max-width: var(--measure); }
+.prose > :first-child { margin-top: 0; }
+
+/* ------------------------------------------------------------- Header --- */
+.site-header {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+.site-header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-4);
+    padding-block: var(--s-4);
+}
+
+.site-brand { display: inline-flex; align-items: center; gap: var(--s-2); font-weight: 700; font-size: 1.15rem; color: var(--ink); }
+.site-brand:hover { text-decoration: none; color: var(--ink); }
+.site-logo { max-height: 38px; width: auto; display: block; }
+
+/* Hamburger — hidden on desktop, shown below --nav-bp. */
+.nav-toggle {
+    display: none;
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    width: 44px; height: 40px;
+    cursor: pointer;
+    color: var(--ink);
+    align-items: center;
+    justify-content: center;
+}
+.nav-toggle .bars, .nav-toggle .bars::before, .nav-toggle .bars::after {
+    content: "";
+    display: block;
+    width: 20px; height: 2px;
+    background: currentColor;
+    border-radius: 2px;
+    transition: transform .2s ease, opacity .2s ease;
+}
+.nav-toggle .bars { position: relative; }
+.nav-toggle .bars::before { position: absolute; top: -6px; }
+.nav-toggle .bars::after  { position: absolute; top:  6px; }
+
+/* --------------------------------------------------------- Navigation --- */
+/* 2-level menu. Desktop: inline row + dropdown on hover/focus. Mobile: stacked
+   accordion toggled by .submenu-toggle. Markup degrades to a plain nested list
+   with no JS (progressive enhancement). */
+.site-nav .menu { list-style: none; margin: 0; padding: 0; }
+.site-nav .menu-item { position: relative; }
+.site-nav a { color: var(--ink); font-weight: 550; display: inline-block; }
+.site-nav a:hover { color: var(--brand); text-decoration: none; }
+.site-nav .menu-item.is-active > a { color: var(--brand); }
+
+.submenu-toggle {
+    appearance: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    padding: var(--s-1);
+    line-height: 0;
+}
+.submenu-toggle .caret {
+    display: inline-block;
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
+    transition: transform .2s ease;
+}
+.submenu-toggle[aria-expanded="true"] .caret { transform: rotate(180deg); }
+
+/* Desktop ( >= --nav-bp ) ------------------------------------------------- */
+@media (min-width: 52rem) {
+    .site-nav > .menu { display: flex; align-items: center; gap: var(--s-5); }
+    .site-nav > .menu > .menu-item > a { padding-block: var(--s-2); }
+
+    /* second level = dropdown */
+    .site-nav .submenu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 12rem;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: var(--s-2);
+        display: none;
+        z-index: 60;
+    }
+    .site-nav .menu-item:hover > .submenu,
+    .site-nav .menu-item:focus-within > .submenu,
+    .site-nav .menu-item.is-open > .submenu { display: block; }
+    .site-nav .submenu .menu-item { width: 100%; }
+    .site-nav .submenu a { display: block; padding: var(--s-2) var(--s-3); border-radius: var(--radius-sm); width: 100%; }
+    .site-nav .submenu a:hover { background: var(--brand-tint); }
+
+    /* caret is a hint only on desktop; hover drives it */
+    .submenu-toggle { vertical-align: middle; }
+}
+
+/* Mobile ( < --nav-bp ) -------------------------------------------------- */
+@media (max-width: 51.999rem) {
+    .nav-toggle { display: inline-flex; }
+
+    .site-nav {
+        position: absolute;
+        left: 0; right: 0;
+        top: 100%;
+        background: var(--bg);
+        border-bottom: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        max-height: 0;
+        overflow: hidden;
+        visibility: hidden;
+        transition: max-height .25s ease, visibility 0s linear .25s;
+    }
+    .site-header.is-nav-open .site-nav {
+        max-height: 80vh;
+        overflow-y: auto;
+        visibility: visible;
+        transition: max-height .25s ease;
+    }
+    .site-nav > .menu { padding: var(--s-3) var(--s-4) var(--s-5); }
+    .site-nav .menu-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+    .site-nav .menu-item > a { flex: 1; padding: var(--s-3) 0; }
+    .submenu-toggle { padding: var(--s-3); }
+
+    .site-nav .submenu {
+        flex-basis: 100%;
+        list-style: none;
+        margin: 0;
+        padding: 0 0 var(--s-2) var(--s-4);
+        display: none;
+    }
+    .site-nav .menu-item.is-open > .submenu { display: block; }
+    .site-nav .submenu a { padding: var(--s-2) 0; }
+}
+
+/* ----------------------------------------------------------- Page header --- */
+.page-header { margin-bottom: var(--s-6); }
+.page-header h1 { margin: 0; }
+.page-header .page-meta { color: var(--muted); font-size: var(--fs-sm); margin-top: var(--s-2); }
+
+/* ----------------------------------------------------------- Blog list --- */
+.post-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--s-5);
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+}
+.post-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+    overflow: hidden;
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+.post-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.post-card .post-card-media { display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--surface-2); }
+.post-card .post-card-media img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+.post-card .post-card-body { padding: var(--s-4) var(--s-5) var(--s-5); display: flex; flex-direction: column; gap: var(--s-2); }
+.post-card h2 { font-size: 1.2rem; margin: 0; }
+.post-card h2 a { color: var(--ink); }
+.post-card h2 a:hover { color: var(--brand); text-decoration: none; }
+.post-card .post-meta { color: var(--muted); font-size: var(--fs-sm); }
+.post-card .post-excerpt { margin: 0; color: var(--ink); }
+
+/* ----------------------------------------------------------- Post meta --- */
+.post-meta time { color: var(--muted); }
+
+/* ------------------------------------------------------- Media / images --- */
+.media-img { border-radius: var(--radius); }
+.featured-image { margin: 0 0 var(--s-5); }
+.featured-image .media-img { width: 100%; box-shadow: var(--shadow-sm); }
+.media-align-left  { float: left;  margin: var(--s-1) var(--s-5) var(--s-4) 0; max-width: 50%; }
+.media-align-right { float: right; margin: var(--s-1) 0 var(--s-4) var(--s-5); max-width: 50%; }
+.media-align-center { display: block; margin: var(--s-5) auto; }
+
+/* ------------------------------------------------ Multi-column layout --- */
+/* THEME CONTRACT (Prolaz C). Content stored as
+   <div class="tallyst-columns" data-columns="N"><div class="tallyst-column">…</div>…</div>.
+   Count-agnostic (grid-auto-flow:column + grid-auto-columns:1fr), stacks on narrow
+   viewports. A theme without this CSS degrades columns to stacked blocks. */
+.tallyst-columns { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s-5); margin: var(--s-5) 0; }
+.tallyst-column { min-width: 0; }
+.tallyst-column > :first-child { margin-top: 0; }
+@media (max-width: 40rem) {
+    .tallyst-columns { grid-auto-flow: row; grid-auto-columns: auto; gap: var(--s-4); }
+}
+
+/* ----------------------------------------------------- Form embed card --- */
+/* The [form id=N] embed (@FormBuilder/form/render.html.twig) ships its own field
+   styles; the theme frames the surrounding surface so it reads as a card on the page. */
+.prose .fb-form-wrap {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: var(--s-5);
+    box-shadow: var(--shadow-sm);
+}
+
+/* --------------------------------------------------------------- Footer --- */
+/* Placeholder only — full footer config is a later pass. */
+.site-footer {
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    margin-top: var(--s-8);
+}
+.site-footer .container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2) var(--s-4);
+    align-items: center;
+    justify-content: space-between;
+    padding-block: var(--s-6);
+}
+.site-footer a { color: var(--muted); }
+.site-footer a:hover { color: var(--brand); }

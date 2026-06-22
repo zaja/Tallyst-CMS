@@ -65,9 +65,9 @@ built now.
   FormBuilder + Stripe, Settings/SMTP, and production-grade auth (roles, user CRUD, lockout, reset,
   2FA, throttling, self-service password). Per-area implementation detail is documented below.
 - **Phase 1 — CMS-complete polish (CURRENT).** Order matters:
-  1. **Neutral default theme + demo content FIRST** — the *lens*. Building it reveals what the
-     footer/hero/menu actually need (and what they don't) instead of guessing; also surfaces mobile.
-  2. **Footer + per-page hero** — informed by what the theme/demo surface.
+  1. **Neutral default theme + demo content FIRST** — the *lens*. **DONE (pass 1)** — see
+     "Default theme & demo content". Footer config + per-page hero deliberately deferred to step 2.
+  2. **Footer + per-page hero (NEXT)** — informed by what the theme/demo surface.
   3. **Email templates** (scoped as above).
 - **Phase 2 — E-commerce finish (manual-fulfilment model).** PayPal processor alongside Stripe;
   refund (the `refunded` state exists); order-flow / order-mail polish. **NOT** automated delivery.
@@ -102,6 +102,10 @@ The default `php` on this server may NOT be 8.5. Always call the explicit binary
 Plain `php` / `composer` can resolve the wrong PHP version and break installs.
 
 ## Common commands
+- Seed baseline: `php8.5 bin/console app:install` (minimal: default theme, home, 2-item menu).
+- Seed DEMO content: `php8.5 bin/console app:demo:seed` (additive) / `--fresh` (full reset).
+  Separate from install — ~16 pages + 15 posts in a 2-level menu, demo forms (free + priced
+  page-as-product), and GD-generated neutral demo images. See "Default theme & demo content".
 - Install deps: `php8.5 /usr/local/bin/composer install`
 - Add a package: `php8.5 /usr/local/bin/composer require <pkg>`
 - Clear cache: `php8.5 bin/console cache:clear`
@@ -144,6 +148,44 @@ from AssetMapper (don't push theme CSS through importmap). Pattern:
   raw URL), nests children, flags the active item (home matches `/` EXACTLY; others
   match exactly or as a path prefix), and renders the theme-overridable
   `menu.html.twig` + `menu_items.html.twig`. Never hardcode nav in a layout.
+
+## Default theme & demo content (Phase 1, pass 1 — DONE)
+The default theme (`themes/default/`) is a small **design system**, not bland defaults, and
+demo content seeds the whole front-end so it can be judged as a *lens* (esp. mobile 2-level nav).
+This pass is intentionally scoped: **footer config, per-page hero, dark mode are LATER passes.**
+
+- **`public/css/theme.css` = tokens-first.** Semantic CSS custom properties on `:root` drive
+  colour (`--ink/--muted/--bg/--surface/--line/--brand/--brand-strong/--brand-ink/--brand-tint`),
+  a type scale, a 4px spacing scale (`--s-1..8`), radius/shadow, container (`--container`) +
+  readable measure (`--measure`) + nav breakpoint (`--nav-bp`). Re-theme by editing `:root`.
+  **System font stack only — no external web fonts.** Every editor output is styled (h1–h6, p,
+  ul/ol, blockquote, code/pre, links, hr, tables, images), plus header/nav, page header, blog
+  cards, post meta, featured image, `[image]` align classes, `.tallyst-columns`/`.tallyst-column`
+  (theme contract), the `[form id=N]` embed surface, and the footer placeholder.
+- **Responsive 2-level nav.** Desktop: inline row + dropdown on `:hover`/`:focus-within` (or
+  `.is-open`). Mobile (≤ `--nav-bp`): hamburger (`.nav-toggle`) opens the panel; parents with
+  children get a `.submenu-toggle` accordion. **Progressive enhancement:** it degrades to a plain
+  nested list with no JS; `themes/default/public/js/nav.js` (a tiny vanilla script loaded via
+  `theme_asset('js/nav.js')`, NOT AssetMapper) only adds the toggles + keeps ARIA in sync.
+  `menu_items.html.twig` emits the toggle button + `has-children` class; `menu.html.twig` gives
+  the nav `id="site-nav"` (the hamburger's `aria-controls`). Accessibility: skip-link,
+  `aria-expanded`/`aria-controls`, `:focus-visible` rings.
+- **Templates** keep all existing helper calls untouched (`render_branding`, `render_menu`,
+  `render_content`, `media_img`, `app_date`, null-safe `featuredImage`) — only markup/classes
+  changed, so nothing regresses. Page/post bodies use a `.prose` measure; `page.html.twig`/
+  `post.html.twig` have a simple **page header (NO hero — hero is a later pass)**.
+- **`app:demo:seed`** (`src/Command/DemoSeedCommand.php`) is the demo lens. Re-runnable:
+  default is additive (create-if-missing by a FIXED slug set, skip existing, **always rebuilds
+  the `main` menu** — the demo OWNS it); `--fresh` deletes the whole demo set first (by the fixed
+  page/post/category/form slugs + `main` menu + media whose `originalName` starts with
+  `tallyst-demo-`) then recreates — the supported full-reset path (the only way to reset `home`,
+  which `app:install` also creates). Cleanup only touches those fixed handles, never real content.
+  **It is a demo/dev-instance tool** — don't run it on a real populated site expecting the real
+  menu to survive. Order: media → forms → categories → pages → posts → menu (forms before pages so
+  real `[form id=N]` ids splice into content). Demo images are **GD-generated at seed** (neutral
+  abstract gradient covers), written to a temp file and pushed through `MediaUploader::upload()`
+  via an `UploadedFile(..., test: true)` — no binaries committed, fully reproducible. Run
+  `app:media:thumbnails:warm` after if thumbs are missing.
 
 ## Media & uploads (Media module)
 - Uploads (VichUploaderBundle) go to `public/media/uploads/` with a sanitised, unique
@@ -593,10 +635,12 @@ Roadmap at the top of this doc; nothing here is built unless marked DONE.
 
 ### Phase 1 — CMS-complete polish (CURRENT)
 Order matters (see Roadmap): theme + demo content are the *lens*, then footer/hero, then email.
-- **Neutral default theme + demo content FIRST (NOT built).** A clean, well-designed default theme
-  + ~15 pages and ~15 posts in a 2-level menu, so the whole front-end (incl. mobile) can be seen.
-  This reveals what footer/hero/menu actually need instead of guessing.
-- **Footer config + per-page hero (NOT built).** Informed by what the theme/demo surface.
+- **Neutral default theme + demo content FIRST — DONE (pass 1).** Tokens-first design-system
+  default theme + `app:demo:seed` (~16 pages / 15 posts, 2-level menu, free + priced demo forms,
+  GD-generated demo images). Full design in "Default theme & demo content". Footer/hero NOT in
+  this pass (next). Open: final VISUAL look is judged rendered (esp. mobile nav) — surfaces what
+  footer/hero need.
+- **Footer config + per-page hero (NEXT, NOT built).** Informed by what the theme/demo surface.
 - **Email templates — SCOPED (NOT built).** Light admin editability for CUSTOMER-FACING mail
   (order confirmation, free-form notification): editable subject + body + a few variables
   (`{name}`, `{total}`…) + sensible defaults. System mail (reset, 2FA) stays Twig in code.
