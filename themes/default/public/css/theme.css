@@ -55,8 +55,8 @@
     --shadow-sm: 0 1px 2px rgba(16, 24, 40, .06);
 
     /* Layout. */
-    --container: 64rem;        /* outer shell (header/footer/blog) */
-    --measure:   44rem;        /* readable prose width             */
+    --container: 68rem;        /* outer shell (header/footer/blog) ~1090px */
+    --measure:   44rem;        /* readable prose width (~65ch)     */
     --nav-bp:    52rem;        /* below this → mobile nav           */
 }
 
@@ -167,9 +167,10 @@ th { font-weight: 650; }
 
 .site-main { padding-block: var(--s-7); min-height: 50vh; }
 
-/* Readable prose column for page/post bodies. Featured images, columns and the
-   form embed sit inside and span this measure. */
-.prose { max-width: var(--measure); }
+/* Readable prose column for page/post bodies, CENTERED in the wider shell (balanced
+   margins — no dead space on one side). Text stays at the ~65ch measure, never widened.
+   Featured images, columns and the form embed sit inside and span this measure. */
+.prose { max-width: var(--measure); margin-inline: auto; }
 .prose > :first-child { margin-top: 0; }
 
 /* ------------------------------------------------------------- Header --- */

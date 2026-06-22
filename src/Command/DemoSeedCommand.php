@@ -387,9 +387,9 @@ class DemoSeedCommand extends Command
             'tim' => ['Naš tim', 2, 'Ljudi iza Tallysta.', $this->contentTim($img(4))],
             'kontakt' => ['Kontakt', null, 'Javite nam se.', $this->contentKontakt($kontaktId)],
             'usluge' => ['Usluge', 6, 'Što radimo za klijente.', $this->contentUsluge()],
-            'web-razvoj' => ['Web razvoj', 1, 'Izrada modernih web aplikacija.', $this->contentTextPage('Web razvoj', 'Gradimo brze, održive web aplikacije po mjeri.')],
-            'konzalting' => ['Konzalting', 3, 'Savjetovanje o arhitekturi i proizvodu.', $this->contentTextPage('Konzalting', 'Pomažemo timovima donijeti prave tehničke i proizvodne odluke.')],
-            'dizajn' => ['Dizajn', 4, 'Dizajn sučelja i korisničkog iskustva.', $this->contentTextPage('Dizajn', 'Čisto, pristupačno sučelje koje korisnici razumiju bez upute.')],
+            'web-razvoj' => ['Web razvoj', 1, 'Izrada modernih web aplikacija.', $this->contentWebRazvoj()],
+            'konzalting' => ['Konzalting', 3, 'Savjetovanje o arhitekturi i proizvodu.', $this->contentKonzalting()],
+            'dizajn' => ['Dizajn', 4, 'Dizajn sučelja i korisničkog iskustva.', $this->contentDizajn()],
             'proizvodi' => ['Proizvodi', 6, 'Naši gotovi proizvodi.', $this->contentProizvodi()],
             'pro-licenca' => ['Pro licenca', 2, 'Kupi Pro licencu — primjer stranice-kao-proizvoda.', $this->contentProLicenca($proId)],
             'cjenik' => ['Cjenik', null, 'Jednostavni, transparentni paketi.', $this->contentCjenik()],
@@ -540,18 +540,32 @@ class DemoSeedCommand extends Command
     private function contentHome(int $imgId): string
     {
         return <<<HTML
-            <p>Tallyst je mjesto gdje <strong>predstavljamo i prodajemo</strong> vlastite aplikacije i usluge — bez posrednika i mjesečnih naknada. Ova stranica je dio demo sadržaja koji prikazuje kako tema izgleda u stvarnoj upotrebi.</p>
+            <p>Tallyst je mjesto gdje <strong>predstavljamo i prodajemo</strong> vlastite aplikacije i usluge — bez posrednika i mjesečnih naknada. Sve ostaje vaše: sadržaj, podaci i odnos s klijentom. Ova stranica je dio demo sadržaja koji prikazuje kako tema izgleda u stvarnoj upotrebi.</p>
+            <p>Umjesto da plaćate proviziju vanjskim platformama, objavu i naplatu držite na vlastitoj domeni. Krenete malo, a sustav raste s vama.</p>
             <div class="tallyst-columns" data-columns="2">
                 <div class="tallyst-column">
                     <h3>Za pružatelje usluga</h3>
-                    <p>Predstavite svoj rad, prikupite upite i naplatite — sve na vlastitoj domeni.</p>
+                    <p>Predstavite svoj rad, prikupite upite i naplatite — sve na vlastitoj domeni, bez mjesečne pretplate.</p>
                 </div>
                 <div class="tallyst-column">
                     <h3>Za autore aplikacija</h3>
-                    <p>Pretvorite stranicu u proizvod jednim ugrađenim obrascem s plaćanjem.</p>
+                    <p>Pretvorite bilo koju stranicu u proizvod jednim ugrađenim obrascem s plaćanjem.</p>
                 </div>
             </div>
             <p>[image id={$imgId} size=medium align=center alt="Apstraktna naslovna ilustracija"]</p>
+            <h2>Zašto Tallyst</h2>
+            <p>Većina alata pokušava raditi sve i zato je teška za korištenje. Mi idemo suprotnim putem: nekoliko stvari, ali napravljenih kako treba. Manje opcija znači manje odluka i brži put do objave.</p>
+            <ul>
+                <li><strong>Jednostavno po dizajnu</strong> — čisto sučelje koje ne treba priručnik.</li>
+                <li><strong>Sve vaše</strong> — self-hosted, bez zaključavanja u tuđu platformu.</li>
+                <li><strong>Stranica = proizvod</strong> — naplata ugrađena tamo gdje je sadržaj.</li>
+            </ul>
+            <h2>Kako počinjete</h2>
+            <ol>
+                <li>Postavite Tallyst na vlastitu domenu.</li>
+                <li>Napišite stranice i objave u čistom editoru.</li>
+                <li>Ugradite obrazac s plaćanjem gdje želite prodavati.</li>
+            </ol>
             <h2>Krenite odavde</h2>
             <ul>
                 <li>Pogledajte <a href="/usluge">što radimo</a>.</li>
@@ -564,89 +578,155 @@ class DemoSeedCommand extends Command
     private function contentONama(): string
     {
         return <<<HTML
-            <p>Mi smo mali tim koji vjeruje da <strong>jednostavnost nije ograničenje, nego vrijednost</strong>. Gradimo proizvode koje i sami želimo koristiti.</p>
+            <p>Mi smo mali tim koji vjeruje da <strong>jednostavnost nije ograničenje, nego vrijednost</strong>. Gradimo proizvode koje i sami želimo koristiti — i upravo zato pažljivo biramo što <em>ne</em> ćemo dodati.</p>
+            <p>Počeli smo kao osobni projekt: trebao nam je čist način da objavimo i prodamo vlastiti rad bez teških platformi i provizija. Ono što je riješilo naš problem pokazalo se korisnim i drugima, pa smo to izgladili u proizvod.</p>
             <h2>Naše vrijednosti</h2>
             <ul>
-                <li>Manje, ali bolje.</li>
-                <li>Vlasništvo nad podacima i odnosom s klijentom.</li>
-                <li>Pošten, transparentan pristup.</li>
+                <li><strong>Manje, ali bolje</strong> — svaka značajka mora zaraditi svoje mjesto.</li>
+                <li><strong>Vlasništvo</strong> — vi držite podatke i odnos s klijentom.</li>
+                <li><strong>Poštenje</strong> — transparentne cijene i jasna komunikacija.</li>
             </ul>
             <blockquote><p>„Najbolji alat je onaj koji se ne primjećuje dok radi svoj posao.”</p></blockquote>
-            <p>Više o ljudima pročitajte na stranici <a href="/tim">Naš tim</a>.</p>
+            <h2>Kako radimo</h2>
+            <p>Radimo u malim, jasno definiranim koracima i rano tražimo povratne informacije. Tako se smjer ispravlja dok je još jeftino, a vi vidite napredak svakog tjedna.</p>
+            <p>Više o ljudima pročitajte na stranici <a href="/tim">Naš tim</a>, a ako želite suradnju, javite se preko <a href="/kontakt">kontakta</a>.</p>
             HTML;
     }
 
     private function contentTim(int $imgId): string
     {
         return <<<HTML
-            <p>Iza Tallysta stoji nekoliko ljudi različitih vještina, ali istog cilja.</p>
-            <div class="tallyst-columns" data-columns="3">
-                <div class="tallyst-column"><h3>Ana</h3><p>Proizvod i dizajn.</p></div>
-                <div class="tallyst-column"><h3>Marko</h3><p>Razvoj i infrastruktura.</p></div>
-                <div class="tallyst-column"><h3>Iva</h3><p>Podrška i sadržaj.</p></div>
-            </div>
+            <p>Iza Tallysta stoji nekoliko ljudi različitih vještina, ali istog cilja: napraviti alat koji je ugodan za svakodnevni rad.</p>
             <p>[image id={$imgId} size=medium align=right alt="Ilustracija tima"]</p>
-            <p>Volimo raditi blisko s klijentima i brzo isporučivati male, korisne promjene.</p>
+            <p>Mali smo namjerno. Tako svatko vidi cijelu sliku, odluke su brze, a komunikacija s klijentima izravna — bez slojeva koji usporavaju.</p>
+            <div class="tallyst-columns" data-columns="3">
+                <div class="tallyst-column"><h3>Ana</h3><p>Proizvod i dizajn. Brine da sučelje ostane jednostavno dok značajke rastu.</p></div>
+                <div class="tallyst-column"><h3>Marko</h3><p>Razvoj i infrastruktura. Drži sustav brzim, sigurnim i lakim za održavanje.</p></div>
+                <div class="tallyst-column"><h3>Iva</h3><p>Podrška i sadržaj. Prva linija prema korisnicima i autorica vodiča.</p></div>
+            </div>
+            <h2>Kako surađujemo</h2>
+            <p>Volimo raditi blisko s klijentima i isporučivati male, korisne promjene umjesto velikih, rizičnih skokova. Svaki tjedan donosi nešto opipljivo.</p>
             HTML;
     }
 
     private function contentKontakt(?int $formId): string
     {
         return <<<HTML
-            <p>Najbrže ćemo odgovoriti putem obrasca ispod. Trudimo se javiti u roku jednog radnog dana.</p>
+            <p>Imate pitanje, ideju za projekt ili vam treba pomoć? Najbrže ćemo odgovoriti putem obrasca ispod. Trudimo se javiti u roku jednog radnog dana.</p>
+            <p>Recite nam ukratko što vam treba i, ako je relevantno, do kada — tako možemo odmah predložiti sljedeći korak.</p>
             [form id={$formId}]
-            <p>Ako više volite e-mail, pišite na <a href="mailto:hello@example.com">hello@example.com</a>.</p>
+            <h2>Drugi načini</h2>
+            <p>Ako više volite e-mail, pišite na <a href="mailto:hello@example.com">hello@example.com</a>. Na hitne upite postojećih klijenata odgovaramo prioritetno.</p>
             HTML;
     }
 
     private function contentUsluge(): string
     {
         return <<<HTML
-            <p>Nudimo nekoliko usluga koje se često kombiniraju u jednom projektu.</p>
+            <p>Nudimo nekoliko usluga koje se često kombiniraju u jednom projektu — od prve ideje do objavljenog, održivog proizvoda.</p>
             <div class="tallyst-columns" data-columns="3">
                 <div class="tallyst-column"><h3><a href="/web-razvoj">Web razvoj</a></h3><p>Aplikacije po mjeri, bez nepotrebne težine.</p></div>
                 <div class="tallyst-column"><h3><a href="/konzalting">Konzalting</a></h3><p>Prave odluke o arhitekturi i proizvodu.</p></div>
                 <div class="tallyst-column"><h3><a href="/dizajn">Dizajn</a></h3><p>Sučelje koje korisnici odmah razumiju.</p></div>
             </div>
             <h2>Kako radimo</h2>
+            <p>Ne počinjemo velikim ugovorom i mjesecima tišine. Počinjemo malim, jasnim korakom koji brzo daje rezultat — pa nastavljamo na temelju onoga što naučimo.</p>
             <ol>
-                <li>Kratak razgovor o cilju.</li>
-                <li>Mali, jasno definiran prvi korak.</li>
-                <li>Redovite isporuke i povratne informacije.</li>
+                <li>Kratak razgovor o cilju i ograničenjima.</li>
+                <li>Mali, jasno definiran prvi korak s vidljivim rezultatom.</li>
+                <li>Redovite isporuke i povratne informacije svakog tjedna.</li>
             </ol>
+            <h2>Za koga radimo</h2>
+            <p>Najbolje surađujemo sa samostalnim autorima i malim timovima koji žele brzo objaviti nešto kvalitetno, bez nepotrebne složenosti. Niste sigurni spadate li tu? <a href="/kontakt">Pitajte nas</a>.</p>
             HTML;
     }
 
     private function contentProizvodi(): string
     {
         return <<<HTML
-            <p>Osim usluga, nudimo i gotove proizvode koje možete kupiti odmah.</p>
+            <p>Osim usluga, nudimo i gotove proizvode koje možete kupiti i koristiti odmah — bez čekanja i bez pretplate.</p>
+            <h2>Dostupno sada</h2>
             <ul>
-                <li><a href="/pro-licenca">Pro licenca</a> — doživotni pristup naprednim značajkama.</li>
+                <li><a href="/pro-licenca">Pro licenca</a> — doživotni pristup naprednim značajkama uz jednokratno plaćanje.</li>
             </ul>
-            <p>Svaka stranica može postati proizvod ugradnjom obrasca s plaćanjem — pogledajte primjer na stranici Pro licenca.</p>
+            <p>Svaka stranica u Tallystu može postati proizvod: dovoljno je ugraditi obrazac s cijenom i ona počinje naplaćivati. Pogledajte živi primjer na stranici <a href="/pro-licenca">Pro licenca</a>.</p>
+            <blockquote><p>Prodajete uslugu umjesto proizvoda? Isti mehanizam radi — naplatite konzultaciju, radionicu ili pretplatu na isti način.</p></blockquote>
             HTML;
     }
 
     private function contentProLicenca(?int $formId): string
     {
         return <<<HTML
-            <p>Pro izdanje otključava napredne značajke uz <strong>jednokratnu</strong> doživotnu licencu — bez pretplate.</p>
+            <p>Pro izdanje otključava napredne značajke uz <strong>jednokratnu</strong> doživotnu licencu — bez pretplate i bez skrivenih troškova. Platite jednom, koristite zauvijek.</p>
             <h2>Što dobivate</h2>
             <ul>
                 <li>Sve značajke besplatnog izdanja.</li>
-                <li>Prioritetnu podršku.</li>
+                <li>Napredne značajke rezervirane za Pro korisnike.</li>
+                <li>Prioritetnu podršku s bržim odgovorima.</li>
                 <li>Buduća ažuriranja bez dodatnih troškova.</li>
             </ul>
-            <p>Ovo je primjer <em>stranice-kao-proizvoda</em>: obrazac ispod naplaćuje i bilježi narudžbu.</p>
+            <h2>Kako kupnja teče</h2>
+            <p>Ispunite obrazac, obavite sigurnu naplatu i licenca stiže na vašu e-mail adresu. Ovo je primjer <em>stranice-kao-proizvoda</em>: isti obrazac koji vidite ispod bilježi narudžbu i pokreće plaćanje.</p>
             [form id={$formId}]
+            <p>Imate pitanje prije kupnje? Pogledajte <a href="/faq">česta pitanja</a> ili nam se <a href="/kontakt">javite</a>.</p>
+            HTML;
+    }
+
+    private function contentWebRazvoj(): string
+    {
+        return <<<HTML
+            <p>Gradimo brze, održive web aplikacije po mjeri — onoliko velike koliko problem traži, ni red koda više. Cilj je rješenje koje i za godinu dana razumijete i možete mijenjati.</p>
+            <h2>Što radimo</h2>
+            <ul>
+                <li>Aplikacije i alati po mjeri vašeg procesa.</li>
+                <li>Integracije s plaćanjima, e-poštom i vanjskim servisima.</li>
+                <li>Migracije sa starih, teških sustava na nešto lakše.</li>
+            </ul>
+            <h2>Kako pristupamo</h2>
+            <p>Prvo razumijemo problem, pa biramo najjednostavniju tehnologiju koja ga rješava. Izbjegavamo modu radi mode — manje pokretnih dijelova znači manje kvarova i niže troškove održavanja.</p>
+            <blockquote><p>„Najbolji kod je onaj koji ne morate napisati.”</p></blockquote>
+            <p>Spremni za razgovor? <a href="/kontakt">Javite nam se</a> i predložit ćemo mali prvi korak.</p>
+            HTML;
+    }
+
+    private function contentKonzalting(): string
+    {
+        return <<<HTML
+            <p>Pomažemo timovima donijeti prave tehničke i proizvodne odluke — prije nego što postanu skupe. Ponekad je najvrjednije ono što vam odgovorimo da <em>ne</em> radite.</p>
+            <h2>Kada smo korisni</h2>
+            <ul>
+                <li>Birate arhitekturu ili tehnologiju za novi proizvod.</li>
+                <li>Postojeći sustav je postao spor ili težak za promjene.</li>
+                <li>Trebate nepristran pogled prije veće investicije.</li>
+            </ul>
+            <h2>Kako izgleda suradnja</h2>
+            <p>Krećemo s kratkim pregledom stanja i ciljeva, a završavamo s konkretnim, prioritiziranim preporukama koje vaš tim može odmah primijeniti — bez vezivanja uz nas.</p>
+            <p>Više o načinu rada pročitajte na <a href="/o-nama">O nama</a> ili <a href="/kontakt">dogovorite razgovor</a>.</p>
+            HTML;
+    }
+
+    private function contentDizajn(): string
+    {
+        return <<<HTML
+            <p>Dizajniramo čisto, pristupačno sučelje koje korisnici razumiju bez upute. Dobar dizajn ovdje ne znači ukras, nego da prava stvar bude očita.</p>
+            <h2>Čime se bavimo</h2>
+            <ul>
+                <li>Dizajn sučelja i korisničkog iskustva (UI/UX).</li>
+                <li>Pojednostavljivanje postojećih, prenatrpanih ekrana.</li>
+                <li>Pristupačnost i čitljivost na svim veličinama zaslona.</li>
+            </ul>
+            <h2>Naša načela</h2>
+            <p>Tipografija, razmak i jasna hijerarhija nose najveći dio posla. Mobilni prikaz tretiramo ravnopravno s desktopom jer sve više korisnika dolazi upravo s telefona.</p>
+            <blockquote><p>„Jednostavnost je krajnja sofisticiranost.”</p></blockquote>
+            <p>Želite svjež pogled na svoj proizvod? <a href="/kontakt">Pišite nam</a>.</p>
             HTML;
     }
 
     private function contentCjenik(): string
     {
         return <<<HTML
-            <p>Jednostavni paketi bez skrivenih troškova.</p>
+            <p>Jednostavni paketi bez skrivenih troškova. Bez pretplate na koju zaboravite — platite ono što vam treba i kad vam treba.</p>
+            <p>Niste sigurni što odabrati? Krenite s besplatnim izdanjem; na Pro prelazite kad osjetite da vam treba više.</p>
             <div class="tallyst-columns" data-columns="3">
                 <div class="tallyst-column">
                     <h3>Početni</h3>
@@ -666,18 +746,24 @@ class DemoSeedCommand extends Command
                     <p><a href="/kontakt">Kontakt</a></p>
                 </div>
             </div>
+            <p>Sve cijene su informativne i dio su demo sadržaja. Trebate li nešto izvan ovih paketa, <a href="/kontakt">dogovorit ćemo</a> rješenje po mjeri.</p>
             HTML;
     }
 
     private function contentFaq(): string
     {
         return <<<HTML
+            <p>Najčešća pitanja i kratki odgovori. Ne nalazite svoje? <a href="/kontakt">Javite nam se</a>.</p>
             <h2>Je li Tallyst stvarno jednostavan?</h2>
-            <p>Da — jednostavnost je namjerna. Radimo manje stvari, ali ih radimo dobro.</p>
+            <p>Da — jednostavnost je namjerna. Radimo manje stvari, ali ih radimo dobro, pa nema priručnika od sto stranica ni izbornika u kojima se gubite.</p>
             <h2>Mogu li sam hostati?</h2>
-            <p>Možete. Sve je vaše: podaci, sadržaj i odnos s klijentima.</p>
+            <p>Možete, i to je poanta. Tallyst je self-hosted: podaci, sadržaj i odnos s klijentima ostaju vaši, na vašoj domeni.</p>
             <h2>Kako funkcionira plaćanje?</h2>
-            <p>Ugradite obrazac s cijenom u bilo koju stranicu i ona postaje proizvod.</p>
+            <p>Ugradite obrazac s cijenom u bilo koju stranicu i ona postaje proizvod. Naplata ide kroz provjereni tok plaćanja, a narudžba se zabilježi automatski.</p>
+            <h2>Trebam li biti programer?</h2>
+            <p>Za svakodnevno uređivanje sadržaja ne. Za prvo postavljanje na server pomaže tehničko predznanje — ili nam se javite pa pomognemo.</p>
+            <h2>Mogu li kasnije promijeniti temu?</h2>
+            <p>Da. Tema je odvojena od sadržaja, pa izgled mijenjate bez diranja stranica i objava.</p>
             <blockquote><p>Ne nalazite odgovor? <a href="/kontakt">Pitajte nas.</a></p></blockquote>
             HTML;
     }
@@ -685,32 +771,39 @@ class DemoSeedCommand extends Command
     private function contentGalerija(int $a, int $b, int $c): string
     {
         return <<<HTML
-            <p>Nekoliko slika ugrađenih u sadržaj pomoću <code>[image id=N]</code> oznake.</p>
+            <p>Galerija pokazuje kako se slike ugrađuju u sadržaj pomoću <code>[image id=N]</code> oznake — pojedinačno, poravnato ili unutar stupaca. Sve slike u ovom demu su neutralni, generirani prikazi.</p>
             <p>[image id={$a} size=medium align=center alt="Demo slika 1"]</p>
+            <h2>U dva stupca</h2>
+            <p>Slike se mogu složiti i jednu pored druge; na užem zaslonu stupci se sami slažu jedan ispod drugog.</p>
             <div class="tallyst-columns" data-columns="2">
                 <div class="tallyst-column"><p>[image id={$b} size=medium alt="Demo slika 2"]</p></div>
                 <div class="tallyst-column"><p>[image id={$c} size=medium alt="Demo slika 3"]</p></div>
             </div>
+            <p>Iste slike koristimo i kao naslovne (featured) na stranicama i objavama, pa galerija dobro pokazuje kako tema postupa s vizualnim sadržajem.</p>
             HTML;
     }
 
     private function contentZnacajke(int $imgId): string
     {
         return <<<HTML
-            <p>Pregled onoga što čini Tallyst ugodnim za svakodnevni rad.</p>
+            <p>Pregled onoga što čini Tallyst ugodnim za svakodnevni rad. Fokus je na malom broju značajki koje stvarno koristite, a ne na dugačkom popisu kvačica.</p>
             <div class="tallyst-columns" data-columns="2">
                 <div class="tallyst-column">
                     <h3>Čist editor</h3>
-                    <p>Naslovi, liste, citati, kod i slike — sve što treba, ništa suvišno.</p>
+                    <p>Naslovi, liste, citati, kod i slike — sve što treba, ništa suvišno. Sadržaj se sprema kao uredan HTML.</p>
                 </div>
                 <div class="tallyst-column">
                     <h3>Stranica = proizvod</h3>
-                    <p>Ugradi obrazac s plaćanjem i prodaja kreće.</p>
+                    <p>Ugradi obrazac s plaćanjem i prodaja kreće, bez zasebne trgovine.</p>
                 </div>
             </div>
             <p>[image id={$imgId} size=medium align=center alt="Ilustracija značajki"]</p>
+            <h2>Ugrađene oznake</h2>
+            <p>Posebne oznake u sadržaju ubacuju dinamičke elemente — obrazac ili sliku — bez pisanja koda:</p>
             <pre><code>[form id=1]   // ugradi obrazac
             [image id=2]  // ugradi sliku</code></pre>
+            <h2>Višestupčani raspored</h2>
+            <p>Sadržaj se može složiti u dva ili tri stupca koji se na mobitelu automatski slažu jedan ispod drugog — kao u primjeru iznad.</p>
             HTML;
     }
 
@@ -718,13 +811,17 @@ class DemoSeedCommand extends Command
     {
         return <<<HTML
             <p>{$lead}</p>
+            <p>Ovo je demo sadržaj za stranicu „{$heading}”. Zamijenite ga vlastitim tekstom iz administracije — niže su primjeri sekcija koje takve stranice obično sadrže.</p>
+            <h2>Opseg</h2>
+            <p>Ovdje opišite na što se dokument odnosi i koga obvezuje. Jasan, kratak uvod pomaže čitatelju da odmah shvati je li tekst relevantan za njega.</p>
             <h2>Detalji</h2>
-            <p>Ovo je demo sadržaj za stranicu „{$heading}”. Uredite ga ili obrišite iz administracije.</p>
             <ul>
-                <li>Jasno definiran opseg.</li>
-                <li>Brza isporuka.</li>
-                <li>Transparentna komunikacija.</li>
+                <li>Jasno definiran opseg i pojmovi.</li>
+                <li>Prava i obveze obiju strana.</li>
+                <li>Kontakt za pitanja i izmjene.</li>
             </ul>
+            <h2>Izmjene</h2>
+            <p>Navedite kako i kada se dokument može mijenjati te kako o tome obavještavate korisnike. Za stvarni tekst posavjetujte se s pravnom osobom.</p>
             HTML;
     }
 
@@ -749,12 +846,16 @@ class DemoSeedCommand extends Command
     private function contentSimplePost(string $title): string
     {
         return <<<HTML
-            <p>Kratka demo objava „{$title}”. Sadrži odlomak teksta i jednostavnu listu kako bi se vidio ritam tipografije.</p>
+            <p>Demo objava „{$title}”. Ovaj tekst postoji da se vidi kako tema oblikuje uobičajenu objavu — odlomke, podnaslove i liste u čitljivom ritmu.</p>
+            <p>Prvi odlomak obično postavlja temu i govori čitatelju zašto bi mu bila zanimljiva. Drži se kratkim i konkretnim; ostatak teksta razrađuje detalje.</p>
+            <h2>Glavni dio</h2>
+            <p>Ovdje ide srž objave. Možete se pozvati i na druge stranice, primjerice na <a href="/usluge">usluge</a> ili <a href="/kontakt">kontakt</a>, kako bi čitatelj imao jasan sljedeći korak.</p>
             <ul>
-                <li>Jedna stavka.</li>
-                <li>Druga stavka.</li>
+                <li>Prva ključna misao.</li>
+                <li>Druga ključna misao.</li>
+                <li>Treća ključna misao.</li>
             </ul>
-            <p>Zamijenite ovaj tekst stvarnim sadržajem iz administracije.</p>
+            <p>Zaključite kratkim sažetkom ili pozivom na akciju. Zamijenite ovaj tekst stvarnim sadržajem iz administracije.</p>
             HTML;
     }
 

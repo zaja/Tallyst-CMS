@@ -170,10 +170,26 @@ This pass is intentionally scoped: **footer config, per-page hero, dark mode are
   `menu_items.html.twig` emits the toggle button + `has-children` class; `menu.html.twig` gives
   the nav `id="site-nav"` (the hamburger's `aria-controls`). Accessibility: skip-link,
   `aria-expanded`/`aria-controls`, `:focus-visible` rings.
+  - **nav.js MUST be Turbo-safe — learned the hard way.** The app runs `@symfony/ux-turbo`
+    (`turbo-core`, `enabled: true, fetch: eager` in `assets/controllers.json`), whose
+    `turbo_controller.js` does `import "@hotwired/turbo"` → **Turbo auto-starts and SWAPS `<body>`
+    on navigation.** A nav script that binds inside `DOMContentLoaded` and caches element refs
+    works on first load but DIES after the first internal navigation (the event never re-fires on
+    a body swap; cached refs point at detached nodes). The hamburger bug was exactly this. Fix
+    pattern (current nav.js): **delegate from `document`** (one `click` listener bound once on a
+    node that survives swaps, resolving the control via `e.target.closest('.nav-toggle'/'.submenu-toggle')`
+    at click time), an idempotent guard (`window.__tallystNavInit`) against a re-execed body
+    script, and never cache element references. Any future theme JS must follow this, not the
+    DOMContentLoaded-and-cache pattern.
 - **Templates** keep all existing helper calls untouched (`render_branding`, `render_menu`,
   `render_content`, `media_img`, `app_date`, null-safe `featuredImage`) — only markup/classes
   changed, so nothing regresses. Page/post bodies use a `.prose` measure; `page.html.twig`/
   `post.html.twig` have a simple **page header (NO hero — hero is a later pass)**.
+  - **Single-column bodies are CENTERED.** `.prose` is `max-width: var(--measure)` (~65ch) **+
+    `margin-inline: auto`** so page/post content sits centered in the wider shell (`--container`
+    ~68rem) with balanced margins — no dead space on one side. The measure stays ~65ch; do NOT
+    widen prose to full container width (hurts readability). The blog grid already uses the full
+    `--container` width.
 - **`app:demo:seed`** (`src/Command/DemoSeedCommand.php`) is the demo lens. Re-runnable:
   default is additive (create-if-missing by a FIXED slug set, skip existing, **always rebuilds
   the `main` menu** — the demo OWNS it); `--fresh` deletes the whole demo set first (by the fixed
@@ -185,7 +201,9 @@ This pass is intentionally scoped: **footer config, per-page hero, dark mode are
   real `[form id=N]` ids splice into content). Demo images are **GD-generated at seed** (neutral
   abstract gradient covers), written to a temp file and pushed through `MediaUploader::upload()`
   via an `UploadedFile(..., test: true)` — no binaries committed, fully reproducible. Run
-  `app:media:thumbnails:warm` after if thumbs are missing.
+  `app:media:thumbnails:warm` after if thumbs are missing. Page/post bodies are written FULL
+  (multiple `<h2>`/`<h3>` sections + several paragraphs per page) so the theme is honestly
+  exercised and pages don't read as empty — keep that bar when editing the `content*()` builders.
 
 ## Media & uploads (Media module)
 - Uploads (VichUploaderBundle) go to `public/media/uploads/` with a sanitised, unique

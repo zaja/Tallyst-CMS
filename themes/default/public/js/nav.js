@@ -5,69 +5,102 @@
  * CSS :hover/:focus-within dropdown still works on desktop. This script adds the mobile
  * hamburger toggle and the click-to-open submenu accordion, keeping ARIA state in sync.
  *
+ * IMPORTANT — works WITH Turbo. The app runs @symfony/ux-turbo (turbo-core, eager), which
+ * starts @hotwired/turbo and SWAPS <body> on navigation. So we must NOT cache element
+ * references and must NOT gate binding on DOMContentLoaded (it fires once per full document
+ * load, never after a Turbo body swap). Instead we delegate from `document`: a single
+ * listener bound once on a node that survives every swap, resolving the clicked control at
+ * click time. An idempotent guard stops a re-executed body script from double-binding.
+ *
  * Served statically with the theme (theme_asset('js/nav.js')); NOT an AssetMapper entry.
  */
 (function () {
     'use strict';
 
+    if (window.__tallystNavInit) {
+        return;
+    }
+    window.__tallystNavInit = true;
+
     var MOBILE = '(max-width: 51.999rem)';
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var header = document.querySelector('[data-nav]');
-        if (!header) return;
+    function header() {
+        return document.querySelector('[data-nav]');
+    }
 
-        var toggle = header.querySelector('.nav-toggle');
-        var nav = header.querySelector('.site-nav');
+    function setToggle(btn, open) {
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.setAttribute('aria-label', open ? 'Zatvori izbornik' : 'Otvori izbornik');
+    }
 
-        // Hamburger: open/close the whole nav panel.
-        if (toggle && nav) {
-            toggle.addEventListener('click', function () {
-                var open = header.classList.toggle('is-nav-open');
-                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-                toggle.setAttribute('aria-label', open ? 'Zatvori izbornik' : 'Otvori izbornik');
-            });
+    // Delegated click: resolve the control at click time so it survives Turbo body swaps.
+    document.addEventListener('click', function (e) {
+        if (!e.target || !e.target.closest) {
+            return;
         }
 
-        // Submenu toggles: accordion on mobile, click-fallback for the dropdown on desktop.
-        var toggles = header.querySelectorAll('.submenu-toggle');
-        Array.prototype.forEach.call(toggles, function (btn) {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                var li = btn.closest('.menu-item');
-                if (!li) return;
-                var open = li.classList.toggle('is-open');
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-        });
-
-        // Close the mobile panel on Escape and reset state when crossing to desktop.
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && header.classList.contains('is-nav-open')) {
-                header.classList.remove('is-nav-open');
-                if (toggle) {
-                    toggle.setAttribute('aria-expanded', 'false');
-                    toggle.setAttribute('aria-label', 'Otvori izbornik');
-                    toggle.focus();
-                }
+        var navToggle = e.target.closest('.nav-toggle');
+        if (navToggle) {
+            var h = navToggle.closest('[data-nav]') || header();
+            if (h) {
+                setToggle(navToggle, h.classList.toggle('is-nav-open'));
             }
-        });
+            return;
+        }
 
-        if (window.matchMedia) {
-            window.matchMedia(MOBILE).addEventListener('change', function (mq) {
-                if (!mq.matches) {
-                    // back to desktop — clear mobile-only open states
-                    header.classList.remove('is-nav-open');
-                    if (toggle) {
-                        toggle.setAttribute('aria-expanded', 'false');
-                        toggle.setAttribute('aria-label', 'Otvori izbornik');
-                    }
-                    Array.prototype.forEach.call(toggles, function (btn) {
-                        var li = btn.closest('.menu-item');
-                        if (li) li.classList.remove('is-open');
-                        btn.setAttribute('aria-expanded', 'false');
-                    });
-                }
-            });
+        var subToggle = e.target.closest('.submenu-toggle');
+        if (subToggle) {
+            e.preventDefault();
+            var li = subToggle.closest('.menu-item');
+            if (li) {
+                subToggle.setAttribute('aria-expanded', li.classList.toggle('is-open') ? 'true' : 'false');
+            }
         }
     });
+
+    // Escape closes the open mobile panel.
+    document.addEventListener('keydown', function (e) {
+        if ('Escape' !== e.key) {
+            return;
+        }
+        var h = header();
+        if (h && h.classList.contains('is-nav-open')) {
+            h.classList.remove('is-nav-open');
+            var t = h.querySelector('.nav-toggle');
+            if (t) {
+                setToggle(t, false);
+                t.focus();
+            }
+        }
+    });
+
+    // Crossing back to desktop clears mobile-only open state.
+    if (window.matchMedia) {
+        var mql = window.matchMedia(MOBILE);
+        var onChange = function (mq) {
+            if (mq.matches) {
+                return;
+            }
+            var h = header();
+            if (!h) {
+                return;
+            }
+            h.classList.remove('is-nav-open');
+            var t = h.querySelector('.nav-toggle');
+            if (t) {
+                setToggle(t, false);
+            }
+            Array.prototype.forEach.call(h.querySelectorAll('.menu-item.is-open'), function (li) {
+                li.classList.remove('is-open');
+            });
+            Array.prototype.forEach.call(h.querySelectorAll('.submenu-toggle'), function (b) {
+                b.setAttribute('aria-expanded', 'false');
+            });
+        };
+        if (mql.addEventListener) {
+            mql.addEventListener('change', onChange);
+        } else if (mql.addListener) {
+            mql.addListener(onChange);
+        }
+    }
 })();
