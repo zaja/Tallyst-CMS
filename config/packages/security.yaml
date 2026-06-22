@@ -30,6 +30,13 @@ security:
             logout:
                 path: admin_logout
                 target: admin_login
+            # TOTP 2FA (scheb): after the password, users with 2FA enabled hit the challenge
+            # before full auth. The firewall is stateful (no `stateless: true`), so the
+            # IS_AUTHENTICATED_2FA_IN_PROGRESS state survives in the session between steps.
+            two_factor:
+                auth_form_path: 2fa_login
+                check_path: 2fa_login_check
+                enable_csrf: true
 
     # Note: Only the *first* matching rule is applied.
     # ^/admin requires ROLE_EDITOR just to ENTER the back-office. Per-section access
@@ -40,6 +47,9 @@ security:
         # Forgot-password flow must be reachable by someone who CAN'T log in — so PUBLIC,
         # and it MUST come before ^/admin (first-match) or it would demand ROLE_EDITOR.
         - { path: ^/admin/reset-password, roles: PUBLIC_ACCESS }
+        # The 2FA challenge is reachable in the half-authenticated state (password OK, code
+        # pending). MUST come before ^/admin (first-match) or ROLE_EDITOR would block it.
+        - { path: ^/admin/2fa, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS }
         - { path: ^/admin, roles: ROLE_EDITOR }
 
 when@test:

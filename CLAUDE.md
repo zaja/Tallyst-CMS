@@ -449,6 +449,34 @@ access automatically and are never demoted.
   request), so it uses `framework.router.default_uri` = `%env(DEFAULT_URI)%` — set `DEFAULT_URI`
   to the real public URL in `.env.local` (e.g. `https://tallyst.org`), else the link defaults to
   `http://localhost`.** (Web-context URLs are fine — they use the real request host.)
+- **Two-factor (TOTP) = scheb/2fa-bundle** (`scheb/2fa-bundle` + `-totp` + `-backup-code`;
+  `endroid/qr-code` for the QR — the `scheb/2fa-qr-code` sub-package has no Symfony-8 release).
+  **Opt-in, self-service** ("Sigurnost" page `/admin/security`, `SecurityController`, ROLE_EDITOR+,
+  visible to ALL logged-in users — no `setPermission` on the menu item). `User` implements scheb's
+  TOTP `TwoFactorInterface` + `BackupCodeInterface`; columns `totp_secret` / `totp_enabled` /
+  `backup_codes` (JSON, **hashed** — sha256 is fine ONLY because the codes are high-entropy: 10×
+  32-symbol ≈ 50 bits; shorten them and you'd need a slow hasher instead).
+  - **Confirm-before-activate (anti-lockout):** `isTotpAuthenticationEnabled() = totpEnabled &&
+    secret`. Enrolment stores a secret with `totpEnabled=false` (INERT — existing users and a user
+    mid-enrolment log in normally); it flips true ONLY after a submitted code validates. Each GET
+    of the enable page regenerates a fresh secret (overwrites a stale pending one). Backup codes are
+    shown **once** (plaintext in the session, then cleared). **Disable requires the current password**
+    (a hijacked session can't strip 2FA).
+  - **Firewall flow:** `two_factor` under the `main` firewall (`auth_form_path: 2fa_login`,
+    `check_path: 2fa_login_check` → `/admin/2fa` + `/admin/2fa_check`). `access_control` grants
+    `^/admin/2fa` to `IS_AUTHENTICATED_2FA_IN_PROGRESS` and it MUST come BEFORE `^/admin` (first-match).
+    After the password, scheb wraps the token (it must be one of `scheb_two_factor.security_tokens`;
+    form_login yields `UsernamePasswordToken`, which is listed) and the firewall lands on the saved
+    target (/admin), which **bounces** to /admin/2fa — so functional tests FOLLOW redirects, and use
+    the REAL form-login (NOT `loginUser()`, which bypasses the firewall → skips the challenge). The
+    challenge form is `templates/security/2fa_form.html.twig` (standalone, login-styled). **Reset does
+    NOT bypass 2FA** — a password change leaves the 2FA fields intact, so login still challenges.
+  - **Lockout escape hatch:** `php8.5 bin/console app:user:2fa:disable <email>` clears
+    secret + enabled + backup codes (server-side recovery if both the app and the codes are lost).
+  - Locked by `tests/Security/UserTwoFactorTest`, `tests/Command/Disable2faCommandTest`,
+    `tests/Functional/TwoFactorTest` (no-2FA straight-in, valid/invalid TOTP, backup-code consume,
+    reset-still-challenges, enrol confirm). NOT done: required-2FA-for-admins, trusted devices,
+    SMS/e-mail 2FA, WebAuthn, full self-profile.
 - **Functional tests need a migrated test DB.** This server uses a separate `tallystcmstest`
   database (its own MySQL user); the connection lives in **`.env.test.local`** (git-ignored).
   The `test` env does NOT load `.env.local`, so `.env.test.local` must carry `DATABASE_URL`
@@ -458,10 +486,11 @@ access automatically and are never demoted.
   doctrine:migrations:migrate -n`. (Fallback for a box that can't create a separate DB: point
   `DATABASE_URL` at the main DB with `TEST_DB_SUFFIX=` empty — tests self-clean, but it's not
   isolated.)
-- **Test-cache gotcha:** after changing PHP/config the cold `test` container recompile can throw
-  in phpunit's kernel-boot path (a FormBuilder prototype-loader quirk), failing every functional
-  (WebTestCase) test with a container error. `cache:warmup` compiles it cleanly, so **warm the
-  test cache first**: `APP_ENV=test php8.5 bin/console cache:warmup && php8.5 bin/phpunit`.
+- **Test-cache: warmed automatically.** A cold `test` container recompile can throw in phpunit's
+  kernel-boot path (a FormBuilder prototype-loader quirk), failing every functional (WebTestCase)
+  test with a container error. `tests/bootstrap.php` now runs `cache:warmup --env=test` up-front
+  (idempotent — recompiles only when sources changed, compiles cleanly), so plain `php8.5 bin/phpunit`
+  just works — no manual warmup step. (If you ever bypass the bootstrap, warm it yourself first.)
 
 ## Backlog (queued — agreed, NOT yet built)
 This is the SINGLE home for "what's next" — park ideas here, not scattered across chat.

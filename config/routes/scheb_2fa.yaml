@@ -1,0 +1,9 @@
+# 2FA challenge routes. Under /admin (consistent with /admin/login + /admin/reset-password);
+# security.yaml grants ^/admin/2fa to IS_AUTHENTICATED_2FA_IN_PROGRESS (before ^/admin).
+2fa_login:
+    path: /admin/2fa
+    defaults:
+        _controller: "scheb_two_factor.form_controller::form"
+
+2fa_login_check:
+    path: /admin/2fa_check

@@ -1,0 +1,30 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Uključivanje 2FA{% endblock %}
+
+{% block main %}
+    <div class="card">
+        <div class="card-body" style="max-width: 36rem;">
+            <ol class="mb-3">
+                <li>Skeniraj QR kod u authenticator aplikaciji (Google Authenticator, Authy, 1Password…).</li>
+                <li>Upiši 6-znamenkasti kod koji aplikacija prikaže.</li>
+            </ol>
+
+            <p><img src="{{ qr }}" alt="2FA QR kod" style="border:1px solid #e5e7eb; border-radius:8px;"></p>
+            <p class="text-muted">Ne možeš skenirati? Ručno upiši tajni ključ: <code>{{ secret }}</code></p>
+
+            <form method="post" action="{{ path('admin_security_2fa_enable') }}" class="row g-2 align-items-end" style="max-width: 26rem;">
+                <input type="hidden" name="_token" value="{{ csrf_token('2fa_enable') }}">
+                <div class="col">
+                    <label class="form-label" for="code">Kod iz aplikacije</label>
+                    <input class="form-control" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" autofocus required>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-primary" type="submit">Potvrdi i uključi</button>
+                </div>
+            </form>
+
+            <p class="mt-3"><a href="{{ path('admin_security') }}">Odustani</a></p>
+        </div>
+    </div>
+{% endblock %}

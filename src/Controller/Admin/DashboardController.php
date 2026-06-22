@@ -82,6 +82,8 @@ class DashboardController extends AbstractDashboardController
     public function configureMenuItems(): iterable
     {
         yield MenuItem::linkToDashboard('Nadzorna ploča', 'fa fa-gauge');
+        // Self-service 2FA — visible to EVERY logged-in user (no setPermission).
+        yield MenuItem::linkToRoute('Sigurnost', 'fa fa-shield-halved', 'admin_security');
 
         // Content — visible to ROLE_EDITOR (and admins via hierarchy).
         yield MenuItem::section('Sadržaj');

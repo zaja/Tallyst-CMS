@@ -1,0 +1,18 @@
+# See https://symfony.com/bundles/SchebTwoFactorBundle/6.x/configuration.html
+scheb_two_factor:
+    security_tokens:
+        - Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken
+        - Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken
+
+    totp:
+        enabled: true
+        # server_name/issuer show in the authenticator app. Digits/period are per-user in
+        # User::getTotpAuthenticationConfiguration() (6 digits, 30s — bundle/app defaults).
+        server_name: Tallyst
+        issuer: Tallyst
+        # Challenge form styled like the login (standalone card).
+        template: security/2fa_form.html.twig
+
+    # One-time recovery codes (hashed at rest on the User; see BackupCodeInterface impl).
+    backup_codes:
+        enabled: true

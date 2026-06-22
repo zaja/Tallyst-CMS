@@ -1,0 +1,17 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Backup kodovi{% endblock %}
+
+{% block main %}
+    <div class="card">
+        <div class="card-body" style="max-width: 36rem;">
+            <div class="alert alert-warning">
+                Spremi ove kodove na sigurno — <strong>prikazuju se samo sada</strong>. Svaki vrijedi
+                jednom i omogućuje prijavu ako izgubiš pristup authenticator aplikaciji.
+            </div>
+            <pre style="font-size:1.1rem; background:#f8f9fa; padding:1rem; border-radius:8px;">{% for c in codes %}{{ c }}
+{% endfor %}</pre>
+            <a class="btn btn-primary" href="{{ path('admin_security') }}">Gotovo</a>
+        </div>
+    </div>
+{% endblock %}
