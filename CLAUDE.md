@@ -64,20 +64,18 @@ built now.
 - **Phase 0 — Core CMS + auth — DONE & parked.** Content engine, modules, Media, Tiptap editor,
   FormBuilder + Stripe, Settings/SMTP, and production-grade auth (roles, user CRUD, lockout, reset,
   2FA, throttling, self-service password). Per-area implementation detail is documented below.
-- **Phase 1 — CMS-complete polish (CURRENT).** Order matters:
-  1. **Neutral default theme + demo content FIRST** — the *lens*. **DONE (pass 1)** — see
-     "Default theme & demo content".
-  2. **Page layout (full-width pages / narrow blog) + per-page hero (overlay) — DONE (pass B)** —
-     see "Default theme & demo content".
-  3. **Footer config + remaining CMS-complete items (NEXT)** — see the Phase 1 backlog list.
-  4. **Email templates** (scoped as above).
+- **Phase 1 — CMS-complete polish (CURRENT).** Theme + demo + page layout/hero + footer config +
+  branding-in-Postavke + favicon + blog archives/pagination + post author/byline — all **DONE**
+  (see the sections below). **Only remaining Phase 1 pass: email templates** (scoped as above) —
+  the final Phase 1 item.
 - **Phase 2 — E-commerce finish (manual-fulfilment model).** PayPal processor alongside Stripe;
   refund (the `refunded` state exists); order-flow / order-mail polish. **NOT** automated delivery.
 - **Phase 3 — Standalone installer + deployment readiness.** WordPress-like install procedure;
   the Deployment Readiness Panel (worker activation snippet + heartbeat status + encryption-key
   status + go-live checks).
-- **Post-v1 / future.** Automated digital delivery (downloads/licences), and any deferred item
-  that later passes the target-user filter.
+- **Post-v1 / future.** Automated digital delivery (downloads/licences); **Import / content packs**
+  (a content importer with format adapters — see the backlog); and any deferred item that later
+  passes the target-user filter.
 
 ## WHAT
 A Symfony 8 application built on three pillars:
@@ -722,13 +720,12 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   renderer). The demo seed creates a **dedicated demo author** (`demo-author@tallyst.local`, nickname
   "Tallyst tim", ROLE_EDITOR, unusable random password) so the byline shows without touching the real
   admin; removed by `--fresh`.
-- **Remaining CMS-complete items (NOT built, queued — agreed scope, keep this list honest):**
-  - **Demo-in-admin** — a Create/Delete demo-content control in the back-office (wraps
-    `app:demo:seed` / its `--fresh` teardown) so it's not CLI-only.
-- **Email templates — SCOPED (NOT built).** Light admin editability for CUSTOMER-FACING mail
-  (order confirmation, free-form notification): editable subject + body + a few variables
-  (`{name}`, `{total}`…) + sensible defaults. System mail (reset, 2FA) stays Twig in code.
-  **NOT** a full admin email-template editor (variables/preview/per-type IDE) — that's over-build.
+- **Email templates — SCOPED (NOT built) — the LAST & only remaining Phase 1 pass.** Light admin
+  editability for CUSTOMER-FACING mail (order confirmation, free-form notification): editable
+  subject + body + a few variables (`{name}`, `{total}`…) + sensible defaults. System mail (reset,
+  2FA) stays Twig in code. **NOT** a full admin email-template editor (variables/preview/per-type
+  IDE) — that's over-build. (The demo Create/Delete admin panel is NOT a Phase 1 item — it moved to
+  "Import / content packs" in Post-v1, below.)
 
 ### Phase 2 — E-commerce finish (manual-fulfilment model)
 - **FormBuilder Pass 2b — PayPal + refund (NOT built).** PayPal is just another
@@ -791,6 +788,24 @@ Dizajn-dogovor za installer fazu.
   on `paid→fulfilled`, download links / licence-key generation / access grants, with the verified
   webhook staying the SOLE source of truth for `paid`. (This was the open "decide the delivery
   model" fork — now DECIDED; only the automated build remains, deferred.)
+- **Import / content packs (deferred — its own meaty phase, sits with/after the standalone installer).**
+  Turn demo content from code into DATA, and give the CMS a real importer:
+  - **Demo-as-data.** Move the demo out of `DemoSeedCommand` PHP into a self-contained DATA bundle
+    in its own folder (e.g. `demo_import/`): real GPL/CC images + a native JSON content bundle the
+    CMS imports. Content-as-data, not content-as-PHP.
+  - **Importer with format adapters.** A core importer + pluggable adapters: a **native-bundle**
+    adapter (demo + future content packs) and a **WordPress WXR** adapter. The importer owns
+    parsing, mapping the foreign model (post types / taxonomies / media / users) onto Tallyst,
+    re-hosting media, and URL rewriting.
+  - **Demo dogfoods the importer** — the demo bundle is the importer's first consumer, so it tests
+    itself on itself.
+  - **WP import is an ONBOARDING feature** — it lowers the switching cost for people leaving
+    WordPress/SaaS, directly serving the product thesis (everything in-house, no SaaS/plugin rent).
+  - **"Demo-in-admin"** (a back-office Create/Delete demo panel) belongs HERE, alongside the
+    importer/installer — NOT in Phase 1.
+  - **Until the importer lands, `app:demo:seed` STAYS as-is** (don't leave the dev workflow without
+    a demo); the data bundle only REPLACES it once the importer exists.
+  - Right-size: the importer (especially WP-WXR) is substantial — its own phase, not a quick add-on.
 - **Everything under "Explicitly NOT in v1"** at the top of this doc — full email-template editor,
   multilingual/i18n, comments, dynamic/custom RBAC roles, required-2FA-for-admins, trusted devices,
   SMS/e-mail 2FA, WebAuthn, full self-profile, custom fields/widgets — none unless the target-user
@@ -864,3 +879,9 @@ data (JSON on the entity), evaluate it with a PHP class AND a mirrored pure JS m
 - Never leave the public domain in dev/debug mode beyond active development.
 - Never commit secrets. DB credentials and Stripe/PayPal keys live in `.env.local`
   (git-ignored) — never in `.env` or in code.
+- **Smoke gotcha — the built-in PHP server BYPASSES nginx.** `php -S … public/index.php` (used to
+  smoke the front when nginx basic-auth is on) does NOT validate Liip cached-URL / nginx-static
+  behaviour: the on-demand Liip resolve URL *works* on the built-in server but **404s under nginx**
+  (it ends in an image extension → served as a static file before PHP runs). So for any image/
+  thumbnail pass, smoke on the REAL nginx (in a browser, or temporarily disable basic-auth + live
+  `curl`) — a green built-in-server check is not proof the image resolves in production.
