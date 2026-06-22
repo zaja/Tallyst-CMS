@@ -188,20 +188,23 @@ This pass is intentionally scoped: **footer config, per-page hero, dark mode are
   changed, so nothing regresses. Page/post bodies use a `.prose` measure; `page.html.twig`/
   `post.html.twig` have a simple **page header (NO hero — hero is a later pass)**.
   - **Page vs blog layout (pass B).** Split at the template level: **`page.html.twig` uses
-    `.page-content` = FULL-WIDTH** (images, `.tallyst-columns`, `.fb-form-wrap` span the shell)
-    while **textual blocks are capped to `var(--measure)` and centered** — done with a child
-    selector list plus `p:not(:has(img))` / `p:has(img)` so image-only paragraphs go full-width
-    automatically (graceful if `:has()` is unsupported: image `<p>` merely caps). **`post.html.twig`
-    + blog index stay NARROW (`.prose`) — do not change.** The non-hero `.page-header` is capped to
-    the measure + centered so a plain page title aligns with its centered text column.
-  - **Per-page hero (pass B, opt-in, OVERLAY).** `Page` has optional `heroEnabled`/`heroImage`
+    `.page-content` = FULL-WIDTH** — text AND images/`.tallyst-columns`/`.fb-form-wrap` all use
+    the full shell (`--container`, ~68rem), same as header/footer (text is NOT capped to a
+    reading measure; decided after seeing the render). The non-hero `.page-header` is full-width,
+    left-aligned. **`post.html.twig` + blog index stay NARROW (`.prose`) — do not change.**
+  - **Per-page hero (pass B, opt-in).** `Page` has optional `heroEnabled`/`heroImage`
     (Media FK, `SET NULL`, reuses `MediaPickerField`)/`heroTitle`/`heroText`/`heroCtaLabel`/
     `heroCtaUrl`, edited under a collapsible **"Hero" fieldset** in `PageCrudController`. Rendered
-    in `page.html.twig` only when `heroEnabled` AND (`heroImage` or `heroTitle`): a background
-    `<img>` (`media_img(..., 'hero', null, '')` → `alt=""`, decorative; the `<h1>` carries meaning)
-    under a CSS `::after` **dark gradient scrim** so title/text/CTA are legible over ANY image
-    (incl. light photos); CTA shows only when label AND url are both set. Null-safe (deleted Media →
-    no `<img>`, dark fallback keeps text readable; no hero → plain `.page-header`). **Hero is Page-only
+    in `page.html.twig` (sharp corners, no border-radius), **two modes**:
+    - **Overlay** — when `heroEnabled` AND (`heroTitle` OR `heroText`): a background `<img>`
+      (`media_img(..., 'hero', null, '')` → `alt=""`, decorative; the `<h1>` carries meaning) under
+      a CSS `::after` **dark gradient scrim** so title/text/CTA stay legible over ANY image (incl.
+      light photos); `<h1>` = `heroTitle ?: title`; CTA only when label AND url are both set. No
+      separate `.page-header` (the overlay carries the title).
+    - **Bare image** — when `heroEnabled` AND `heroImage` but NO `heroTitle`/`heroText`: show the
+      image alone (`.page-hero-image`, no overlay/scrim) and render the page `<h1>` BELOW it in the
+      normal `.page-header`. (So a hero image never forces the page title onto the image.)
+    Null-safe (deleted Media → no `<img>`; no hero → plain `.page-header`). **Hero is Page-only
     (not Post).** Uses a dedicated **`hero` Liip filter (~1600px inset)** so full-width heroes aren't
     upscaled-`medium` blur — and that filter name MUST be added in **THREE** places or it silently
     falls back to `medium`/404s: `config/packages/liip_imagine.yaml`, `ThumbnailWarmer::FILTERS`,

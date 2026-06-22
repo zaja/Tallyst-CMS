@@ -7,10 +7,14 @@
 {% endblock %}
 
 {% block body %}
-    {% if page.heroEnabled and (page.heroImage or page.heroTitle) %}
-        {# Per-page hero: overlay text on an image with a contrast scrim (CSS ::after).
-           Image is decorative (the <h1> carries meaning) → alt="". Null-safe: a deleted
-           heroImage renders nothing and the scrim over the dark fallback keeps text legible. #}
+    {% set hero_overlay = page.heroEnabled and (page.heroTitle or page.heroText) %}
+    {% set hero_image_only = page.heroEnabled and page.heroImage and not (page.heroTitle or page.heroText) %}
+
+    {% if hero_overlay %}
+        {# Hero WITH text: overlay h1/text/CTA on the image, kept legible by the CSS scrim
+           (::after). Image is decorative (the <h1> carries meaning) → alt="". Null-safe:
+           a deleted heroImage renders nothing and the scrim over the dark fallback keeps
+           the overlay text legible. #}
         <header class="page-hero{{ page.heroImage ? ' has-image' : '' }}">
             {% if page.heroImage %}{{ media_img(page.heroImage, 'hero', null, '') }}{% endif %}
             <div class="page-hero-inner">
@@ -20,6 +24,14 @@
                     <a class="page-hero-cta" href="{{ page.heroCtaUrl }}">{{ page.heroCtaLabel }}</a>
                 {% endif %}
             </div>
+        </header>
+        {# no separate page-header: the overlay carries the title #}
+    {% elseif hero_image_only %}
+        {# Hero with ONLY an image: show the image bare (no overlay text), and render the
+           page title below in the normal header position. #}
+        <div class="page-hero-image">{{ media_img(page.heroImage, 'hero', null, '') }}</div>
+        <header class="page-header">
+            <h1>{{ page.title }}</h1>
         </header>
     {% else %}
         <header class="page-header">

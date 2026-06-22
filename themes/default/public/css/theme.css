@@ -172,27 +172,10 @@ th { font-weight: 650; }
 .prose { max-width: var(--measure); margin-inline: auto; }
 .prose > :first-child { margin-top: 0; }
 
-/* Full-width PAGE content. The article spans the whole shell so images, .tallyst-columns
-   and the [form] embed are full-width, while TEXTUAL blocks are capped to the readable
-   measure and centered (balanced margins). Image-only paragraphs (p:has(img)) stay
-   full-width via :has(); where :has() is unsupported they merely cap to the measure
-   (graceful). Elements inside .tallyst-columns are not direct children, so they're never
-   capped — the column grid manages its own width. */
-.page-content > * { margin-inline: auto; }
-.page-content > p:not(:has(img)),
-.page-content > h2,
-.page-content > h3,
-.page-content > h4,
-.page-content > h5,
-.page-content > h6,
-.page-content > ul,
-.page-content > ol,
-.page-content > blockquote,
-.page-content > pre,
-.page-content > dl,
-.page-content > table {
-    max-width: var(--measure);
-}
+/* Full-width PAGE content. Everything — text AND images/columns/[form] — uses the FULL
+   shell width (`--container`, ~68rem), same as header/footer. Blog stays narrow (.prose).
+   (Decided after seeing the render: full-width text reads fine in this shell and matches
+   the full-width media.) */
 .page-content > :first-child { margin-top: 0; }
 
 /* ------------------------------------------------------------- Header --- */
@@ -338,9 +321,9 @@ th { font-weight: 650; }
 }
 
 /* ----------------------------------------------------------- Page header --- */
-/* Capped to the measure + centered so a page's plain title aligns with its centered
-   text column (no-op inside .prose, which is already the measure). */
-.page-header { max-width: var(--measure); margin: 0 auto var(--s-6); }
+/* Full-width, left-aligned (aligns with full-width page content). Inside .prose (posts) it
+   simply fills the prose measure, so blog headers are unaffected. */
+.page-header { margin: 0 0 var(--s-6); }
 .page-header h1 { margin: 0; }
 .page-header .page-meta { color: var(--muted); font-size: var(--fs-sm); margin-top: var(--s-2); }
 
@@ -356,7 +339,6 @@ th { font-weight: 650; }
     min-height: 320px;
     margin-bottom: var(--s-6);
     padding: var(--s-6);
-    border-radius: var(--radius);
     overflow: hidden;
     background: var(--ink);
 }
@@ -366,7 +348,15 @@ th { font-weight: 650; }
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 0;
+}
+
+/* Bare-image hero: image only (no overlay text); the page title renders below it. */
+.page-hero-image { margin-bottom: var(--s-6); }
+.page-hero-image .media-img {
+    display: block;
+    width: 100%;
+    max-height: 440px;
+    object-fit: cover;
 }
 .page-hero::after {
     content: "";
