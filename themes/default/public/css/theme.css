@@ -474,7 +474,7 @@ th { font-weight: 650; }
 
 /* Columns: 1 = single text column; 2 = text + menu side by side, stacking on mobile. */
 .footer-cols { display: grid; gap: var(--s-5); margin-bottom: var(--s-5); }
-.footer-cols--2 { grid-template-columns: 2fr 1fr; }
+.footer-cols--2 { grid-template-columns: 3fr 2fr; }
 .footer-col--text > :first-child { margin-top: 0; }
 .footer-col--text > :last-child { margin-bottom: 0; }
 @media (max-width: 40rem) {
