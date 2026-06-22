@@ -369,8 +369,11 @@ themes/               # THEMES — one folder = one theme
      actually deliver); the controller wraps it in try/catch so a notification hiccup never
      fails the submit. PRICED forms are skipped — they keep the order/fulfilment mails.
 4. **Page-as-product.** A `FormDefinition` may carry `priceMinor` (integer MINOR
-   units — cents, never float) + `currency`. A priced submission creates an `Order`
-   and starts payment; a free form behaves as before.
+   units — cents, never float) + `currency`, OR a list of price `variants`
+   ({label, priceMinor}) — or-or: variants, when present, replace the fixed price (the
+   buyer picks one; the server resolves the chosen index via `variantAt()`, never trusting
+   a client price). A priced submission creates an `Order` and starts payment; a free form
+   behaves as before.
 5. **Payments use a strategy interface.** `PaymentProcessorInterface` + a registry —
    **Stripe AND PayPal** are both impls; `order.provider` routes checkout/refund/webhook.
    The interface is `getName / isConfigured / getMode / createCheckout / finalizeReturn /
@@ -871,9 +874,19 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   configured ∩ allowed, used by the form render (radios/hidden/unavailable) + the submit. PayPal keys
   in Postavke → PayPal. DTO reuses `providerSessionId` (PayPal order id) + `providerPaymentIntentId`
   (capture id). PayPal full-refund only (partial out of scope).
+- **Price variants — DONE (pass 5).** Or-or, single dimension: `FormDefinition.variants` (JSON list of
+  `{label, priceMinor}`, like `allowedPaymentMethods` — no entity). When non-empty they REPLACE the
+  fixed `priceMinor`; empty = fixed price (unchanged). `isProduct()` = `hasVariants() || priceMinor>0`;
+  `variantAt($i)` is the server-side gate (null on out-of-range → submit rejects with a flash, never
+  trusts a client price — the client sends only the index). Chosen variant's `label` + resolved price
+  land on the `Order` (`variantLabel` + `amountMinor`); shown in OrderCrud + a `{variant}` mail tag
+  (advertised on the order types; default bodies unchanged so existing mails don't break). Builder:
+  `VariantType` collection reusing the generic `formbuilder--builder` add/remove (no new JS). Migration
+  added `fb_form.variants` + `fb_order.variant_label`. **Also fixed a pass-4 gap:** `allowedPaymentMethods`
+  was in the form type but never rendered in `edit.html.twig` (`render_rest:false` dropped it) → the
+  per-product payment limit was unsettable; now rendered.
 - **Queued (this order):**
-  1. **Price variants** (price options per form — none today).
-  2. **Tax rate** (single rate — none today).
+  1. **Tax rate** (single rate — none today) — last Phase 2 pass.
 - **Subscriptions & recurring (future epic, post-v1).** Stripe runs the billing/retries + the
   **Customer Portal** for self-service cancel/update (we do NOT build that UI); OUR job is the
   subscription-lifecycle webhooks (created/updated/`invoice.paid`/`canceled`) + access/licence

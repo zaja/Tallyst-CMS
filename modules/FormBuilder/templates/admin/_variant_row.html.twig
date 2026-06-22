@@ -1,0 +1,14 @@
+{# One price-variant row in the builder. [data-fb-item] + a remove button wired to the generic
+   formbuilder--builder controller (same mechanism as field rows; variants need no renumber). #}
+<div class="fb-field-row" data-fb-item>
+    <div class="fb-row-head">
+        <span class="fb-handle">⋮⋮</span>
+        <div class="fb-row-controls">
+            <button type="button" class="btn btn-sm btn-outline-danger" data-action="formbuilder--builder#remove" title="Ukloni">×</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">{{ form_row(variantForm.label) }}</div>
+        <div class="col">{{ form_row(variantForm.priceMinor) }}</div>
+    </div>
+</div>

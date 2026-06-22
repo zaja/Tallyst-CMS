@@ -75,6 +75,7 @@ class OrderMailer
             'amount' => number_format($order->getAmountMinor() / 100, 2, ',', '.'),
             'currency' => strtoupper($order->getCurrency()),
             'form_name' => $order->getForm()?->getName() ?? '-',
+            'variant' => $order->getVariantLabel() ?? '',
         ];
     }
 }

@@ -42,6 +42,10 @@ class Order
     #[ORM\Column(length: 3)]
     private string $currency = 'eur';
 
+    /** The chosen price variant's label (for display in admin + mail); null for non-variant orders. */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $variantLabel = null;
+
     #[ORM\Column(length: 20)]
     private string $status = self::STATUS_PENDING;
 
@@ -126,6 +130,18 @@ class Order
     public function setCurrency(string $currency): static
     {
         $this->currency = strtolower($currency);
+
+        return $this;
+    }
+
+    public function getVariantLabel(): ?string
+    {
+        return $this->variantLabel;
+    }
+
+    public function setVariantLabel(?string $variantLabel): static
+    {
+        $this->variantLabel = $variantLabel;
 
         return $this;
     }

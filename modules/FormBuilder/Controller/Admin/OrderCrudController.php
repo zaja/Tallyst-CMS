@@ -101,6 +101,7 @@ class OrderCrudController extends AbstractCrudController
                 Order::STATUS_FULFILLED => 'success',
                 Order::STATUS_REFUNDED => 'info',
             ]);
+        yield TextField::new('variantLabel', 'Varijanta');
         yield TextField::new('customerEmail', 'Kupac');
 
         yield TextField::new('provider', 'Provider')->onlyOnDetail();

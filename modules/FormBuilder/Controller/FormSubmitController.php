@@ -154,12 +154,29 @@ class FormSubmitController extends AbstractController
             }
         }
 
+        // Or-or: variants determine the price (the chosen index is resolved server-side against the
+        // defined variants — the client never sends a price); else the fixed priceMinor.
+        $amountMinor = (int) $form->getPriceMinor();
+        $variantLabel = null;
+        if ($form->hasVariants()) {
+            $raw = $request->request->get('variant');
+            $variant = $form->variantAt(is_numeric($raw) ? (int) $raw : -1);
+            if (null === $variant) {
+                $this->addFlash('danger', 'Odaberite ispravnu opciju.');
+
+                return $this->redirect($return);
+            }
+            $amountMinor = $variant['priceMinor'];
+            $variantLabel = $variant['label'];
+        }
+
         $order = (new Order())
             ->setForm($form)
             ->setSubmission($submission)
-            ->setAmountMinor((int) $form->getPriceMinor())
+            ->setAmountMinor($amountMinor)
             ->setCurrency($form->getCurrency() ?: 'eur')
-            ->setProvider($chosen);
+            ->setProvider($chosen)
+            ->setVariantLabel($variantLabel);
         $this->orders->save($order); // persist to obtain an id
 
         $successUrl = $this->generateUrl('form_builder_order_thankyou', ['id' => $order->getId()], UrlGeneratorInterface::ABSOLUTE_URL);

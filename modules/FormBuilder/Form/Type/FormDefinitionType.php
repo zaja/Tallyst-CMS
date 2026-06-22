@@ -47,13 +47,23 @@ class FormDefinitionType extends AbstractType
                 'required' => false,
                 'currency' => false,
                 'label' => 'Cijena',
-                'help' => 'Prazno = forma bez naplate. S cijenom forma postaje proizvod (plaćanje na submit).',
+                'help' => 'Prazno = forma bez naplate. S cijenom forma postaje proizvod (plaćanje na submit). Ignorira se ako postoje varijante.',
             ])
             ->add('currency', ChoiceType::class, [
                 'required' => false,
                 'label' => 'Valuta',
                 'choices' => ['EUR' => 'eur', 'USD' => 'usd', 'GBP' => 'gbp'],
                 'placeholder' => '—',
+            ])
+            ->add('variants', CollectionType::class, [
+                'label' => false,
+                'entry_type' => VariantType::class,
+                'allow_add' => true,
+                'allow_delete' => true,
+                'by_reference' => false,
+                'prototype' => true,
+                'prototype_name' => '__variant__',
+                'required' => false,
             ])
             ->add('allowedPaymentMethods', ChoiceType::class, [
                 'required' => false,

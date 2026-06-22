@@ -27,7 +27,7 @@
             </label>
         </div>
 
-        {% if form.priceMinor %}
+        {% if form.priceMinor and not form.hasVariants %}
             <p class="fb-price">Cijena: <strong>{{ (form.priceMinor / 100)|number_format(2, ',', '.') }} {{ (form.currency ?: 'eur')|upper }}</strong></p>
         {% endif %}
 
@@ -85,11 +85,24 @@
             </div>
         {% endfor %}
 
-        {% if form.priceMinor %}
+        {% if form.isProduct %}
             {% set methods = payment_methods|default([]) %}
             {% if methods is empty %}
                 <p class="fb-error">Plaćanje trenutno nije dostupno.</p>
             {% else %}
+                {% if form.hasVariants %}
+                    <div class="fb-field fb-variants">
+                        <label>Odaberi opciju <span class="fb-req">*</span></label>
+                        <div class="fb-choices">
+                            {% for v in form.variants %}
+                                <label class="fb-choice">
+                                    <input type="radio" name="variant" value="{{ loop.index0 }}"{{ loop.first ? ' checked' : '' }} required>
+                                    {{ v.label }} — {{ (v.priceMinor / 100)|number_format(2, ',', '.') }} {{ (form.currency ?: 'eur')|upper }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
                 {% if methods|length > 1 %}
                     <div class="fb-field fb-payment">
                         <label>Način plaćanja <span class="fb-req">*</span></label>

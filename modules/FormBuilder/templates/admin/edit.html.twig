@@ -19,6 +19,26 @@
                     <div class="col">{{ form_row(form.priceMinor) }}</div>
                     <div class="col">{{ form_row(form.currency) }}</div>
                 </div>
+                {{ form_row(form.allowedPaymentMethods) }}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5">Varijante cijene</h2>
+                <p class="text-muted small">Ako dodaš varijante, kupac bira jednu i njena se cijena koristi umjesto fiksne cijene.</p>
+                {{ form_errors(form.variants) }}
+                <div data-fb-collection data-fb-level="variants"
+                     data-prototype="{{ include('@FormBuilder/admin/_variant_row.html.twig', {variantForm: form.variants.vars.prototype})|e('html_attr') }}"
+                     data-prototype-name="__variant__"
+                     data-fb-index="{{ form.variants|length }}">
+                    <div data-fb-items>
+                        {% for variantForm in form.variants %}
+                            {{ include('@FormBuilder/admin/_variant_row.html.twig', {variantForm: variantForm}) }}
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary mt-2" data-action="formbuilder--builder#add">+ Dodaj varijantu</button>
+                </div>
             </div>
         </div>
 

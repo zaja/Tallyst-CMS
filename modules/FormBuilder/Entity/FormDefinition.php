@@ -59,6 +59,16 @@ class FormDefinition
     private ?array $allowedPaymentMethods = null;
 
     /**
+     * Price variants (or-or): a flat list of {label, priceMinor}. When non-empty, the buyer picks one
+     * and its price is used INSTEAD of priceMinor; empty/null = fixed priceMinor. Currency is shared
+     * (product-level). Single dimension — no matrix.
+     *
+     * @var array<int, array{label: string, priceMinor: int}>|null
+     */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $variants = null;
+
+    /**
      * Submission-notification config for FREE forms (priced forms use the order/fulfilment
      * mails). When enabled, a notification e-mail is sent on each valid submit.
      */
@@ -177,10 +187,63 @@ class FormDefinition
         return $this;
     }
 
-    /** A priced form is a product: its submission goes through payment. */
+    /** A priced form is a product: it has variants OR a fixed price; its submission goes through payment. */
     public function isProduct(): bool
     {
-        return null !== $this->priceMinor && $this->priceMinor > 0;
+        return $this->hasVariants() || (null !== $this->priceMinor && $this->priceMinor > 0);
+    }
+
+    /** @return array<int, array{label: string, priceMinor: int}>|null */
+    public function getVariants(): ?array
+    {
+        return $this->variants;
+    }
+
+    /**
+     * Store variants, dropping fully-empty rows (prototype/blank) and coercing priceMinor to int.
+     * Half-filled rows (label xor price) are KEPT so validation can flag them.
+     *
+     * @param array<int, array{label?: string, priceMinor?: mixed}>|null $variants
+     */
+    public function setVariants(?array $variants): static
+    {
+        $clean = [];
+        foreach ($variants ?? [] as $v) {
+            $label = trim((string) ($v['label'] ?? ''));
+            $price = $v['priceMinor'] ?? null;
+            if ('' === $label && (null === $price || '' === $price || 0 === (int) $price)) {
+                continue; // fully empty row — not a variant
+            }
+            $clean[] = ['label' => $label, 'priceMinor' => null === $price || '' === $price ? 0 : (int) $price];
+        }
+
+        $this->variants = [] === $clean ? null : array_values($clean);
+
+        return $this;
+    }
+
+    /** Whether this product is variant-priced (≥1 complete variant). */
+    public function hasVariants(): bool
+    {
+        foreach ($this->variants ?? [] as $v) {
+            if ('' !== ($v['label'] ?? '') && (int) ($v['priceMinor'] ?? 0) > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The variant at $index, or null if out of range — the server-side selection gate.
+     *
+     * @return array{label: string, priceMinor: int}|null
+     */
+    public function variantAt(int $index): ?array
+    {
+        $list = array_values($this->variants ?? []);
+
+        return ($index >= 0 && isset($list[$index])) ? $list[$index] : null;
     }
 
     public function getCurrency(): ?string
@@ -277,6 +340,20 @@ class FormDefinition
             if (false === filter_var($recipient, \FILTER_VALIDATE_EMAIL)) {
                 $context->buildViolation('Neispravna e-mail adresa: '.$recipient)
                     ->atPath('notifyRecipient')->addViolation();
+            }
+        }
+    }
+
+    /** Each variant must have a label AND a positive price (a half-filled row is an error). */
+    #[Assert\Callback]
+    public function validateVariants(ExecutionContextInterface $context): void
+    {
+        foreach (array_values($this->variants ?? []) as $i => $v) {
+            $label = trim((string) ($v['label'] ?? ''));
+            $price = (int) ($v['priceMinor'] ?? 0);
+            if ('' === $label || $price <= 0) {
+                $context->buildViolation('Svaka varijanta treba naziv i cijenu veću od 0.')
+                    ->atPath('variants['.$i.']')->addViolation();
             }
         }
     }
