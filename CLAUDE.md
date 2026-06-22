@@ -489,6 +489,17 @@ new table, no migration (encrypted values are just text in the existing `value` 
   NO-OP (keeps the stored value) — that's what lets the UI render the SMTP password field
   empty ("•••• nepromijenjeno") and only overwrite when the admin types a new one.
   `getForForm()` NEVER returns a secret.
+  - **GOTCHA — browser autofill clobbers write-only secrets (learned the hard way, twice).** The
+    "empty = keep" guard only protects EMPTY submits. A browser password manager can AUTOFILL the
+    SMTP-password field with a saved credential; that non-empty value sails through and overwrites
+    the real secret on a normal Settings Save (symptom: silent `535` SMTP auth after saving an
+    unrelated tab; the stored ciphertext length changes though nobody typed). Mitigation in place:
+    the field carries **`autocomplete="new-password"`** (`SettingsController::formOptions`) so the
+    browser leaves it alone. That depends on browser cooperation; the real fix (QUEUED) is to
+    **isolate the SMTP password into its OWN submit** (a separate `<form>` like the test-mail form
+    already on that page), so the bulk Save never carries the secret at all — browser-independent.
+    NOTE: a "submitted == current decrypted → no-op" guard does NOT help (autofill writes a
+    *different* value), so don't bother with that approach.
 - **`SettingsEncryptor`** = libsodium `crypto_secretbox` (authenticated), key from
   `SETTINGS_ENCRYPTION_KEY` env (base64 of 32 bytes, injected pre-decoded via the `base64:`
   env processor; real key in `.env.local`, empty placeholder in `.env`). Stored form is
