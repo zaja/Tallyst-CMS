@@ -21,6 +21,7 @@ use Tallyst\FormBuilder\Repository\FormSubmissionRepository;
 use Tallyst\FormBuilder\Repository\OrderRepository;
 use Tallyst\FormBuilder\Service\SubmissionNotifier;
 use Tallyst\FormBuilder\Service\SubmissionValidator;
+use Tallyst\FormBuilder\Service\TaxCalculator;
 
 /**
  * Public form submission endpoint. Two-segment path (/form/...) so the /{slug}
@@ -43,6 +44,7 @@ class FormSubmitController extends AbstractController
         private readonly SubmissionValidator $validator,
         private readonly SubmissionNotifier $notifier,
         private readonly PaymentProcessorRegistry $payments,
+        private readonly TaxCalculator $tax,
         private readonly LoggerInterface $logger,
         #[Autowire(service: 'limiter.form_submit')]
         private readonly RateLimiterFactory $formSubmitLimiter,
@@ -177,6 +179,23 @@ class FormSubmitController extends AbstractController
             ->setCurrency($form->getCurrency() ?: 'eur')
             ->setProvider($chosen)
             ->setVariantLabel($variantLabel);
+
+        // Tax recording (provider-agnostic): inclusive split derived from the gross amount — the
+        // charged amount is unchanged. Country/VAT-ID are the optional checkout inputs (blank → null);
+        // IP from the request. Tax fields stay null when tax is disabled (export distinguishes that).
+        $order->setCustomerIp($request->getClientIp());
+        $country = trim((string) $request->request->get('country', ''));
+        $vatId = trim((string) $request->request->get('vat_id', ''));
+        $order->setCustomerCountry('' !== $country ? $country : null);
+        $order->setCustomerVatId('' !== $vatId ? $vatId : null);
+        if ($this->tax->isEnabled()) {
+            $b = $this->tax->breakdown($amountMinor);
+            $order->setNetAmountMinor($b['net'])
+                ->setTaxAmountMinor($b['tax'])
+                ->setTaxRate((string) $this->tax->rate())
+                ->setTaxName($this->tax->name());
+        }
+
         $this->orders->save($order); // persist to obtain an id
 
         $successUrl = $this->generateUrl('form_builder_order_thankyou', ['id' => $order->getId()], UrlGeneratorInterface::ABSOLUTE_URL);

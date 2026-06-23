@@ -16,10 +16,12 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Workflow\WorkflowInterface;
 use Tallyst\FormBuilder\Entity\Order;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
+use Tallyst\FormBuilder\Repository\OrderRepository;
 use Tallyst\FormBuilder\Service\OrderMailer;
 
 /**
@@ -36,6 +38,7 @@ class OrderCrudController extends AbstractCrudController
         private readonly OrderMailer $mailer,
         private readonly EntityManagerInterface $em,
         private readonly PaymentProcessorRegistry $payments,
+        private readonly OrderRepository $orders,
     ) {
     }
 
@@ -70,6 +73,10 @@ class OrderCrudController extends AbstractCrudController
             ->displayIf(static fn (Order $order): bool => \in_array($order->getStatus(), [Order::STATUS_PAID, Order::STATUS_FULFILLED], true))
             ->setHtmlAttributes(['onclick' => "return confirm('Refundirati ovu narudžbu? Novac se vraća kupcu.')"]);
 
+        $export = Action::new('exportCsv', 'Izvezi narudžbe', 'fa fa-file-csv')
+            ->linkToCrudAction('exportCsv')
+            ->createAsGlobalAction();
+
         return $actions
             ->disable(Action::NEW, Action::EDIT, Action::DELETE, Action::BATCH_DELETE)
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
@@ -78,7 +85,8 @@ class OrderCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, $resend)
             ->add(Crud::PAGE_DETAIL, $resend)
             ->add(Crud::PAGE_INDEX, $refund)
-            ->add(Crud::PAGE_DETAIL, $refund);
+            ->add(Crud::PAGE_DETAIL, $refund)
+            ->add(Crud::PAGE_INDEX, $export);
     }
 
     public function configureFields(string $pageName): iterable
@@ -104,10 +112,56 @@ class OrderCrudController extends AbstractCrudController
         yield TextField::new('variantLabel', 'Varijanta');
         yield TextField::new('customerEmail', 'Kupac');
 
+        $money = static fn (?int $minor): string => null === $minor ? '—' : number_format($minor / 100, 2, ',', '.');
+        yield TextField::new('netAmountMinor', 'Neto')->formatValue($money)->onlyOnDetail();
+        yield TextField::new('taxAmountMinor', 'Porez')->formatValue($money)->onlyOnDetail();
+        yield TextField::new('taxRate', 'Stopa (%)')->onlyOnDetail();
+        yield TextField::new('taxName', 'Naziv poreza')->onlyOnDetail();
+        yield TextField::new('customerCountry', 'Država')->onlyOnDetail();
+        yield TextField::new('customerVatId', 'VAT ID')->onlyOnDetail();
+        yield TextField::new('customerIp', 'IP')->onlyOnDetail();
+
         yield TextField::new('provider', 'Provider')->onlyOnDetail();
         yield TextField::new('providerSessionId', 'Checkout session')->onlyOnDetail();
         yield TextField::new('providerPaymentIntentId', 'Payment intent')->onlyOnDetail();
         yield TextareaField::new('submissionSummary', 'Podaci forme')->onlyOnDetail();
+    }
+
+    /** CSV export for the accountant (UTF-8 BOM so HR chars open correctly in Excel). */
+    public function exportCsv(): StreamedResponse
+    {
+        $orders = $this->orders->findAllOrderedByIdDesc();
+        $money = static fn (?int $minor): string => null === $minor ? '' : number_format($minor / 100, 2, '.', '');
+
+        $response = new StreamedResponse(function () use ($orders, $money): void {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['ID', 'Datum', 'Bruto', 'Neto', 'Porez', 'Stopa', 'Naziv poreza', 'Valuta', 'Država', 'VAT ID', 'Provider', 'Status', 'E-mail', 'Varijanta'], ',', '"', '');
+            foreach ($orders as $o) {
+                fputcsv($out, [
+                    $o->getId(),
+                    $o->getCreatedAt()?->format('Y-m-d H:i'),
+                    $money($o->getAmountMinor()),
+                    $money($o->getNetAmountMinor()),
+                    $money($o->getTaxAmountMinor()),
+                    $o->getTaxRate() ?? '',
+                    $o->getTaxName() ?? '',
+                    strtoupper($o->getCurrency()),
+                    $o->getCustomerCountry() ?? '',
+                    $o->getCustomerVatId() ?? '',
+                    $o->getProvider(),
+                    $o->getStatus(),
+                    $o->getCustomerEmail() ?? '',
+                    $o->getVariantLabel() ?? '',
+                ], ',', '"', '');
+            }
+            fclose($out);
+        });
+
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="narudzbe.csv"');
+
+        return $response;
     }
 
     public function markFulfilled(AdminContext $context, AdminUrlGenerator $urls): Response

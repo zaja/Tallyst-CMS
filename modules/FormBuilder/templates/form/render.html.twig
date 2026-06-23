@@ -31,6 +31,10 @@
             <p class="fb-price">Cijena: <strong>{{ (form.priceMinor / 100)|number_format(2, ',', '.') }} {{ (form.currency ?: 'eur')|upper }}</strong></p>
         {% endif %}
 
+        {% if tax.enabled|default(false) and form.isProduct %}
+            <p class="fb-tax">Cijena uključuje {{ tax.name }} ({{ tax.rate }}%).</p>
+        {% endif %}
+
         {% if form.description %}<p class="fb-desc">{{ form.description }}</p>{% endif %}
 
         {% for field in form.fields %}
@@ -101,6 +105,16 @@
                                 </label>
                             {% endfor %}
                         </div>
+                    </div>
+                {% endif %}
+                {% if tax.enabled|default(false) %}
+                    <div class="fb-field">
+                        <label for="fb-country-{{ form.id }}">Država (opcionalno)</label>
+                        <input type="text" id="fb-country-{{ form.id }}" name="country" value="">
+                    </div>
+                    <div class="fb-field">
+                        <label for="fb-vatid-{{ form.id }}">VAT ID / OIB (opcionalno)</label>
+                        <input type="text" id="fb-vatid-{{ form.id }}" name="vat_id" value="">
                     </div>
                 {% endif %}
                 {% if methods|length > 1 %}

@@ -67,9 +67,11 @@ built now.
 - **Phase 1 — CMS-complete polish — DONE.** Theme + demo + page layout/hero + footer config +
   branding-in-Postavke + favicon + blog archives/pagination + post author/byline + email templates
   (engine PASS 1 + Tiptap-lite editor PASS 2) — all complete (see the sections below).
-- **Phase 2 — E-commerce finish (manual-fulfilment model) (CURRENT).** PayPal processor alongside Stripe;
-  refund (the `refunded` state exists); order-flow / order-mail polish. **NOT** automated delivery.
-- **Phase 3 — Standalone installer + deployment readiness.** WordPress-like install procedure;
+- **Phase 2 — E-commerce finish (manual-fulfilment model) — DONE.** Manual-fulfilment order lifecycle +
+  admin actions, refund (admin + provider webhook), Stripe + PayPal config in Postavke, PayPal processor
+  + provider choice + per-product limit, price variants, and inclusive tax + CSV export. **NOT** automated
+  delivery (post-v1).
+- **Phase 3 — Standalone installer + deployment readiness (CURRENT).** WordPress-like install procedure;
   the Deployment Readiness Panel (worker activation snippet + heartbeat status + encryption-key
   status + go-live checks).
 - **Post-v1 / future.** Automated digital delivery (downloads/licences); **Import / content packs**
@@ -837,7 +839,7 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   content packs", Post-v1.)
 - **Phase 1 (CMS-complete polish) is COMPLETE.** Next: Phase 2 — e-commerce finish.
 
-### Phase 2 — E-commerce finish (manual-fulfilment model) (CURRENT)
+### Phase 2 — E-commerce finish (manual-fulfilment model) — DONE
 - **Order lifecycle (manual fulfilment) + admin actions — DONE (pass 1).** Option B: `fulfilled`
   now = admin manually delivered (no longer auto-on-mail); `FulfillOrderHandler` sends confirmation +
   admin notice via `OrderMailer` and leaves the order `paid`; `OrderCrudController` actions "Označi
@@ -885,13 +887,32 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   added `fb_form.variants` + `fb_order.variant_label`. **Also fixed a pass-4 gap:** `allowedPaymentMethods`
   was in the form type but never rendered in `edit.html.twig` (`render_rest:false` dropped it) → the
   per-product payment limit was unsettable; now rendered.
-- **Queued (this order):**
-  1. **Tax rate** (single rate — none today) — last Phase 2 pass.
+- **Tax — DONE (pass 6, LAST). PRODUCTION DECISION: Tallyst is NOT a tax engine or Merchant-of-Record.**
+  ONE configurable **inclusive** rate (toggle): the entered price already includes tax; net/tax are
+  derived backwards (`TaxCalculator`: `net = round(gross/(1+rate/100))`, `tax = gross - net` → always
+  sums) and the **charged amount is unchanged** (both processors untouched — tax never alters the gross
+  sent to Stripe/PayPal). Settings: FormBuilder `TaxSettingsProvider` "Porez" (`tax_enabled`/`tax_rate`/
+  `tax_name`) with an honest-boundary help text. Recording on the Order (nullable; all null when tax was
+  off, so export distinguishes "no tax" from a real 0): `taxAmountMinor`/`netAmountMinor`/`taxRate`/
+  `taxName`/`customerCountry`/`customerIp`/`customerVatId`. Checkout shows an inclusive note + optional
+  country/VAT-ID inputs (captured honestly, not sniffed; `customerCountry` is indicative free-text, not
+  normalised). VAT-ID is **recorded but uninterpreted** (no VIES / no reverse-charge). Mail tags
+  `tax_amount`/`net_amount`/`tax_rate`/`tax_name` (advertised; default bodies unchanged). **CSV export**
+  (OrderCrud global action, ROLE_ADMIN, UTF-8 BOM) is the accountant deliverable. OUT: multi-rate/
+  per-country/per-product, OSS, VIES, tax-API, exclusive tax, changing the charged amount.
+- **Phase 2 (e-commerce finish) is COMPLETE.** Next: Phase 3 — standalone installer + readiness panel.
 - **Subscriptions & recurring (future epic, post-v1).** Stripe runs the billing/retries + the
   **Customer Portal** for self-service cancel/update (we do NOT build that UI); OUR job is the
   subscription-lifecycle webhooks (created/updated/`invoice.paid`/`canceled`) + access/licence
   teardown on cancel/lapse. Depends on automated access-management (the deferred automated-delivery
   work), so it sits with Post-v1, not the manual-fulfilment v1.
+- **Merchant-of-Record (global tax) — future epic, post-v1.** For sellers above the OSS threshold /
+  selling globally, add Lemon Squeezy / Paddle as an extra `PaymentProcessorInterface` + a "billing
+  mode" choice (direct vs MoR). The MoR is the legal seller → they handle global tax/VAT/compliance, so
+  Tallyst's single-rate engine doesn't have to. Notes: this CHANGES what an Order means (Tallyst isn't
+  the seller); LS has no programmatic product-create (use a placeholder product + custom_price); check
+  Paddle's product-create. This is the proper answer to everything the pass-6 tax scope consciously left
+  out (multi-rate/per-country/VIES/OSS).
 
 ### Phase 3 — Standalone installer + deployment readiness
 - **Standalone installer — WordPress-like (NOT built).** A guided first-run install procedure

@@ -30,6 +30,16 @@ class OrderRepository extends ServiceEntityRepository
         return $this->findOneBy(['providerPaymentIntentId' => $paymentIntentId]);
     }
 
+    /**
+     * All orders, newest first — for the accountant CSV export.
+     *
+     * @return Order[]
+     */
+    public function findAllOrderedByIdDesc(): array
+    {
+        return $this->findBy([], ['id' => 'DESC']);
+    }
+
     public function save(Order $order, bool $flush = true): void
     {
         $this->getEntityManager()->persist($order);

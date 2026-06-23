@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Tallyst\FormBuilder\Form\FormSchemaFactory;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
+use Tallyst\FormBuilder\Service\TaxCalculator;
 use Twig\Environment;
 
 /**
@@ -24,6 +25,7 @@ class FormShortcode implements ShortcodeInterface
         private readonly Environment $twig,
         private readonly RequestStack $requestStack,
         private readonly PaymentProcessorRegistry $payments,
+        private readonly TaxCalculator $tax,
     ) {
     }
 
@@ -52,6 +54,7 @@ class FormShortcode implements ShortcodeInterface
             'errors' => $errors,
             'old' => $old,
             'payment_methods' => $form->isProduct() ? $this->paymentMethods($form->getAllowedPaymentMethods()) : [],
+            'tax' => ['enabled' => $this->tax->isEnabled(), 'name' => $this->tax->name(), 'rate' => $this->tax->rate()],
         ]);
     }
 

@@ -46,6 +46,30 @@ class Order
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $variantLabel = null;
 
+    // --- Tax recording (inclusive). amountMinor stays GROSS; these are derived/recorded only.
+    // All null when tax was disabled at order time (so export distinguishes "no tax" from a real 0).
+
+    #[ORM\Column(nullable: true)]
+    private ?int $taxAmountMinor = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $netAmountMinor = null;
+
+    #[ORM\Column(type: 'decimal', precision: 5, scale: 2, nullable: true)]
+    private ?string $taxRate = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $taxName = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $customerCountry = null;
+
+    #[ORM\Column(length: 45, nullable: true)]
+    private ?string $customerIp = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $customerVatId = null;
+
     #[ORM\Column(length: 20)]
     private string $status = self::STATUS_PENDING;
 
@@ -142,6 +166,90 @@ class Order
     public function setVariantLabel(?string $variantLabel): static
     {
         $this->variantLabel = $variantLabel;
+
+        return $this;
+    }
+
+    public function getTaxAmountMinor(): ?int
+    {
+        return $this->taxAmountMinor;
+    }
+
+    public function setTaxAmountMinor(?int $taxAmountMinor): static
+    {
+        $this->taxAmountMinor = $taxAmountMinor;
+
+        return $this;
+    }
+
+    public function getNetAmountMinor(): ?int
+    {
+        return $this->netAmountMinor;
+    }
+
+    public function setNetAmountMinor(?int $netAmountMinor): static
+    {
+        $this->netAmountMinor = $netAmountMinor;
+
+        return $this;
+    }
+
+    public function getTaxRate(): ?string
+    {
+        return $this->taxRate;
+    }
+
+    public function setTaxRate(?string $taxRate): static
+    {
+        $this->taxRate = $taxRate;
+
+        return $this;
+    }
+
+    public function getTaxName(): ?string
+    {
+        return $this->taxName;
+    }
+
+    public function setTaxName(?string $taxName): static
+    {
+        $this->taxName = $taxName;
+
+        return $this;
+    }
+
+    public function getCustomerCountry(): ?string
+    {
+        return $this->customerCountry;
+    }
+
+    public function setCustomerCountry(?string $customerCountry): static
+    {
+        $this->customerCountry = $customerCountry;
+
+        return $this;
+    }
+
+    public function getCustomerIp(): ?string
+    {
+        return $this->customerIp;
+    }
+
+    public function setCustomerIp(?string $customerIp): static
+    {
+        $this->customerIp = $customerIp;
+
+        return $this;
+    }
+
+    public function getCustomerVatId(): ?string
+    {
+        return $this->customerVatId;
+    }
+
+    public function setCustomerVatId(?string $customerVatId): static
+    {
+        $this->customerVatId = $customerVatId;
 
         return $this;
     }

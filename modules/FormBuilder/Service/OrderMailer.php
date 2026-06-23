@@ -70,12 +70,19 @@ class OrderMailer
      */
     private function tags(Order $order): array
     {
+        $tax = $order->getTaxAmountMinor();
+        $net = $order->getNetAmountMinor();
+
         return [
             'order_id' => (string) $order->getId(),
             'amount' => number_format($order->getAmountMinor() / 100, 2, ',', '.'),
             'currency' => strtoupper($order->getCurrency()),
             'form_name' => $order->getForm()?->getName() ?? '-',
             'variant' => $order->getVariantLabel() ?? '',
+            'tax_amount' => null === $tax ? '' : number_format($tax / 100, 2, ',', '.'),
+            'net_amount' => null === $net ? '' : number_format($net / 100, 2, ',', '.'),
+            'tax_rate' => null === $order->getTaxRate() ? '' : rtrim(rtrim($order->getTaxRate(), '0'), '.'),
+            'tax_name' => $order->getTaxName() ?? '',
         ];
     }
 }
