@@ -178,6 +178,7 @@ class FormSubmitController extends AbstractController
             ->setAmountMinor($amountMinor)
             ->setCurrency($form->getCurrency() ?: 'eur')
             ->setProvider($chosen)
+            ->setPaymentMode($this->payments->get($chosen)->getMode())
             ->setVariantLabel($variantLabel);
 
         // Tax recording (provider-agnostic): inclusive split derived from the gross amount — the

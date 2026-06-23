@@ -76,6 +76,11 @@ class Order
     #[ORM\Column(length: 20)]
     private string $provider = 'stripe';
 
+    /** Provider mode at creation ('test'/'live') — a historical fact, so the dashboard deep-link
+     *  doesn't depend on the current config. Null for pre-recording orders (graceful fallback). */
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $paymentMode = null;
+
     /** Provider checkout session id — how the webhook finds this order. */
     #[ORM\Column(length: 255, nullable: true, unique: true)]
     private ?string $providerSessionId = null;
@@ -279,6 +284,18 @@ class Order
     public function setProvider(string $provider): static
     {
         $this->provider = $provider;
+
+        return $this;
+    }
+
+    public function getPaymentMode(): ?string
+    {
+        return $this->paymentMode;
+    }
+
+    public function setPaymentMode(?string $paymentMode): static
+    {
+        $this->paymentMode = $paymentMode;
 
         return $this;
     }

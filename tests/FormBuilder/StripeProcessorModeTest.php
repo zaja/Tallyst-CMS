@@ -47,5 +47,9 @@ class StripeProcessorModeTest extends TestCase
         self::assertSame('https://dashboard.stripe.com/test/payments/pi_123', $this->processor('sk_test_abc')->dashboardUrl($order));
         self::assertSame('https://dashboard.stripe.com/payments/pi_123', $this->processor('sk_live_abc')->dashboardUrl($order));
         self::assertNull($this->processor('sk_test_abc')->dashboardUrl(new \Tallyst\FormBuilder\Entity\Order()), 'no payment intent → no link');
+
+        // The order's RECORDED mode wins over the current config (historical accuracy).
+        $liveRecorded = (new \Tallyst\FormBuilder\Entity\Order())->setProviderPaymentIntentId('pi_123')->setPaymentMode('live');
+        self::assertSame('https://dashboard.stripe.com/payments/pi_123', $this->processor('sk_test_abc')->dashboardUrl($liveRecorded), 'recorded live mode wins over a test key');
     }
 }

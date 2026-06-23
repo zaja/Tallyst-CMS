@@ -80,7 +80,11 @@ class PayPalProcessor implements PaymentProcessorInterface
             return null;
         }
 
-        return 'https://www.'.('live' === $this->mode() ? '' : 'sandbox.').'paypal.com/activity/';
+        // Use the order's RECORDED mode (historical), falling back to current for pre-recording orders.
+        // getMode() normalises to 'test'/'live' (sandbox→'test'), consistent with Stripe.
+        $mode = $order->getPaymentMode() ?: $this->getMode();
+
+        return 'https://www.'.('live' === $mode ? '' : 'sandbox.').'paypal.com/activity/';
     }
 
     public function createCheckout(Order $order, string $successUrl, string $cancelUrl): string

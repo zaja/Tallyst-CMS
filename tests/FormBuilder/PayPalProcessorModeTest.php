@@ -66,10 +66,12 @@ class PayPalProcessorModeTest extends TestCase
 
     public function testDashboardUrl(): void
     {
-        $order = (new \Tallyst\FormBuilder\Entity\Order())->setProviderPaymentIntentId('CAP-1');
+        // dashboardUrl uses the order's RECORDED mode ('test'/'live' from getMode() at creation).
+        $sandbox = (new \Tallyst\FormBuilder\Entity\Order())->setProviderPaymentIntentId('CAP-1')->setPaymentMode('test');
+        $live = (new \Tallyst\FormBuilder\Entity\Order())->setProviderPaymentIntentId('CAP-1')->setPaymentMode('live');
 
-        self::assertSame('https://www.sandbox.paypal.com/activity/', $this->processor(['paypal_mode' => 'sandbox'])->dashboardUrl($order));
-        self::assertSame('https://www.paypal.com/activity/', $this->processor(['paypal_mode' => 'live'])->dashboardUrl($order));
-        self::assertNull($this->processor(['paypal_mode' => 'sandbox'])->dashboardUrl(new \Tallyst\FormBuilder\Entity\Order()), 'no capture id → no link');
+        self::assertSame('https://www.sandbox.paypal.com/activity/', $this->processor([])->dashboardUrl($sandbox));
+        self::assertSame('https://www.paypal.com/activity/', $this->processor([])->dashboardUrl($live));
+        self::assertNull($this->processor([])->dashboardUrl(new \Tallyst\FormBuilder\Entity\Order()), 'no capture id → no link');
     }
 }

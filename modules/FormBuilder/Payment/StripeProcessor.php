@@ -79,8 +79,10 @@ class StripeProcessor implements PaymentProcessorInterface
             return null;
         }
 
-        // Stable per-payment deep-link; the "test/" segment only for non-live mode.
-        $segment = 'live' === $this->getMode() ? '' : 'test/';
+        // Stable per-payment deep-link; the "test/" segment only for non-live mode. Use the order's
+        // RECORDED mode (historical fact) with the current mode as a fallback for pre-recording orders.
+        $mode = $order->getPaymentMode() ?: $this->getMode();
+        $segment = 'live' === $mode ? '' : 'test/';
 
         return 'https://dashboard.stripe.com/'.$segment.'payments/'.$pi;
     }

@@ -400,11 +400,16 @@ themes/               # THEMES — one folder = one theme
      all); `PaymentProcessorRegistry::availableFor(allowed)` = configured ∩ allowed — the one source
      for the form render (radios / hidden / "unavailable") and the submit (validate the chosen method,
      set `order.provider`). Keys live in Postavke (Stripe + PayPal sections), settings ?: env.
-   - **Dashboard deep-link:** `dashboardUrl(Order): ?string` (per processor, mode-aware) → an OrderCrud
-     detail-only action "Otvori u dashboardu plaćanja" (new tab; hidden when no PI). Stripe = a stable
-     per-payment link (`/test/payments/{pi}` vs `/payments/{pi}`); **PayPal has no reliable
-     per-transaction deep-link**, so it opens the (mode-correct) activity page and the capture id in the
-     detail is used for lookup (honest fallback).
+   - **Dashboard deep-link:** `dashboardUrl(Order): ?string` (per processor) → an OrderCrud detail-only
+     action "Otvori u dashboardu plaćanja" (new tab; hidden when no PI). Stripe = a stable per-payment
+     link (`/test/payments/{pi}` vs `/payments/{pi}`); **PayPal has no reliable per-transaction
+     deep-link**, so it opens the (mode-correct) activity page and the capture id in the detail is used
+     for lookup (honest fallback). **Mode is the order's RECORDED `paymentMode`** (set from `getMode()`
+     at checkout — a historical fact, like `taxRate`), with the current mode as a fallback for
+     pre-recording orders, so an old test order never mislinks to live after going live.
+   - **OrderCrud surfacing:** provider badge in the list (Stripe/PayPal); detail shows `paymentMode`,
+     net/tax/country/VAT/IP. CSV export adds **"Mod"** (test/live) + **"Podaci kupca"** (the submission
+     summary flattened to one line — the buyer's form fields for invoicing; `fputcsv` quotes commas).
    Order lifecycle is a Symfony **state_machine** workflow (`order`): `pending → paid → fulfilled →
    refunded`. Critical rules:
    - The **verified webhook is the SOLE source of truth for `paid`** — never the
