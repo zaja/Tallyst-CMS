@@ -25,9 +25,9 @@
             {% if fieldValue and fieldValue.required %}<span class="badge badge-warning fb-summary-required">obavezno</span>{% endif %}
         </div>
         <div class="fb-row-controls">
-            <button type="button" data-action="formbuilder--builder#moveUp" title="Gore">↑</button>
-            <button type="button" data-action="formbuilder--builder#moveDown" title="Dolje">↓</button>
-            <button type="button" class="fb-del" data-action="formbuilder--builder#remove">Ukloni polje</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="formbuilder--builder#moveUp" title="Gore">↑</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="formbuilder--builder#moveDown" title="Dolje">↓</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-action="formbuilder--builder#remove">Ukloni polje</button>
         </div>
     </div>
 
@@ -58,7 +58,7 @@
                     {{ include('@FormBuilder/admin/_rule.html.twig', {ruleForm: ruleForm}) }}
                 {% endfor %}
             </div>
-            <button type="button" class="fb-add-rule" data-action="formbuilder--builder#add">+ Pravilo</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary fb-add-rule" data-action="formbuilder--builder#add">+ Pravilo</button>
         </div>
     </fieldset>
 </div>
