@@ -54,6 +54,9 @@ class OrderCsvExportTest extends TestCase
 
         self::assertStringContainsString('Podaci kupca', $csv, 'header column present');
         self::assertStringContainsString('Mod', $csv, 'mode column present');
+        // The imposed checkout Država/VAT-ID columns were removed (B2B goes via form fields → Podaci kupca).
+        self::assertStringNotContainsString('Zemlja', $csv);
+        self::assertStringNotContainsString('VAT ID', $csv);
         // Newlines flattened to "; " AND the comma-containing value is RFC-quoted (one cell, not split).
         self::assertStringContainsString('"ime: Goran Zajec; tvrtka: Sve je dobro, j.d.o.o."', $csv);
         // The data stays on the single data row (header + one row → exactly one newline after each).

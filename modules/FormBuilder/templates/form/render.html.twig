@@ -107,16 +107,6 @@
                         </div>
                     </div>
                 {% endif %}
-                {% if tax.enabled|default(false) %}
-                    <div class="fb-field">
-                        <label for="fb-country-{{ form.id }}">Država (opcionalno)</label>
-                        <input type="text" id="fb-country-{{ form.id }}" name="country" value="">
-                    </div>
-                    <div class="fb-field">
-                        <label for="fb-vatid-{{ form.id }}">VAT ID / OIB (opcionalno)</label>
-                        <input type="text" id="fb-vatid-{{ form.id }}" name="vat_id" value="">
-                    </div>
-                {% endif %}
                 {% if methods|length > 1 %}
                     <div class="fb-field fb-payment">
                         <label>Način plaćanja <span class="fb-req">*</span></label>

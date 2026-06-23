@@ -182,13 +182,10 @@ class FormSubmitController extends AbstractController
             ->setVariantLabel($variantLabel);
 
         // Tax recording (provider-agnostic): inclusive split derived from the gross amount — the
-        // charged amount is unchanged. Country/VAT-ID are the optional checkout inputs (blank → null);
-        // IP from the request. Tax fields stay null when tax is disabled (export distinguishes that).
+        // charged amount is unchanged. IP from the request; tax fields stay null when tax is disabled
+        // (export distinguishes that). B2B data (company/VAT) is captured via ordinary form fields
+        // (conditional display) → the "Podaci kupca" CSV column, not imposed checkout inputs.
         $order->setCustomerIp($request->getClientIp());
-        $country = trim((string) $request->request->get('country', ''));
-        $vatId = trim((string) $request->request->get('vat_id', ''));
-        $order->setCustomerCountry('' !== $country ? $country : null);
-        $order->setCustomerVatId('' !== $vatId ? $vatId : null);
         if ($this->tax->isEnabled()) {
             $b = $this->tax->breakdown($amountMinor);
             $order->setNetAmountMinor($b['net'])

@@ -126,8 +126,6 @@ class OrderCrudController extends AbstractCrudController
         yield TextField::new('taxFormatted', 'Porez')->onlyOnDetail();
         yield TextField::new('taxRate', 'Stopa (%)')->onlyOnDetail();
         yield TextField::new('taxName', 'Naziv poreza')->onlyOnDetail();
-        yield TextField::new('customerCountry', 'Država')->onlyOnDetail();
-        yield TextField::new('customerVatId', 'VAT ID')->onlyOnDetail();
         yield TextField::new('customerIp', 'IP')->onlyOnDetail();
 
         yield TextField::new('paymentMode', 'Mod')->onlyOnDetail();
@@ -145,7 +143,7 @@ class OrderCrudController extends AbstractCrudController
         $response = new StreamedResponse(function () use ($orders, $money): void {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['ID', 'Datum', 'Bruto', 'Neto', 'Porez', 'Stopa', 'Naziv poreza', 'Valuta', 'Država', 'VAT ID', 'Provider', 'Mod', 'Status', 'E-mail', 'Varijanta', 'Podaci kupca'], ',', '"', '');
+            fputcsv($out, ['ID', 'Datum', 'Bruto', 'Neto', 'Porez', 'Stopa', 'Naziv poreza', 'Valuta', 'Provider', 'Mod', 'Status', 'E-mail', 'Varijanta', 'Podaci kupca'], ',', '"', '');
             foreach ($orders as $o) {
                 // Form data on one CSV line: flatten the summary's newlines (fputcsv handles commas/quotes).
                 $customerData = str_replace(["\r\n", "\n", "\r"], '; ', $o->getSubmissionSummary());
@@ -158,8 +156,6 @@ class OrderCrudController extends AbstractCrudController
                     $o->getTaxRate() ?? '',
                     $o->getTaxName() ?? '',
                     strtoupper($o->getCurrency()),
-                    $o->getCustomerCountry() ?? '',
-                    $o->getCustomerVatId() ?? '',
                     $o->getProvider(),
                     $o->getPaymentMode() ?? '',
                     $o->getStatus(),

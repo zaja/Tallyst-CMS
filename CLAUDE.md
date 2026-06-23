@@ -923,12 +923,18 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   sent to Stripe/PayPal). Settings: FormBuilder `TaxSettingsProvider` "Porez" (`tax_enabled`/`tax_rate`/
   `tax_name`) with an honest-boundary help text. Recording on the Order (nullable; all null when tax was
   off, so export distinguishes "no tax" from a real 0): `taxAmountMinor`/`netAmountMinor`/`taxRate`/
-  `taxName`/`customerCountry`/`customerIp`/`customerVatId`. Checkout shows an inclusive note + optional
-  country/VAT-ID inputs (captured honestly, not sniffed; `customerCountry` is indicative free-text, not
-  normalised). VAT-ID is **recorded but uninterpreted** (no VIES / no reverse-charge). Mail tags
-  `tax_amount`/`net_amount`/`tax_rate`/`tax_name` (advertised; default bodies unchanged). **CSV export**
-  (OrderCrud global action, ROLE_ADMIN, UTF-8 BOM) is the accountant deliverable. OUT: multi-rate/
-  per-country/per-product, OSS, VIES, tax-API, exclusive tax, changing the charged amount.
+  `taxName`/`customerIp` (+ `customerCountry`/`customerVatId` **DORMANT** — see below). Checkout shows the
+  inclusive note "Cijena uključuje {tax_name} ({rate}%)". Mail tags `tax_amount`/`net_amount`/`tax_rate`/
+  `tax_name` (advertised; default bodies unchanged). **CSV export** (OrderCrud global action, ROLE_ADMIN,
+  UTF-8 BOM) is the accountant deliverable. OUT: multi-rate/per-country/per-product, OSS, VIES, tax-API,
+  exclusive tax, changing the charged amount.
+  - **B2B / VAT capture = ordinary form fields, NOT imposed checkout fields.** The tax pass briefly added
+    fixed "Država"/"VAT ID" inputs to every paid checkout; **removed** (premature imposition). An admin
+    who needs B2B adds a "Kupujem kao tvrtka" checkbox with **conditional display** revealing OIB/Ime
+    tvrtke fields → those land in the **"Podaci kupca"** CSV column (the submission summary). No predefined
+    field types / structured mapping. The `Order.customerCountry`/`customerVatId` columns are **DORMANT**
+    (nullable, nobody fills them; kept for a possible future MoR — not dropped). `customerIp` is still
+    recorded.
 - **Phase 2 (e-commerce finish) is COMPLETE.** Next: Phase 3 — standalone installer + readiness panel.
 - **Subscriptions & recurring (future epic, post-v1).** Stripe runs the billing/retries + the
   **Customer Portal** for self-service cancel/update (we do NOT build that UI); OUR job is the
