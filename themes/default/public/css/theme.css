@@ -56,7 +56,7 @@
 
     /* Layout. */
     --container: 75rem;        /* outer shell (header/footer/blog) ~1200px */
-    --measure:   44rem;        /* readable prose width (~65ch)     */
+    --measure:   52rem;        /* readable prose width (~75ch)     */
     --nav-bp:    52rem;        /* below this → mobile nav           */
 }
 
