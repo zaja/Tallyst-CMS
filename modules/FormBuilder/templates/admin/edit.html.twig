@@ -5,55 +5,94 @@
 {% block content_title %}{{ definition.id ? 'Uredi formu' : 'Nova forma' }}{% endblock %}
 
 {% block main %}
-    <div data-controller="formbuilder--builder">
+    {# UI-only: which sections are relevant is DERIVED from the existing product state (has price or
+       variants). No data model / flag — the toggle just reveals/hides; see form_type_controller.js. #}
+    {% set isProduct = form.vars.value.isProduct() %}
+    <div data-controller="formbuilder--builder formbuilder--formtype">
         {{ form_start(form) }}
 
-        <div class="card mb-3">
+        {# Osnovno #}
+        <div class="card mb-3 fb-card">
             <div class="card-body">
+                <h2 class="h5 fb-section-title">Osnovno</h2>
+                <p class="fb-section-help">Naziv, slug i status forme.</p>
                 {{ form_errors(form) }}
                 {{ form_row(form.name) }}
-                {{ form_row(form.slug) }}
+                <div class="row">
+                    <div class="col">{{ form_row(form.slug) }}</div>
+                    <div class="col">{{ form_row(form.status) }}</div>
+                </div>
                 {{ form_row(form.description) }}
-                {{ form_row(form.status) }}
+            </div>
+        </div>
+
+        {# Tip forme — UI-only toggle (buttons, nothing submitted) #}
+        <div class="card mb-3 fb-card">
+            <div class="card-body">
+                <h2 class="h5 fb-section-title">Tip forme</h2>
+                <p class="fb-section-help">Određuje koje su opcije ispod relevantne.</p>
+                <div class="fb-type-grid" role="group">
+                    <button type="button" class="fb-type-option" data-fb-type="free"
+                            data-formbuilder--formtype-target="option"
+                            data-action="formbuilder--formtype#select"{{ isProduct ? '' : ' data-active' }}>
+                        <span class="fb-type-title">Besplatna</span>
+                        <span class="fb-type-sub">kontakt / prijava</span>
+                    </button>
+                    <button type="button" class="fb-type-option" data-fb-type="paid"
+                            data-formbuilder--formtype-target="option"
+                            data-action="formbuilder--formtype#select"{{ isProduct ? ' data-active' : '' }}>
+                        <span class="fb-type-title">Naplatna (proizvod)</span>
+                        <span class="fb-type-sub">plaćanje na submit</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Naplata (paid) — pre-hidden in Twig when not a product to avoid a flash before JS boots #}
+        <div class="card mb-3 fb-card{{ isProduct ? '' : ' d-none' }}" data-formbuilder--formtype-target="paid">
+            <div class="card-body">
+                <h2 class="h5 fb-section-title">Naplata <span class="badge fb-badge-soft">samo proizvod</span></h2>
+                <p class="fb-section-help">Cijena, valuta, načini plaćanja i varijante.</p>
                 <div class="row">
                     <div class="col">{{ form_row(form.priceMinor) }}</div>
                     <div class="col">{{ form_row(form.currency) }}</div>
                 </div>
                 {{ form_row(form.allowedPaymentMethods) }}
-            </div>
-        </div>
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <h2 class="h5">Varijante cijene</h2>
-                <p class="text-muted small">Ako dodaš varijante, kupac bira jednu i njena se cijena koristi umjesto fiksne cijene.</p>
                 {{ form_errors(form.variants) }}
-                <div data-fb-collection data-fb-level="variants"
-                     data-prototype="{{ include('@FormBuilder/admin/_variant_row.html.twig', {variantForm: form.variants.vars.prototype})|e('html_attr') }}"
-                     data-prototype-name="__variant__"
-                     data-fb-index="{{ form.variants|length }}">
-                    <div data-fb-items>
-                        {% for variantForm in form.variants %}
-                            {{ include('@FormBuilder/admin/_variant_row.html.twig', {variantForm: variantForm}) }}
-                        {% endfor %}
+                <div class="fb-subblock">
+                    <p class="fb-section-help mb-2">Varijante cijene — kupac bira jednu, njena se cijena koristi umjesto fiksne.</p>
+                    <div data-fb-collection data-fb-level="variants"
+                         data-prototype="{{ include('@FormBuilder/admin/_variant_row.html.twig', {variantForm: form.variants.vars.prototype})|e('html_attr') }}"
+                         data-prototype-name="__variant__"
+                         data-fb-index="{{ form.variants|length }}">
+                        <div data-fb-items>
+                            {% for variantForm in form.variants %}
+                                {{ include('@FormBuilder/admin/_variant_row.html.twig', {variantForm: variantForm}) }}
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-action="formbuilder--builder#add">+ Dodaj varijantu</button>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary mt-2" data-action="formbuilder--builder#add">+ Dodaj varijantu</button>
                 </div>
             </div>
         </div>
 
-        <div class="card mb-3">
+        {# Obavijesti (free) #}
+        <div class="card mb-3 fb-card{{ isProduct ? ' d-none' : '' }}" data-formbuilder--formtype-target="free">
             <div class="card-body">
-                <h2 class="h5">Notifikacija</h2>
+                <h2 class="h5 fb-section-title">Obavijesti</h2>
+                <p class="fb-section-help">E-mail obavijest na svaku prijavu (za besplatne forme).</p>
                 {{ form_row(form.notifyEnabled) }}
                 {{ form_row(form.notifyRecipient) }}
                 {{ form_row(form.notifySubject) }}
             </div>
         </div>
 
-        <div class="card mb-3">
+        {# Polja forme — always #}
+        <div class="card mb-3 fb-card">
             <div class="card-body">
-                <h2 class="h5">Polja</h2>
+                <h2 class="h5 fb-section-title">Polja forme</h2>
+                <p class="fb-section-help">Što posjetitelj ispunjava.</p>
                 {{ form_errors(form.fields) }}
 
                 {# datalist hint of existing field keys for the condition "field" inputs #}
@@ -72,7 +111,7 @@
                             {{ include('@FormBuilder/admin/_field.html.twig', {fieldForm: fieldForm}) }}
                         {% endfor %}
                     </div>
-                    <button type="button" class="btn btn-outline-secondary mt-2" data-action="formbuilder--builder#add">+ Dodaj polje</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-action="formbuilder--builder#add">+ Dodaj polje</button>
                 </div>
             </div>
         </div>
@@ -82,31 +121,50 @@
             <a class="btn btn-light" href="{{ path('form_builder_admin_index') }}">Odustani</a>
         </div>
 
-        {# We render every field manually above; render only the CSRF token from the
-           rest, and disable form_rest so it doesn't re-emit the fields collection as
-           empty index-labelled fieldsets ("0 1 2" under the Save button). #}
+        {# Every field is rendered manually above; emit only the CSRF token from the rest and disable
+           form_rest so the fields collection isn't re-emitted as empty index-labelled fieldsets. #}
         {{ form_widget(form._token) }}
         {{ form_end(form, {render_rest: false}) }}
     </div>
 
     <style>
-        .fb-field-row { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; background: #fcfcfd; }
+        /* Sections — softer cards + muted one-line help (EA/Bootstrap theme variables, dark-mode safe). */
+        .fb-card { border-radius: 14px; }
+        .fb-section-title { margin-bottom: .15rem; }
+        .fb-section-help { color: var(--bs-secondary-color); font-size: .85rem; margin-bottom: 1rem; }
+        .fb-badge-soft { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis, var(--bs-primary)); font-weight: 500; font-size: .7rem; vertical-align: middle; }
+        .fb-subblock { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--bs-border-color); }
+
+        /* Type toggle — two selectable cards (buttons; active state, no JS class churn needed). */
+        .fb-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .fb-type-option { display: flex; flex-direction: column; gap: .15rem; align-items: flex-start; text-align: left; padding: 1rem 1.1rem; border: 1px solid var(--bs-border-color); border-radius: 12px; cursor: pointer; background: var(--bs-body-bg); color: inherit; transition: border-color .15s, background .15s; }
+        .fb-type-option[data-active] { border-color: var(--bs-primary); background: var(--bs-primary-bg-subtle); }
+        .fb-type-title { font-weight: 600; }
+        .fb-type-sub { color: var(--bs-secondary-color); font-size: .8rem; }
+
+        /* Collection rows (field + variant) — theme variables fix the dark-mode "black box". */
+        .fb-field-row { border: 1px solid var(--bs-border-color); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; background: var(--bs-tertiary-bg); }
         .fb-row-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: .5rem; }
-        .fb-handle { color: #9ca3af; }
-        /* Collapsed-by-default field rows: a clickable summary toggles the config open. */
+        .fb-handle { color: var(--bs-secondary-color); cursor: grab; }
         .fb-row-summary { display: flex; align-items: center; gap: .5rem; cursor: pointer; flex: 1; min-width: 0; }
         .fb-summary-label { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .fb-summary-required { font-size: .7rem; }
         .fb-row-controls { display: flex; gap: .25rem; flex-shrink: 0; }
-        .fb-chevron::before { content: '▾'; color: #6b7280; font-size: .8rem; }
+        .fb-chevron::before { content: '▾'; color: var(--bs-secondary-color); font-size: .8rem; }
         .fb-field-row--collapsed .fb-chevron::before { content: '▸'; }
         .fb-field-row--collapsed .fb-row-head { margin-bottom: 0; }
         .fb-field-row--collapsed .fb-grid,
         .fb-field-row--collapsed .fb-cond { display: none; }
         .fb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem 1rem; }
-        .fb-cond { margin-top: 1rem; border: 1px dashed #d1d5db; border-radius: 8px; padding: .75rem; }
-        .fb-cond legend { font-size: .85rem; color: #555; width: auto; padding: 0 .4rem; }
+        .fb-cond { margin-top: 1rem; border: 1px dashed var(--bs-border-color); border-radius: 8px; padding: .75rem; }
+        .fb-cond legend { font-size: .85rem; color: var(--bs-secondary-color); width: auto; padding: 0 .4rem; }
         .fb-cond-head { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .fb-rule { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: .5rem; align-items: start; margin-bottom: .5rem; }
         .fb-rule .mb-3 { margin-bottom: 0 !important; }
+        .fb-variant-row .mb-3 { margin-bottom: 0 !important; }
+
+        @media (max-width: 575px) {
+            .fb-type-grid, .fb-grid, .fb-cond-head { grid-template-columns: 1fr; }
+        }
     </style>
 {% endblock %}

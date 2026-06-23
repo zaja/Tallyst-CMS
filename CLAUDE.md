@@ -354,6 +354,15 @@ themes/               # THEMES — one folder = one theme
      sync as you type (`refreshSummary`/`updateSummary`) and auto-expands a freshly ADDED
      field; a field with a validation error renders expanded so the error is visible. Pure
      presentation — no data-model/submit change. Builder CSS is inline in `edit.html.twig`.
+   - **Edit screen is GROUPED into cards** (Osnovno / Tip forme / Naplata "samo proizvod" /
+     Obavijesti / Polja forme), one template for new + edit. A **UI-ONLY "Tip forme" toggle**
+     (`formbuilder--formtype`, buttons — nothing submitted, no entity flag) shows/hides Naplata
+     (paid) vs Obavijesti (free); initial state derived from `FormDefinition::isProduct()`. It only
+     reveals/hides — hidden sections keep submitting their values, so the toggle never clears
+     price/variants (the actual mode is still "has price or variants"). The inline CSS uses
+     **Bootstrap/EA theme variables** (`--bs-tertiary-bg`/`--bs-border-color`/…) NOT hardcoded hex,
+     so the collection rows follow dark mode. `render_rest:false` → every `FormDefinitionType` field
+     must stay explicitly rendered (incl. `allowedPaymentMethods`, `variants`).
    - **Conditional-required:** a field hidden by its display conditions is NOT required (nor
      validated, nor stored). The SERVER is authoritative — `SubmissionValidator` runs
      `ConditionEvaluator::visibleKeys()` (a CASCADING fixed point: a field whose condition

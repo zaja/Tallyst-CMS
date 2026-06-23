@@ -22,6 +22,7 @@
             <span class="fb-handle">≡</span>
             <span class="fb-summary-label" data-fb-summary-label>{{ summaryLabel }}</span>
             <span class="badge badge-secondary fb-summary-type" data-fb-summary-type>{{ typeLabel }}</span>
+            {% if fieldValue and fieldValue.required %}<span class="badge badge-warning fb-summary-required">obavezno</span>{% endif %}
         </div>
         <div class="fb-row-controls">
             <button type="button" data-action="formbuilder--builder#moveUp" title="Gore">↑</button>
