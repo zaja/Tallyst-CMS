@@ -38,7 +38,9 @@
         {{ form_row(fieldForm.key, {attr: {'data-fb-key-input': ''}}) }}
         {{ form_row(fieldForm.type, {attr: {'data-fb-type-input': '', 'data-action': 'change->formbuilder--builder#refreshSummary'}}) }}
         {{ form_row(fieldForm.placeholder) }}
-        {{ form_row(fieldForm.options, {attr: {'data-fb-options-input': ''}}) }}
+        <div class="fb-options-wrap{{ typeValue in ['select', 'radio'] ? '' : ' d-none' }}" data-fb-options-wrap>
+            {{ form_row(fieldForm.options, {attr: {'data-fb-options-input': ''}}) }}
+        </div>
         {{ form_row(fieldForm.required) }}
     </div>
 

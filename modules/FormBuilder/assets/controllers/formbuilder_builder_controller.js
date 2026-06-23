@@ -62,6 +62,13 @@ export default class extends Controller {
         if (typeOut && typeSelect && typeSelect.selectedIndex >= 0) {
             typeOut.textContent = typeSelect.options[typeSelect.selectedIndex].text;
         }
+
+        // Options textarea is only meaningful for select/radio — show/hide it by the chosen type.
+        const optWrap = row.querySelector('[data-fb-options-wrap]');
+        if (optWrap && typeSelect) {
+            const hasOptions = 'select' === typeSelect.value || 'radio' === typeSelect.value;
+            optWrap.classList.toggle('d-none', !hasOptions);
+        }
     }
 
     remove(event) {
