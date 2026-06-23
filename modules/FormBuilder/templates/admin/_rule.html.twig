@@ -1,9 +1,17 @@
-{# One condition rule row. Used both for existing rules and as the collection
-   prototype (ruleForm = ...rules.vars.prototype). #}
+{# One condition rule row. Used both for existing rules and as the collection prototype
+   (ruleForm = ...rules.vars.prototype).
+
+   The real field/operator/value widgets carry the stored model ({key, one-of-7 operator, string});
+   formbuilder--rules HIDES them and renders contextual proxies (field dropdown / type-aware operator /
+   value dropdown-or-input) into [data-fb-rule-proxy], syncing back into these — so the submitted model
+   is unchanged and, with JS off, the real inputs still work (graceful degradation). #}
 {% form_theme ruleForm 'bootstrap_5_layout.html.twig' %}
 <div class="fb-rule" data-fb-item>
-    {{ form_widget(ruleForm.field) }}
-    {{ form_widget(ruleForm.operator) }}
-    {{ form_widget(ruleForm.value) }}
+    <div class="fb-rule-real">
+        {{ form_widget(ruleForm.field, {attr: {'data-fb-rule-field': '', 'list': 'fb-field-keys'}}) }}
+        {{ form_widget(ruleForm.operator, {attr: {'data-fb-rule-operator': ''}}) }}
+        {{ form_widget(ruleForm.value, {attr: {'data-fb-rule-value': ''}}) }}
+    </div>
+    <div class="fb-rule-proxy" data-fb-rule-proxy hidden></div>
     <button type="button" class="btn btn-sm btn-outline-danger fb-x" data-action="formbuilder--builder#remove" title="Ukloni pravilo">×</button>
 </div>

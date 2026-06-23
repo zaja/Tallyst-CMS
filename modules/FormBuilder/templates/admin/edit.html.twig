@@ -102,7 +102,7 @@
                     {% endfor %}
                 </datalist>
 
-                <div data-fb-collection data-fb-level="fields"
+                <div data-fb-collection data-fb-level="fields" data-controller="formbuilder--rules"
                      data-prototype="{{ include('@FormBuilder/admin/_field.html.twig', {fieldForm: form.fields.vars.prototype})|e('html_attr') }}"
                      data-prototype-name="__field__"
                      data-fb-index="{{ form.fields|length }}">
@@ -159,12 +159,16 @@
         .fb-cond { margin-top: 1rem; border: 1px dashed var(--bs-border-color); border-radius: 8px; padding: .75rem; }
         .fb-cond legend { font-size: .85rem; color: var(--bs-secondary-color); width: auto; padding: 0 .4rem; }
         .fb-cond-head { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .fb-rule { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: .5rem; align-items: start; margin-bottom: .5rem; }
+        /* Rule row: [field/operator/value block] + remove button. The block is either the real
+           widgets (no-JS fallback) or the contextual proxy grid; both are a 3-col grid. */
+        .fb-rule { display: grid; grid-template-columns: 1fr auto; gap: .5rem; align-items: start; margin-bottom: .5rem; }
+        .fb-rule-real, .fb-rule-proxy-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; }
         .fb-rule .mb-3 { margin-bottom: 0 !important; }
         .fb-variant-row .mb-3 { margin-bottom: 0 !important; }
+        .fb-cond-toggle { margin: .25rem 0 .5rem; }
 
         @media (max-width: 575px) {
-            .fb-type-grid, .fb-grid, .fb-cond-head { grid-template-columns: 1fr; }
+            .fb-type-grid, .fb-grid, .fb-cond-head, .fb-rule-real, .fb-rule-proxy-grid { grid-template-columns: 1fr; }
         }
     </style>
 {% endblock %}

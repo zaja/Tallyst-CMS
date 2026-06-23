@@ -35,14 +35,24 @@
 
     <div class="fb-grid">
         {{ form_row(fieldForm.label, {attr: {'data-fb-label-input': '', 'data-action': 'input->formbuilder--builder#refreshSummary'}}) }}
-        {{ form_row(fieldForm.key) }}
+        {{ form_row(fieldForm.key, {attr: {'data-fb-key-input': ''}}) }}
         {{ form_row(fieldForm.type, {attr: {'data-fb-type-input': '', 'data-action': 'change->formbuilder--builder#refreshSummary'}}) }}
         {{ form_row(fieldForm.placeholder) }}
-        {{ form_row(fieldForm.options) }}
+        {{ form_row(fieldForm.options, {attr: {'data-fb-options-input': ''}}) }}
         {{ form_row(fieldForm.required) }}
     </div>
 
-    <fieldset class="fb-cond">
+    {% set condRuleCount = fieldForm.conditions.rules|length %}
+    {% set condToggleId = fieldForm.vars.id ~ '_condtoggle' %}
+    <div class="form-check fb-cond-toggle">
+        {# UI-only: reveals/hides the conditions block. Initial ON iff rules exist; off = hide, not
+           delete (hidden rule rows still submit), like the Tip-forme toggle. No name → not submitted. #}
+        <input type="checkbox" class="form-check-input" id="{{ condToggleId }}"{{ condRuleCount > 0 ? ' checked' : '' }}
+               data-action="change->formbuilder--rules#toggleConditions">
+        <label class="form-check-label" for="{{ condToggleId }}">Uvjetni prikaz</label>
+    </div>
+
+    <fieldset class="fb-cond{{ condRuleCount > 0 ? '' : ' d-none' }}">
         <legend>Uvjeti prikaza (opcionalno)</legend>
         <div class="fb-cond-head">
             {{ form_row(fieldForm.conditions.action) }}

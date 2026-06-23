@@ -370,6 +370,16 @@ themes/               # THEMES — one folder = one theme
      hidden fields before checking `required`. The client (`formbuilder--conditions`) mirrors
      this by removing `required` from hidden inputs. Locked by `SubmissionValidatorTest`
      (incl. the chained case) + the functional `FormSubmitConditionalRequiredTest`.
+   - **Rule EDITOR is contextual (admin, `formbuilder--rules`), client-only.** The stored model
+     (`{field:key, operator:one-of-7, value:string}`) + the evaluator are UNTOUCHED; the controller
+     HIDES the real `_rule.html.twig` inputs and renders proxies that write back: a **field dropdown**
+     of OTHER fields read LIVE from the DOM (so they work before save), a **type-aware operator**
+     (checkbox → "je/nije čekirano" = `equals`/`not_equals` value `"1"` — no new operators), and a
+     **value dropdown** (radio/select options) or input (text/number). It also **auto-keys** fields
+     from their label (the server only slugifies when key is empty, so a client key is authoritative;
+     a key referenced by a rule or manually edited is frozen so a later rename can't break the rule),
+     and a per-field **"Uvjetni prikaz"** toggle hides the rules block (hide-not-delete). Graceful
+     degradation: no-JS → the real inputs still work.
    - **Email-on-submit (free forms):** per-form notification config on `FormDefinition`
      (`notifyEnabled` + `notifyRecipient` comma-list + optional `notifySubject`; an
      `Assert\Callback` validates the e-mails in the admin form). On a valid FREE submit,
