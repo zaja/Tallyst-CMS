@@ -77,6 +77,11 @@ class OrderCrudController extends AbstractCrudController
             ->linkToCrudAction('exportCsv')
             ->createAsGlobalAction();
 
+        $dashboard = Action::new('paymentDashboard', 'Otvori u dashboardu plaćanja', 'fa fa-arrow-up-right-from-square')
+            ->linkToUrl(fn (Order $order): string => (string) $this->payments->get($order->getProvider())->dashboardUrl($order))
+            ->displayIf(fn (Order $order): bool => null !== $this->payments->get($order->getProvider())->dashboardUrl($order))
+            ->setHtmlAttributes(['target' => '_blank', 'rel' => 'noopener']);
+
         return $actions
             ->disable(Action::NEW, Action::EDIT, Action::DELETE, Action::BATCH_DELETE)
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
@@ -86,6 +91,7 @@ class OrderCrudController extends AbstractCrudController
             ->add(Crud::PAGE_DETAIL, $resend)
             ->add(Crud::PAGE_INDEX, $refund)
             ->add(Crud::PAGE_DETAIL, $refund)
+            ->add(Crud::PAGE_DETAIL, $dashboard)
             ->add(Crud::PAGE_INDEX, $export);
     }
 

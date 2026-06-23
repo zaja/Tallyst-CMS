@@ -72,6 +72,19 @@ class StripeProcessor implements PaymentProcessorInterface
         };
     }
 
+    public function dashboardUrl(Order $order): ?string
+    {
+        $pi = $order->getProviderPaymentIntentId();
+        if (null === $pi || '' === $pi) {
+            return null;
+        }
+
+        // Stable per-payment deep-link; the "test/" segment only for non-live mode.
+        $segment = 'live' === $this->getMode() ? '' : 'test/';
+
+        return 'https://dashboard.stripe.com/'.$segment.'payments/'.$pi;
+    }
+
     public function createCheckout(Order $order, string $successUrl, string $cancelUrl): string
     {
         $stripe = new StripeClient($this->secretKey());

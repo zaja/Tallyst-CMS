@@ -63,4 +63,13 @@ class PayPalProcessorModeTest extends TestCase
     {
         self::assertSame('unconfigured', $this->processor([])->getMode());
     }
+
+    public function testDashboardUrl(): void
+    {
+        $order = (new \Tallyst\FormBuilder\Entity\Order())->setProviderPaymentIntentId('CAP-1');
+
+        self::assertSame('https://www.sandbox.paypal.com/activity/', $this->processor(['paypal_mode' => 'sandbox'])->dashboardUrl($order));
+        self::assertSame('https://www.paypal.com/activity/', $this->processor(['paypal_mode' => 'live'])->dashboardUrl($order));
+        self::assertNull($this->processor(['paypal_mode' => 'sandbox'])->dashboardUrl(new \Tallyst\FormBuilder\Entity\Order()), 'no capture id → no link');
+    }
 }

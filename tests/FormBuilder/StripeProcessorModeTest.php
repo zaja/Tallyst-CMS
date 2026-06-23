@@ -39,4 +39,13 @@ class StripeProcessorModeTest extends TestCase
     {
         self::assertSame('unconfigured', $this->processor('', '')->getMode());
     }
+
+    public function testDashboardUrl(): void
+    {
+        $order = (new \Tallyst\FormBuilder\Entity\Order())->setProviderPaymentIntentId('pi_123');
+
+        self::assertSame('https://dashboard.stripe.com/test/payments/pi_123', $this->processor('sk_test_abc')->dashboardUrl($order));
+        self::assertSame('https://dashboard.stripe.com/payments/pi_123', $this->processor('sk_live_abc')->dashboardUrl($order));
+        self::assertNull($this->processor('sk_test_abc')->dashboardUrl(new \Tallyst\FormBuilder\Entity\Order()), 'no payment intent → no link');
+    }
 }

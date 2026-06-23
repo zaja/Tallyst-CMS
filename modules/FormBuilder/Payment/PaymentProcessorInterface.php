@@ -65,4 +65,10 @@ interface PaymentProcessorInterface
      * @return string[]
      */
     public function getWebhookEvents(): array;
+
+    /**
+     * Admin deep-link to this order's transaction in the provider dashboard (mode-aware), or null
+     * when there's nothing to link to (no captured payment reference yet).
+     */
+    public function dashboardUrl(Order $order): ?string;
 }

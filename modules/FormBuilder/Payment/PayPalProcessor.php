@@ -71,6 +71,18 @@ class PayPalProcessor implements PaymentProcessorInterface
         return ['PAYMENT.CAPTURE.COMPLETED', 'PAYMENT.CAPTURE.REFUNDED'];
     }
 
+    public function dashboardUrl(Order $order): ?string
+    {
+        // PayPal has no documented/reliable per-transaction deep-link, so we open the (mode-correct)
+        // activity page — the capture id is shown in the order detail for lookup. Honest fallback.
+        $captureId = (string) $order->getProviderPaymentIntentId();
+        if ('' === $captureId) {
+            return null;
+        }
+
+        return 'https://www.'.('live' === $this->mode() ? '' : 'sandbox.').'paypal.com/activity/';
+    }
+
     public function createCheckout(Order $order, string $successUrl, string $cancelUrl): string
     {
         $data = $this->json('POST', '/v2/checkout/orders', [

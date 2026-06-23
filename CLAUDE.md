@@ -400,6 +400,11 @@ themes/               # THEMES — one folder = one theme
      all); `PaymentProcessorRegistry::availableFor(allowed)` = configured ∩ allowed — the one source
      for the form render (radios / hidden / "unavailable") and the submit (validate the chosen method,
      set `order.provider`). Keys live in Postavke (Stripe + PayPal sections), settings ?: env.
+   - **Dashboard deep-link:** `dashboardUrl(Order): ?string` (per processor, mode-aware) → an OrderCrud
+     detail-only action "Otvori u dashboardu plaćanja" (new tab; hidden when no PI). Stripe = a stable
+     per-payment link (`/test/payments/{pi}` vs `/payments/{pi}`); **PayPal has no reliable
+     per-transaction deep-link**, so it opens the (mode-correct) activity page and the capture id in the
+     detail is used for lookup (honest fallback).
    Order lifecycle is a Symfony **state_machine** workflow (`order`): `pending → paid → fulfilled →
    refunded`. Critical rules:
    - The **verified webhook is the SOLE source of truth for `paid`** — never the
