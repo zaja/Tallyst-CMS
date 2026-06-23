@@ -112,9 +112,8 @@ class OrderCrudController extends AbstractCrudController
         yield TextField::new('variantLabel', 'Varijanta');
         yield TextField::new('customerEmail', 'Kupac');
 
-        $money = static fn (?int $minor): string => null === $minor ? '—' : number_format($minor / 100, 2, ',', '.');
-        yield TextField::new('netAmountMinor', 'Neto')->formatValue($money)->onlyOnDetail();
-        yield TextField::new('taxAmountMinor', 'Porez')->formatValue($money)->onlyOnDetail();
+        yield TextField::new('netFormatted', 'Neto')->onlyOnDetail();
+        yield TextField::new('taxFormatted', 'Porez')->onlyOnDetail();
         yield TextField::new('taxRate', 'Stopa (%)')->onlyOnDetail();
         yield TextField::new('taxName', 'Naziv poreza')->onlyOnDetail();
         yield TextField::new('customerCountry', 'Država')->onlyOnDetail();

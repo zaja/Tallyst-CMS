@@ -330,6 +330,17 @@ class Order
         return number_format($this->amountMinor / 100, 2, ',', '.').' '.strtoupper($this->currency);
     }
 
+    /** Formatted net/tax for the admin detail (string getters — EA TextField rejects raw ints). */
+    public function getNetFormatted(): string
+    {
+        return null === $this->netAmountMinor ? '—' : number_format($this->netAmountMinor / 100, 2, ',', '.');
+    }
+
+    public function getTaxFormatted(): string
+    {
+        return null === $this->taxAmountMinor ? '—' : number_format($this->taxAmountMinor / 100, 2, ',', '.');
+    }
+
     /** Human-readable dump of the submitted form data, for the admin detail view. */
     public function getSubmissionSummary(): string
     {
