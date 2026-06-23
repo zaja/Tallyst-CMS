@@ -981,6 +981,17 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   public URL** (e.g. `https://tallyst.org`) so worker-rendered absolute links (password-reset link,
   etc.) aren't `http://localhost`. The Deployment Readiness Panel below is the eventual in-admin
   surface for these checks.
+- **⚠️ Webhook routes MUST bypass EVERY front-auth (RECURRING TRAP — hit more than once).**
+  `/webhook/stripe` + `/webhook/paypal` are server-to-server and verified by signature (Stripe HMAC /
+  PayPal offline cert-verify), so any nginx **Basic Auth / maintenance page / front auth** returns
+  **401 BEFORE Symfony** → the order stays **"U obradi" (pending)**, fulfilment never fires, **no mails**
+  (customer + admin), and `customerEmail` stays empty — all ONE cause. Go-live: `auth_basic off;` (or
+  equivalent) for those two routes in the nginx/CloudPanel config; if you use an IP allowlist instead,
+  keep the Stripe + PayPal webhook IP lists current (they go stale → 401 again).
+  - **SYMPTOM TRIAD (golden rule):** payment **SUCCEEDED on Stripe/PayPal's side** BUT the order is
+    **"U obradi"** in Tallyst → **check the webhook 401 FIRST** (nginx access log: `POST /webhook/... 401`;
+    the request is ABSENT from `dev.log` because it never reaches PHP). Don't hunt in code — the cause is
+    almost always front-auth / webhook config, not the app.
 
 ### Deployment Readiness Panel (Phase 3 — installer faza — NE gradi se sad)
 Admin "Sustav/Deployment" panel: operativni go-live status + generirani setup snippeti.
