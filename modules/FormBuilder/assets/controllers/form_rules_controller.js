@@ -212,8 +212,17 @@ export default class extends Controller {
         if ('radio' === type || 'select' === type) {
             const sel = document.createElement('select');
             sel.className = 'form-select form-select-sm';
-            sel.appendChild(option('', '— vrijednost —'));
             const opts = (selField && selField.options) || [];
+            if (0 === opts.length) {
+                // The value list is the referenced field's own options — none defined yet → say so.
+                const hint = option('', '— polje nema opcija —');
+                hint.disabled = true;
+                sel.appendChild(hint);
+                sel.disabled = true;
+                wrap.appendChild(sel);
+                return;
+            }
+            sel.appendChild(option('', '— vrijednost —'));
             for (const o of opts) sel.appendChild(option(o, o));
             if (realVal.value && !opts.includes(realVal.value)) sel.appendChild(option(realVal.value, realVal.value));
             sel.value = realVal.value;
