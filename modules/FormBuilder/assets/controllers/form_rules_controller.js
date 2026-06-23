@@ -214,11 +214,9 @@ export default class extends Controller {
             sel.className = 'form-select form-select-sm';
             const opts = (selField && selField.options) || [];
             if (0 === opts.length) {
-                // The value list is the referenced field's own options — none defined yet → say so.
-                const hint = option('', '— polje nema opcija —');
-                hint.disabled = true;
-                sel.appendChild(hint);
-                sel.disabled = true;
+                // The value list is the referenced field's own options — none defined → say so.
+                // (A single disabled option can render blank, so keep it a plain selected option.)
+                sel.appendChild(option('', '— polje nema opcija (dodaj ih ili koristi checkbox) —'));
                 wrap.appendChild(sel);
                 return;
             }
