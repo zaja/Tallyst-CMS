@@ -41,7 +41,8 @@ class PageCrudController extends AbstractCrudController
         yield ChoiceField::new('status', 'Status')
             ->setChoices(['Skica' => Page::STATUS_DRAFT, 'Objavljeno' => Page::STATUS_PUBLISHED])
             ->renderAsBadges([Page::STATUS_DRAFT => 'secondary', Page::STATUS_PUBLISHED => 'success']);
-        yield MediaPickerField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
+        // No featured image on Pages — the hero is a Page's image. The field stays on the entity
+        // (dormant) + renders null-safe in page.html.twig, so existing pages aren't affected.
         yield TiptapField::new('content', 'Sadržaj')->hideOnIndex();
         yield TextField::new('template', 'Predložak')->hideOnIndex()
             ->setHelp('Naziv theme predloška, npr. page.html.twig. Prazno = zadani.');
@@ -49,8 +50,8 @@ class PageCrudController extends AbstractCrudController
         yield TextareaField::new('metaDescription', 'Meta opis')->hideOnIndex();
         yield IntegerField::new('position', 'Pozicija')->hideOnIndex();
 
-        yield FormField::addFieldset('Hero')->setIcon('image')->collapsible()->renderCollapsed()
-            ->setHelp('Opcionalni hero s tekstom preko slike, na vrhu stranice. Prikazuje se samo kad je uključen i postavljena je slika ili naslov.');
+        yield FormField::addFieldset('Hero sekcija (opcionalno)')->setIcon('panorama')->collapsible()
+            ->setHelp('Hero s tekstom preko slike, na vrhu stranice. Prikazuje se samo kad je uključen i postavljena je slika ili naslov.');
         yield BooleanField::new('heroEnabled', 'Hero uključen')->hideOnIndex();
         yield MediaPickerField::new('heroImage', 'Hero slika')->hideOnIndex();
         yield TextField::new('heroTitle', 'Hero naslov')->hideOnIndex()

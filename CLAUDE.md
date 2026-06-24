@@ -251,6 +251,10 @@ This pass is intentionally scoped: **footer config, per-page hero, dark mode are
   it in the (theme-overridable) page/post templates, null-safe (`{% if x.featuredImage %}`).
   Why FK here but a loose Setting for the logo: featured is a per-entity relation where
   SET NULL gives real integrity; the logo is a global Setting (string by nature).
+  **Pages do NOT expose featuredImage in the edit form** (the per-page hero IS the Page's image —
+  featured would duplicate it). The column stays on `Page` (dormant, nullable) and `page.html.twig`
+  still renders it null-safe, so existing pages with a legacy featured image don't break. Posts +
+  Categories keep the featured field (no hero there → it's their list/archive thumbnail).
 - **`[image id=N size=medium align=left alt="..."]`** shortcode embeds a Media in
   content, mirroring `[form id=N]`. Missing/deleted id → nothing (a comment), never an
   error. `size` is whitelisted to defined Liip filters (medium default), `align` to a
@@ -268,6 +272,11 @@ This pass is intentionally scoped: **footer config, per-page hero, dark mode are
   admin) and robust (degrades to filename if the file/EXIF is unreadable; EXIF guarded by
   `function_exists`). Applies to every upload path (index bulk + modal). Backfill existing
   rows with `php8.5 bin/console app:media:backfill-meta` (touches only empty fields).
+- **Pixel dimensions** (`Media.width`/`height`, nullable int) are captured at upload from the SAME
+  `getimagesize` the metadata extractor already runs (no second read) and shown as `getDimensionsLabel()`
+  ("1920×1080 px") in the Media list + detail. Null-safe: non-image / unreadable → null → blank in the UI.
+  The backfill above ALSO fills dimensions for pre-existing rows (`findMissingMeta` matches
+  `width/height IS NULL`); idempotent, skips missing files.
 - **Reusable media-library component** (Stimulus, EA-shell, admin entrypoint):
   - Endpoints (Media module, under `^/admin` → ROLE_ADMIN, NOT EA-shell pages so no
     `dashboardControllerFqcn` default): `GET media_library_index` (`/admin/media/library`,

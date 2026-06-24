@@ -67,6 +67,7 @@ class MediaCrudController extends AbstractCrudController
             ->setHelp('Kopiraj u sadržaj stranice/objave.');
         yield TextField::new('alt', 'Alt tekst')->hideOnIndex();
         yield TextField::new('originalName', 'Datoteka')->hideOnForm();
+        yield TextField::new('dimensionsLabel', 'Dimenzije')->hideOnForm();
         yield TextField::new('mimeType', 'Tip')->onlyOnDetail();
         yield DateTimeField::new('createdAt', 'Dodano')->hideOnForm();
     }

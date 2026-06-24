@@ -18,7 +18,7 @@ use Tallyst\Media\Entity\Media;
  */
 class MediaMetadataExtractor
 {
-    /** Fill Media's empty title/alt from the file at $path (+ its original filename). */
+    /** Fill Media's empty title/alt + its pixel dimensions from the file at $path (+ original filename). */
     public function applyToMedia(Media $media, string $path, ?string $originalName): void
     {
         $meta = $this->extract($path, $originalName);
@@ -29,17 +29,26 @@ class MediaMetadataExtractor
         if ($this->isEmpty($media->getAlt()) && null !== $meta['alt']) {
             $media->setAlt($meta['alt']);
         }
+        // Dimensions are factual (not user input) → set whenever readable, so a re-upload/backfill
+        // refreshes them. A non-image / unreadable file leaves them null (graceful).
+        if (null !== $meta['width']) {
+            $media->setWidth($meta['width']);
+        }
+        if (null !== $meta['height']) {
+            $media->setHeight($meta['height']);
+        }
     }
 
     /**
-     * @return array{title: ?string, alt: ?string}
+     * @return array{title: ?string, alt: ?string, width: ?int, height: ?int}
      */
     public function extract(string $path, ?string $originalName): array
     {
         $iptcTitle = $iptcCaption = $exifDescription = null;
+        $width = $height = null;
 
         if ('' !== $path && is_file($path) && is_readable($path)) {
-            [$iptcTitle, $iptcCaption] = $this->iptc($path);
+            [$iptcTitle, $iptcCaption, $width, $height] = $this->imageData($path);
             $exifDescription = $this->exifDescription($path);
         }
 
@@ -48,26 +57,37 @@ class MediaMetadataExtractor
         return [
             'title' => $this->clean($iptcTitle) ?? $this->clean($exifDescription) ?? $fromName,
             'alt' => $this->clean($iptcCaption) ?? $this->clean($exifDescription) ?? $fromName,
+            'width' => $width,
+            'height' => $height,
         ];
     }
 
-    /** @return array{0: ?string, 1: ?string} [ObjectName, Caption] */
-    private function iptc(string $path): array
+    /**
+     * One getimagesize() yields BOTH the IPTC block AND the pixel dimensions — no second read.
+     *
+     * @return array{0: ?string, 1: ?string, 2: ?int, 3: ?int} [ObjectName, Caption, width, height]
+     */
+    private function imageData(string $path): array
     {
         try {
             $info = [];
             $size = @getimagesize($path, $info);
-            if (false === $size || !isset($info['APP13'])) {
-                return [null, null];
-            }
-            $iptc = @iptcparse($info['APP13']);
-            if (!\is_array($iptc)) {
-                return [null, null];
+            if (false === $size) {
+                return [null, null, null, null];
             }
 
-            return [$iptc['2#005'][0] ?? null, $iptc['2#120'][0] ?? null];
+            $width = isset($size[0]) && $size[0] > 0 ? (int) $size[0] : null;
+            $height = isset($size[1]) && $size[1] > 0 ? (int) $size[1] : null;
+
+            $iptcTitle = $iptcCaption = null;
+            if (isset($info['APP13']) && \is_array($iptc = @iptcparse($info['APP13']))) {
+                $iptcTitle = $iptc['2#005'][0] ?? null;
+                $iptcCaption = $iptc['2#120'][0] ?? null;
+            }
+
+            return [$iptcTitle, $iptcCaption, $width, $height];
         } catch (\Throwable) {
-            return [null, null];
+            return [null, null, null, null];
         }
     }
 

@@ -26,8 +26,9 @@ class MediaRepository extends ServiceEntityRepository
     /** @return Media[] */
     public function findMissingMeta(): array
     {
+        // Also picks rows missing pixel dimensions, so app:media:backfill-meta fills those too.
         return $this->createQueryBuilder('m')
-            ->where('m.title IS NULL OR m.title = :empty OR m.alt IS NULL OR m.alt = :empty')
+            ->where('m.title IS NULL OR m.title = :empty OR m.alt IS NULL OR m.alt = :empty OR m.width IS NULL OR m.height IS NULL')
             ->setParameter('empty', '')
             ->orderBy('m.id', 'ASC')
             ->getQuery()

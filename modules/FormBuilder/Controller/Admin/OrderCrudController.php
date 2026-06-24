@@ -85,6 +85,8 @@ class OrderCrudController extends AbstractCrudController
         return $actions
             ->disable(Action::NEW, Action::EDIT, Action::DELETE, Action::BATCH_DELETE)
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
+            // Make EA's built-in detail→index action an unmistakable "back to list" button.
+            ->update(Crud::PAGE_DETAIL, Action::INDEX, fn (Action $a): Action => $a->setLabel('Na popis')->setIcon('fa fa-arrow-left'))
             ->add(Crud::PAGE_INDEX, $markFulfilled)
             ->add(Crud::PAGE_DETAIL, $markFulfilled)
             ->add(Crud::PAGE_INDEX, $resend)

@@ -48,6 +48,13 @@ class Media
     #[ORM\Column(nullable: true)]
     private ?int $size = null;
 
+    /** Pixel dimensions — captured at upload (nullable: pre-backfill rows + non-image files). */
+    #[ORM\Column(nullable: true)]
+    private ?int $width = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $height = null;
+
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $mimeType = null;
 
@@ -123,6 +130,40 @@ class Media
         $this->size = $size;
 
         return $this;
+    }
+
+    public function getWidth(): ?int
+    {
+        return $this->width;
+    }
+
+    public function setWidth(?int $width): static
+    {
+        $this->width = $width;
+
+        return $this;
+    }
+
+    public function getHeight(): ?int
+    {
+        return $this->height;
+    }
+
+    public function setHeight(?int $height): static
+    {
+        $this->height = $height;
+
+        return $this;
+    }
+
+    /** "1920×1080 px" when both dimensions are known, else null (pre-backfill / non-image). */
+    public function getDimensionsLabel(): ?string
+    {
+        if (null === $this->width || null === $this->height) {
+            return null;
+        }
+
+        return $this->width.'×'.$this->height.' px';
     }
 
     public function getMimeType(): ?string
