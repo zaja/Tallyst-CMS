@@ -1,5 +1,9 @@
 import { Controller } from '@hotwired/stimulus';
-import Chart from 'chart.js/auto';
+// Import from the mapped 'chart.js' (tree-shakeable core) and register all components ourselves —
+// the 'chart.js/auto' convenience subpath is NOT a resolvable importmap specifier under AssetMapper.
+import { Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 /*
  * Revenue chart for the admin dashboard. The server sends ~13 months of DAILY revenue (minor units,
