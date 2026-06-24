@@ -40,6 +40,7 @@ class DashboardController extends AbstractDashboardController
                 'version' => $module->getVersion(),
                 'description' => $module->getDescription(),
                 'enabled' => $this->moduleState->isEnabled($module->getName()),
+                'core' => $module->isCore(),
             ];
         }
 
@@ -54,8 +55,16 @@ class DashboardController extends AbstractDashboardController
             throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
 
-        if (null === $this->modules->get($name)) {
+        $module = $this->modules->get($name);
+        if (null === $module) {
             throw $this->createNotFoundException(\sprintf('Module "%s" not found.', $name));
+        }
+
+        // Core modules can't be disabled — reject even a direct/forged request (UI hides the toggle too).
+        if ($module->isCore()) {
+            $this->addFlash('warning', \sprintf('Modul "%s" je dio jezgre i ne može se isključiti.', $module->getLabel()));
+
+            return $this->redirectToRoute('admin_modules');
         }
 
         $this->moduleState->setEnabled($name, !$this->moduleState->isEnabled($name));

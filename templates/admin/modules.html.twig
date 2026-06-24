@@ -27,21 +27,27 @@
                         </td>
                         <td>{{ module.version }}</td>
                         <td>
-                            {% if module.enabled %}
+                            {% if module.core %}
+                                <span class="badge badge-info">Core</span>
+                            {% elseif module.enabled %}
                                 <span class="badge badge-success">Uključen</span>
                             {% else %}
                                 <span class="badge badge-secondary">Isključen</span>
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            <form method="post" action="{{ path('admin_modules_toggle', {name: module.name}) }}" class="d-inline">
-                                <input type="hidden" name="_token" value="{{ csrf_token('toggle-module-' ~ module.name) }}">
-                                {% if module.enabled %}
-                                    <button class="btn btn-sm btn-outline-danger" type="submit">Isključi</button>
-                                {% else %}
-                                    <button class="btn btn-sm btn-primary" type="submit">Uključi</button>
-                                {% endif %}
-                            </form>
+                            {% if module.core %}
+                                <span class="text-muted small">Dio jezgre — ne može se isključiti</span>
+                            {% else %}
+                                <form method="post" action="{{ path('admin_modules_toggle', {name: module.name}) }}" class="d-inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('toggle-module-' ~ module.name) }}">
+                                    {% if module.enabled %}
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">Isključi</button>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-primary" type="submit">Uključi</button>
+                                    {% endif %}
+                                </form>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

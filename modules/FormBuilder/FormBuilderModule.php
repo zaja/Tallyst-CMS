@@ -32,6 +32,11 @@ class FormBuilderModule implements AdminModuleInterface
         return 'Gradnja formi s uvjetnom logikom; [form id=N] pretvara sadržaj stranice u formu.';
     }
 
+    public function isCore(): bool
+    {
+        return true; // mandatory: orders/payments/webhooks + the [form] shortcode depend on it
+    }
+
     public function getAdminMenuItems(): iterable
     {
         // Form management + orders are admin-only (the controllers carry

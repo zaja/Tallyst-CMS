@@ -3,7 +3,10 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Theme;
+use App\Theme\ThemeDeletionGuard;
 use Doctrine\ORM\EntityManagerInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
@@ -13,9 +16,33 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 class ThemeCrudController extends AbstractCrudController
 {
+    public function __construct(private readonly ThemeDeletionGuard $guard)
+    {
+    }
+
     public static function getEntityFqcn(): string
     {
         return Theme::class;
+    }
+
+    public function configureActions(Actions $actions): Actions
+    {
+        $hideWhenBlocked = fn (Action $a): Action => $a->displayIf(fn (Theme $t): bool => null === $this->guard->blockDelete($t));
+
+        return $actions
+            ->update(Crud::PAGE_INDEX, Action::DELETE, $hideWhenBlocked)
+            ->update(Crud::PAGE_DETAIL, Action::DELETE, $hideWhenBlocked);
+    }
+
+    public function deleteEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        if ($entityInstance instanceof Theme && null !== ($msg = $this->guard->blockDelete($entityInstance))) {
+            $this->addFlash('danger', $msg);
+
+            return; // no remove/flush — the theme stays
+        }
+
+        parent::deleteEntity($entityManager, $entityInstance);
     }
 
     public function configureCrud(Crud $crud): Crud

@@ -24,4 +24,11 @@ interface ModuleInterface
     public function getVersion(): string;
 
     public function getDescription(): string;
+
+    /**
+     * Core modules are mandatory infrastructure (FormBuilder, Media) and CANNOT be disabled — the
+     * module declares this itself (no hardcoded list). The state manager treats core as
+     * always-enabled and the admin offers no disable toggle for it.
+     */
+    public function isCore(): bool;
 }

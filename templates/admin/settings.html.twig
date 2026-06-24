@@ -13,7 +13,7 @@
         </div>
     {% endif %}
 
-    {{ form_start(form) }}
+    {{ form_start(form, {attr: {'data-dirty-guard': ''}}) }}
     <ul class="nav nav-tabs mb-3" role="tablist">
         {% for section in sections %}
             <li class="nav-item" role="presentation">

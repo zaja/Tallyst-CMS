@@ -5,6 +5,8 @@ namespace App\Controller\Admin;
 use App\Entity\User;
 use App\Security\AdminLockoutGuard;
 use Doctrine\ORM\EntityManagerInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
@@ -50,6 +52,17 @@ class UserCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('Korisnik')
             ->setEntityLabelInPlural('Korisnici')
             ->setDefaultSort(['email' => 'ASC']);
+    }
+
+    public function configureActions(Actions $actions): Actions
+    {
+        // UI level of the lockout guard: hide Delete when the server would block it (self / last
+        // admin). Server-side enforcement stays in deleteEntity (mirrors blockDelete exactly).
+        $hideWhenBlocked = fn (Action $a): Action => $a->displayIf(fn (User $u): bool => null === $this->guard->blockDelete($u));
+
+        return $actions
+            ->update(Crud::PAGE_INDEX, Action::DELETE, $hideWhenBlocked)
+            ->update(Crud::PAGE_DETAIL, Action::DELETE, $hideWhenBlocked);
     }
 
     public function configureFields(string $pageName): iterable

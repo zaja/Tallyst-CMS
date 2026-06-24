@@ -32,6 +32,11 @@ class MediaModule implements AdminModuleInterface
         return 'Upload i upravljanje slikama (thumbnaili), logo/branding.';
     }
 
+    public function isCore(): bool
+    {
+        return true; // foundational: uploads, thumbnails, the Tiptap editor + featured images depend on it
+    }
+
     public function getAdminMenuItems(): iterable
     {
         // "Mediji" (the media library) is content — visible to ROLE_EDITOR. Branding (logo +

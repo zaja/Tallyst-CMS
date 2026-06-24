@@ -7,15 +7,25 @@ use App\Repository\SettingRepository;
 /**
  * Persists each module's enabled/disabled state in the Setting store (not in code),
  * keyed as `module.<name>.enabled`. Modules are enabled by default until disabled.
+ *
+ * CORE modules (FormBuilder, Media) are ALWAYS enabled — they declare `isCore()` and can't be
+ * disabled. isEnabled() ignores any stored flag for them, so a legacy `'0'` (set before the guard)
+ * self-heals and a core module can never be stuck hidden from the admin menu / editor.
  */
 class ModuleStateManager
 {
-    public function __construct(private readonly SettingRepository $settings)
-    {
+    public function __construct(
+        private readonly SettingRepository $settings,
+        private readonly ModuleRegistry $modules,
+    ) {
     }
 
     public function isEnabled(string $name): bool
     {
+        if (true === $this->modules->get($name)?->isCore()) {
+            return true;
+        }
+
         return '0' !== $this->settings->get($this->key($name), '1');
     }
 

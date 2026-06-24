@@ -4,3 +4,4 @@
  * front-end styles. Wired into EasyAdmin via DashboardController::configureAssets().
  */
 import './stimulus_bootstrap.js';
+import './admin_dirty_guard.js';

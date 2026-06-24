@@ -9,7 +9,7 @@
        variants). No data model / flag — the toggle just reveals/hides; see form_type_controller.js. #}
     {% set isProduct = form.vars.value.isProduct() %}
     <div data-controller="formbuilder--builder formbuilder--formtype">
-        {{ form_start(form) }}
+        {{ form_start(form, {attr: {'data-dirty-guard': ''}}) }}
 
         {# Osnovno #}
         <div class="card mb-3 fb-card">

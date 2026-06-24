@@ -735,8 +735,25 @@ access automatically and are never demoted.
   (Administrator/Urednik). The password field is **form-only + unmapped**, hashed via a
   `POST_SUBMIT` listener (the EA recipe) — blank on edit = unchanged, plaintext never persisted.
 - **Lockout protection** (`AdminLockoutGuard`): you can't delete or demote the **last admin**,
-  nor remove **your own** admin role. Enforced in `updateEntity`/`deleteEntity` as
-  redirect+flash (skip `parent::` → no flush) — never a 500, never the dangerous mutation.
+  nor remove **your own** admin role. Enforced server-side in `updateEntity`/`deleteEntity` as
+  redirect+flash (skip `parent::` → no flush) — never a 500, never the dangerous mutation. **UI level:**
+  `UserCrudController::configureActions` hides the Delete action when `blockDelete` would block it
+  (`displayIf`), mirroring the server rule (role-strip stays server-only — can't hide an in-form field).
+- **Integrity guards (same class — don't let the admin break the app):** beyond the admin lockout,
+  (1) **`ThemeDeletionGuard`** blocks deleting the **active** or the **only** theme
+  (`ThemeCrudController::deleteEntity` flash+abort + `configureActions` hides Delete); (2) **core modules
+  can't be disabled** — `ModuleInterface::isCore()` (FormBuilder + Media return true), `toggleModule`
+  rejects a core toggle even on a forged request, the "Instalirani moduli" page shows a "Core" badge with
+  no Isključi button, and `ModuleStateManager::isEnabled()` treats core as always-enabled (self-heals a
+  legacy `'0'`). NOTE: disabling a module is SHALLOW — it only hides that module's admin menu items +
+  editor toolbar button; routes/services/entities/shortcodes/webhooks come from the always-loaded bundle
+  and keep working. So a disabled core module just made the admin LOOK broken — hence the ban.
+- **Unsaved-changes guard** (`assets/admin_dirty_guard.js`, admin entrypoint): warns before leaving a
+  dirty edit/new form. **Turbo-aware** (admin runs Turbo Drive) → both `beforeunload` (close/reload) AND
+  `turbo:before-visit` (in-app nav). Dirty = serialize-and-compare against a snapshot taken AFTER
+  controllers settle (NOT raw input events — Tiptap/form-builder mutate inputs on connect → false dirty).
+  Covers EA crud forms via `body.ea-edit`/`ea-new` + custom forms tagged `data-dirty-guard`; submit /
+  `turbo:submit-start` suppresses the warning on save.
 - **`app:user:create --role`** defaults to ROLE_ADMIN (bootstrap admin) and rejects anything
   other than ROLE_ADMIN/ROLE_EDITOR.
 - **Forgot-password** = SymfonyCasts ResetPasswordBundle. Flow lives under **`/admin/reset-password`**
