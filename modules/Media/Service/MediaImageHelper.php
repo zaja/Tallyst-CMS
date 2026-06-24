@@ -40,7 +40,7 @@ class MediaImageHelper
     /**
      * Safe <img> for a media, or '' when there's nothing to render.
      */
-    public function img(?Media $media, string $filter = self::DEFAULT_FILTER, ?string $altOverride = null, ?string $align = null): string
+    public function img(?Media $media, string $filter = self::DEFAULT_FILTER, ?string $altOverride = null, ?string $align = null, ?string $width = null): string
     {
         if (null === $media) {
             return '';
@@ -54,7 +54,10 @@ class MediaImageHelper
         $alt = $altOverride ?? $media->getAlt() ?? $media->getTitle() ?? '';
 
         $classes = ['media-img'];
-        if (null !== $align && isset(self::ALIGN_CLASSES[$align])) {
+        // Full width takes precedence over float-align (a 100%-wide floated image makes no sense).
+        if ('full' === $width) {
+            $classes[] = 'media-img-full';
+        } elseif (null !== $align && isset(self::ALIGN_CLASSES[$align])) {
             $classes[] = self::ALIGN_CLASSES[$align];
         }
 

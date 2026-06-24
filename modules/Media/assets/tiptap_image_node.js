@@ -31,6 +31,11 @@ export const TallystImage = Image.extend({
                 parseHTML: (el) => el.getAttribute('data-align'),
                 renderHTML: (attrs) => (attrs.align ? { 'data-align': attrs.align } : {}),
             },
+            width: {
+                default: null,
+                parseHTML: (el) => el.getAttribute('data-width'),
+                renderHTML: (attrs) => (attrs.width ? { 'data-width': attrs.width } : {}),
+            },
         };
     },
 

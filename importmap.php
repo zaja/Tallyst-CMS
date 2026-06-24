@@ -80,4 +80,5 @@ return [
     'prosemirror-view/style/prosemirror.min.css' => ['version' => '1.41.9', 'type' => 'css'],
     'rope-sequence' => ['version' => '1.3.4'],
     'prosemirror-gapcursor/style/gapcursor.min.css' => ['version' => '1.4.1', 'type' => 'css'],
+    'sortablejs' => ['version' => '1.15.7'],
 ];

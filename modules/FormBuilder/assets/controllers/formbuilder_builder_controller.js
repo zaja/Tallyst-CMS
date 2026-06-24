@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import Sortable from 'sortablejs';
 
 /*
  * Admin builder UX: add/remove/reorder collection rows (fields and, nested within
@@ -7,8 +8,32 @@ import { Controller } from '@hotwired/stimulus';
  * running index, so the same `add` action serves both levels via the nearest
  * [data-fb-collection] ancestor. Field rows are collapsed by default (CSS); the row's
  * clickable summary toggles, and the label/type summary stays in sync as you edit.
+ *
+ * Field reorder is drag-drop (SortableJS, touch + mouse, via the .fb-handle grip) AND the
+ * ↑/↓ arrows (kept as an accessible / no-Sortable fallback). Both just reorder the DOM and
+ * call renumber() to rewrite the position inputs — the save mechanism is unchanged. Init does
+ * NOT mutate inputs, so it never false-triggers the unsaved-changes guard on load.
  */
 export default class extends Controller {
+    connect() {
+        // Drag-drop only the FIELDS collection (variants/rules out of scope). Newly-added rows
+        // are draggable automatically since Sortable watches the container.
+        const items = this.element.querySelector('[data-fb-collection][data-fb-level="fields"] > [data-fb-items]');
+        if (items) {
+            this.sortable = Sortable.create(items, {
+                handle: '.fb-handle',
+                animation: 150,
+                ghostClass: 'fb-row-ghost',
+                onEnd: () => this.renumber(items.closest('[data-fb-collection]')),
+            });
+        }
+    }
+
+    disconnect() {
+        this.sortable?.destroy();
+        this.sortable = null;
+    }
+
     add(event) {
         const collection = event.currentTarget.closest('[data-fb-collection]');
         const items = collection.querySelector(':scope > [data-fb-items]');

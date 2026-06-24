@@ -255,10 +255,16 @@ This pass is intentionally scoped: **footer config, per-page hero, dark mode are
   featured would duplicate it). The column stays on `Page` (dormant, nullable) and `page.html.twig`
   still renders it null-safe, so existing pages with a legacy featured image don't break. Posts +
   Categories keep the featured field (no hero there → it's their list/archive thumbnail).
-- **`[image id=N size=medium align=left alt="..."]`** shortcode embeds a Media in
+- **`[image id=N size=medium align=left width=full alt="..."]`** shortcode embeds a Media in
   content, mirroring `[form id=N]`. Missing/deleted id → nothing (a comment), never an
   error. `size` is whitelisted to defined Liip filters (medium default), `align` to a
   fixed CSS class, `alt` is escaped — no arbitrary attribute reaches the `<img>`.
+  **`width`** is per-image (only `full` is special, else normal): `full` renders the `.media-img-full`
+  class (full container width) from the **larger `hero` source** so a 100%-wide image isn't an
+  upscaled-blurry medium, and full takes precedence over `align`. Default (absent) = normal → existing
+  images unchanged. Set it in the editor via the toolbar **"Slika: puna širina"** toggle
+  (`media--tiptap#toggleImageWidth` → toggles the selected image node's `width`; `data-width` round-trips
+  through `ImageShortcodeHtmlConverter`).
 - **One place builds the `<img>`:** `MediaImageHelper` (`media_img()` Twig fn) — used
   by branding, featured images AND the shortcode. Change image markup/escaping there.
 - **One place validates+persists an upload:** `MediaUploader::upload(UploadedFile)` is the
@@ -363,6 +369,13 @@ themes/               # THEMES — one folder = one theme
      sync as you type (`refreshSummary`/`updateSummary`) and auto-expands a freshly ADDED
      field; a field with a validation error renders expanded so the error is visible. Pure
      presentation — no data-model/submit change. Builder CSS is inline in `edit.html.twig`.
+   - **Field reorder = drag-drop (SortableJS, touch + mouse) AND ↑/↓ arrows.** `formbuilder--builder`
+     `connect()` inits `Sortable` on the FIELDS items container (`handle: '.fb-handle'` grip,
+     `ghostClass: 'fb-row-ghost'`); `onEnd` reuses the existing `renumber()` to rewrite the
+     `[data-fb-position]` inputs — identical save path to the arrows (kept as an accessible / no-Sortable
+     fallback). SortableJS via importmap (`importmap.php`; `assets/vendor/` fetched at deploy). Init never
+     mutates inputs → no false dirty-form trigger; new rows are draggable automatically. Drag is FIELDS-only
+     (variants/rules still arrows-only). `disconnect()` destroys the instance.
    - **Edit screen is GROUPED into cards** (Osnovno / Tip forme / Naplata "samo proizvod" /
      Obavijesti / Polja forme), one template for new + edit. A **UI-ONLY "Tip forme" toggle**
      (`formbuilder--formtype`, buttons — nothing submitted, no entity flag) shows/hides Naplata
@@ -504,9 +517,9 @@ Replaces the old Trix `TextEditorField` on Page/Post.
   `EditorShortcodeConverterInterface` (auto-tagged `app.editor_shortcode_converter`, like
   `ShortcodeInterface`); `EditorContentConverter` aggregates every tagged converter and
   `TiptapType` depends only on that Core aggregator. Each module supplies its own:
-  - Media → `ImageShortcodeHtmlConverter`: `[image id=N size align alt]` ⇄
+  - Media → `ImageShortcodeHtmlConverter`: `[image id=N size align width alt]` ⇄
     `<img data-tallyst-image data-id=N …>` (forward resolves the Liip URL via
-    `MediaImageHelper`; null-safe — deleted Media → empty src, id kept).
+    `MediaImageHelper`; null-safe — deleted Media → empty src, id kept; `data-width` round-trips).
   - FormBuilder → `FormShortcodeHtmlConverter`: `[form id=N]` ⇄
     `<div data-tallyst-form data-id=N data-label=…>` card (null-safe label "Forma #N").
   Each converter touches ONLY its disjoint pattern, so the chain is **order-independent**

@@ -59,6 +59,12 @@
     border-radius: 4px;
 }
 
+/* Full-width image: preview reflects the front render so the toggle gives instant feedback. */
+.tiptap__editor .ProseMirror img[data-width="full"] {
+    display: block;
+    width: 100%;
+}
+
 .tiptap__editor .ProseMirror img.ProseMirror-selectednode {
     outline: 2px solid var(--bs-primary, #0d6efd);
 }

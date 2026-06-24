@@ -74,6 +74,11 @@ ok(!/style=/.test(out), 'inline style attribute dropped');
 // --- Image node survives its OWN round-trip (so PHP can convert it back) ---
 const imgOnly = roundTrip('<img data-tallyst-image data-id="7" data-size="medium" src="/y.jpg" alt="A">');
 ok(imgOnly.includes('data-id="7"') && imgOnly.includes('data-tallyst-image'), 'standalone image node round-trips');
+ok(!imgOnly.includes('data-width'), 'an image without a width attribute stays width-less (default normal)');
+
+// --- Per-image full width survives the round-trip ---
+const fullImg = roundTrip('<img data-tallyst-image data-id="8" data-width="full" src="/z.jpg" alt="B">');
+ok(fullImg.includes('data-width="full"') && fullImg.includes('data-id="8"'), 'full-width image round-trips (data-width preserved)');
 
 // --- Toolbar gating: the form button shows only when FormBuilder is enabled ---
 ok(editorToolbarExtensions(['media', 'form_builder']).some((t) => t.label.includes('Forma')),

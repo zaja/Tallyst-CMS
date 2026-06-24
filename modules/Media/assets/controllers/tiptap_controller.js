@@ -101,6 +101,19 @@ export default class extends Controller {
         this.libraryTarget.dispatchEvent(new CustomEvent('media-library:open'));
     }
 
+    /**
+     * Toggle the SELECTED image between normal and full-container width (per-image). No-op when
+     * no image is selected. Feedback is immediate via the editor preview (data-width="full" CSS);
+     * the PHP converter stores it as [image … width=full].
+     */
+    toggleImageWidth() {
+        if (!this.editor.isActive('image')) {
+            return;
+        }
+        const current = this.editor.getAttributes('image').width;
+        this.editor.chain().focus().updateAttributes('image', { width: 'full' === current ? null : 'full' }).run();
+    }
+
     columns2() { this.insertColumns(2); }
     columns3() { this.insertColumns(3); }
 

@@ -472,6 +472,8 @@ th { font-weight: 650; }
 .media-align-left  { float: left;  margin: var(--s-1) var(--s-5) var(--s-4) 0; max-width: 50%; }
 .media-align-right { float: right; margin: var(--s-1) 0 var(--s-4) var(--s-5); max-width: 50%; }
 .media-align-center { display: block; margin: var(--s-5) auto; }
+/* Per-image full width: spans the full content container (rendered from the larger 'hero' source). */
+.media-img-full { display: block; width: 100%; height: auto; margin: var(--s-6) 0; }
 
 /* ------------------------------------------------ Multi-column layout --- */
 /* THEME CONTRACT (Prolaz C). Content stored as

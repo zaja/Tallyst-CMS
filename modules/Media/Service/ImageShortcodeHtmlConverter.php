@@ -50,15 +50,17 @@ class ImageShortcodeHtmlConverter implements EditorShortcodeConverterInterface
             $size = isset($attrs['size']) ? (string) $attrs['size'] : 'medium';
             $align = isset($attrs['align']) ? (string) $attrs['align'] : '';
             $alt = isset($attrs['alt']) ? (string) $attrs['alt'] : (null !== $media ? ($media->getAlt() ?? '') : '');
+            $width = isset($attrs['width']) ? (string) $attrs['width'] : '';
             // null-safe: a deleted Media yields an empty src but keeps data-id, so the
             // shortcode is preserved on save (and the front stays null-safe too).
             $src = null !== $media ? ($this->images->url($media->getImageName(), $size) ?? '') : '';
 
             return \sprintf(
-                '<img data-tallyst-image="" data-id="%d" data-size="%s" data-align="%s" src="%s" alt="%s">',
+                '<img data-tallyst-image="" data-id="%d" data-size="%s" data-align="%s" data-width="%s" src="%s" alt="%s">',
                 $id,
                 $this->esc($size),
                 $this->esc($align),
+                $this->esc($width),
                 $this->esc($src),
                 $this->esc($alt),
             );
@@ -84,11 +86,12 @@ class ImageShortcodeHtmlConverter implements EditorShortcodeConverterInterface
                 $this->attr($tag, 'data-size'),
                 $this->attr($tag, 'data-align'),
                 $this->attr($tag, 'alt'),
+                $this->attr($tag, 'data-width'),
             );
         }, $html) ?? $html;
     }
 
-    private function buildShortcode(int $id, string $size, string $align, string $alt): string
+    private function buildShortcode(int $id, string $size, string $align, string $alt, string $width = ''): string
     {
         $out = '[image id='.$id;
         // 'medium' is the shortcode default — omit it to keep stored content clean.
@@ -97,6 +100,10 @@ class ImageShortcodeHtmlConverter implements EditorShortcodeConverterInterface
         }
         if ('' !== $align) {
             $out .= ' align='.$align;
+        }
+        // Only 'full' is meaningful — 'normal'/empty is the default, omitted to keep content clean.
+        if ('full' === $width) {
+            $out .= ' width=full';
         }
         $alt = html_entity_decode($alt, \ENT_QUOTES);
         if ('' !== $alt) {

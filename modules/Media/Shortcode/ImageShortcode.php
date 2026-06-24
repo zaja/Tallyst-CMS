@@ -43,7 +43,12 @@ class ImageShortcode implements ShortcodeInterface
         $size = isset($attributes['size']) ? (string) $attributes['size'] : 'medium';
         $align = isset($attributes['align']) ? (string) $attributes['align'] : null;
         $alt = isset($attributes['alt']) ? (string) $attributes['alt'] : null;
+        $width = isset($attributes['width']) ? (string) $attributes['width'] : null;
 
-        return $this->images->img($media, $size, $alt, $align);
+        // Full-width renders from the larger 'hero' source so a 100%-wide image isn't an
+        // upscaled-blurry medium (600px). Anything but 'full' is normal width.
+        $filter = 'full' === $width ? 'hero' : $size;
+
+        return $this->images->img($media, $filter, $alt, $align, $width);
     }
 }

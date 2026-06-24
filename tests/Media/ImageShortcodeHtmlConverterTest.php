@@ -55,6 +55,13 @@ class ImageShortcodeHtmlConverterTest extends TestCase
         self::assertStringContainsString('/media/cache/thumb/media/uploads/photo.jpg', $html);
     }
 
+    public function testForwardPreservesFullWidth(): void
+    {
+        $html = $this->converter($this->media())->toEditorHtml('[image id=5 width=full]');
+
+        self::assertStringContainsString('data-width="full"', $html);
+    }
+
     public function testForwardLeavesOtherContentAndFormShortcodeUntouched(): void
     {
         $in = '<p>Tekst</p>[form id=2]<h2>Naslov</h2>';
@@ -81,6 +88,16 @@ class ImageShortcodeHtmlConverterTest extends TestCase
         self::assertSame('[image id=5]', $this->converter(null)->toStored($img));
     }
 
+    public function testReverseEmitsFullWidthAndOmitsNormal(): void
+    {
+        $full = '<img data-tallyst-image data-id="5" data-width="full" src="/x.jpg" alt="">';
+        self::assertSame('[image id=5 width=full]', $this->converter(null)->toStored($full));
+
+        // Empty/normal width is the default — never written.
+        $normal = '<img data-tallyst-image data-id="5" data-width="" src="/x.jpg" alt="">';
+        self::assertSame('[image id=5]', $this->converter(null)->toStored($normal));
+    }
+
     public function testReverseLeavesPlainImgAndTextUntouched(): void
     {
         $in = '<p>Tekst</p><img src="/other.jpg">[form id=2]';
@@ -92,6 +109,7 @@ class ImageShortcodeHtmlConverterTest extends TestCase
     {
         yield 'id only' => ['[image id=5]'];
         yield 'with size+align+alt' => ['[image id=5 size=thumb align=left alt="Pozdrav"]'];
+        yield 'full width' => ['[image id=5 width=full]'];
         yield 'inline among text' => ['<p>Prije</p>[image id=5]<p>[form id=2] poslije</p>'];
     }
 
@@ -121,5 +139,24 @@ class ImageShortcodeHtmlConverterTest extends TestCase
         $front = $renderer->render($shortcode);
 
         self::assertSame($images->img($media, 'thumb', 'Pozdrav', 'left'), $front);
+    }
+
+    /** Full width on the front: rendered from the larger 'hero' source with the .media-img-full class. */
+    public function testFullWidthRendersAtHeroWithFullClass(): void
+    {
+        $media = $this->media('photo.jpg', 'Alt');
+        $repo = $this->createStub(MediaRepository::class);
+        $repo->method('find')->willReturn($media);
+        $images = new MediaImageHelper();
+
+        $img = '<img data-tallyst-image data-id="5" data-width="full" alt="Pozdrav" src="/x.jpg">';
+        $shortcode = (new ImageShortcodeHtmlConverter($repo, $images))->toStored($img);
+        self::assertSame('[image id=5 width=full alt="Pozdrav"]', $shortcode);
+
+        $front = (new ContentRenderer(new ShortcodeRegistry([new ImageShortcode($repo, $images)])))->render($shortcode);
+
+        self::assertStringContainsString('media-img-full', $front);
+        self::assertStringContainsString('/media/cache/hero/', $front, 'full width renders from the hero source (not blurry medium)');
+        self::assertSame($images->img($media, 'hero', 'Pozdrav', null, 'full'), $front);
     }
 }
