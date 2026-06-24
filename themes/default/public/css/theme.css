@@ -501,9 +501,12 @@ th { font-weight: 650; }
 
 /* Live dropdown under the header field. */
 .live-search-dropdown {
-    position: absolute; top: calc(100% + 4px); right: 0; left: 0; z-index: 50;
+    /* Anchored to the field's right edge and grown leftward, so a wide dropdown never spills off-screen
+       on the right; capped to the viewport on the left. */
+    position: absolute; top: calc(100% + 4px); right: 0; left: auto; z-index: 50;
+    width: max-content; min-width: 24rem; max-width: min(28rem, 92vw);
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    box-shadow: var(--shadow); overflow: hidden; min-width: 16rem;
+    box-shadow: var(--shadow); overflow: hidden;
 }
 .live-search-item {
     display: block; padding: var(--s-2) var(--s-3); text-decoration: none; color: var(--ink);
@@ -514,7 +517,7 @@ th { font-weight: 650; }
     flex: none; font-size: .68rem; text-transform: uppercase; letter-spacing: .03em;
     color: var(--brand-strong); background: var(--brand-tint); padding: .05rem var(--s-1); border-radius: 999px;
 }
-.live-search-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-search-title { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-search-snippet {
     color: var(--muted); font-size: var(--fs-sm); margin-top: 2px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
