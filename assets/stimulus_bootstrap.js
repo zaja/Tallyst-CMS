@@ -9,6 +9,7 @@ import MediaPickerController from '../modules/Media/assets/controllers/media_pic
 import MediaBulkUploadController from '../modules/Media/assets/controllers/media_bulk_upload_controller.js';
 import MediaTiptapController from '../modules/Media/assets/controllers/tiptap_controller.js';
 import EmailEditorController from './controllers/email_editor_controller.js';
+import SearchLiveController from './controllers/search_live_controller.js';
 import { registerEditorExtension } from '../modules/Media/assets/tiptap_extensions.js';
 import { FormEmbed } from '../modules/FormBuilder/assets/tiptap_form_node.js';
 import { openFormPicker } from '../modules/FormBuilder/assets/form_picker.js';
@@ -43,3 +44,6 @@ app.register('media--tiptap', MediaTiptapController);
 
 // App-level: Tiptap-lite editor for email template bodies (Pass 2). Raw HTML, no converter.
 app.register('email-editor', EmailEditorController);
+
+// Front: live search dropdown under the header field (front 'app' entrypoint).
+app.register('search--live', SearchLiveController);

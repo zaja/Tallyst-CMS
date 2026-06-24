@@ -24,9 +24,17 @@
             </button>
             {{ render_menu('main') }}
             {% if setting('search_enabled') %}
-                <form class="site-search" role="search" method="get" action="{{ path('search') }}">
-                    <input type="search" name="q" placeholder="Pretraži…" aria-label="Pretraži" value="{{ app.request.query.get('q') }}">
+                {# Live dropdown is progressive enhancement — without JS the form still submits to /pretraga. #}
+                <form class="site-search" role="search" method="get" action="{{ path('search') }}"
+                      data-controller="search--live"
+                      data-search--live-url-value="{{ path('search_live') }}"
+                      data-action="keydown->search--live#keydown">
+                    <input type="search" name="q" placeholder="Pretraži…" aria-label="Pretraži" autocomplete="off"
+                           value="{{ app.request.query.get('q') }}"
+                           data-search--live-target="input"
+                           data-action="input->search--live#onInput">
                     <button type="submit" aria-label="Traži">🔍</button>
+                    <div class="live-search-dropdown" role="listbox" data-search--live-target="dropdown" hidden></div>
                 </form>
             {% endif %}
         </div>

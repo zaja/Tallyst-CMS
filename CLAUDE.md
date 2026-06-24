@@ -798,6 +798,17 @@ theme `search.html.twig`).
   (bookmarks/direct links don't break — only the UI field is gated). NOT on the maintenance exempt list
   (it's a visitor feature → goes behind maintenance with the rest of the site). Locked by
   `tests/Functional/SearchTest` (ranking, draft-exclusion, short/empty, XSS-escape).
+- **Live dropdown (instant results):** `GET /pretraga/live` → JSON `{results:[{title,type,url}]}`, reuses
+  `SearchService::search($q, 5)` (same sanitisation; no snippet). Gated on the same `search_enabled`
+  (off → `{results:[]}`, no 404 — the field is hidden anyway). `search--live` Stimulus controller
+  (registered in `stimulus_bootstrap`, boots on the front via `app.js`) on the header form: **debounce
+  250ms**, **min 3 chars**, **race guard** (AbortController cancels in-flight + a monotonic `seq` drops
+  stale responses), **XSS-safe render via `textContent`/`el.href` — never innerHTML**, close on
+  Escape/click-outside (listener bound in `connect`, removed in `disconnect` → Turbo-safe), arrow+Enter
+  keyboard nav, "Prikaži sve →" footer → `/pretraga`. Progressive enhancement: no JS → the form still
+  submits to `/pretraga`. **Theme contract:** the header form renders `data-controller="search--live"` +
+  input/dropdown targets (like nav.js). Locked by `tests/Functional/SearchLiveTest` (top-5 cap,
+  draft-excluded, JSON shape, XSS, short, toggle-off).
 
 ## Roles & access (back-office)
 Two roles: **ROLE_ADMIN** (everything) and **ROLE_EDITOR** (content only — Pages, Posts,

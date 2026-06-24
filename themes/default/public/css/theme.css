@@ -476,7 +476,7 @@ th { font-weight: 650; }
 .media-img-full { display: block; width: 100%; height: auto; margin: var(--s-6) 0; }
 
 /* ---- Search (header field + results) ---- */
-.site-search { display: flex; align-items: center; gap: var(--s-1); }
+.site-search { position: relative; display: flex; align-items: center; gap: var(--s-1); }
 .site-search input[type="search"] {
     font: inherit; color: var(--ink); background: var(--surface);
     border: 1px solid var(--line); border-radius: var(--radius);
@@ -498,6 +498,29 @@ th { font-weight: 650; }
 .search-result-title { display: block; font-weight: 600; font-size: 1.1rem; }
 .search-snippet { color: var(--muted); margin: var(--s-1) 0 0; }
 .search-snippet mark { background: var(--brand-tint); color: inherit; padding: 0 .1em; border-radius: 3px; }
+
+/* Live dropdown under the header field. */
+.live-search-dropdown {
+    position: absolute; top: calc(100% + 4px); right: 0; left: 0; z-index: 50;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden; min-width: 16rem;
+}
+.live-search-item {
+    display: flex; align-items: baseline; gap: var(--s-2);
+    padding: var(--s-2) var(--s-3); text-decoration: none; color: var(--ink);
+}
+.live-search-item:hover, .live-search-item.is-active { background: var(--brand-tint); }
+.live-search-type {
+    flex: none; font-size: .68rem; text-transform: uppercase; letter-spacing: .03em;
+    color: var(--brand-ink); background: var(--brand-tint); padding: .05rem var(--s-1); border-radius: 999px;
+}
+.live-search-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-search-empty { padding: var(--s-2) var(--s-3); color: var(--muted); }
+.live-search-all {
+    display: block; padding: var(--s-2) var(--s-3); text-align: center; font-size: .85rem;
+    text-decoration: none; color: var(--brand-ink); border-top: 1px solid var(--line); background: var(--bg);
+}
+.live-search-all:hover, .live-search-all.is-active { background: var(--brand-tint); }
 
 /* ------------------------------------------------ Multi-column layout --- */
 /* THEME CONTRACT (Prolaz C). Content stored as

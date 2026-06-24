@@ -31,9 +31,11 @@ class SearchService
     }
 
     /**
+     * @param int|null $limit max merged results (default TOTAL_LIMIT; the live dropdown passes 5)
+     *
      * @return array{state: 'ok'|'empty'|'short', query: string, results: list<array{type:string, title:string, url:string, snippet:string, score:float}>}
      */
-    public function search(string $query): array
+    public function search(string $query, ?int $limit = null): array
     {
         $query = trim($query);
         preg_match_all('/[\p{L}\p{N}]+/u', mb_strtolower($query), $m);
@@ -59,7 +61,7 @@ class SearchService
         }
 
         usort($results, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);
-        $results = \array_slice($results, 0, self::TOTAL_LIMIT);
+        $results = \array_slice($results, 0, $limit ?? self::TOTAL_LIMIT);
 
         return ['state' => [] === $results ? 'empty' : 'ok', 'query' => $query, 'results' => $results];
     }
