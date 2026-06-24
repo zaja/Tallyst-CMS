@@ -21,6 +21,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -73,7 +74,11 @@ class OrderCrudController extends AbstractCrudController
             ]))
             ->add(ChoiceFilter::new('provider', 'Plaćanje')->setChoices(['Stripe' => 'stripe', 'PayPal' => 'paypal']))
             ->add(ChoiceFilter::new('paymentMode', 'Mod')->setChoices(['Test' => 'test', 'Live' => 'live']))
-            ->add(DateTimeFilter::new('createdAt', 'Datum'))
+            // Date RANGE: clean date-only pickers; pick "između" in the comparison for od/do.
+            // (Defaulting to "između" is unsafe — EA throws if BETWEEN is applied with empty dates.)
+            ->add(DateTimeFilter::new('createdAt', 'Datum')
+                ->setFormTypeOption('value_type', DateType::class)
+                ->setFormTypeOption('value_type_options', ['widget' => 'single_text']))
             ->add(TextFilter::new('variantLabel', 'Varijanta'));
     }
 
