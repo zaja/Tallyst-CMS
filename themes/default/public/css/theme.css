@@ -196,7 +196,7 @@ th { font-weight: 650; }
 
 .site-brand { display: inline-flex; align-items: center; gap: var(--s-2); font-weight: 700; font-size: 1.15rem; color: var(--ink); }
 .site-brand:hover { text-decoration: none; color: var(--ink); }
-.site-logo { max-height: 38px; width: auto; display: block; }
+.site-logo { max-height: 56px; width: auto; display: block; }
 
 /* Hamburger — hidden on desktop, shown below --nav-bp. */
 .nav-toggle {
