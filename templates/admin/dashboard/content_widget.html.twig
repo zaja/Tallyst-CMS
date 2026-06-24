@@ -1,0 +1,41 @@
+{# Content dashboard widget (everyone). Data from ContentDashboardWidget::getData. #}
+<section class="mb-4">
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card h-100"><div class="card-body">
+                <div class="text-muted small text-uppercase">Objave</div>
+                <div class="fs-3 fw-bold">{{ postCount }}</div>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card h-100"><div class="card-body">
+                <div class="text-muted small text-uppercase">Stranice</div>
+                <div class="fs-3 fw-bold">{{ pageCount }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Zadnje objave</h2>
+            {% if posts is empty %}
+                <p class="text-muted mb-0">Još nema objava.</p>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead><tr><th>Naslov</th><th>Status</th><th>Datum</th></tr></thead>
+                        <tbody>
+                            {% for p in posts %}
+                                <tr>
+                                    <td><a href="{{ p.editUrl }}">{{ p.title }}</a></td>
+                                    <td><span class="badge badge-{{ p.published ? 'success' : 'secondary' }}">{{ p.published ? 'Objavljeno' : 'Skica' }}</span></td>
+                                    <td>{{ p.date ?? '—' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>

@@ -2,6 +2,7 @@
 
 namespace App\Controller\Admin;
 
+use App\Dashboard\DashboardWidgetInterface;
 use App\Module\AdminModuleInterface;
 use App\Module\ModuleRegistry;
 use App\Module\ModuleStateManager;
@@ -9,6 +10,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -16,16 +18,33 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class DashboardController extends AbstractDashboardController
 {
+    /**
+     * @param iterable<DashboardWidgetInterface> $widgets
+     */
     public function __construct(
         private readonly ModuleRegistry $modules,
         private readonly ModuleStateManager $moduleState,
+        #[AutowireIterator('app.dashboard_widget')]
+        private readonly iterable $widgets,
     ) {
     }
 
     #[Route('/admin', name: 'admin')]
     public function index(): Response
     {
-        return $this->render('admin/dashboard.html.twig');
+        // Collect widgets the current user may see, ordered by position; each renders its own
+        // template+data. Core never knows about Order — FormBuilder's widget supplies revenue.
+        $widgets = [];
+        foreach ($this->widgets as $widget) {
+            $role = $widget->getRequiredRole();
+            if (null !== $role && !$this->isGranted($role)) {
+                continue;
+            }
+            $widgets[] = ['position' => $widget->getPosition(), 'template' => $widget->getTemplate(), 'data' => $widget->getData()];
+        }
+        usort($widgets, static fn (array $a, array $b): int => $a['position'] <=> $b['position']);
+
+        return $this->render('admin/dashboard.html.twig', ['widgets' => $widgets]);
     }
 
     #[Route('/admin/modules', name: 'admin_modules', methods: ['GET'])]

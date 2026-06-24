@@ -35,6 +35,16 @@ class PostRepository extends ServiceEntityRepository
     }
 
     /**
+     * Most recent posts (any status — admins want recent drafts too) for the dashboard list.
+     *
+     * @return Post[]
+     */
+    public function recent(int $limit = 10): array
+    {
+        return $this->findBy([], ['id' => 'DESC'], $limit);
+    }
+
+    /**
      * Published posts for one page, newest first, optionally scoped to a category. Wrapped in a
      * Doctrine Paginator so count() is correct alongside the LIMIT/OFFSET slice.
      *

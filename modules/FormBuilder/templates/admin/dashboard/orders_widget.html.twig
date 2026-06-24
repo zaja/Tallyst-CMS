@@ -1,0 +1,101 @@
+{# Orders/revenue dashboard widget (ROLE_ADMIN). Data from OrdersDashboardWidget::getData. #}
+{% set status_badge = {
+    'pending':   {'label': 'U obradi',      'class': 'secondary'},
+    'paid':      {'label': 'Čeka isporuku', 'class': 'warning'},
+    'fulfilled': {'label': 'Isporučeno',    'class': 'success'},
+    'refunded':  {'label': 'Refundirano',   'class': 'info'},
+} %}
+
+<section class="mb-4">
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">Zarada ovaj mjesec</div>
+                    <div class="fs-5 fw-bold">
+                        {% for line in revenueThisMonth %}<div>{{ line }}</div>{% else %}<div>—</div>{% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">Zarada ukupno</div>
+                    <div class="fs-5 fw-bold">
+                        {% for line in revenueTotal %}<div>{{ line }}</div>{% else %}<div>—</div>{% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">Plaćeno ovaj mjesec</div>
+                    <div class="fs-3 fw-bold">{{ paidThisMonth }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <a href="{{ awaitingUrl }}" class="card h-100 text-decoration-none {{ awaiting > 0 ? 'border-warning' : '' }}">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">Čeka isporuku</div>
+                    <div class="fs-3 fw-bold {{ awaiting > 0 ? 'text-warning' : '' }}">{{ awaiting }}</div>
+                    <div class="small text-muted">{{ awaiting > 0 ? 'Klikni za popis →' : 'Nema na čekanju' }}</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-3"
+         data-controller="formbuilder--dashboard-chart"
+         data-formbuilder--dashboard-chart-series-value="{{ chartSeries|json_encode }}"
+         data-formbuilder--dashboard-chart-currency-value="{{ chartCurrency }}">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h2 class="h5 mb-0">Zarada {{ chartCurrency ? '(' ~ chartCurrency ~ ')' }}</h2>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" data-formbuilder--dashboard-chart-target="periodBtn" data-period="7" data-action="formbuilder--dashboard-chart#setPeriod">7 dana</button>
+                        <button type="button" class="btn btn-outline-secondary" data-formbuilder--dashboard-chart-target="periodBtn" data-period="30" data-action="formbuilder--dashboard-chart#setPeriod">30 dana</button>
+                        <button type="button" class="btn btn-outline-secondary" data-formbuilder--dashboard-chart-target="periodBtn" data-period="365" data-action="formbuilder--dashboard-chart#setPeriod">12 mjeseci</button>
+                    </div>
+                    <input type="date" class="form-control form-control-sm" style="width:auto" data-formbuilder--dashboard-chart-target="from" data-action="change->formbuilder--dashboard-chart#setRange" aria-label="Od">
+                    <input type="date" class="form-control form-control-sm" style="width:auto" data-formbuilder--dashboard-chart-target="to" data-action="change->formbuilder--dashboard-chart#setRange" aria-label="Do">
+                </div>
+            </div>
+            <div class="position-relative" style="min-height:220px">
+                <canvas data-formbuilder--dashboard-chart-target="canvas"></canvas>
+                <p class="text-muted mb-0" data-formbuilder--dashboard-chart-target="empty" hidden>Nema podataka za prikaz.</p>
+            </div>
+            {% if multiCurrency %}<p class="small text-muted mt-2 mb-0">Graf prikazuje primarnu valutu ({{ chartCurrency }}). Ostale valute su u karticama iznad.</p>{% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Zadnje narudžbe</h2>
+            {% if recent is empty %}
+                <p class="text-muted mb-0">Još nema narudžbi.</p>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead><tr><th>#</th><th>Datum</th><th>Iznos</th><th>Status</th><th>Plaćanje</th></tr></thead>
+                        <tbody>
+                            {% for o in recent %}
+                                {% set b = status_badge[o.status] ?? {'label': o.status, 'class': 'secondary'} %}
+                                <tr>
+                                    <td><a href="{{ o.detailUrl }}">#{{ o.id }}</a></td>
+                                    <td>{{ o.date }}</td>
+                                    <td>{{ o.amount }}</td>
+                                    <td><span class="badge badge-{{ b.class }}">{{ b.label }}</span></td>
+                                    <td class="text-capitalize">{{ o.provider }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>

@@ -3,6 +3,7 @@ import FormbuilderConditionsController from '../modules/FormBuilder/assets/contr
 import FormbuilderBuilderController from '../modules/FormBuilder/assets/controllers/formbuilder_builder_controller.js';
 import FormTypeController from '../modules/FormBuilder/assets/controllers/form_type_controller.js';
 import FormRulesController from '../modules/FormBuilder/assets/controllers/form_rules_controller.js';
+import DashboardChartController from '../modules/FormBuilder/assets/controllers/dashboard_chart_controller.js';
 import MediaLibraryController from '../modules/Media/assets/controllers/media_library_controller.js';
 import MediaPickerController from '../modules/Media/assets/controllers/media_picker_controller.js';
 import MediaBulkUploadController from '../modules/Media/assets/controllers/media_bulk_upload_controller.js';
@@ -31,6 +32,7 @@ app.register('formbuilder--conditions', FormbuilderConditionsController);
 app.register('formbuilder--builder', FormbuilderBuilderController);
 app.register('formbuilder--formtype', FormTypeController);
 app.register('formbuilder--rules', FormRulesController);
+app.register('formbuilder--dashboard-chart', DashboardChartController);
 
 // Media module controllers: reusable library modal (grid + search + FilePond) and the
 // featured-image picker widget that consumes its selection event.

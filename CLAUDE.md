@@ -738,6 +738,23 @@ All 4 customer/admin mails are admin-editable (subject + HTML body + enabled) vi
   subject CRLF-strip, required-tag detection incl. the editor-output `<p>{reset_url}</p>` case);
   `SubmissionNotifierTest` retargeted to the engine.
 
+## Admin dashboard (widgets)
+The `/admin` landing (`DashboardController::index`) renders **IoC widgets** — same tagged-provider pattern as
+settings/email/menu sections, so Core never queries module data. `DashboardWidgetInterface`
+(`#[AutoconfigureTag('app.dashboard_widget')]`): `getPosition()`, `getRequiredRole(): ?string` (the
+controller skips widgets the user's role lacks → **editors see no revenue**), `getTemplate()`, `getData()`.
+Core ships `ContentDashboardWidget` (pos 20, role null — counts + recent posts); **FormBuilder ships
+`OrdersDashboardWidget`** (pos 10, ROLE_ADMIN — revenue, so Core never touches Order).
+- **Revenue rule:** counted from **paid + fulfilled** only; **refunded/pending EXCLUDED** (money returned /
+  never captured). Aggregated **in the DB** (`OrderRepository::revenueTotals`/`countPaidSince`/`countByStatus`/
+  `revenueByDay`/`recentOrders` — GROUP BY, never load-all-then-sum), **per currency** (chart shows the
+  primary = most-revenue currency; cards show all). Locked by `OrderDashboardStatsTest`.
+- **Chart** = Chart.js via importmap (`chart.js/auto`), client-side period switch (7d/30d/12mj + date range):
+  server sends ~13 months of DAILY revenue once; `formbuilder--dashboard-chart` re-aggregates (≤60-day window
+  → per day, else per month). **No date-adapter** dep — category X axis with string labels. Dark-mode safe
+  (reads `--bs-body-color`/`--bs-border-color`/`--bs-primary` at draw; EA uses `data-bs-theme`). Empty series
+  → "Nema podataka", never throws. The "Čeka isporuku" card deep-links to the paid-filtered order list.
+
 ## Roles & access (back-office)
 Two roles: **ROLE_ADMIN** (everything) and **ROLE_EDITOR** (content only — Pages, Posts,
 Categories, Media). `role_hierarchy: ROLE_ADMIN ⊇ ROLE_EDITOR`, so existing admins keep full

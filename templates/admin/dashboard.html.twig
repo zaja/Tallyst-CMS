@@ -1,9 +1,12 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block content_title %}Dobrodošli u Tallyst CMS{% endblock %}
+{% block content_title %}Nadzorna ploča{% endblock %}
 
 {% block main %}
-    <p class="lead">Upravljanje sadržajem, navigacijom, temama i modulima.</p>
-    <p>Odaberite sekciju iz izbornika lijevo. Moduli se automatski pojavljuju pod
-       <strong>Moduli</strong> kako ih instalirate.</p>
+    {% for widget in widgets %}
+        {{ include(widget.template, widget.data) }}
+    {% else %}
+        <p class="lead">Dobrodošli u Tallyst CMS.</p>
+        <p>Odaberite sekciju iz izbornika lijevo.</p>
+    {% endfor %}
 {% endblock %}

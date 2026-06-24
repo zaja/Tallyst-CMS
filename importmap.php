@@ -81,4 +81,6 @@ return [
     'rope-sequence' => ['version' => '1.3.4'],
     'prosemirror-gapcursor/style/gapcursor.min.css' => ['version' => '1.4.1', 'type' => 'css'],
     'sortablejs' => ['version' => '1.15.7'],
+    'chart.js' => ['version' => '4.5.1'],
+    '@kurkle/color' => ['version' => '0.3.4'],
 ];
