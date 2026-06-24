@@ -59,6 +59,8 @@ class SearchLiveTest extends WebTestCase
             self::assertArrayHasKey('title', $r);
             self::assertArrayHasKey('type', $r);
             self::assertArrayHasKey('url', $r);
+            self::assertArrayHasKey('snippet', $r);
+            self::assertIsString($r['snippet']);
         }
     }
 

@@ -798,8 +798,12 @@ theme `search.html.twig`).
   (bookmarks/direct links don't break — only the UI field is gated). NOT on the maintenance exempt list
   (it's a visitor feature → goes behind maintenance with the rest of the site). Locked by
   `tests/Functional/SearchTest` (ranking, draft-exclusion, short/empty, XSS-escape).
-- **Live dropdown (instant results):** `GET /pretraga/live` → JSON `{results:[{title,type,url}]}`, reuses
-  `SearchService::search($q, 5)` (same sanitisation; no snippet). Gated on the same `search_enabled`
+- **Live dropdown (instant results):** `GET /pretraga/live` → JSON `{results:[{title,type,url,snippet}]}`,
+  reuses `SearchService::search($q, 5)`. `SearchService` splits `excerpt()` (PLAIN windowed text) from
+  `highlight()` (`<mark>` wrap): the page snippet is `highlight(escape(excerpt))` (HTML, `|raw`), the DTO
+  also carries `snippetText` (plain), and the live endpoint sends a ~100-char plain shortening → the JS
+  renders it via `textContent` (no `<mark>`, XSS-safe). Type badges use `--brand-strong` on `--brand-tint`
+  (dark-on-pale; `--brand-ink` white-on-tint was unreadable). Gated on the same `search_enabled`
   (off → `{results:[]}`, no 404 — the field is hidden anyway). `search--live` Stimulus controller
   (registered in `stimulus_bootstrap`, boots on the front via `app.js`) on the header form: **debounce
   250ms**, **min 3 chars**, **race guard** (AbortController cancels in-flight + a monotonic `seq` drops

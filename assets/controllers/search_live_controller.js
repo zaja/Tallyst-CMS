@@ -73,13 +73,22 @@ export default class extends Controller {
                 const a = document.createElement('a');
                 a.className = 'live-search-item';
                 a.href = r.url; // generated path — safe as an attribute
+                const line = document.createElement('span');
+                line.className = 'live-search-line';
                 const badge = document.createElement('span');
                 badge.className = 'live-search-type';
                 badge.textContent = r.type; // textContent → never interprets HTML
                 const title = document.createElement('span');
                 title.className = 'live-search-title';
                 title.textContent = r.title;
-                a.append(badge, title);
+                line.append(badge, title);
+                a.appendChild(line);
+                if (r.snippet) {
+                    const snippet = document.createElement('span');
+                    snippet.className = 'live-search-snippet';
+                    snippet.textContent = r.snippet; // plain text → XSS-safe
+                    a.appendChild(snippet);
+                }
                 this.dropdownTarget.appendChild(a);
                 this.items.push(a);
             });

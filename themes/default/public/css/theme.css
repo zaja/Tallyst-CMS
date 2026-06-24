@@ -492,7 +492,7 @@ th { font-weight: 650; }
 .search-result { padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
 .search-type {
     display: inline-block; font-size: .72rem; text-transform: uppercase; letter-spacing: .03em;
-    color: var(--brand-ink); background: var(--brand-tint);
+    color: var(--brand-strong); background: var(--brand-tint);
     padding: .1rem var(--s-2); border-radius: 999px; margin-bottom: var(--s-1);
 }
 .search-result-title { display: block; font-weight: 600; font-size: 1.1rem; }
@@ -506,19 +506,23 @@ th { font-weight: 650; }
     box-shadow: var(--shadow); overflow: hidden; min-width: 16rem;
 }
 .live-search-item {
-    display: flex; align-items: baseline; gap: var(--s-2);
-    padding: var(--s-2) var(--s-3); text-decoration: none; color: var(--ink);
+    display: block; padding: var(--s-2) var(--s-3); text-decoration: none; color: var(--ink);
 }
 .live-search-item:hover, .live-search-item.is-active { background: var(--brand-tint); }
+.live-search-line { display: flex; align-items: baseline; gap: var(--s-2); }
 .live-search-type {
     flex: none; font-size: .68rem; text-transform: uppercase; letter-spacing: .03em;
-    color: var(--brand-ink); background: var(--brand-tint); padding: .05rem var(--s-1); border-radius: 999px;
+    color: var(--brand-strong); background: var(--brand-tint); padding: .05rem var(--s-1); border-radius: 999px;
 }
 .live-search-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-search-snippet {
+    color: var(--muted); font-size: var(--fs-sm); margin-top: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .live-search-empty { padding: var(--s-2) var(--s-3); color: var(--muted); }
 .live-search-all {
     display: block; padding: var(--s-2) var(--s-3); text-align: center; font-size: .85rem;
-    text-decoration: none; color: var(--brand-ink); border-top: 1px solid var(--line); background: var(--bg);
+    text-decoration: none; color: var(--brand-strong); border-top: 1px solid var(--line); background: var(--bg);
 }
 .live-search-all:hover, .live-search-all.is-active { background: var(--brand-tint); }
 

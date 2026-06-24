@@ -69,27 +69,31 @@ class SearchService
     /**
      * @param string[] $tokens
      *
-     * @return array{type:string, title:string, url:string, snippet:string, score:float}
+     * @return array{type:string, title:string, url:string, snippet:string, snippetText:string, score:float}
      */
     private function result(string $type, string $route, string $slug, string $title, ?string $body, float $score, array $tokens): array
     {
+        $text = $this->excerpt((string) $body, $tokens);
+
         return [
             'type' => $type,
             'title' => $title,
             'url' => $this->urls->generate($route, ['slug' => $slug]),
-            'snippet' => $this->snippet((string) $body, $tokens),
+            // Page uses the highlighted HTML (|raw); the live dropdown uses the plain text (textContent).
+            'snippet' => '' === $text ? '' : $this->highlight(htmlspecialchars($text, \ENT_QUOTES), $tokens),
+            'snippetText' => $text,
             'score' => $score,
         ];
     }
 
     /**
-     * A short plain-text excerpt around the first matching token, with tokens highlighted. XSS-safe:
-     * the text is escaped BEFORE <mark> is inserted (tokens are word-chars, so escaping doesn't alter
-     * them); the template prints the result with |raw.
+     * A short PLAIN-text excerpt (no HTML, no highlight) around the first matching token. Shared by the
+     * page snippet (which then escapes + highlights it) and the live dropdown (which renders it as-is via
+     * textContent — so it must stay plain).
      *
      * @param string[] $tokens
      */
-    private function snippet(string $body, array $tokens): string
+    private function excerpt(string $body, array $tokens): string
     {
         $plain = strip_tags((string) preg_replace('/\[[^\]]*\]/', ' ', $body));
         $plain = trim((string) preg_replace('/\s+/', ' ', $plain));
@@ -107,9 +111,18 @@ class SearchService
 
         $start = false === $pos ? 0 : max(0, $pos - 60);
         $window = mb_substr($plain, $start, self::SNIPPET_LEN);
-        $text = ($start > 0 ? '… ' : '').$window.(mb_strlen($plain) > $start + self::SNIPPET_LEN ? ' …' : '');
 
-        $escaped = htmlspecialchars($text, \ENT_QUOTES);
+        return ($start > 0 ? '… ' : '').$window.(mb_strlen($plain) > $start + self::SNIPPET_LEN ? ' …' : '');
+    }
+
+    /**
+     * Wrap each token in <mark> on ALREADY-ESCAPED text — XSS-safe (tokens are word-chars, so escaping
+     * doesn't alter them; only <mark> is injected). The page template prints the result with |raw.
+     *
+     * @param string[] $tokens
+     */
+    private function highlight(string $escaped, array $tokens): string
+    {
         foreach ($tokens as $t) {
             $escaped = (string) preg_replace('/('.preg_quote($t, '/').')/iu', '<mark>$1</mark>', $escaped);
         }

@@ -37,11 +37,13 @@ class SearchController extends AbstractController
         }
 
         $found = $search->search((string) $request->query->get('q', ''), 5);
-        $results = array_map(static fn (array $r): array => [
-            'title' => $r['title'],
-            'type' => $r['type'],
-            'url' => $r['url'],
-        ], $found['results']);
+        $results = array_map(static function (array $r): array {
+            // Plain text (no <mark>) shortened for a compact dropdown row; rendered via textContent → XSS-safe.
+            $text = $r['snippetText'];
+            $snippet = mb_strlen($text) > 100 ? rtrim(mb_substr($text, 0, 100)).'…' : $text;
+
+            return ['title' => $r['title'], 'type' => $r['type'], 'url' => $r['url'], 'snippet' => $snippet];
+        }, $found['results']);
 
         return new JsonResponse(['results' => $results]);
     }
