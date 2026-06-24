@@ -458,6 +458,13 @@ themes/               # THEMES — one folder = one theme
    - **`finalizeReturn(Order)`** runs on the buyer's return for EVERY provider (Stripe no-op;
      PayPal captures the approved order). It is idempotent and MUST NOT set `paid` — the webhook
      stays sole truth. A capture failure is graceful (thank-you try/catch → "processing" view, no 500).
+   - **Thank-you page** (`/form/order/{id}/thank-you`, `thank_you.html.twig`, themed): shows a dynamic
+     order block (#id, paid/processing, amount) PLUS an admin-editable message (`thank_you_message`
+     RICH_TEXT, FormBuilder "Narudžbe" settings section, rendered `setting('thank_you_message')|render_content`
+     above the block; default applies when unset). **Token-guarded against enumeration:** `Order.thankYouToken`
+     (`bin2hex(random_bytes(16))`, set at checkout) is carried as **`?t=`** (NOT `?token=` — PayPal appends
+     its own `token`/`PayerID`), `hash_equals`-checked → wrong/missing/old-null token = **404**. Both
+     providers get it (one `successUrl`). Locked by `tests/FormBuilder/ThankYouTest`.
    - **`OrderPaymentSync`** holds the paid+refund transitions and their idempotency guards in ONE
      place; BOTH webhook controllers (`/webhook/stripe`, `/webhook/paypal`) call it after their own
      verification, so every provider goes through identical guards (can't drift/bypass).

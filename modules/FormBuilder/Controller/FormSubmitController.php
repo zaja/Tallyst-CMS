@@ -119,8 +119,16 @@ class FormSubmitController extends AbstractController
     }
 
     #[Route('/form/order/{id}/thank-you', name: 'form_builder_order_thankyou', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function thankYou(Order $order): Response
+    public function thankYou(Order $order, Request $request): Response
     {
+        // Anti-enumeration: the URL must carry the order's unguessable token (?t=). A missing/wrong token
+        // — or an old order with none — is a 404, so sequential ids can't reveal other orders. (Param is
+        // `t`, NOT `token`: PayPal appends its own ?token=…&PayerID=… to the return URL.)
+        $token = $order->getThankYouToken();
+        if (null === $token || !hash_equals($token, (string) $request->query->get('t', ''))) {
+            throw $this->createNotFoundException();
+        }
+
         // Finalize the provider's return: Stripe = no-op (Checkout auto-captures); PayPal captures
         // the approved order. The webhook still drives paid/fulfilled, so this page may show
         // "processing" until it lands. A capture failure (declined/expired/abandoned) must stay
@@ -179,7 +187,9 @@ class FormSubmitController extends AbstractController
             ->setCurrency($form->getCurrency() ?: 'eur')
             ->setProvider($chosen)
             ->setPaymentMode($this->payments->get($chosen)->getMode())
-            ->setVariantLabel($variantLabel);
+            ->setVariantLabel($variantLabel)
+            // Unguessable token for the thank-you URL (?t=) — anti-enumeration.
+            ->setThankYouToken(bin2hex(random_bytes(16)));
 
         // Tax recording (provider-agnostic): inclusive split derived from the gross amount — the
         // charged amount is unchanged. IP from the request; tax fields stay null when tax is disabled
@@ -196,7 +206,7 @@ class FormSubmitController extends AbstractController
 
         $this->orders->save($order); // persist to obtain an id
 
-        $successUrl = $this->generateUrl('form_builder_order_thankyou', ['id' => $order->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $successUrl = $this->generateUrl('form_builder_order_thankyou', ['id' => $order->getId(), 't' => $order->getThankYouToken()], UrlGeneratorInterface::ABSOLUTE_URL);
         $cancelUrl = $request->getSchemeAndHttpHost().$return;
 
         $checkoutUrl = $this->payments->get($order->getProvider())->createCheckout($order, $successUrl, $cancelUrl);

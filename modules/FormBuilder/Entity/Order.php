@@ -70,6 +70,10 @@ class Order
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $customerVatId = null;
 
+    /** Unguessable token in the thank-you URL (?t=) so order pages can't be enumerated by sequential id. */
+    #[ORM\Column(length: 32, nullable: true)]
+    private ?string $thankYouToken = null;
+
     #[ORM\Column(length: 20)]
     private string $status = self::STATUS_PENDING;
 
@@ -255,6 +259,18 @@ class Order
     public function setCustomerVatId(?string $customerVatId): static
     {
         $this->customerVatId = $customerVatId;
+
+        return $this;
+    }
+
+    public function getThankYouToken(): ?string
+    {
+        return $this->thankYouToken;
+    }
+
+    public function setThankYouToken(?string $thankYouToken): static
+    {
+        $this->thankYouToken = $thankYouToken;
 
         return $this;
     }

@@ -6,6 +6,9 @@
     <article class="fb-thankyou">
         <h1>Hvala!</h1>
 
+        {# Admin-editable copy (Postavke → Narudžbe); the SettingDefinition default applies when unset. #}
+        <div class="fb-thankyou-message">{{ setting('thank_you_message')|render_content }}</div>
+
         {% if order.paid %}
             <p>Vaše plaćanje je zaprimljeno. Narudžba <strong>#{{ order.id }}</strong> je potvrđena
                i poslali smo vam potvrdu e-mailom.</p>
