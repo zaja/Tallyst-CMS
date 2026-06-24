@@ -757,11 +757,24 @@ Core ships `ContentDashboardWidget` (pos 20, role null — counts + recent posts
   never captured). Aggregated **in the DB** (`OrderRepository::revenueTotals`/`countPaidSince`/`countByStatus`/
   `revenueByDay`/`recentOrders` — GROUP BY, never load-all-then-sum), **per currency** (chart shows the
   primary = most-revenue currency; cards show all). Locked by `OrderDashboardStatsTest`.
-- **Chart** = Chart.js via importmap (`chart.js/auto`), client-side period switch (7d/30d/12mj + date range):
-  server sends ~13 months of DAILY revenue once; `formbuilder--dashboard-chart` re-aggregates (≤60-day window
-  → per day, else per month). **No date-adapter** dep — category X axis with string labels. Dark-mode safe
-  (reads `--bs-body-color`/`--bs-border-color`/`--bs-primary` at draw; EA uses `data-bs-theme`). Empty series
-  → "Nema podataka", never throws. The "Čeka isporuku" card deep-links to the paid-filtered order list.
+- **Chart** = Chart.js via importmap (`import { Chart, registerables } from 'chart.js'; Chart.register(...)`
+  — NOT `chart.js/auto`, see the AssetMapper subpath gotcha), client-side period switch (7d/30d/12mj + date
+  range): server sends ~13 months of DAILY revenue once; `formbuilder--dashboard-chart` re-aggregates
+  (≤60-day window → per day, else per month). **No date-adapter** dep — category X axis with string labels.
+  Dark-mode safe (reads `--bs-body-color`/`--bs-border-color`/`--bs-primary` at draw; EA uses `data-bs-theme`).
+  Empty series → "Nema podataka", never throws. The "Čeka isporuku" card deep-links to the paid-filtered order list.
+
+## SEO — sitemap.xml + robots.txt
+Public, on-demand, no auth (`SitemapController`). **`/sitemap.xml`** lists published content only: home `/` +
+`/blog`, published Pages (skip the **`home`** slug — it's emitted as `/`, never `/home`), published Posts
+(`<lastmod>` = `publishedAt`; Pages/Categories have no timestamp so no lastmod), and categories with ≥1
+published post (`CategoryRepository::findWithPublishedPosts` — empty archives = thin content, excluded).
+**`/robots.txt`** → `Allow: /` + `Disallow: /admin` + `Sitemap:` line. URLs are **ABSOLUTE from
+`%env(DEFAULT_URI)%`** (the canonical host, not the request host — `rtrim(baseUri) . generate(ABSOLUTE_PATH)`).
+No route conflict with `page_show /{slug}` (the `.` in the filenames isn't in `[a-zA-Z0-9\-]+`). **Twig XML
+gotcha:** in a `.xml.twig` the `<?xml … ?>` declaration must be **literal text on line 1** (emitting it via
+`{{ '<?xml…' }}` produced NO output → malformed XML); `<loc>` values are explicitly `|e`-escaped (xml
+templates aren't HTML-autoescaped). Locked by `tests/Functional/SitemapTest`.
 
 ## Roles & access (back-office)
 Two roles: **ROLE_ADMIN** (everything) and **ROLE_EDITOR** (content only — Pages, Posts,
@@ -1066,6 +1079,9 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
     **"U obradi"** in Tallyst → **check the webhook 401 FIRST** (nginx access log: `POST /webhook/... 401`;
     the request is ABSENT from `dev.log` because it never reaches PHP). Don't hunt in code — the cause is
     almost always front-auth / webhook config, not the app.
+  - **Maintenance/basic-auth EXEMPT-ROUTE list (when that feature lands):** the same class of "must stay
+    publicly reachable" routes — `/webhook/stripe`, `/webhook/paypal`, **`/sitemap.xml`, `/robots.txt`** —
+    must bypass any future maintenance mode / basic-auth (crawlers + payment providers can't authenticate).
 
 ### Deployment Readiness Panel (Phase 3 — installer faza — NE gradi se sad)
 Admin "Sustav/Deployment" panel: operativni go-live status + generirani setup snippeti.

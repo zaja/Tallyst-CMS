@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{% for e in entries %}<url><loc>{{ e.loc|e }}</loc>{% if e.lastmod is defined and e.lastmod %}<lastmod>{{ e.lastmod }}</lastmod>{% endif %}</url>
+{% endfor %}</urlset>
