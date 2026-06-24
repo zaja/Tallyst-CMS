@@ -830,6 +830,19 @@ theme `search.html.twig`).
   input/dropdown targets (like nav.js). Locked by `tests/Functional/SearchLiveTest` (top-5 cap,
   draft-excluded, JSON shape, XSS, short, toggle-off).
 
+## Maintenance mode
+Admin toggles it in **Postavke → Održavanje** (`maintenance_enabled` BOOL default off + `maintenance_message`
+RICH_TEXT). `MaintenanceSubscriber` (kernel.request, **priority 7** — just AFTER the firewall@8 so
+`isGranted` sees the user) serves public visitors a **503 + `Retry-After`** standalone page
+(`templates/maintenance.html.twig`, no theme/nav, message via `render_content`) — 503 not 200 so Google
+doesn't deindex.
+- **Anti-lockout (double net):** the `^/admin` prefix is exempt (admin + `/admin/login` + reset + 2fa all
+  live there → the admin can always get in to switch it off), AND a logged-in **ROLE_ADMIN bypasses** it
+  (live preview). **Always-public exempt** too: `^/webhook`, `/sitemap.xml`, `/robots.txt` (providers +
+  crawlers can't authenticate). Search (`/pretraga`) is NOT exempt (visitor feature → goes down with the site).
+- **Fail-open on the read:** the toggle is read in a try/catch — a settings/DB hiccup must never 503 the
+  whole site; only an explicit ON triggers maintenance. Locked by `tests/Functional/MaintenanceTest`.
+
 ## Roles & access (back-office)
 Two roles: **ROLE_ADMIN** (everything) and **ROLE_EDITOR** (content only — Pages, Posts,
 Categories, Media). `role_hierarchy: ROLE_ADMIN ⊇ ROLE_EDITOR`, so existing admins keep full

@@ -36,6 +36,11 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
             new SettingDefinition('blog_posts_per_page', SettingType::INT, 'Objava po stranici', 'Koliko objava prikazati po stranici na blogu i arhivama (1–50).', 9),
         ]);
 
+        yield new SettingsSection('maintenance', 'Održavanje', 'fa-screwdriver-wrench', [
+            new SettingDefinition('maintenance_enabled', SettingType::BOOL, 'Maintenance mode', 'Posjetitelji vide stranicu održavanja (503); admin i dalje radi i može ući.', false),
+            new SettingDefinition('maintenance_message', SettingType::RICH_TEXT, 'Poruka', 'Prikazuje se posjetiteljima dok je održavanje uključeno.', '<p>Stranica je trenutno u održavanju. Vraćamo se uskoro.</p>'),
+        ]);
+
         yield new SettingsSection('localization', 'Lokalizacija', 'fa-globe', [
             new SettingDefinition('app_locale', SettingType::CHOICE, 'Jezik', 'Zadani jezik sučelja i prijevoda.', 'en', [
                 'English' => 'en',
