@@ -3,17 +3,23 @@
 namespace Tallyst\FormBuilder\Controller\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Factory\FilterFactory;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -54,6 +60,21 @@ class OrderCrudController extends AbstractCrudController
             ->setEntityLabelInPlural('Narudžbe')
             ->setDefaultSort(['id' => 'DESC'])
             ->setPageTitle('detail', static fn (Order $order): string => 'Narudžba #'.$order->getId());
+    }
+
+    public function configureFilters(Filters $filters): Filters
+    {
+        return $filters
+            ->add(ChoiceFilter::new('status', 'Status')->setChoices([
+                'U obradi' => Order::STATUS_PENDING,
+                'Čeka isporuku' => Order::STATUS_PAID,
+                'Isporučeno' => Order::STATUS_FULFILLED,
+                'Refundirano' => Order::STATUS_REFUNDED,
+            ]))
+            ->add(ChoiceFilter::new('provider', 'Plaćanje')->setChoices(['Stripe' => 'stripe', 'PayPal' => 'paypal']))
+            ->add(ChoiceFilter::new('paymentMode', 'Mod')->setChoices(['Test' => 'test', 'Live' => 'live']))
+            ->add(DateTimeFilter::new('createdAt', 'Datum'))
+            ->add(TextFilter::new('variantLabel', 'Varijanta'));
     }
 
     public function configureActions(Actions $actions): Actions
@@ -136,10 +157,20 @@ class OrderCrudController extends AbstractCrudController
         yield TextareaField::new('submissionSummary', 'Podaci forme')->onlyOnDetail();
     }
 
-    /** CSV export for the accountant (UTF-8 BOM so HR chars open correctly in Excel). */
-    public function exportCsv(): StreamedResponse
+    /**
+     * CSV export for the accountant (UTF-8 BOM so HR chars open correctly in Excel).
+     * RESPECTS the active list filters/search: it rebuilds the SAME query the index uses
+     * (createIndexQueryBuilder over the current SearchDto), so "filtered list → filtered export".
+     * No active filter → SearchDto empty → all orders. Same button, contextual.
+     */
+    public function exportCsv(AdminContext $context): StreamedResponse
     {
-        $orders = $this->orders->findAllOrderedByIdDesc();
+        $fields = FieldCollection::new($this->configureFields(Crud::PAGE_INDEX));
+        $filters = $this->container->get(FilterFactory::class)->create($context->getCrud()->getFiltersConfig(), $fields, $context->getEntity());
+        $qb = $this->createIndexQueryBuilder($context->getSearch(), $context->getEntity(), $fields, $filters);
+        /** @var Order[] $orders */
+        $orders = $qb->getQuery()->getResult();
+
         $money = static fn (?int $minor): string => null === $minor ? '' : number_format($minor / 100, 2, '.', '');
 
         $response = new StreamedResponse(function () use ($orders, $money): void {

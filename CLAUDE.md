@@ -438,6 +438,16 @@ themes/               # THEMES — one folder = one theme
    - **OrderCrud surfacing:** provider badge in the list (Stripe/PayPal); detail shows `paymentMode`,
      net/tax/country/VAT/IP. CSV export adds **"Mod"** (test/live) + **"Podaci kupca"** (the submission
      summary flattened to one line — the buyer's form fields for invoicing; `fputcsv` quotes commas).
+   - **Filters + filter-aware export:** `configureFilters` adds status/provider/paymentMode (ChoiceFilter),
+     `createdAt` (DateTimeFilter range), `variantLabel` (TextFilter). The "Izvezi narudžbe" export
+     **RESPECTS the active filter/search** — it rebuilds the SAME query the list uses via
+     `createIndexQueryBuilder($context->getSearch(), $context->getEntity(), $fields,
+     FilterFactory::create(...))` (EA's own pattern), so list rows == exported rows; no filter → all. The
+     global-action link inherits the active `filters[…]`/`query` because `AdminUrlGenerator` merges the
+     current request query. Test (`OrderCsvExportTest`, functional) seeds orders + asserts filtered subset
+     vs all. **Gotcha:** a StreamedResponse in a WebTestCase is read via
+     `$client->getInternalResponse()->getContent()` (the test client already buffered it; the Symfony
+     response is already streamed → empty).
    Order lifecycle is a Symfony **state_machine** workflow (`order`): `pending → paid → fulfilled →
    refunded`. Critical rules:
    - The **verified webhook is the SOLE source of truth for `paid`** — never the

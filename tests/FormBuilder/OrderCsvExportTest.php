@@ -2,74 +2,142 @@
 
 namespace App\Tests\FormBuilder;
 
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
-use PHPUnit\Framework\TestCase;
-use Symfony\Component\Workflow\WorkflowInterface;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Tallyst\FormBuilder\Controller\Admin\OrderCrudController;
+use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormSubmission;
 use Tallyst\FormBuilder\Entity\Order;
-use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
-use Tallyst\FormBuilder\Repository\OrderRepository;
-use Tallyst\FormBuilder\Service\OrderMailer;
 
 /**
- * The accountant CSV must carry the buyer's form data (for invoicing), on one line, and a value with a
- * comma must not break the row (RFC CSV quoting via fputcsv).
+ * The accountant CSV (a) carries the buyer's form data on one safely-quoted line, and (b) RESPECTS the
+ * active list filter — exporting exactly what the filtered list shows (no filter → all). The export reuses
+ * EA's createIndexQueryBuilder over the request's SearchDto, so list query == export query.
  */
-class OrderCsvExportTest extends TestCase
+class OrderCsvExportTest extends WebTestCase
 {
-    private function csvFor(Order $order): string
+    /** @var int[] */
+    private array $orderIds = [];
+    private ?int $formId = null;
+    private ?int $submissionId = null;
+    private array $emails = [];
+
+    public function testExportRespectsActiveFilterAndQuotesCustomerData(): void
     {
-        $orders = $this->createStub(OrderRepository::class);
-        $orders->method('findAllOrderedByIdDesc')->willReturn([$order]);
+        $client = static::createClient();
+        $this->seed();
+        $client->loginUser($this->makeAdmin());
 
-        $controller = new OrderCrudController(
-            $this->createStub(WorkflowInterface::class),
-            $this->createStub(OrderMailer::class),
-            $this->createStub(EntityManagerInterface::class),
-            $this->createStub(PaymentProcessorRegistry::class),
-            $orders,
-        );
+        // No filter → ALL seeded orders, and the comma+newline submission stays one RFC-quoted cell.
+        $all = $this->export($client);
+        self::assertStringContainsString('paid-stripe@t.local', $all);
+        self::assertStringContainsString('pending-paypal@t.local', $all);
+        self::assertStringContainsString('paid-paypal@t.local', $all);
+        self::assertStringContainsString('Podaci kupca', $all, 'header column present');
+        self::assertStringContainsString('Mod', $all);
+        self::assertStringNotContainsString('Zemlja', $all);
+        self::assertStringNotContainsString('VAT ID', $all);
+        self::assertStringContainsString('"ime: Goran Zajec; tvrtka: Sve je dobro, j.d.o.o."', $all, 'newlines flattened + comma value RFC-quoted into one cell');
 
-        ob_start();
-        $controller->exportCsv()->sendContent();
+        // status = paid → only the two paid orders, never the pending one.
+        $paid = $this->export($client, ['status' => ['comparison' => '=', 'value' => Order::STATUS_PAID]]);
+        self::assertStringContainsString('paid-stripe@t.local', $paid);
+        self::assertStringContainsString('paid-paypal@t.local', $paid);
+        self::assertStringNotContainsString('pending-paypal@t.local', $paid, 'pending order excluded by the status filter');
 
-        return (string) ob_get_clean();
+        // provider = stripe → only the stripe order.
+        $stripe = $this->export($client, ['provider' => ['comparison' => '=', 'value' => 'stripe']]);
+        self::assertStringContainsString('paid-stripe@t.local', $stripe);
+        self::assertStringNotContainsString('paypal@t.local', $stripe, 'paypal orders excluded by the provider filter');
     }
 
-    public function testExportIncludesFlattenedCustomerDataWithSafeQuoting(): void
+    private function export(KernelBrowser $client, array $filters = []): string
     {
-        $submission = (new FormSubmission())->setData([
+        $params = ['crudControllerFqcn' => OrderCrudController::class, 'crudAction' => 'exportCsv'];
+        if ([] !== $filters) {
+            $params['filters'] = $filters;
+        }
+        $client->request('GET', '/admin', $params);
+        self::assertResponseIsSuccessful();
+
+        // The test client (HttpKernelBrowser) already buffers a StreamedResponse into the BrowserKit
+        // response, so read it from there (the Symfony response is already streamed → empty).
+        return (string) $client->getInternalResponse()->getContent();
+    }
+
+    private function seed(): void
+    {
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+
+        $form = (new FormDefinition())->setName('Export test')->setSlug('export-test-'.bin2hex(random_bytes(4)));
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $submission = (new FormSubmission())->setForm($form)->setData([
             'ime' => 'Goran Zajec',
             'tvrtka' => 'Sve je dobro, j.d.o.o.',
         ]);
-        $order = (new Order())
-            ->setSubmission($submission)
-            ->setProvider('stripe')
-            ->setPaymentMode('test')
-            ->setAmountMinor(4900)
-            ->setCurrency('eur');
+        $em->persist($submission);
+        $em->flush();
+        $this->submissionId = $submission->getId();
 
-        $csv = $this->csvFor($order);
-
-        self::assertStringContainsString('Podaci kupca', $csv, 'header column present');
-        self::assertStringContainsString('Mod', $csv, 'mode column present');
-        // The imposed checkout Država/VAT-ID columns were removed (B2B goes via form fields → Podaci kupca).
-        self::assertStringNotContainsString('Zemlja', $csv);
-        self::assertStringNotContainsString('VAT ID', $csv);
-        // Newlines flattened to "; " AND the comma-containing value is RFC-quoted (one cell, not split).
-        self::assertStringContainsString('"ime: Goran Zajec; tvrtka: Sve je dobro, j.d.o.o."', $csv);
-        // The data stays on the single data row (header + one row → exactly one newline after each).
-        self::assertSame(1, substr_count(trim($csv), "\n"), 'no extra rows — the comma value did not break the row');
+        $rows = [
+            ['paid-stripe@t.local', Order::STATUS_PAID, 'stripe', $submission],
+            ['pending-paypal@t.local', Order::STATUS_PENDING, 'paypal', null],
+            ['paid-paypal@t.local', Order::STATUS_PAID, 'paypal', null],
+        ];
+        foreach ($rows as [$email, $status, $provider, $sub]) {
+            $order = (new Order())
+                ->setForm($form)
+                ->setSubmission($sub)
+                ->setStatus($status)
+                ->setProvider($provider)
+                ->setPaymentMode('test')
+                ->setAmountMinor(4900)
+                ->setCurrency('eur')
+                ->setCustomerEmail($email);
+            $em->persist($order);
+            $em->flush();
+            $this->orderIds[] = $order->getId();
+        }
     }
 
-    public function testExportNullSafeWithoutSubmission(): void
+    private function makeAdmin(): User
     {
-        $order = (new Order())->setProvider('paypal')->setAmountMinor(4900)->setCurrency('eur');
+        $container = static::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $hasher = $container->get(UserPasswordHasherInterface::class);
 
-        $csv = $this->csvFor($order);
+        $email = 'order_export_'.bin2hex(random_bytes(6)).'@test.local';
+        $user = (new User($email))->setRoles(['ROLE_ADMIN']);
+        $user->setPassword($hasher->hashPassword($user, 'password123'));
+        $em->persist($user);
+        $em->flush();
+        $this->emails[] = $email;
 
-        self::assertStringContainsString('Podaci kupca', $csv);
-        self::assertSame(1, substr_count(trim($csv), "\n"), 'one data row even with no submission');
+        return $user;
+    }
+
+    protected function tearDown(): void
+    {
+        $conn = static::getContainer()->get(EntityManagerInterface::class)->getConnection();
+        foreach ($this->orderIds as $id) {
+            $conn->executeStatement('DELETE FROM fb_order WHERE id = ?', [$id]);
+        }
+        if (null !== $this->submissionId) {
+            $conn->executeStatement('DELETE FROM fb_submission WHERE id = ?', [$this->submissionId]);
+        }
+        if (null !== $this->formId) {
+            $conn->executeStatement('DELETE FROM fb_form WHERE id = ?', [$this->formId]);
+        }
+        foreach ($this->emails as $email) {
+            $conn->executeStatement('DELETE FROM user WHERE email = ?', [$email]);
+        }
+
+        parent::tearDown();
     }
 }
