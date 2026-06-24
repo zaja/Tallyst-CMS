@@ -71,12 +71,25 @@ built now.
   admin actions, refund (admin + provider webhook), Stripe + PayPal config in Postavke, PayPal processor
   + provider choice + per-product limit, price variants, and inclusive tax + CSV export. **NOT** automated
   delivery (post-v1).
-- **Phase 3 — Standalone installer + deployment readiness (CURRENT).** WordPress-like install procedure;
-  the Deployment Readiness Panel (worker activation snippet + heartbeat status + encryption-key
-  status + go-live checks).
+- **Phase 3 — Standalone installer + deployment readiness (CURRENT).** WordPress-like install
+  procedure — **Pass 1 (interactive `app:install` wizard) DONE**; remaining: the Deployment
+  Readiness Panel (worker activation snippet + heartbeat status + encryption-key status + go-live
+  checks) and the Composer post-create hook / Packagist packaging.
 - **Post-v1 / future.** Automated digital delivery (downloads/licences); **Import / content packs**
   (a content importer with format adapters — see the backlog); and any deferred item that later
   passes the target-user filter.
+
+## Versioning (semver — rule ACTIVE from v1.0.0)
+Tallyst follows **semver (MAJOR.MINOR.PATCH)** from the first stable release.
+- **PATCH** = bugfix (backward-compatible). **MINOR** = new feature (backward-compatible).
+  **MAJOR** = breaking change (a core-API change that may break existing installs/addons).
+- Every release → a git tag (`vX.Y.Z`) → **Packagist auto-sync** (git↔Packagist linked).
+- **Semver is the API CONTRACT to the addon ecosystem:** MINOR/PATCH must NOT break addons (core
+  API stays stable); MAJOR signals "addons: re-check compatibility". Addons declare the compatible
+  core version (`"tallyst/cms": "^1.0"`).
+- **Timing:** the rule **activates at v1.0.0** (end of Phase 3 — installer done, Tallyst distributed).
+  Before v1.0.0 (active development) tagging is NOT required (no Packagist sync yet). The current
+  dev (tallystorg) builds toward v1.0.0.
 
 ## WHAT
 A Symfony 8 application built on three pillars:
@@ -103,7 +116,11 @@ The default `php` on this server may NOT be 8.5. Always call the explicit binary
 Plain `php` / `composer` can resolve the wrong PHP version and break installs.
 
 ## Common commands
-- Seed baseline: `php8.5 bin/console app:install` (minimal: default theme, home, 2-item menu).
+- Install (interactive wizard): `php8.5 bin/console app:install` — guided first-run install
+  (DB creds + connection validation, admin user, `.env.local`, migrations, baseline seed, asset
+  fallback); idempotent + already-installed guard. See "Standalone installer" in the backlog.
+  Baseline content (default theme, home, 2-item menu) is now seeded by `BaselineSeeder` via the
+  hidden `app:install:finalize` step (run in a fresh-kernel subprocess).
 - Seed DEMO content: `php8.5 bin/console app:demo:seed` (additive) / `--fresh` (full reset).
   Separate from install — ~16 pages + 15 posts in a 2-level menu, demo forms (free + priced
   page-as-product), and GD-generated neutral demo images. See "Default theme & demo content".
@@ -1117,8 +1134,43 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   out (multi-rate/per-country/VIES/OSS).
 
 ### Phase 3 — Standalone installer + deployment readiness
-- **Standalone installer — WordPress-like (NOT built).** A guided first-run install procedure
-  (DB, admin user, encryption key, base config) for the target solo-dev user.
+- **Standalone installer — interactive `app:install` wizard — DONE (Pass 1).** Ghost-style
+  guided first-run install for a CLEAN environment (fresh site, empty DB). Flow:
+  pre-flight (sodium ext + `var/`/project writable) → **already-installed GUARD first** (refuses
+  to overwrite a live site; `--force` + confirm bypasses; also refuses a non-empty target schema)
+  → DB prompts with **live connection validation** (raw DBAL probe, re-prompt loop, never proceeds
+  on a broken connection; auto-detects `serverVersion` for the DSN) → admin email/password (hidden,
+  confirmed) + site name + `DEFAULT_URI` → write `.env.local` (idempotent upsert; `APP_SECRET`
+  generate-if-missing/never-rotate; encryption key via `EncryptionKeyProvisioner`; perms 0600) →
+  migrations + seed + admin + asset fallback + `cache:clear` → Ghost-style final message
+  (worker / Stripe-PayPal / prod+webhook). Optional CI flags (`--db-* --admin-* --site-* --force
+  --skip-assets`) + the `TALLYST_ADMIN_PASSWORD` env for unattended install.
+  - **⚠️ ARCHITECTURE — DB-mutating steps MUST run as fresh-kernel SUBPROCESSES (the crux).**
+    `symfony/runtime` runs `Dotenv::bootEnv()` ONCE before the kernel (`usePutenv=false`), so the
+    boot-time `DATABASE_URL` is frozen in `$_ENV`/`$_SERVER` and baked into the compiled container.
+    After the wizard writes a NEW `DATABASE_URL` to `.env.local` mid-run, the in-process Doctrine
+    connection is STALE — migrations/seed/admin-insert CANNOT run in-process against the new DB
+    (mutating `$_ENV`/`putenv` fights the already-compiled container; works in dev, breaks under
+    prod's single container). So each step is a `Process([PHP_BINARY,'bin/console',…])` that boots a
+    FRESH kernel reading the new `.env.local`. **Symfony Process inherits `$_SERVER`+`$_ENV`, so the
+    child would otherwise see the parent's stale `DATABASE_URL` (and Dotenv lets a present env var
+    win over the file)** — the wizard passes a child env that sets the `.env`-managed keys
+    (`DATABASE_URL`/`APP_SECRET`/`DEFAULT_URI`/`ORDER_ADMIN_EMAIL`/`SETTINGS_ENCRYPTION_KEY`) to
+    `false` (Process removes them) so the child re-reads them fresh from the file. The DB connection
+    test + the install guard use a RAW `DriverManager` connection built from the inputs (independent
+    of the container). The admin password is forwarded via the **private child env**
+    (`TALLYST_ADMIN_PASSWORD`), never argv (argv shows in `ps`/history).
+  - **Pieces:** `src/Install/` — `DatabaseDsnBuilder` (parts→mysql DSN + `serverVersion` formatting,
+    pure), `EnvLocalWriter` (idempotent key upsert, double-quote+escape, 0600; does NOT touch the
+    encryption-key block), `InstallStateDetector` (envLocal predicate + DB probes), `DatabaseProber`
+    (raw DBAL connect/ping/version), `BaselineSeeder` (theme/home/post/menu — extracted from the old
+    `InstallCommand`). `src/Command/InstallCommand` (the wizard), `src/Command/InstallFinalizeCommand`
+    (hidden `app:install:finalize` — seeds + creates admin in the fresh-kernel subprocess; reads the
+    password env, idempotent). Unit tests: `tests/Install/*` (DsnBuilder, EnvLocalWriter,
+    StateDetector predicate) + `tests/Command/InstallFinalizeCommandTest` (validation). The
+    interactive wizard itself is smoke-only (user runs it on a clean CloudPanel site/empty DB).
+  - **NOT in Pass 1 (later passes):** readiness panel (below), the Composer `post-create-project-cmd`
+    hook + Packagist packaging, web installer, SMTP in the wizard (deferred to Postavke → Email).
 - **Stripe auto-webhook-setup + config diagnostics (NOT built).** Beyond the pass-3 copy-paste guide:
   Tallyst creates/updates the Stripe webhook endpoint via the API (so the admin doesn't hand-add it),
   and a "check Stripe config" diagnostic that reads the configured endpoint and warns if
