@@ -131,6 +131,14 @@ a per-environment build artifact and is git-ignored — never commit it.
   front CSS) via `DashboardController::configureAssets()`, so front styles never
   override the EasyAdmin theme/dark mode. Register module Stimulus controllers in
   `assets/stimulus_bootstrap.js` (shared by both entrypoints).
+- **⚠️ Tree-shakeable packages — import the BARE specifier + register manually, NEVER a `/auto` or
+  other subpath.** AssetMapper does NO Node export-map resolution — it maps only the bare specifier
+  listed in `importmap.php` (e.g. `chart.js`), so a subpath import like `chart.js/auto` throws a
+  runtime "module not found" and the Stimulus controller **silently never boots** (the feature just
+  doesn't work; no PHP/Twig error — the only signal is in the BROWSER console). Correct pattern:
+  `import { Chart, registerables } from 'chart.js'; Chart.register(...registerables);`. Diagnosis when a
+  JS feature is dead despite green PHP: open the browser console for a module-resolve error and check
+  whether the import uses a subpath that isn't a key in `importmap.php`.
 
 ## Themes (one folder = one theme)
 Theme STATIC assets (`themes/<name>/public/`) are served by the web server, SEPARATE
