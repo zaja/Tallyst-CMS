@@ -37,10 +37,14 @@ class MediaModule implements AdminModuleInterface
         return true; // foundational: uploads, thumbnails, the Tiptap editor + featured images depend on it
     }
 
-    public function getAdminMenuItems(): iterable
+    public function getAdminMenuItems(): array
     {
         // "Mediji" (the media library) is content — visible to ROLE_EDITOR. Branding (logo +
         // favicon) moved into Postavke → Branding (admin-only), so no standalone item here.
-        yield MenuItem::linkTo(MediaCrudController::class, 'Mediji', 'fa fa-images');
+        return [
+            AdminModuleInterface::SECTION_CONTENT => [
+                MenuItem::linkTo(MediaCrudController::class, 'Mediji', 'fa fa-images'),
+            ],
+        ];
     }
 }

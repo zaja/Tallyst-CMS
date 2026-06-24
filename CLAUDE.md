@@ -1071,11 +1071,13 @@ Copy `modules/FormBuilder/` — it is the reference module. Its bundle class
 (`AbstractBundle`) self-registers its Doctrine mapping and its `config/services.php`,
 and overrides `getPath()` to `__DIR__` (the bundle lives in `modules/<Name>/`, not a
 `src/` subdir, so the default heuristic mis-resolves it). Implement `ModuleInterface`
-(metadata → shows in the registry) and optionally `AdminModuleInterface`
-(`getAdminMenuItems()` → appears under the dashboard "Moduli" section; build CRUD
-links with `MenuItem::linkTo(<CrudController>::class, label, icon)` — `linkToCrud()`
-is deprecated). Content tags implement `ShortcodeInterface`; both interfaces are auto-tagged via
-`#[AutoconfigureTag]`, so no `_instanceof`/services wiring is needed for them.
+(metadata → shows in the registry; **`isCore()`** — core modules can't be disabled) and optionally
+`AdminModuleInterface` (`getAdminMenuItems()` returns **section-keyed** items
+`[AdminModuleInterface::SECTION_CONTENT => [MenuItem…], SECTION_SALES => […]]` — the dashboard places
+each group into the matching Core section, e.g. Sadržaj/Prodaja, so Core never references module
+controllers (dependency direction); build CRUD links with `MenuItem::linkTo(<CrudController>::class,
+label, icon)` — `linkToCrud()` is deprecated). Content tags implement `ShortcodeInterface`; both
+interfaces are auto-tagged via `#[AutoconfigureTag]`, so no `_instanceof`/services wiring is needed.
 
 **The 5 app-side touch points (everything else lives in the module):**
 1. **Autoload** — add the PSR-4 namespace to `composer.json` (`"Tallyst\\<Name>\\":
