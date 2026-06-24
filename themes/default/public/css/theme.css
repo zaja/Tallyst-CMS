@@ -504,7 +504,7 @@ th { font-weight: 650; }
     /* Anchored to the field's right edge and grown leftward, so a wide dropdown never spills off-screen
        on the right; capped to the viewport on the left. */
     position: absolute; top: calc(100% + 4px); right: 0; left: auto; z-index: 50;
-    width: max-content; min-width: 24rem; max-width: min(28rem, 92vw);
+    width: max-content; min-width: 26rem; max-width: min(34rem, 94vw);
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
     box-shadow: var(--shadow); overflow: hidden;
 }
@@ -520,7 +520,9 @@ th { font-weight: 650; }
 .live-search-title { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-search-snippet {
     color: var(--muted); font-size: var(--fs-sm); margin-top: 2px;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    /* Wrap to at most 2 lines (no hard right-cut), ellipsis on overflow. */
+    display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; white-space: normal;
 }
 .live-search-empty { padding: var(--s-2) var(--s-3); color: var(--muted); }
 .live-search-all {
