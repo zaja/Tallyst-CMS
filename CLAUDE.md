@@ -776,6 +776,29 @@ gotcha:** in a `.xml.twig` the `<?xml … ?>` declaration must be **literal text
 `{{ '<?xml…' }}` produced NO output → malformed XML); `<loc>` values are explicitly `|e`-escaped (xml
 templates aren't HTML-autoescaped). Locked by `tests/Functional/SitemapTest`.
 
+## Frontend search (MySQL FULLTEXT)
+Public search over **published** Pages/Posts/Categories — self-hosted, zero external deps, native MySQL
+FULLTEXT. `SitemapController`-style public route **`/pretraga`** (`SearchController` → `SearchService` →
+theme `search.html.twig`).
+- **Indexes:** per table a FULLTEXT on the **title/name alone** + one on the **body** (`page` title|content;
+  `post` title|(excerpt,content); `category` name|description) — two indexes so the score can **weight the
+  title ×2** above body (`MATCH(cols)` needs an index on exactly those cols). Declared via
+  `#[ORM\Index(flags:['fulltext'])]` (stays in `schema:validate` sync). **`innodb_ft_min_token_size`
+  default 3** → tokens <3 chars aren't indexed (we don't touch server config; handled gracefully).
+- **Queries:** native SQL per repo (`{Page,Post,Category}Repository::search…`), `MATCH … AGAINST(? IN
+  BOOLEAN MODE)`, **parameterised positional `?`** (DBAL won't reuse a named param; `LIMIT` is an inlined
+  trusted int). Pages/Posts filter `status='published'`; categories are all public.
+- **`SearchService`:** tokenises the query to `[\p{L}\p{N}]+` (drops boolean operators `+ - * " ( )` →
+  injection-safe), keeps tokens ≥3 chars, builds `token*` (prefix wildcard — Croatian without stemming:
+  `licenc*`). No token ≥3 → state `short`. Merges all types, sorts by score DESC (mixed by relevance, type
+  badge in the UI), caps 25. **Snippet:** strip shortcodes+tags → window around first hit → `htmlspecialchars`
+  THEN inject `<mark>` (tokens are word-chars, so escaping is safe; template prints `|raw`).
+- **Toggle:** General setting **`search_enabled`** (BOOL, **default OFF** — simple sites stay field-free;
+  null-safe via `setting()`). The header field shows only when on; **the `/pretraga` route always works**
+  (bookmarks/direct links don't break — only the UI field is gated). NOT on the maintenance exempt list
+  (it's a visitor feature → goes behind maintenance with the rest of the site). Locked by
+  `tests/Functional/SearchTest` (ranking, draft-exclusion, short/empty, XSS-escape).
+
 ## Roles & access (back-office)
 Two roles: **ROLE_ADMIN** (everything) and **ROLE_EDITOR** (content only — Pages, Posts,
 Categories, Media). `role_hierarchy: ROLE_ADMIN ⊇ ROLE_EDITOR`, so existing admins keep full

@@ -12,6 +12,8 @@ use Tallyst\Media\Entity\Media;
  */
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 #[ORM\Table(name: 'post')]
+#[ORM\Index(name: 'ft_post_title', columns: ['title'], flags: ['fulltext'])]
+#[ORM\Index(name: 'ft_post_body', columns: ['excerpt', 'content'], flags: ['fulltext'])]
 #[ORM\HasLifecycleCallbacks]
 class Post
 {

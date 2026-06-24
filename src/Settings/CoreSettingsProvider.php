@@ -24,6 +24,7 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
         yield new SettingsSection('general', 'Općenito', 'fa-sliders', [
             new SettingDefinition('site_name', SettingType::STRING, 'Naziv sajta', 'Prikazuje se u zaglavlju i naslovu.', 'Tallyst'),
             new SettingDefinition('site_tagline', SettingType::STRING, 'Slogan', 'Kratak opis sajta (meta opis).', ''),
+            new SettingDefinition('search_enabled', SettingType::BOOL, 'Prikaži tražilicu', 'Polje za pretragu u zaglavlju. Isključeno (zadano) = jednostavan sajt bez pretrage; uključi ako imaš puno sadržaja.', false),
         ]);
 
         yield new SettingsSection('branding', 'Branding', 'fa-palette', [

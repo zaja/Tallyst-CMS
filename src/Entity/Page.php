@@ -12,6 +12,10 @@ use Tallyst\Media\Entity\Media;
  */
 #[ORM\Entity(repositoryClass: PageRepository::class)]
 #[ORM\Table(name: 'page')]
+// Separate FULLTEXT indexes so search can weight a title match above a body match (MATCH needs an
+// index on exactly the matched columns).
+#[ORM\Index(name: 'ft_page_title', columns: ['title'], flags: ['fulltext'])]
+#[ORM\Index(name: 'ft_page_content', columns: ['content'], flags: ['fulltext'])]
 #[ORM\HasLifecycleCallbacks]
 class Page
 {

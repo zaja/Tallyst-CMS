@@ -23,6 +23,12 @@
                 <span class="bars" aria-hidden="true"></span>
             </button>
             {{ render_menu('main') }}
+            {% if setting('search_enabled') %}
+                <form class="site-search" role="search" method="get" action="{{ path('search') }}">
+                    <input type="search" name="q" placeholder="Pretraži…" aria-label="Pretraži" value="{{ app.request.query.get('q') }}">
+                    <button type="submit" aria-label="Traži">🔍</button>
+                </form>
+            {% endif %}
         </div>
     </header>
 

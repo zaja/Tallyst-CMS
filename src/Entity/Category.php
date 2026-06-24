@@ -11,6 +11,8 @@ use Tallyst\Media\Entity\Media;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 #[ORM\Table(name: 'category')]
+#[ORM\Index(name: 'ft_category_name', columns: ['name'], flags: ['fulltext'])]
+#[ORM\Index(name: 'ft_category_description', columns: ['description'], flags: ['fulltext'])]
 #[ORM\HasLifecycleCallbacks]
 class Category
 {

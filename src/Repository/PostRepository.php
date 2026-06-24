@@ -45,6 +45,27 @@ class PostRepository extends ServiceEntityRepository
     }
 
     /**
+     * FULLTEXT search over published posts, title weighted ×2 above excerpt+content. Native SQL.
+     *
+     * @return list<array{id:int, title:string, slug:string, excerpt:?string, content:?string, score:float}>
+     */
+    public function searchPublished(string $boolean, int $limit): array
+    {
+        $sql = 'SELECT id, title, slug, excerpt, content,
+                       (MATCH(title) AGAINST(? IN BOOLEAN MODE) * 2 + MATCH(excerpt, content) AGAINST(? IN BOOLEAN MODE)) AS score
+                FROM post
+                WHERE status = ?
+                  AND (MATCH(title) AGAINST(? IN BOOLEAN MODE) OR MATCH(excerpt, content) AGAINST(? IN BOOLEAN MODE))
+                ORDER BY score DESC
+                LIMIT '.(int) $limit;
+
+        return $this->getEntityManager()->getConnection()->executeQuery(
+            $sql,
+            [$boolean, $boolean, Post::STATUS_PUBLISHED, $boolean, $boolean],
+        )->fetchAllAssociative();
+    }
+
+    /**
      * Published posts for one page, newest first, optionally scoped to a category. Wrapped in a
      * Doctrine Paginator so count() is correct alongside the LIMIT/OFFSET slice.
      *

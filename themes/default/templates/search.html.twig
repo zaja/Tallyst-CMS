@@ -1,0 +1,34 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Pretraga{% if query %}: {{ query }}{% endif %} — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block body %}
+    <article class="page-content">
+        <header class="page-header">
+            <h1>Pretraga</h1>
+        </header>
+
+        <div class="prose">
+            {% if state == 'short' %}
+                <p class="search-note">Upiši barem 3 znaka za pretragu.</p>
+            {% elseif state == 'empty' %}
+                <p class="search-note">
+                    {% if query %}Nema rezultata za „{{ query }}".{% else %}Upiši pojam za pretragu.{% endif %}
+                </p>
+            {% else %}
+                <p class="search-note">Rezultati za „{{ query }}" ({{ results|length }}):</p>
+                <ul class="search-results">
+                    {% for r in results %}
+                        <li class="search-result">
+                            <span class="search-type">{{ r.type }}</span>
+                            <a class="search-result-title" href="{{ r.url }}">{{ r.title }}</a>
+                            {% if r.snippet %}<p class="search-snippet">{{ r.snippet|raw }}</p>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </article>
+{% endblock %}

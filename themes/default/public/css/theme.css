@@ -475,6 +475,30 @@ th { font-weight: 650; }
 /* Per-image full width: spans the full content container (rendered from the larger 'hero' source). */
 .media-img-full { display: block; width: 100%; height: auto; margin: var(--s-6) 0; }
 
+/* ---- Search (header field + results) ---- */
+.site-search { display: flex; align-items: center; gap: var(--s-1); }
+.site-search input[type="search"] {
+    font: inherit; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: var(--s-1) var(--s-2); max-width: 14rem;
+}
+.site-search input[type="search"]:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.site-search button {
+    font: inherit; cursor: pointer; background: none; border: none;
+    padding: var(--s-1); color: var(--muted); line-height: 1;
+}
+.search-note { color: var(--muted); }
+.search-results { list-style: none; padding: 0; margin: var(--s-4) 0 0; }
+.search-result { padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
+.search-type {
+    display: inline-block; font-size: .72rem; text-transform: uppercase; letter-spacing: .03em;
+    color: var(--brand-ink); background: var(--brand-tint);
+    padding: .1rem var(--s-2); border-radius: 999px; margin-bottom: var(--s-1);
+}
+.search-result-title { display: block; font-weight: 600; font-size: 1.1rem; }
+.search-snippet { color: var(--muted); margin: var(--s-1) 0 0; }
+.search-snippet mark { background: var(--brand-tint); color: inherit; padding: 0 .1em; border-radius: 3px; }
+
 /* ------------------------------------------------ Multi-column layout --- */
 /* THEME CONTRACT (Prolaz C). Content stored as
    <div class="tallyst-columns" data-columns="N"><div class="tallyst-column">…</div>…</div>.
