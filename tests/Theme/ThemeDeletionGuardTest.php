@@ -40,4 +40,10 @@ class ThemeDeletionGuardTest extends TestCase
     {
         self::assertNull($this->guard(2)->blockDelete($this->theme(false)));
     }
+
+    public function testCannotDeleteDefaultEvenWhenInactiveWithOthers(): void
+    {
+        $default = (new Theme())->setName('default')->setActive(false);
+        self::assertNotNull($this->guard(3)->blockDelete($default), 'default is never deletable');
+    }
 }

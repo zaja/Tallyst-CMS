@@ -26,7 +26,7 @@ class AdminAccessTest extends WebTestCase
     /** Admin-only — an editor must get 403 on each (complete set of ROLE_ADMIN routes). */
     private const ADMIN_ONLY = [
         '/admin/settings', '/admin/modules', '/admin/user', '/admin/order',
-        '/admin/theme', '/admin/menu', '/admin/menu-item', '/admin/setting',
+        '/admin/themes', '/admin/menu', '/admin/menu-item', '/admin/setting',
         '/admin/forms', '/admin/email',
     ];
 

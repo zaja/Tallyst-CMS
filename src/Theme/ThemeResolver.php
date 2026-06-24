@@ -40,7 +40,28 @@ class ThemeResolver
             // Theme table may not exist yet (before first migration) — use default.
         }
 
+        // Safety net: if the active theme's folder was removed/broken (e.g. FTP-deleted while active),
+        // fall back to default so the public site never breaks. Default is git-tracked + always usable.
+        if ($this->defaultTheme !== $name && !$this->isUsable($name)) {
+            $name = $this->defaultTheme;
+        }
+
         return $this->activeThemeName = $name;
+    }
+
+    /** A theme is usable when its folder resolves a layout.html.twig (own or via its parent chain). */
+    public function isUsable(string $name): bool
+    {
+        if (!is_dir($this->getThemeDir($name))) {
+            return false;
+        }
+        foreach ($this->getTemplatePathChain($name) as $dir) {
+            if (is_file($dir.'/layout.html.twig')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getThemesDir(): string

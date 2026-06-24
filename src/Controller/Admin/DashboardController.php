@@ -157,7 +157,7 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToRoute('Sigurnost', 'fa fa-shield-halved', 'admin_security');
 
         yield MenuItem::section('Izgled')->setPermission('ROLE_ADMIN');
-        yield MenuItem::linkTo(ThemeCrudController::class, 'Teme', 'fa fa-palette')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToRoute('Teme', 'fa fa-palette', 'admin_themes')->setPermission('ROLE_ADMIN');
 
         // MODULI — only the registry page (admin-only); module items now live in their own sections.
         yield MenuItem::section('Moduli')->setPermission('ROLE_ADMIN');

@@ -157,6 +157,22 @@ from AssetMapper (don't push theme CSS through importmap). Pattern:
   raw URL), nests children, flags the active item (home matches `/` EXACTLY; others
   match exactly or as a path prefix), and renders the theme-overridable
   `menu.html.twig` + `menu_items.html.twig`. Never hardcode nav in a layout.
+- **Theme management = auto-detect + activate (V1; NO browser upload, NO CMS delete).** Admin/dev drops a
+  theme folder into `themes/` (FTP / copy `default` + rename); the CMS detects it. `ThemeScanner::scan()`
+  lists every `themes/*/` with a `theme.yaml` (folders without one are ignored), reading label/author/parent
+  and flagging `valid` (a `layout.html.twig` resolves — own or via the parent chain, so child themes count),
+  `parentMissing`, `hasThumbnail`, `isDefault`, `active`. **`ThemesController`** (`/admin/themes`, replaces
+  the old EA Theme CRUD) shows the cards + activates one (CSRF; create-if-missing `Theme` row + single
+  active; only a valid theme activates). Active theme is still the DB `Theme.active` row.
+- **`theme.png` thumbnail convention:** optional `themes/<name>/theme.png` (root, next to `theme.yaml`;
+  ~880×660). It's OUTSIDE `public/`, so the admin streams it via `GET /admin/themes/{name}/thumbnail`
+  (ROLE_ADMIN; name regex-validated → no path traversal; 404 → list shows a placeholder). `themes/default`
+  ships one.
+- **The site ALWAYS has a working theme:** `ThemeResolver::getActiveThemeName()` verifies the active theme
+  is usable (folder + resolvable `layout.html.twig`) and **falls back to `default`** otherwise — an
+  FTP-deleted/broken active theme can't break the front. Plus `ThemeDeletionGuard` blocks deleting `default`
+  (never), the active, or the only theme (defense-in-depth — no delete UI in V1), and `default` is
+  git-tracked. **Theme upload via browser is V2** (Twig sandbox + zip validation — backlog).
 
 ## Default theme & demo content (Phase 1, pass 1 — DONE)
 The default theme (`themes/default/`) is a small **design system**, not bland defaults, and
@@ -1147,6 +1163,10 @@ Dizajn-dogovor za installer fazu.
 - Preduvjet: heartbeat subscriber je mali enabling dio (može se dodati i ranije ako zatreba).
 
 ### Post-v1 / future (deferred — NOT v1)
+- **Theme upload via browser (V2 — Shopify-model).** V1 is auto-detect + activate (folders dropped into
+  `themes/` via FTP/git). V2 adds in-admin upload: a zip uploaded + validated (structure: `theme.yaml` +
+  `layout.html.twig`; size/type) and, crucially, **Twig sandboxing** (untrusted theme templates must not
+  run arbitrary PHP/Twig — `{{ … }}`/tags restricted to a safe allowlist). Its own security pass.
 - **Automated digital delivery (deferred — model DECIDED).** The delivery model is settled: **v1 is
   manual fulfilment** (payment → order recorded → confirmation e-mail → the admin delivers manually:
   sends the file, grants access, issues the licence, performs the service — enough for BOTH services
