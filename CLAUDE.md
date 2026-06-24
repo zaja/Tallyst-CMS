@@ -842,6 +842,12 @@ doesn't deindex.
   crawlers can't authenticate). Search (`/pretraga`) is NOT exempt (visitor feature → goes down with the site).
 - **Fail-open on the read:** the toggle is read in a try/catch — a settings/DB hiccup must never 503 the
   whole site; only an explicit ON triggers maintenance. Locked by `tests/Functional/MaintenanceTest`.
+- **Admin reminder:** an EA layout override (`templates/bundles/EasyAdminBundle/layout.html.twig`, overrides
+  the `flash_messages` block) shows a Bootstrap `alert-warning` "Maintenance mode aktivan" banner on EVERY
+  admin page when on (link to Postavke → Održavanje). `setting('maintenance_enabled')` drives it.
+- **Dev toolbar:** `/_` paths (`_wdt`/`_profiler`) are exempt (else the toolbar's AJAX got 503'd → "error
+  loading the web debug toolbar"), and the subscriber `$profiler?->disable()`s on the maintenance response
+  (no `X-Debug-Token` → WDT skips injection → clean page). `?Profiler` is injected `@?profiler` (null in prod).
 
 ## Roles & access (back-office)
 Two roles: **ROLE_ADMIN** (everything) and **ROLE_EDITOR** (content only — Pages, Posts,

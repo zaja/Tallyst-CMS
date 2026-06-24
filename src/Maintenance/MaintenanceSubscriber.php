@@ -4,10 +4,12 @@ namespace App\Maintenance;
 
 use App\Settings\SettingsManager;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\HttpKernel\Profiler\Profiler;
 use Twig\Environment;
 
 /**
@@ -28,6 +30,9 @@ class MaintenanceSubscriber
         private readonly SettingsManager $settings,
         private readonly Security $security,
         private readonly Environment $twig,
+        // Dev/test only — absent in prod (null). Used to skip the web debug toolbar on the maintenance page.
+        #[Autowire('@?profiler')]
+        private readonly ?Profiler $profiler = null,
     ) {
     }
 
@@ -48,6 +53,7 @@ class MaintenanceSubscriber
         $path = $event->getRequest()->getPathInfo();
         if (str_starts_with($path, '/admin')          // admin + login + reset-password + 2fa (no lockout)
             || str_starts_with($path, '/webhook')      // Stripe/PayPal — server-to-server
+            || str_starts_with($path, '/_')            // dev internals (_wdt, _profiler, _fragment) — never 503 these
             || \in_array($path, ['/sitemap.xml', '/robots.txt'], true)) {
             return;
         }
@@ -55,6 +61,10 @@ class MaintenanceSubscriber
         if ($this->security->isGranted('ROLE_ADMIN')) {
             return; // a logged-in admin previews the live site
         }
+
+        // Keep the maintenance page clean in dev: a disabled profiler emits no X-Debug-Token, so the
+        // web debug toolbar skips injection. No-op in prod (profiler absent). Belt with the /_ exemption.
+        $this->profiler?->disable();
 
         $html = $this->twig->render('maintenance.html.twig', [
             'message' => (string) $this->settings->get('maintenance_message'),

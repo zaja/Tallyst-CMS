@@ -1,0 +1,13 @@
+{# App override of the EA admin layout: adds a global "maintenance mode active" reminder on EVERY admin
+   page (overrides the flash_messages block + calls parent()). Bootstrap alert-warning = dark-mode safe. #}
+{% extends '@!EasyAdmin/layout.html.twig' %}
+
+{% block flash_messages %}
+    {% if setting('maintenance_enabled') %}
+        <div class="alert alert-warning m-3 mb-0" role="alert">
+            ⚠ <strong>Maintenance mode je aktivan</strong> — javni dio je nedostupan posjetiteljima.
+            <a href="{{ path('admin_settings') }}" class="alert-link">Isključi u Postavke → Održavanje</a>
+        </div>
+    {% endif %}
+    {{ parent() }}
+{% endblock %}
