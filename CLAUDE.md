@@ -1193,6 +1193,18 @@ Dizajn-dogovor za installer fazu.
   `themes/` via FTP/git). V2 adds in-admin upload: a zip uploaded + validated (structure: `theme.yaml` +
   `layout.html.twig`; size/type) and, crucially, **Twig sandboxing** (untrusted theme templates must not
   run arbitrary PHP/Twig — `{{ … }}`/tags restricted to a safe allowlist). Its own security pass.
+- **Replacement tags in the thank-you message (and maybe email templates) — deferred, design noted.**
+  Today the thank-you message (Pass 11) is static editable text + a fixed dynamic block; let the admin
+  embed tags in the copy. Two kinds: **order tags** (`{broj_narudzbe}`, `{iznos}`, `{valuta}` — reliable,
+  structured on `Order`) and **field tags** (`{polje:naziv}` — pulled from the form SUBMISSION, for
+  name/company). **Customer data comes from the FORM (submission), NOT Stripe/PayPal** — processors don't
+  give a reliable name (Stripe doesn't collect it unless `name_collection` is configured; PayPal returns the
+  PayPal-account name, not necessarily the wanted one); don't touch payment for the name, the form is the
+  cleaner source. Reuse the `ShortcodeRegistry`; graceful when a field is missing (tag → empty/removed,
+  never a crash — it depends on per-form field names). **Deferred because:** static text + the dynamic block
+  cover the main need, and replacement tags add fragility (field-name coupling) for marginal v1 value.
+  (The email-template engine already has its OWN advertised-tag mechanism; this is about extending the same
+  idea to the thank-you copy — keep the two consistent if/when built.)
 - **Automated digital delivery (deferred — model DECIDED).** The delivery model is settled: **v1 is
   manual fulfilment** (payment → order recorded → confirmation e-mail → the admin delivers manually:
   sends the file, grants access, issues the licence, performs the service — enough for BOTH services
