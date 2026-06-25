@@ -183,6 +183,70 @@ admin:
         problem: problema
         manual_count: ručno
         fix: 'Popravak:'
+        status: { ok: OK, warning: Upozorenje, problem: Problem, manual: Provjeri ručno }
+        group: { security: Sigurnost, config: Konfiguracija, mail: Pošta, assets: Asseti, fs: Datotečni sustav, db: Baza podataka, worker: Pozadinski procesi }
+        app_secret:
+            detail: { empty: 'Prazan — CSRF tokeni i potpisani URL-ovi nisu sigurni.', ok: Postavljen. }
+            fix: 'app:install ga generira u .env.local; ili ručno postavi APP_SECRET na 32+ nasumičnih znakova.'
+        enc_key:
+            detail: { bad: 'Nedostaje ili nije ispravan (treba base64 od 32 bajta) — enkripcija postavki (SMTP lozinka) ne radi.', ok: 'Postavljen (32 bajta).' }
+            fix: "Pokreni app:install, ili: php8.5 -r 'echo base64_encode(random_bytes(32));' → upiši u .env.local."
+        https:
+            detail: { ok: 'DEFAULT_URI koristi https. (Ne potvrđuje stvarni TLS na serveru — to provjeri u pregledniku.)', warn: 'DEFAULT_URI nije https — produkcija bi trebala posluživati preko HTTPS-a.' }
+            fix: 'Postavi SSL (CloudPanel/nginx) i DEFAULT_URI na https://… .'
+        app_env:
+            detail: { ok: Radi u prod modu., dev: 'Trenutno "%env%". Lokalni razvoj je u redu; za PRODUKCIJU postavi prod (dev izlaže detaljne greške i usporava).' }
+            fix: 'U .env.local postavi APP_ENV=prod, pa cache:clear — prije nego javna domena ide uživo.'
+        default_uri:
+            detail:
+                invalid: 'Nije postavljen apsolutni URL — mailovi (reset lozinke) i sitemap koristit će http://localhost.'
+                localhost: 'Postavljen na "%uri%" — worker-generirani linkovi (reset lozinke) vodit će na localhost.'
+                ok: 'Postavljen: %uri%'
+            fix: { invalid: 'Postavi DEFAULT_URI na pravi javni URL (npr. https://tvoja-domena.hr) u .env.local.', localhost: 'Za produkciju postavi DEFAULT_URI na pravu javnu domenu.' }
+        mailer:
+            label: Pošta (SMTP)
+            detail: { db: 'DB SMTP konfiguriran (%host%).', env: Koristi MAILER_DSN iz okoline., unconfigured: 'Nije konfigurirana — reset lozinke i mailovi narudžbi neće se slati.' }
+            fix: 'Postavke → Email: upiši SMTP host/korisnika/lozinku (ili postavi MAILER_DSN u .env.local).'
+        smtp_password:
+            label: SMTP lozinka
+            detail: 'Nije moguće dekriptirati (ključ rotiran/izgubljen) — mailer pada na env fallback.'
+            fix: 'Postavke → Email: ponovno upiši SMTP lozinku (re-enkriptira se trenutnim ključem).'
+        mail_from:
+            label: Adresa pošiljatelja
+            detail: { warn: 'mail_from_email nije postavljen — pravi SMTP serveri odbijaju mail bez ispravnog From-a (553).', ok: 'Postavljena: %from%' }
+            fix: 'Postavke → Email: postavi "Email pošiljatelja" na adresu koju SMTP račun smije slati.'
+        order_email:
+            label: Email za narudžbe
+            detail: { unset: 'Nije postavljen — obavijesti o narudžbama neće stići na pravu adresu.', placeholder: 'Postavljen na placeholder "%placeholder%" — obavijesti o narudžbama neće stići na pravu adresu.', ok: 'Postavljen: %email%' }
+            fix: 'Postavke → Email: postavi "Email za narudžbe" na pravu, dostavljivu adresu (ili ORDER_ADMIN_EMAIL u .env.local).'
+        assets_manifest:
+            label: Kompajlirani asseti
+            detail: { ok: public/assets/manifest.json postoji., problem: 'public/assets/manifest.json ne postoji — JS/CSS ne radi (graf na nadzornoj ploči, pretraga, editor…).' }
+            fix: 'Pokreni: php8.5 bin/console asset-map:compile'
+        theme_published:
+            label: Objavljena tema
+            detail: { ok: public/themes/default postoji., problem: 'public/themes/default ne postoji — front nema CSS teme.' }
+            fix: 'Pokreni: php8.5 bin/console app:theme:assets:install'
+        var_writable:
+            label: var/ zapisiv
+            detail: { ok: cache/log direktorij je zapisiv., problem: 'var/ nije zapisiv — cache i logovi će pucati.' }
+            fix: 'Dodijeli prava web korisniku: chmod -R u+rwX %path%'
+        uploads:
+            label: Upload direktorij
+            detail: { missing: 'public/media/uploads još ne postoji (stvorit će se pri prvom uploadu).', ok: public/media/uploads je zapisiv., problem: 'public/media/uploads nije zapisiv — uploadi slika će pucati.' }
+            fix: { missing: 'Provjeri da je public/media zapisiv: chmod -R u+rwX %path%/public/media', problem: 'chmod -R u+rwX %path%' }
+        migrations:
+            label: Migracije
+            detail: { error: 'Ne mogu provjeriti stanje migracija: %error%', ok: Sve migracije su pokrenute., pending: '%count% migracija nije pokrenuto — shema baze je zastarjela.' }
+            fix: { error: 'Provjeri DB konekciju, pa pokreni: php8.5 bin/console doctrine:migrations:migrate', pending: 'Pokreni: php8.5 bin/console doctrine:migrations:migrate' }
+        worker:
+            label: Messenger worker
+            detail: { active: 'Aktivan — zadnji put viđen prije %seconds% s (heartbeat).', empty: 'Worker se nije javio (heartbeat prazan) — možda ne radi, ili je tek pokrenut/restartan i još nije „kucnuo".', stale: 'Worker se zadnji put javio prije %seconds% s (zastarjelo) — možda je stao.', suffix: ' Ne mogu 100% potvrditi iz aplikacije.' }
+            fix: 'Provjeri ručno: systemctl --user status tallyst-messenger (pa po potrebi restart). Heartbeat se osvježava dok worker radi.'
+        queue:
+            label: Red poruka
+            detail: { error: 'Ne mogu pročitati red poruka: %error%', failed: '%failed% neuspjelih poruka (i %pending% na čekanju).', backlog: '%pending% poruka na čekanju — ako broj raste, worker vjerojatno ne radi.', ok: '%pending% na čekanju, %failed% neuspjelih.' }
+            fix: { error: 'Provjeri DB / tablicu messenger_messages (migracije).', failed: 'Pogledaj: php8.5 bin/console messenger:failed:show — pa retry ili remove.', backlog: 'Provjeri da worker radi (gore).' }
     security:
         title: Sigurnost
         password: Lozinka

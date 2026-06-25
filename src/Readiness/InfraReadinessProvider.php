@@ -6,6 +6,7 @@ use App\Messenger\WorkerHeartbeat;
 use Doctrine\DBAL\Connection;
 use Doctrine\Migrations\DependencyFactory;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Infrastructure readiness checks: assets, filesystem, DB migrations, and the messenger worker.
@@ -15,10 +16,11 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  */
 class InfraReadinessProvider implements ReadinessCheckProviderInterface
 {
-    private const G_ASSETS = 'Asseti';
-    private const G_FS = 'Datotečni sustav';
-    private const G_DB = 'Baza podataka';
-    private const G_WORKER = 'Pozadinski procesi';
+    // Group names are `admin`-domain keys (translated via t()); labels + detail/fix are keys too.
+    private const G_ASSETS = 'admin.readiness.group.assets';
+    private const G_FS = 'admin.readiness.group.fs';
+    private const G_DB = 'admin.readiness.group.db';
+    private const G_WORKER = 'admin.readiness.group.worker';
 
     public function __construct(
         #[Autowire('%kernel.project_dir%')]
@@ -27,7 +29,14 @@ class InfraReadinessProvider implements ReadinessCheckProviderInterface
         #[Autowire(service: 'doctrine.migrations.dependency_factory')]
         private readonly DependencyFactory $migrations,
         private readonly WorkerHeartbeat $heartbeat,
+        private readonly TranslatorInterface $translator,
     ) {
+    }
+
+    /** @param array<string, string|int> $params */
+    private function t(string $key, array $params = []): string
+    {
+        return $this->translator->trans($key, $params, 'admin');
     }
 
     public function getChecks(): iterable
@@ -43,94 +52,108 @@ class InfraReadinessProvider implements ReadinessCheckProviderInterface
 
     private function checkAssetsManifest(): Check
     {
+        $g = $this->t(self::G_ASSETS);
+        $label = $this->t('admin.readiness.assets_manifest.label');
         if (is_file($this->projectDir.'/public/assets/manifest.json')) {
-            return Check::ok(self::G_ASSETS, 'Kompajlirani asseti', 'public/assets/manifest.json postoji.');
+            return Check::ok($g, $label, $this->t('admin.readiness.assets_manifest.detail.ok'));
         }
 
-        return Check::problem(self::G_ASSETS, 'Kompajlirani asseti',
-            'public/assets/manifest.json ne postoji — JS/CSS ne radi (graf na nadzornoj ploči, pretraga, editor…).',
-            'Pokreni: php8.5 bin/console asset-map:compile');
+        return Check::problem($g, $label,
+            $this->t('admin.readiness.assets_manifest.detail.problem'),
+            $this->t('admin.readiness.assets_manifest.fix'));
     }
 
     private function checkThemePublished(): Check
     {
+        $g = $this->t(self::G_ASSETS);
+        $label = $this->t('admin.readiness.theme_published.label');
         $path = $this->projectDir.'/public/themes/default';
         if (is_link($path) || is_dir($path)) {
-            return Check::ok(self::G_ASSETS, 'Objavljena tema', 'public/themes/default postoji.');
+            return Check::ok($g, $label, $this->t('admin.readiness.theme_published.detail.ok'));
         }
 
-        return Check::problem(self::G_ASSETS, 'Objavljena tema',
-            'public/themes/default ne postoji — front nema CSS teme.',
-            'Pokreni: php8.5 bin/console app:theme:assets:install');
+        return Check::problem($g, $label,
+            $this->t('admin.readiness.theme_published.detail.problem'),
+            $this->t('admin.readiness.theme_published.fix'));
     }
 
     private function checkVarWritable(): Check
     {
+        $g = $this->t(self::G_FS);
+        $label = $this->t('admin.readiness.var_writable.label');
         $var = $this->projectDir.'/var';
         if (is_dir($var) && is_writable($var)) {
-            return Check::ok(self::G_FS, 'var/ zapisiv', 'cache/log direktorij je zapisiv.');
+            return Check::ok($g, $label, $this->t('admin.readiness.var_writable.detail.ok'));
         }
 
-        return Check::problem(self::G_FS, 'var/ zapisiv',
-            'var/ nije zapisiv — cache i logovi će pucati.',
-            sprintf('Dodijeli prava web korisniku: chmod -R u+rwX %s', $var));
+        return Check::problem($g, $label,
+            $this->t('admin.readiness.var_writable.detail.problem'),
+            $this->t('admin.readiness.var_writable.fix', ['%path%' => $var]));
     }
 
     private function checkUploadsWritable(): Check
     {
+        $g = $this->t(self::G_FS);
+        $label = $this->t('admin.readiness.uploads.label');
         $dir = $this->projectDir.'/public/media/uploads';
         if (!is_dir($dir)) {
-            return Check::warning(self::G_FS, 'Upload direktorij',
-                'public/media/uploads još ne postoji (stvorit će se pri prvom uploadu).',
-                sprintf('Provjeri da je public/media zapisiv: chmod -R u+rwX %s/public/media', $this->projectDir));
+            return Check::warning($g, $label,
+                $this->t('admin.readiness.uploads.detail.missing'),
+                $this->t('admin.readiness.uploads.fix.missing', ['%path%' => $this->projectDir]));
         }
         if (is_writable($dir)) {
-            return Check::ok(self::G_FS, 'Upload direktorij', 'public/media/uploads je zapisiv.');
+            return Check::ok($g, $label, $this->t('admin.readiness.uploads.detail.ok'));
         }
 
-        return Check::problem(self::G_FS, 'Upload direktorij',
-            'public/media/uploads nije zapisiv — uploadi slika će pucati.',
-            sprintf('chmod -R u+rwX %s', $dir));
+        return Check::problem($g, $label,
+            $this->t('admin.readiness.uploads.detail.problem'),
+            $this->t('admin.readiness.uploads.fix.problem', ['%path%' => $dir]));
     }
 
     private function checkMigrations(): Check
     {
+        $g = $this->t(self::G_DB);
+        $label = $this->t('admin.readiness.migrations.label');
         try {
             $pending = \count($this->migrations->getMigrationStatusCalculator()->getNewMigrations());
         } catch (\Throwable $e) {
-            return Check::problem(self::G_DB, 'Migracije',
-                'Ne mogu provjeriti stanje migracija: '.$e->getMessage(),
-                'Provjeri DB konekciju, pa pokreni: php8.5 bin/console doctrine:migrations:migrate');
+            return Check::problem($g, $label,
+                $this->t('admin.readiness.migrations.detail.error', ['%error%' => $e->getMessage()]),
+                $this->t('admin.readiness.migrations.fix.error'));
         }
 
         if (0 === $pending) {
-            return Check::ok(self::G_DB, 'Migracije', 'Sve migracije su pokrenute.');
+            return Check::ok($g, $label, $this->t('admin.readiness.migrations.detail.ok'));
         }
 
-        return Check::problem(self::G_DB, 'Migracije',
-            sprintf('%d migracija nije pokrenuto — shema baze je zastarjela.', $pending),
-            'Pokreni: php8.5 bin/console doctrine:migrations:migrate');
+        return Check::problem($g, $label,
+            $this->t('admin.readiness.migrations.detail.pending', ['%count%' => $pending]),
+            $this->t('admin.readiness.migrations.fix.pending'));
     }
 
     private function checkWorker(): Check
     {
+        $g = $this->t(self::G_WORKER);
+        $label = $this->t('admin.readiness.worker.label');
         $lastSeen = $this->heartbeat->lastSeen();
         if (null !== $lastSeen && $this->heartbeat->isFresh()) {
-            return Check::ok(self::G_WORKER, 'Messenger worker',
-                sprintf('Aktivan — zadnji put viđen prije %d s (heartbeat).', max(0, time() - $lastSeen)));
+            return Check::ok($g, $label,
+                $this->t('admin.readiness.worker.detail.active', ['%seconds%' => max(0, time() - $lastSeen)]));
         }
 
         $detail = null === $lastSeen
-            ? 'Worker se nije javio (heartbeat prazan) — možda ne radi, ili je tek pokrenut/restartan i još nije "kucnuo".'
-            : sprintf('Worker se zadnji put javio prije %d s (zastarjelo) — možda je stao.', time() - $lastSeen);
+            ? $this->t('admin.readiness.worker.detail.empty')
+            : $this->t('admin.readiness.worker.detail.stale', ['%seconds%' => time() - $lastSeen]);
 
-        return Check::manual(self::G_WORKER, 'Messenger worker',
-            $detail.' Ne mogu 100% potvrditi iz aplikacije.',
-            'Provjeri ručno: systemctl --user status tallyst-messenger (pa po potrebi restart). Heartbeat se osvježava dok worker radi.');
+        return Check::manual($g, $label,
+            $detail.$this->t('admin.readiness.worker.detail.suffix'),
+            $this->t('admin.readiness.worker.fix'));
     }
 
     private function checkQueue(): Check
     {
+        $g = $this->t(self::G_WORKER);
+        $label = $this->t('admin.readiness.queue.label');
         try {
             $pending = (int) $this->connection->fetchOne(
                 "SELECT COUNT(*) FROM messenger_messages WHERE queue_name = 'default' AND delivered_at IS NULL"
@@ -139,23 +162,23 @@ class InfraReadinessProvider implements ReadinessCheckProviderInterface
                 "SELECT COUNT(*) FROM messenger_messages WHERE queue_name = 'failed'"
             );
         } catch (\Throwable $e) {
-            return Check::manual(self::G_WORKER, 'Red poruka',
-                'Ne mogu pročitati red poruka: '.$e->getMessage(),
-                'Provjeri DB / tablicu messenger_messages (migracije).');
+            return Check::manual($g, $label,
+                $this->t('admin.readiness.queue.detail.error', ['%error%' => $e->getMessage()]),
+                $this->t('admin.readiness.queue.fix.error'));
         }
 
         if ($failed > 0) {
-            return Check::warning(self::G_WORKER, 'Red poruka',
-                sprintf('%d neuspjelih poruka (i %d na čekanju).', $failed, $pending),
-                'Pogledaj: php8.5 bin/console messenger:failed:show — pa retry ili remove.');
+            return Check::warning($g, $label,
+                $this->t('admin.readiness.queue.detail.failed', ['%failed%' => $failed, '%pending%' => $pending]),
+                $this->t('admin.readiness.queue.fix.failed'));
         }
         if ($pending > 50) {
-            return Check::warning(self::G_WORKER, 'Red poruka',
-                sprintf('%d poruka na čekanju — ako broj raste, worker vjerojatno ne radi.', $pending),
-                'Provjeri da worker radi (gore).');
+            return Check::warning($g, $label,
+                $this->t('admin.readiness.queue.detail.backlog', ['%pending%' => $pending]),
+                $this->t('admin.readiness.queue.fix.backlog'));
         }
 
-        return Check::ok(self::G_WORKER, 'Red poruka',
-            sprintf('%d na čekanju, %d neuspjelih.', $pending, $failed));
+        return Check::ok($g, $label,
+            $this->t('admin.readiness.queue.detail.ok', ['%pending%' => $pending, '%failed%' => $failed]));
     }
 }

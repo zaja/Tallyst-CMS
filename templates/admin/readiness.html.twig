@@ -33,7 +33,7 @@
                                     <div class="small mt-1"><span class="text-muted">{{ 'admin.readiness.fix'|trans({}, 'admin') }}</span> {{ c.fix }}</div>
                                 {% endif %}
                             </div>
-                            <span class="badge {{ c.status.badgeClass }} flex-shrink-0">{{ c.status.icon }} {{ c.status.label }}</span>
+                            <span class="badge {{ c.status.badgeClass }} flex-shrink-0">{{ c.status.icon }} {{ ('admin.readiness.status.' ~ c.status.value)|trans({}, 'admin') }}</span>
                         </div>
                     </li>
                 {% endfor %}

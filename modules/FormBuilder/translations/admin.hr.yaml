@@ -142,6 +142,10 @@ admin:
             http_error: 'Greška (HTTP %status%).'
             network_error: 'Mrežna greška: %error%'
             no_results: Nema rezultata.
+            verdict:
+                error: 'Ne mogu dohvatiti URL iz aplikacije (%error%). Provjeri ručno, npr.: curl -i -X POST %url%'
+                blocked: 'Vraća 401 — vjerojatno basic-auth blokira webhook (plaćanje uspije, ali narudžba ostane "U obradi", bez mailova). Isključi auth za ovu rutu (auth_basic off;). NAPOMENA: ako koristiš IP-allowlist umjesto basic-autha, ovo može biti lažni alarm (poziv ne dolazi sa Stripe/PayPal IP-a) — provjeri ručno.'
+                ok: 'Dostupan (HTTP %code%) — nije iza basic-autha. (Kod %code% je očekivan: nepotpisani test je odbijen, prava logika nije pokrenuta.)'
         widget:
             revenue_month: Zarada ovaj mjesec
             revenue_total: Zarada ukupno

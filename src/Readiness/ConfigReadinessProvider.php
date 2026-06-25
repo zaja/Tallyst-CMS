@@ -4,6 +4,7 @@ namespace App\Readiness;
 
 use App\Settings\SettingsManager;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Config/security/mail readiness checks derived from env scalars + the Settings layer. Pure
@@ -13,9 +14,11 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  */
 class ConfigReadinessProvider implements ReadinessCheckProviderInterface
 {
-    private const G_SECURITY = 'Sigurnost';
-    private const G_CONFIG = 'Konfiguracija';
-    private const G_MAIL = 'Pošta';
+    // Group names are `admin`-domain translation keys (translated via t()). Check LABELS that are env-var
+    // names stay literal (universal); descriptive labels + detail/fix are keys with %param% placeholders.
+    private const G_SECURITY = 'admin.readiness.group.security';
+    private const G_CONFIG = 'admin.readiness.group.config';
+    private const G_MAIL = 'admin.readiness.group.mail';
     private const PLACEHOLDER_ORDER_EMAIL = 'admin@tallyst.local';
 
     public function __construct(
@@ -32,7 +35,14 @@ class ConfigReadinessProvider implements ReadinessCheckProviderInterface
         #[Autowire('%env(ORDER_ADMIN_EMAIL)%')]
         private readonly string $orderAdminEnv,
         private readonly SettingsManager $settings,
+        private readonly TranslatorInterface $translator,
     ) {
+    }
+
+    /** @param array<string, string|int> $params */
+    private function t(string $key, array $params = []): string
+    {
+        return $this->translator->trans($key, $params, 'admin');
     }
 
     public function getChecks(): iterable
@@ -52,81 +62,87 @@ class ConfigReadinessProvider implements ReadinessCheckProviderInterface
 
     private function checkAppSecret(): Check
     {
+        $g = $this->t(self::G_SECURITY);
         if ('' === trim($this->appSecret)) {
-            return Check::problem(self::G_SECURITY, 'APP_SECRET',
-                'Prazan — CSRF tokeni i potpisani URL-ovi nisu sigurni.',
-                'app:install ga generira u .env.local; ili ručno postavi APP_SECRET na 32+ nasumičnih znakova.');
+            return Check::problem($g, 'APP_SECRET',
+                $this->t('admin.readiness.app_secret.detail.empty'),
+                $this->t('admin.readiness.app_secret.fix'));
         }
 
-        return Check::ok(self::G_SECURITY, 'APP_SECRET', 'Postavljen.');
+        return Check::ok($g, 'APP_SECRET', $this->t('admin.readiness.app_secret.detail.ok'));
     }
 
     private function checkEncryptionKey(): Check
     {
+        $g = $this->t(self::G_SECURITY);
         $decoded = base64_decode($this->encryptionKey, true);
         if ('' === trim($this->encryptionKey) || false === $decoded || 32 !== \strlen($decoded)) {
-            return Check::problem(self::G_SECURITY, 'SETTINGS_ENCRYPTION_KEY',
-                'Nedostaje ili nije ispravan (treba base64 od 32 bajta) — enkripcija postavki (SMTP lozinka) ne radi.',
-                "Pokreni app:install, ili: php8.5 -r 'echo base64_encode(random_bytes(32));' → upiši u .env.local.");
+            return Check::problem($g, 'SETTINGS_ENCRYPTION_KEY',
+                $this->t('admin.readiness.enc_key.detail.bad'),
+                $this->t('admin.readiness.enc_key.fix'));
         }
 
-        return Check::ok(self::G_SECURITY, 'SETTINGS_ENCRYPTION_KEY', 'Postavljen (32 bajta).');
+        return Check::ok($g, 'SETTINGS_ENCRYPTION_KEY', $this->t('admin.readiness.enc_key.detail.ok'));
     }
 
     private function checkHttps(): Check
     {
+        $g = $this->t(self::G_SECURITY);
         if ('https' === $this->scheme()) {
-            return Check::ok(self::G_SECURITY, 'HTTPS',
-                'DEFAULT_URI koristi https. (Ne potvrđuje stvarni TLS na serveru — to provjeri u pregledniku.)');
+            return Check::ok($g, 'HTTPS', $this->t('admin.readiness.https.detail.ok'));
         }
 
-        return Check::warning(self::G_SECURITY, 'HTTPS',
-            'DEFAULT_URI nije https — produkcija bi trebala posluživati preko HTTPS-a.',
-            'Postavi SSL (CloudPanel/nginx) i DEFAULT_URI na https://… .');
+        return Check::warning($g, 'HTTPS',
+            $this->t('admin.readiness.https.detail.warn'),
+            $this->t('admin.readiness.https.fix'));
     }
 
     private function checkAppEnv(): Check
     {
+        $g = $this->t(self::G_CONFIG);
         if ('prod' === $this->appEnv) {
-            return Check::ok(self::G_CONFIG, 'APP_ENV', 'Radi u prod modu.');
+            return Check::ok($g, 'APP_ENV', $this->t('admin.readiness.app_env.detail.ok'));
         }
 
-        return Check::warning(self::G_CONFIG, 'APP_ENV',
-            sprintf('Trenutno "%s". Lokalni razvoj je u redu; za PRODUKCIJU postavi prod (dev izlaže detaljne greške i usporava).', $this->appEnv),
-            'U .env.local postavi APP_ENV=prod, pa cache:clear — prije nego javna domena ide uživo.');
+        return Check::warning($g, 'APP_ENV',
+            $this->t('admin.readiness.app_env.detail.dev', ['%env%' => $this->appEnv]),
+            $this->t('admin.readiness.app_env.fix'));
     }
 
     private function checkDefaultUri(): Check
     {
+        $g = $this->t(self::G_CONFIG);
         $uri = trim($this->defaultUri);
         $host = '' === $uri ? null : parse_url($uri, \PHP_URL_HOST);
 
         if ('' === $uri || !\in_array($this->scheme(), ['http', 'https'], true) || null === $host) {
-            return Check::warning(self::G_CONFIG, 'DEFAULT_URI',
-                'Nije postavljen apsolutni URL — mailovi (reset lozinke) i sitemap koristit će http://localhost.',
-                'Postavi DEFAULT_URI na pravi javni URL (npr. https://tvoja-domena.hr) u .env.local.');
+            return Check::warning($g, 'DEFAULT_URI',
+                $this->t('admin.readiness.default_uri.detail.invalid'),
+                $this->t('admin.readiness.default_uri.fix.invalid'));
         }
         if (\in_array($host, ['localhost', '127.0.0.1'], true)) {
-            return Check::warning(self::G_CONFIG, 'DEFAULT_URI',
-                sprintf('Postavljen na "%s" — worker-generirani linkovi (reset lozinke) vodit će na localhost.', $uri),
-                'Za produkciju postavi DEFAULT_URI na pravu javnu domenu.');
+            return Check::warning($g, 'DEFAULT_URI',
+                $this->t('admin.readiness.default_uri.detail.localhost', ['%uri%' => $uri]),
+                $this->t('admin.readiness.default_uri.fix.localhost'));
         }
 
-        return Check::ok(self::G_CONFIG, 'DEFAULT_URI', sprintf('Postavljen: %s', $uri));
+        return Check::ok($g, 'DEFAULT_URI', $this->t('admin.readiness.default_uri.detail.ok', ['%uri%' => $uri]));
     }
 
     private function checkMailer(): Check
     {
+        $g = $this->t(self::G_MAIL);
+        $label = $this->t('admin.readiness.mailer.label');
         if ('' !== (string) $this->settings->get('smtp_host')) {
-            return Check::ok(self::G_MAIL, 'Pošta (SMTP)', sprintf('DB SMTP konfiguriran (%s).', (string) $this->settings->get('smtp_host')));
+            return Check::ok($g, $label, $this->t('admin.readiness.mailer.detail.db', ['%host%' => (string) $this->settings->get('smtp_host')]));
         }
         if ('' !== trim($this->mailerDsn) && 'null://null' !== trim($this->mailerDsn)) {
-            return Check::ok(self::G_MAIL, 'Pošta (SMTP)', 'Koristi MAILER_DSN iz okoline.');
+            return Check::ok($g, $label, $this->t('admin.readiness.mailer.detail.env'));
         }
 
-        return Check::warning(self::G_MAIL, 'Pošta (SMTP)',
-            'Nije konfigurirana — reset lozinke i mailovi narudžbi neće se slati.',
-            'Postavke → Email: upiši SMTP host/korisnika/lozinku (ili postavi MAILER_DSN u .env.local).');
+        return Check::warning($g, $label,
+            $this->t('admin.readiness.mailer.detail.unconfigured'),
+            $this->t('admin.readiness.mailer.fix'));
     }
 
     private function checkSmtpDecryptable(): ?Check
@@ -138,34 +154,39 @@ class ConfigReadinessProvider implements ReadinessCheckProviderInterface
             return null;
         }
 
-        return Check::problem(self::G_MAIL, 'SMTP lozinka',
-            'Nije moguće dekriptirati (ključ rotiran/izgubljen) — mailer pada na env fallback.',
-            'Postavke → Email: ponovno upiši SMTP lozinku (re-enkriptira se trenutnim ključem).');
+        return Check::problem($this->t(self::G_MAIL), $this->t('admin.readiness.smtp_password.label'),
+            $this->t('admin.readiness.smtp_password.detail'),
+            $this->t('admin.readiness.smtp_password.fix'));
     }
 
     private function checkMailFrom(): Check
     {
+        $g = $this->t(self::G_MAIL);
+        $label = $this->t('admin.readiness.mail_from.label');
         $from = (string) $this->settings->get('mail_from_email');
         if ('' === trim($from)) {
-            return Check::warning(self::G_MAIL, 'Adresa pošiljatelja',
-                'mail_from_email nije postavljen — pravi SMTP serveri odbijaju mail bez ispravnog From-a (553).',
-                'Postavke → Email: postavi "Email pošiljatelja" na adresu koju SMTP račun smije slati.');
+            return Check::warning($g, $label,
+                $this->t('admin.readiness.mail_from.detail.warn'),
+                $this->t('admin.readiness.mail_from.fix'));
         }
 
-        return Check::ok(self::G_MAIL, 'Adresa pošiljatelja', sprintf('Postavljena: %s', $from));
+        return Check::ok($g, $label, $this->t('admin.readiness.mail_from.detail.ok', ['%from%' => $from]));
     }
 
     private function checkOrderAdminEmail(): Check
     {
+        $g = $this->t(self::G_MAIL);
+        $label = $this->t('admin.readiness.order_email.label');
         $email = (string) ($this->settings->get('order_admin_email') ?: $this->orderAdminEnv);
         if ('' === trim($email) || self::PLACEHOLDER_ORDER_EMAIL === $email) {
-            return Check::warning(self::G_MAIL, 'Email za narudžbe',
-                ('' === trim($email) ? 'Nije postavljen' : 'Postavljen na placeholder "'.self::PLACEHOLDER_ORDER_EMAIL.'"')
-                    .' — obavijesti o narudžbama neće stići na pravu adresu.',
-                'Postavke → Email: postavi "Email za narudžbe" na pravu, dostavljivu adresu (ili ORDER_ADMIN_EMAIL u .env.local).');
+            $detail = '' === trim($email)
+                ? $this->t('admin.readiness.order_email.detail.unset')
+                : $this->t('admin.readiness.order_email.detail.placeholder', ['%placeholder%' => self::PLACEHOLDER_ORDER_EMAIL]);
+
+            return Check::warning($g, $label, $detail, $this->t('admin.readiness.order_email.fix'));
         }
 
-        return Check::ok(self::G_MAIL, 'Email za narudžbe', sprintf('Postavljen: %s', $email));
+        return Check::ok($g, $label, $this->t('admin.readiness.order_email.detail.ok', ['%email%' => $email]));
     }
 
     private function scheme(): string

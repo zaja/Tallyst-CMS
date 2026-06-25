@@ -5,6 +5,7 @@ namespace Tallyst\FormBuilder\Service;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * On-demand probe for the webhook 401 trap (the recurring go-live failure: basic-auth blocks the
@@ -30,6 +31,7 @@ class WebhookReachabilityProbe
         private readonly RouterInterface $router,
         #[Autowire('%env(DEFAULT_URI)%')]
         private readonly string $defaultUri,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -64,7 +66,8 @@ class WebhookReachabilityProbe
                 'provider' => $provider,
                 'url' => $url,
                 'status' => 'manual',
-                'message' => 'Ne mogu dohvatiti URL iz aplikacije ('.$e->getMessage().'). Provjeri ručno, npr.: curl -i -X POST '.$url,
+                // Verdicts translate via the `admin` domain (the probe runs from the admin panel = request locale).
+                'message' => $this->translator->trans('admin.form.webhook_check.verdict.error', ['%error%' => $e->getMessage(), '%url%' => $url], 'admin'),
             ];
         }
 
@@ -73,9 +76,7 @@ class WebhookReachabilityProbe
                 'provider' => $provider,
                 'url' => $url,
                 'status' => 'problem',
-                'message' => 'Vraća 401 — vjerojatno basic-auth blokira webhook (plaćanje uspije, ali narudžba ostane "U obradi", bez mailova). '
-                    .'Isključi auth za ovu rutu (auth_basic off;). NAPOMENA: ako koristiš IP-allowlist umjesto basic-autha, ovo može biti lažni alarm '
-                    .'(poziv ne dolazi sa Stripe/PayPal IP-a) — provjeri ručno.',
+                'message' => $this->translator->trans('admin.form.webhook_check.verdict.blocked', [], 'admin'),
             ];
         }
 
@@ -83,7 +84,7 @@ class WebhookReachabilityProbe
             'provider' => $provider,
             'url' => $url,
             'status' => 'ok',
-            'message' => sprintf('Dostupan (HTTP %d) — nije iza basic-autha. (Kod %d je očekivan: nepotpisani test je odbijen, prava logika nije pokrenuta.)', $code, $code),
+            'message' => $this->translator->trans('admin.form.webhook_check.verdict.ok', ['%code%' => $code], 'admin'),
         ];
     }
 }

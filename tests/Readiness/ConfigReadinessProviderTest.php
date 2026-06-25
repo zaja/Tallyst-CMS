@@ -7,6 +7,7 @@ use App\Readiness\ConfigReadinessProvider;
 use App\Readiness\Status;
 use App\Settings\SettingsManager;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ConfigReadinessProviderTest extends TestCase
 {
@@ -20,6 +21,12 @@ class ConfigReadinessProviderTest extends TestCase
         $sm->method('get')->willReturnCallback(static fn (string $k): string => $settings[$k] ?? '');
         $sm->method('isEncryptedValueReadable')->willReturn($smtpReadable);
 
+        // Passthrough translator (returns the key) — env-var LABELS stay literal (APP_SECRET…), while
+        // group + descriptive label/detail/fix surface as their `admin` keys. The tests assert STATUS
+        // (the logic) + the key, not localised text.
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
         return new ConfigReadinessProvider(
             $env['appEnv'] ?? 'prod',
             $env['appSecret'] ?? str_repeat('a', 32),
@@ -28,6 +35,7 @@ class ConfigReadinessProviderTest extends TestCase
             $env['mailerDsn'] ?? 'smtp://user:pass@host:587',
             $env['orderEnv'] ?? '',
             $sm,
+            $translator,
         );
     }
 
@@ -50,7 +58,7 @@ class ConfigReadinessProviderTest extends TestCase
             settings: ['smtp_host' => 'smtp.example.com', 'mail_from_email' => 'no-reply@tallyst.org', 'order_admin_email' => 'admin@real.hr'],
         ));
 
-        foreach (['APP_SECRET', 'SETTINGS_ENCRYPTION_KEY', 'HTTPS', 'APP_ENV', 'DEFAULT_URI', 'Pošta (SMTP)', 'Adresa pošiljatelja', 'Email za narudžbe'] as $label) {
+        foreach (['APP_SECRET', 'SETTINGS_ENCRYPTION_KEY', 'HTTPS', 'APP_ENV', 'DEFAULT_URI', 'admin.readiness.mailer.label', 'admin.readiness.mail_from.label', 'admin.readiness.order_email.label'] as $label) {
             self::assertSame(Status::OK, $checks[$label]->status, $label.' should be OK');
         }
     }
@@ -59,7 +67,7 @@ class ConfigReadinessProviderTest extends TestCase
     {
         $checks = $this->byLabel($this->provider(env: ['appEnv' => 'dev']));
         self::assertSame(Status::WARNING, $checks['APP_ENV']->status);
-        self::assertStringContainsString('PRODUKCIJU', $checks['APP_ENV']->detail);
+        self::assertStringContainsString('app_env.detail.dev', $checks['APP_ENV']->detail);
     }
 
     public function testEmptyAppSecretIsProblem(): void
@@ -89,25 +97,25 @@ class ConfigReadinessProviderTest extends TestCase
     {
         // smtp_host empty AND MAILER_DSN is the null placeholder.
         $checks = $this->byLabel($this->provider(env: ['mailerDsn' => 'null://null']));
-        self::assertSame(Status::WARNING, $checks['Pošta (SMTP)']->status);
+        self::assertSame(Status::WARNING, $checks['admin.readiness.mailer.label']->status);
     }
 
     public function testOrderAdminPlaceholderIsWarning(): void
     {
         $checks = $this->byLabel($this->provider(env: ['orderEnv' => 'admin@tallyst.local']));
-        self::assertSame(Status::WARNING, $checks['Email za narudžbe']->status);
+        self::assertSame(Status::WARNING, $checks['admin.readiness.order_email.label']->status);
     }
 
     public function testUndecryptableSmtpPasswordIsProblem(): void
     {
         $checks = $this->byLabel($this->provider(settings: ['smtp_host' => 'smtp.example.com'], smtpReadable: false));
-        self::assertArrayHasKey('SMTP lozinka', $checks);
-        self::assertSame(Status::PROBLEM, $checks['SMTP lozinka']->status);
+        self::assertArrayHasKey('admin.readiness.smtp_password.label', $checks);
+        self::assertSame(Status::PROBLEM, $checks['admin.readiness.smtp_password.label']->status);
     }
 
     public function testSmtpDecryptCheckIsSkippedWhenNoDbSmtp(): void
     {
         // No smtp_host → the decrypt check should not even appear.
-        self::assertArrayNotHasKey('SMTP lozinka', $this->byLabel($this->provider()));
+        self::assertArrayNotHasKey('admin.readiness.smtp_password.label', $this->byLabel($this->provider()));
     }
 }

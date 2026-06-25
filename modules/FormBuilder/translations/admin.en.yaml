@@ -142,6 +142,10 @@ admin:
             http_error: 'Error (HTTP %status%).'
             network_error: 'Network error: %error%'
             no_results: No results.
+            verdict:
+                error: 'Can''t reach the URL from the app (%error%). Check manually, e.g.: curl -i -X POST %url%'
+                blocked: 'Returns 401 — basic auth is probably blocking the webhook (payment succeeds but the order stays "Processing", with no e-mails). Turn off auth for this route (auth_basic off;). NOTE: if you use an IP allowlist instead of basic auth, this may be a false alarm (the call isn''t from a Stripe/PayPal IP) — check manually.'
+                ok: 'Reachable (HTTP %code%) — not behind basic auth. (Code %code% is expected: the unsigned test was rejected, the real logic did not run.)'
         widget:
             revenue_month: Revenue this month
             revenue_total: Revenue total

@@ -183,6 +183,70 @@ admin:
         problem: problems
         manual_count: manual
         fix: 'Fix:'
+        status: { ok: OK, warning: Warning, problem: Problem, manual: Check manually }
+        group: { security: Security, config: Configuration, mail: Mail, assets: Assets, fs: Filesystem, db: Database, worker: Background processes }
+        app_secret:
+            detail: { empty: 'Empty — CSRF tokens and signed URLs are unsafe.', ok: Set. }
+            fix: 'app:install generates it in .env.local; or set APP_SECRET manually to 32+ random characters.'
+        enc_key:
+            detail: { bad: 'Missing or invalid (needs base64 of 32 bytes) — settings encryption (the SMTP password) does not work.', ok: 'Set (32 bytes).' }
+            fix: "Run app:install, or: php8.5 -r 'echo base64_encode(random_bytes(32));' → put it in .env.local."
+        https:
+            detail: { ok: 'DEFAULT_URI uses https. (This does not confirm real TLS on the server — check that in the browser.)', warn: 'DEFAULT_URI is not https — production should serve over HTTPS.' }
+            fix: 'Set up SSL (CloudPanel/nginx) and DEFAULT_URI to https://… .'
+        app_env:
+            detail: { ok: Running in prod mode., dev: 'Currently "%env%". Local development is fine; for PRODUCTION set prod (dev exposes detailed errors and is slower).' }
+            fix: 'In .env.local set APP_ENV=prod, then cache:clear — before the public domain goes live.'
+        default_uri:
+            detail:
+                invalid: 'No absolute URL set — mail (password reset) and the sitemap will use http://localhost.'
+                localhost: 'Set to "%uri%" — worker-generated links (password reset) will point to localhost.'
+                ok: 'Set: %uri%'
+            fix: { invalid: 'Set DEFAULT_URI to the real public URL (e.g. https://your-domain.com) in .env.local.', localhost: 'For production set DEFAULT_URI to the real public domain.' }
+        mailer:
+            label: Mail (SMTP)
+            detail: { db: 'DB SMTP configured (%host%).', env: Using MAILER_DSN from the environment., unconfigured: 'Not configured — password resets and order mail will not be sent.' }
+            fix: 'Settings → Email: enter the SMTP host/user/password (or set MAILER_DSN in .env.local).'
+        smtp_password:
+            label: SMTP password
+            detail: 'Cannot be decrypted (the key was rotated/lost) — the mailer falls back to the env.'
+            fix: 'Settings → Email: re-enter the SMTP password (it is re-encrypted with the current key).'
+        mail_from:
+            label: From address
+            detail: { warn: 'mail_from_email is not set — real SMTP servers reject mail without a valid From (553).', ok: 'Set: %from%' }
+            fix: 'Settings → Email: set "From (e-mail)" to an address the SMTP account is allowed to send as.'
+        order_email:
+            label: Order e-mail
+            detail: { unset: 'Not set — order notices will not reach a real address.', placeholder: 'Set to the placeholder "%placeholder%" — order notices will not reach a real address.', ok: 'Set: %email%' }
+            fix: 'Settings → Email: set "Order e-mail" to a real, deliverable address (or ORDER_ADMIN_EMAIL in .env.local).'
+        assets_manifest:
+            label: Compiled assets
+            detail: { ok: public/assets/manifest.json exists., problem: 'public/assets/manifest.json is missing — JS/CSS is broken (dashboard chart, search, editor…).' }
+            fix: 'Run: php8.5 bin/console asset-map:compile'
+        theme_published:
+            label: Published theme
+            detail: { ok: public/themes/default exists., problem: 'public/themes/default is missing — the front has no theme CSS.' }
+            fix: 'Run: php8.5 bin/console app:theme:assets:install'
+        var_writable:
+            label: var/ writable
+            detail: { ok: The cache/log directory is writable., problem: 'var/ is not writable — cache and logs will break.' }
+            fix: 'Grant rights to the web user: chmod -R u+rwX %path%'
+        uploads:
+            label: Upload directory
+            detail: { missing: 'public/media/uploads does not exist yet (created on the first upload).', ok: public/media/uploads is writable., problem: 'public/media/uploads is not writable — image uploads will break.' }
+            fix: { missing: 'Check that public/media is writable: chmod -R u+rwX %path%/public/media', problem: 'chmod -R u+rwX %path%' }
+        migrations:
+            label: Migrations
+            detail: { error: 'Cannot check the migration state: %error%', ok: All migrations have run., pending: '%count% migration(s) not run — the database schema is outdated.' }
+            fix: { error: 'Check the DB connection, then run: php8.5 bin/console doctrine:migrations:migrate', pending: 'Run: php8.5 bin/console doctrine:migrations:migrate' }
+        worker:
+            label: Messenger worker
+            detail: { active: 'Active — last seen %seconds%s ago (heartbeat).', empty: 'The worker has not reported (heartbeat empty) — it may not be running, or it was just started/restarted and has not beaten yet.', stale: 'The worker last reported %seconds%s ago (stale) — it may have stopped.', suffix: ' Can''t confirm 100% from the app.' }
+            fix: 'Check manually: systemctl --user status tallyst-messenger (restart if needed). The heartbeat refreshes while the worker runs.'
+        queue:
+            label: Message queue
+            detail: { error: 'Cannot read the queue: %error%', failed: '%failed% failed message(s) (and %pending% pending).', backlog: '%pending% messages pending — if the number grows, the worker probably is not running.', ok: '%pending% pending, %failed% failed.' }
+            fix: { error: 'Check the DB / messenger_messages table (migrations).', failed: 'See: php8.5 bin/console messenger:failed:show — then retry or remove.', backlog: 'Check that the worker is running (above).' }
     security:
         title: Security
         password: Password
