@@ -7,7 +7,7 @@
    collapsed (CSS). A field that has a validation error renders EXPANDED so the error is
    visible after a failed save. The builder controller auto-expands a freshly ADDED field
    and keeps the summary (label + type badge) in sync as you type. #}
-{% form_theme fieldForm 'bootstrap_5_layout.html.twig' %}
+{% form_theme fieldForm '@EasyAdmin/crud/form_theme.html.twig' %}
 {% set fieldValue = fieldForm.vars.value %}
 {% set fieldHasErrors = fieldForm.vars.errors|length > 0
     or fieldForm|filter(c => c.vars.errors|length > 0)|length > 0 %}

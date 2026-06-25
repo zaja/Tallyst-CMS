@@ -5,7 +5,7 @@
    formbuilder--rules HIDES them and renders contextual proxies (field dropdown / type-aware operator /
    value dropdown-or-input) into [data-fb-rule-proxy], syncing back into these — so the submitted model
    is unchanged and, with JS off, the real inputs still work (graceful degradation). #}
-{% form_theme ruleForm 'bootstrap_5_layout.html.twig' %}
+{% form_theme ruleForm '@EasyAdmin/crud/form_theme.html.twig' %}
 <div class="fb-rule" data-fb-item>
     <div class="fb-rule-real">
         {{ form_widget(ruleForm.field, {attr: {'data-fb-rule-field': '', 'list': 'fb-field-keys'}}) }}
