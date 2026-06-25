@@ -22,8 +22,9 @@ Tallyst is my answer. You build a payment-enabled form, drop `[form id=N]` into 
 - **Form builder → payment** — the signature feature: `[form id=N]` turns any page into a product, checking out through [Stripe](https://stripe.com) or [PayPal](https://paypal.com).
 - **Orders** — order lifecycle with manual fulfilment, refunds, price variants, and inclusive tax + CSV export for your accountant.
 - **Themes** — auto-detected (drop a folder into `themes/`), with a child-theme parent chain.
-- **Built in** — full-text search, maintenance mode, a deployment-readiness panel, e-mail templates, and a modular architecture (features ship as self-contained bundles).
+- **Built in** — full-text search, maintenance mode, a deployment-readiness panel, and editable e-mail templates.
 - **Production-grade auth** — admin/editor roles, optional TOTP two-factor, password reset, and login throttling — because it handles payments.
+- **Modular by design** — core features (CMS, form builder, media) ship as self-contained bundles; the same architecture supports optional and third-party modules, so you add only what you need.
 
 ## Quick start
 
@@ -73,6 +74,10 @@ Tallyst follows [semantic versioning](https://semver.org) from v1.0.0 — the co
 ## Screenshots
 
 _Coming soon._
+
+## Feedback
+
+Tallyst is open source and actively developed. Bug reports and feature ideas are welcome via [GitHub issues](https://github.com/zaja/Tallyst-CMS/issues).
 
 ## License
 

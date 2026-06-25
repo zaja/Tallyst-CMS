@@ -1356,6 +1356,13 @@ ONLY — it never changes config (diagnoses + instructs).
   multilingual/i18n, comments, dynamic/custom RBAC roles, required-2FA-for-admins, trusted devices,
   SMS/e-mail 2FA, WebAuthn, full self-profile, custom fields/widgets — none unless the target-user
   filter later demands it. (Prolaz C's own later passes are noted in its DONE entry above.)
+- **Full contribution setup (deferred — README has only a minimal "Feedback" line for now).** The
+  README intentionally invites ONLY bug reports / feature ideas via GitHub issues — no "Contributing"
+  call-to-build (themes/modules), no PR guide. Before that section lands, build the prerequisites:
+  `CONTRIBUTING.md`, GitHub issue/PR templates, developer docs for authoring themes + modules, and a
+  DEFINED community-vs-paid add-on model. Only once those exist does the README gain a full
+  "Contributing" section inviting third-party theme/module development. (Don't promise an add-on
+  marketplace/store until it exists.)
 
 ## Adding a new module (the pattern to follow)
 Copy `modules/FormBuilder/` — it is the reference module. Its bundle class
