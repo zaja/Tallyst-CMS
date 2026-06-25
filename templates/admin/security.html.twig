@@ -1,6 +1,6 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% form_theme passwordForm 'bootstrap_5_layout.html.twig' %}
+{% form_theme passwordForm '@EasyAdmin/crud/form_theme.html.twig' %}
 
 {% block content_title %}{{ 'admin.security.title'|trans({}, 'admin') }}{% endblock %}
 
