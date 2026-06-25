@@ -16,10 +16,10 @@ class TaxSettingsProvider implements SettingsSectionProviderInterface
 {
     public function getSettingsSections(): iterable
     {
-        yield new SettingsSection('tax', 'Porez', 'fa-percent', [
-            new SettingDefinition('tax_enabled', SettingType::BOOL, 'Obračunaj porez', 'Primjenjuje JEDNU stopu (uključenu u cijenu) na sve narudžbe — ispravno za domaću prodaju / ispod EU OSS praga (€10.000). Za prodaju preko praga ili globalnu usklađenost konzultiraj knjigovođu ili Merchant-of-Record (Paddle/Lemon Squeezy). Tallyst bilježi podatke za tvoj export, ne podnosi poreznu prijavu.', false),
-            new SettingDefinition('tax_rate', SettingType::STRING, 'Stopa (%)', 'Npr. 25. Porez je UKLJUČEN u cijenu (izračuna se unatrag) — naplaćeni iznos se ne mijenja.', '25'),
-            new SettingDefinition('tax_name', SettingType::STRING, 'Naziv poreza', 'Npr. PDV.', 'PDV'),
+        yield new SettingsSection('tax', 'admin.settings.tax.title', 'fa-percent', [
+            new SettingDefinition('tax_enabled', SettingType::BOOL, 'admin.settings.tax.tax_enabled.label', 'admin.settings.tax.tax_enabled.help', false),
+            new SettingDefinition('tax_rate', SettingType::STRING, 'admin.settings.tax.tax_rate.label', 'admin.settings.tax.tax_rate.help', '25'),
+            new SettingDefinition('tax_name', SettingType::STRING, 'admin.settings.tax.tax_name.label', 'admin.settings.tax.tax_name.help', 'PDV'),
         ]);
     }
 }

@@ -17,11 +17,12 @@ class StripeSettingsProvider implements SettingsSectionProviderInterface
 {
     public function getSettingsSections(): iterable
     {
-        yield new SettingsSection('stripe', 'Stripe', 'fa-credit-card', [
-            new SettingDefinition('stripe_secret_key', SettingType::PASSWORD, 'Tajni ključ (Secret key)', 'sk_test_… ili sk_live_… Prazno = STRIPE_SECRET_KEY iz okoline.', null, [], true),
-            new SettingDefinition('stripe_webhook_secret', SettingType::PASSWORD, 'Webhook secret', 'whsec_… s istog (test/live) endpointa. Prazno = STRIPE_WEBHOOK_SECRET iz okoline.', null, [], true),
-            new SettingDefinition('checkout_locale', SettingType::CHOICE, 'Jezik naplate (checkout)', 'Jezik Stripe checkout stranice. Automatski = prati preglednik kupca.', 'auto', [
-                'Automatski' => 'auto',
+        yield new SettingsSection('stripe', 'admin.settings.stripe.title', 'fa-credit-card', [
+            new SettingDefinition('stripe_secret_key', SettingType::PASSWORD, 'admin.settings.stripe.stripe_secret_key.label', 'admin.settings.stripe.stripe_secret_key.help', null, [], true),
+            new SettingDefinition('stripe_webhook_secret', SettingType::PASSWORD, 'admin.settings.stripe.stripe_webhook_secret.label', 'admin.settings.stripe.stripe_webhook_secret.help', null, [], true),
+            new SettingDefinition('checkout_locale', SettingType::CHOICE, 'admin.settings.stripe.checkout_locale.label', 'admin.settings.stripe.checkout_locale.help', 'auto', [
+                // Only "Automatic" is translated; language names render in their OWN language.
+                'admin.settings.stripe.checkout_locale.choice.auto' => 'auto',
                 'Hrvatski' => 'hr',
                 'English' => 'en',
                 'Deutsch' => 'de',

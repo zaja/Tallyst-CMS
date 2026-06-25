@@ -16,13 +16,13 @@ class PayPalSettingsProvider implements SettingsSectionProviderInterface
 {
     public function getSettingsSections(): iterable
     {
-        yield new SettingsSection('paypal', 'PayPal', 'fa-brands fa-paypal', [
-            new SettingDefinition('paypal_client_id', SettingType::STRING, 'Client ID', 'Iz PayPal app (sandbox ili live). Prazno = PAYPAL_CLIENT_ID iz okoline.', null),
-            new SettingDefinition('paypal_client_secret', SettingType::PASSWORD, 'Client secret', 'Tajni ključ PayPal appa. Prazno = PAYPAL_CLIENT_SECRET iz okoline.', null, [], true),
-            new SettingDefinition('paypal_webhook_id', SettingType::STRING, 'Webhook ID', 'ID webhooka iz PayPal dashboarda (treba za verifikaciju). Prazno = PAYPAL_WEBHOOK_ID iz okoline.', null),
-            new SettingDefinition('paypal_mode', SettingType::CHOICE, 'Način rada', 'PayPal nema test/live prefiks u ključu — odaberi izričito. Sandbox i live imaju ODVOJENE ključeve i webhookove.', 'sandbox', [
-                'Sandbox (test)' => 'sandbox',
-                'Live (produkcija)' => 'live',
+        yield new SettingsSection('paypal', 'admin.settings.paypal.title', 'fa-brands fa-paypal', [
+            new SettingDefinition('paypal_client_id', SettingType::STRING, 'admin.settings.paypal.paypal_client_id.label', 'admin.settings.paypal.paypal_client_id.help', null),
+            new SettingDefinition('paypal_client_secret', SettingType::PASSWORD, 'admin.settings.paypal.paypal_client_secret.label', 'admin.settings.paypal.paypal_client_secret.help', null, [], true),
+            new SettingDefinition('paypal_webhook_id', SettingType::STRING, 'admin.settings.paypal.paypal_webhook_id.label', 'admin.settings.paypal.paypal_webhook_id.help', null),
+            new SettingDefinition('paypal_mode', SettingType::CHOICE, 'admin.settings.paypal.paypal_mode.label', 'admin.settings.paypal.paypal_mode.help', 'sandbox', [
+                'admin.settings.paypal.paypal_mode.choice.sandbox' => 'sandbox',
+                'admin.settings.paypal.paypal_mode.choice.live' => 'live',
             ]),
         ]);
     }

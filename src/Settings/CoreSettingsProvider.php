@@ -21,60 +21,64 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
 
     public function getSettingsSections(): iterable
     {
-        yield new SettingsSection('general', 'Općenito', 'fa-sliders', [
-            new SettingDefinition('site_name', SettingType::STRING, 'Naziv sajta', 'Prikazuje se u zaglavlju i naslovu.', 'Tallyst'),
-            new SettingDefinition('site_tagline', SettingType::STRING, 'Slogan', 'Kratak opis sajta (meta opis).', ''),
-            new SettingDefinition('search_enabled', SettingType::BOOL, 'Prikaži tražilicu', 'Polje za pretragu u zaglavlju. Isključeno (zadano) = jednostavan sajt bez pretrage; uključi ako imaš puno sadržaja.', false),
+        // Labels/help/section-titles/descriptive-choices are `admin`-domain keys (translated by the
+        // settings form). Choice VALUES are untouched; language-name choices (English/Hrvatski) and
+        // dynamic choices (timezones, menus) stay literal.
+        yield new SettingsSection('general', 'admin.settings.general.title', 'fa-sliders', [
+            new SettingDefinition('site_name', SettingType::STRING, 'admin.settings.general.site_name.label', 'admin.settings.general.site_name.help', 'Tallyst'),
+            new SettingDefinition('site_tagline', SettingType::STRING, 'admin.settings.general.site_tagline.label', 'admin.settings.general.site_tagline.help', ''),
+            new SettingDefinition('search_enabled', SettingType::BOOL, 'admin.settings.general.search_enabled.label', 'admin.settings.general.search_enabled.help', false),
         ]);
 
-        yield new SettingsSection('branding', 'Branding', 'fa-palette', [
-            new SettingDefinition('logo_media_id', SettingType::MEDIA, 'Logo', 'Prikazuje se u zaglavlju. Prazno = naziv sajta kao tekst.'),
-            new SettingDefinition('favicon_media_id', SettingType::MEDIA, 'Favicon', 'Ikona u kartici preglednika (PNG/JPG, kvadratna ~64px).'),
+        yield new SettingsSection('branding', 'admin.settings.branding.title', 'fa-palette', [
+            new SettingDefinition('logo_media_id', SettingType::MEDIA, 'admin.settings.branding.logo_media_id.label', 'admin.settings.branding.logo_media_id.help'),
+            new SettingDefinition('favicon_media_id', SettingType::MEDIA, 'admin.settings.branding.favicon_media_id.label', 'admin.settings.branding.favicon_media_id.help'),
         ]);
 
-        yield new SettingsSection('blog', 'Blog', 'fa-newspaper', [
-            new SettingDefinition('blog_posts_per_page', SettingType::INT, 'Objava po stranici', 'Koliko objava prikazati po stranici na blogu i arhivama (1–50).', 9),
+        yield new SettingsSection('blog', 'admin.settings.blog.title', 'fa-newspaper', [
+            new SettingDefinition('blog_posts_per_page', SettingType::INT, 'admin.settings.blog.blog_posts_per_page.label', 'admin.settings.blog.blog_posts_per_page.help', 9),
         ]);
 
-        yield new SettingsSection('maintenance', 'Održavanje', 'fa-screwdriver-wrench', [
-            new SettingDefinition('maintenance_enabled', SettingType::BOOL, 'Maintenance mode', 'Posjetitelji vide stranicu održavanja (503); admin i dalje radi i može ući.', false),
-            new SettingDefinition('maintenance_message', SettingType::RICH_TEXT, 'Poruka', 'Prikazuje se posjetiteljima dok je održavanje uključeno.', '<p>Stranica je trenutno u održavanju. Vraćamo se uskoro.</p>'),
+        yield new SettingsSection('maintenance', 'admin.settings.maintenance.title', 'fa-screwdriver-wrench', [
+            new SettingDefinition('maintenance_enabled', SettingType::BOOL, 'admin.settings.maintenance.maintenance_enabled.label', 'admin.settings.maintenance.maintenance_enabled.help', false),
+            new SettingDefinition('maintenance_message', SettingType::RICH_TEXT, 'admin.settings.maintenance.maintenance_message.label', 'admin.settings.maintenance.maintenance_message.help', '<p>Stranica je trenutno u održavanju. Vraćamo se uskoro.</p>'),
         ]);
 
-        yield new SettingsSection('localization', 'Lokalizacija', 'fa-globe', [
-            new SettingDefinition('app_locale', SettingType::CHOICE, 'Jezik', 'Zadani jezik sučelja i prijevoda.', 'en', [
+        yield new SettingsSection('localization', 'admin.settings.localization.title', 'fa-globe', [
+            new SettingDefinition('app_locale', SettingType::CHOICE, 'admin.settings.localization.app_locale.label', 'admin.settings.localization.app_locale.help', 'en', [
+                // Language names render in their OWN language (not translated).
                 'English' => 'en',
                 'Hrvatski' => 'hr',
             ]),
-            new SettingDefinition('app_timezone', SettingType::CHOICE, 'Vremenska zona', 'Koristi se za prikaz datuma.', 'Europe/Zagreb', $this->timezoneChoices()),
-            new SettingDefinition('app_date_format', SettingType::STRING, 'Format datuma', 'PHP date() format, npr. d.m.Y.', 'd.m.Y.'),
+            new SettingDefinition('app_timezone', SettingType::CHOICE, 'admin.settings.localization.app_timezone.label', 'admin.settings.localization.app_timezone.help', 'Europe/Zagreb', $this->timezoneChoices()),
+            new SettingDefinition('app_date_format', SettingType::STRING, 'admin.settings.localization.app_date_format.label', 'admin.settings.localization.app_date_format.help', 'd.m.Y.'),
         ]);
 
-        yield new SettingsSection('email', 'Email', 'fa-envelope', [
-            new SettingDefinition('mail_from_name', SettingType::STRING, 'Pošiljatelj (ime)', 'Ime u polju From odlaznih mailova.', 'Tallyst'),
-            new SettingDefinition('mail_from_email', SettingType::EMAIL, 'Pošiljatelj (email)', 'Adresa u polju From.', ''),
-            new SettingDefinition('mail_reply_to', SettingType::EMAIL, 'Reply-To', 'Neobavezno; odgovori idu na ovu adresu.', ''),
-            new SettingDefinition('order_admin_email', SettingType::EMAIL, 'Email za narudžbe (admin)', 'Prima obavijest o novoj plaćenoj narudžbi. Prazno = ORDER_ADMIN_EMAIL iz okoline.', ''),
-            new SettingDefinition('smtp_host', SettingType::STRING, 'SMTP host', 'Npr. smtp.mailtrap.io. Prazno = koristi MAILER_DSN iz okoline.', ''),
-            new SettingDefinition('smtp_port', SettingType::INT, 'SMTP port', '587 za STARTTLS, 465 za SSL.', 587),
-            new SettingDefinition('smtp_username', SettingType::STRING, 'SMTP korisnik', '', ''),
-            new SettingDefinition('smtp_password', SettingType::PASSWORD, 'SMTP lozinka', 'Šifrirano. Ostavi prazno da zadržiš trenutnu.', null, [], true),
-            new SettingDefinition('smtp_encryption', SettingType::CHOICE, 'Enkripcija', '', 'tls', [
-                'STARTTLS (tls)' => 'tls',
-                'SSL/TLS (ssl)' => 'ssl',
-                'Bez enkripcije' => 'none',
+        yield new SettingsSection('email', 'admin.settings.email.title', 'fa-envelope', [
+            new SettingDefinition('mail_from_name', SettingType::STRING, 'admin.settings.email.mail_from_name.label', 'admin.settings.email.mail_from_name.help', 'Tallyst'),
+            new SettingDefinition('mail_from_email', SettingType::EMAIL, 'admin.settings.email.mail_from_email.label', 'admin.settings.email.mail_from_email.help', ''),
+            new SettingDefinition('mail_reply_to', SettingType::EMAIL, 'admin.settings.email.mail_reply_to.label', 'admin.settings.email.mail_reply_to.help', ''),
+            new SettingDefinition('order_admin_email', SettingType::EMAIL, 'admin.settings.email.order_admin_email.label', 'admin.settings.email.order_admin_email.help', ''),
+            new SettingDefinition('smtp_host', SettingType::STRING, 'admin.settings.email.smtp_host.label', 'admin.settings.email.smtp_host.help', ''),
+            new SettingDefinition('smtp_port', SettingType::INT, 'admin.settings.email.smtp_port.label', 'admin.settings.email.smtp_port.help', 587),
+            new SettingDefinition('smtp_username', SettingType::STRING, 'admin.settings.email.smtp_username.label', '', ''),
+            new SettingDefinition('smtp_password', SettingType::PASSWORD, 'admin.settings.email.smtp_password.label', 'admin.settings.email.smtp_password.help', null, [], true),
+            new SettingDefinition('smtp_encryption', SettingType::CHOICE, 'admin.settings.email.smtp_encryption.label', '', 'tls', [
+                'admin.settings.email.smtp_encryption.choice.tls' => 'tls',
+                'admin.settings.email.smtp_encryption.choice.ssl' => 'ssl',
+                'admin.settings.email.smtp_encryption.choice.none' => 'none',
             ]),
         ]);
 
-        yield new SettingsSection('footer', 'Footer', 'fa-window-minimize', [
-            new SettingDefinition('footer_columns', SettingType::CHOICE, 'Broj kolona', 'Jedna kolona = samo tekst; dvije = tekst + izbornik.', '2', [
-                '1 kolona' => '1',
-                '2 kolone' => '2',
+        yield new SettingsSection('footer', 'admin.settings.footer.title', 'fa-window-minimize', [
+            new SettingDefinition('footer_columns', SettingType::CHOICE, 'admin.settings.footer.footer_columns.label', 'admin.settings.footer.footer_columns.help', '2', [
+                'admin.settings.footer.footer_columns.choice.1' => '1',
+                'admin.settings.footer.footer_columns.choice.2' => '2',
             ]),
-            new SettingDefinition('footer_text', SettingType::RICH_TEXT, 'Tekst', 'Prikazuje se u prvoj koloni footera.'),
-            new SettingDefinition('footer_menu', SettingType::CHOICE, 'Izbornik (2. kolona)', 'Postojeći izbornik prikazan u drugoj koloni (kad su 2 kolone).', '', $this->menuChoices()),
-            new SettingDefinition('footer_copyright', SettingType::STRING, 'Copyright', 'Prazno = automatski "© {godina} {naziv sajta}".', ''),
-            new SettingDefinition('footer_show_powered_by', SettingType::BOOL, 'Prikaži "Pokreće Tallyst CMS"', '', true),
+            new SettingDefinition('footer_text', SettingType::RICH_TEXT, 'admin.settings.footer.footer_text.label', 'admin.settings.footer.footer_text.help'),
+            new SettingDefinition('footer_menu', SettingType::CHOICE, 'admin.settings.footer.footer_menu.label', 'admin.settings.footer.footer_menu.help', '', $this->menuChoices()),
+            new SettingDefinition('footer_copyright', SettingType::STRING, 'admin.settings.footer.footer_copyright.label', 'admin.settings.footer.footer_copyright.help', ''),
+            new SettingDefinition('footer_show_powered_by', SettingType::BOOL, 'admin.settings.footer.footer_show_powered_by.label', '', true),
         ]);
     }
 

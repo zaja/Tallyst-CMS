@@ -111,6 +111,50 @@ admin:
             placeholder: name@example.com
             send: Send
             note: 'Sends via the current configuration; the result reports which transport was used.'
+        general:
+            title: General
+            site_name: { label: Site name, help: Shown in the header and the title. }
+            site_tagline: { label: Tagline, help: A short site description (meta description). }
+            search_enabled: { label: Show the search box, help: 'A search field in the header. Off (default) = a simple site without search; turn it on if you have a lot of content.' }
+        branding:
+            title: Branding
+            logo_media_id: { label: Logo, help: Shown in the header. Empty = the site name as text. }
+            favicon_media_id: { label: Favicon, help: 'Browser-tab icon (PNG/JPG, square ~64px).' }
+        blog:
+            title: Blog
+            blog_posts_per_page: { label: Posts per page, help: 'How many posts to show per page on the blog and archives (1–50).' }
+        maintenance:
+            title: Maintenance
+            maintenance_enabled: { label: Maintenance mode, help: 'Visitors see a maintenance page (503); the admin keeps working and can still get in.' }
+            maintenance_message: { label: Message, help: Shown to visitors while maintenance is on. }
+        localization:
+            title: Localization
+            app_locale: { label: Language, help: The default language of the interface and translations. }
+            app_timezone: { label: Time zone, help: Used for displaying dates. }
+            app_date_format: { label: Date format, help: 'PHP date() format, e.g. d.m.Y.' }
+        email:
+            title: Email
+            mail_from_name: { label: From (name), help: The name in the From field of outgoing mail. }
+            mail_from_email: { label: From (e-mail), help: The address in the From field. }
+            mail_reply_to: { label: Reply-To, help: Optional; replies go to this address. }
+            order_admin_email: { label: Order e-mail (admin), help: 'Receives a notice about a new paid order. Empty = ORDER_ADMIN_EMAIL from the environment.' }
+            smtp_host: { label: SMTP host, help: 'E.g. smtp.mailtrap.io. Empty = use MAILER_DSN from the environment.' }
+            smtp_port: { label: SMTP port, help: '587 for STARTTLS, 465 for SSL.' }
+            smtp_username: { label: SMTP user }
+            smtp_password: { label: SMTP password, help: Encrypted. Leave empty to keep the current one. }
+            smtp_encryption:
+                label: Encryption
+                choice: { tls: STARTTLS (tls), ssl: SSL/TLS (ssl), none: No encryption }
+        footer:
+            title: Footer
+            footer_columns:
+                label: Number of columns
+                help: 'One column = text only; two = text + menu.'
+                choice: { '1': 1 column, '2': 2 columns }
+            footer_text: { label: Text, help: Shown in the first footer column. }
+            footer_menu: { label: Menu (2nd column), help: 'An existing menu shown in the second column (when there are 2 columns).' }
+            footer_copyright: { label: Copyright, help: 'Empty = automatic "© {year} {site name}".' }
+            footer_show_powered_by: { label: 'Show "Powered by Tallyst CMS"' }
     theme:
         title: Themes
         intro: 'Themes are added by copying a folder into themes/ on the server (FTP / copy default and rename); the CMS detects them automatically. A theme may include a theme.png (~880×660) thumbnail.'

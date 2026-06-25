@@ -19,7 +19,7 @@
                 <button class="nav-link{{ loop.first ? ' active' : '' }}" id="tab-{{ section.key }}"
                         data-bs-toggle="tab" data-bs-target="#pane-{{ section.key }}"
                         type="button" role="tab">
-                    <i class="fa {{ section.icon }}"></i> {{ section.label }}
+                    <i class="fa {{ section.icon }}"></i> {{ section.label|trans({}, 'admin') }}
                 </button>
             </li>
         {% endfor %}

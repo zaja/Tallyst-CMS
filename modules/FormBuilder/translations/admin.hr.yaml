@@ -174,3 +174,29 @@ admin:
         field_placeholder: npr. drzava
         operator: Operator
         value: Vrijednost
+    settings:
+        stripe:
+            title: Stripe
+            stripe_secret_key: { label: Tajni ključ (Secret key), help: 'sk_test_… ili sk_live_… Prazno = STRIPE_SECRET_KEY iz okoline.' }
+            stripe_webhook_secret: { label: Webhook secret, help: 'whsec_… s istog (test/live) endpointa. Prazno = STRIPE_WEBHOOK_SECRET iz okoline.' }
+            checkout_locale:
+                label: Jezik naplate (checkout)
+                help: 'Jezik Stripe checkout stranice. Automatski = prati preglednik kupca.'
+                choice: { auto: Automatski }
+        paypal:
+            title: PayPal
+            paypal_client_id: { label: Client ID, help: 'Iz PayPal app (sandbox ili live). Prazno = PAYPAL_CLIENT_ID iz okoline.' }
+            paypal_client_secret: { label: Client secret, help: 'Tajni ključ PayPal appa. Prazno = PAYPAL_CLIENT_SECRET iz okoline.' }
+            paypal_webhook_id: { label: Webhook ID, help: 'ID webhooka iz PayPal dashboarda (treba za verifikaciju). Prazno = PAYPAL_WEBHOOK_ID iz okoline.' }
+            paypal_mode:
+                label: Način rada
+                help: 'PayPal nema test/live prefiks u ključu — odaberi izričito. Sandbox i live imaju ODVOJENE ključeve i webhookove.'
+                choice: { sandbox: Sandbox (test), live: Live (produkcija) }
+        tax:
+            title: Porez
+            tax_enabled: { label: Obračunaj porez, help: 'Primjenjuje JEDNU stopu (uključenu u cijenu) na sve narudžbe — ispravno za domaću prodaju / ispod EU OSS praga (€10.000). Za prodaju preko praga ili globalnu usklađenost konzultiraj knjigovođu ili Merchant-of-Record (Paddle/Lemon Squeezy). Tallyst bilježi podatke za tvoj export, ne podnosi poreznu prijavu.' }
+            tax_rate: { label: Stopa (%), help: 'Npr. 25. Porez je UKLJUČEN u cijenu (izračuna se unatrag) — naplaćeni iznos se ne mijenja.' }
+            tax_name: { label: Naziv poreza, help: 'Npr. PDV.' }
+        orders:
+            title: Narudžbe
+            thank_you_message: { label: Poruka zahvale, help: 'Prikazuje se kupcu na stranici zahvale nakon uspješnog plaćanja, iznad podataka o narudžbi.' }

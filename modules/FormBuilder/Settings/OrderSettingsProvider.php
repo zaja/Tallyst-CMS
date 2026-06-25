@@ -15,8 +15,8 @@ class OrderSettingsProvider implements SettingsSectionProviderInterface
 {
     public function getSettingsSections(): iterable
     {
-        yield new SettingsSection('orders', 'Narudžbe', 'fa-receipt', [
-            new SettingDefinition('thank_you_message', SettingType::RICH_TEXT, 'Poruka zahvale', 'Prikazuje se kupcu na stranici zahvale nakon uspješnog plaćanja, iznad podataka o narudžbi.', '<p>Hvala na narudžbi! Potvrdu i upute šaljemo e-mailom.</p>'),
+        yield new SettingsSection('orders', 'admin.settings.orders.title', 'fa-receipt', [
+            new SettingDefinition('thank_you_message', SettingType::RICH_TEXT, 'admin.settings.orders.thank_you_message.label', 'admin.settings.orders.thank_you_message.help', '<p>Hvala na narudžbi! Potvrdu i upute šaljemo e-mailom.</p>'),
         ]);
     }
 }

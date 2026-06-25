@@ -174,3 +174,29 @@ admin:
         field_placeholder: e.g. country
         operator: Operator
         value: Value
+    settings:
+        stripe:
+            title: Stripe
+            stripe_secret_key: { label: Secret key, help: 'sk_test_… or sk_live_… Empty = STRIPE_SECRET_KEY from the environment.' }
+            stripe_webhook_secret: { label: Webhook secret, help: 'whsec_… from the same (test/live) endpoint. Empty = STRIPE_WEBHOOK_SECRET from the environment.' }
+            checkout_locale:
+                label: Checkout language
+                help: 'The language of the Stripe checkout page. Automatic = follows the buyer''s browser.'
+                choice: { auto: Automatic }
+        paypal:
+            title: PayPal
+            paypal_client_id: { label: Client ID, help: 'From the PayPal app (sandbox or live). Empty = PAYPAL_CLIENT_ID from the environment.' }
+            paypal_client_secret: { label: Client secret, help: 'The PayPal app''s secret. Empty = PAYPAL_CLIENT_SECRET from the environment.' }
+            paypal_webhook_id: { label: Webhook ID, help: 'The webhook ID from the PayPal dashboard (needed for verification). Empty = PAYPAL_WEBHOOK_ID from the environment.' }
+            paypal_mode:
+                label: Mode
+                help: 'PayPal has no test/live prefix in the key — choose explicitly. Sandbox and live have SEPARATE keys and webhooks.'
+                choice: { sandbox: Sandbox (test), live: Live (production) }
+        tax:
+            title: Tax
+            tax_enabled: { label: Apply tax, help: 'Applies ONE rate (included in the price) to all orders — correct for domestic sales / below the EU OSS threshold (€10,000). For sales above the threshold or global compliance, consult an accountant or a Merchant-of-Record (Paddle/Lemon Squeezy). Tallyst records data for your export; it does not file a tax return.' }
+            tax_rate: { label: Rate (%), help: 'E.g. 25. Tax is INCLUDED in the price (computed backwards) — the charged amount does not change.' }
+            tax_name: { label: Tax name, help: 'E.g. VAT.' }
+        orders:
+            title: Orders
+            thank_you_message: { label: Thank-you message, help: 'Shown to the buyer on the thank-you page after a successful payment, above the order details.' }

@@ -111,6 +111,50 @@ admin:
             placeholder: email@primjer.hr
             send: Pošalji
             note: 'Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.'
+        general:
+            title: Općenito
+            site_name: { label: Naziv sajta, help: Prikazuje se u zaglavlju i naslovu. }
+            site_tagline: { label: Slogan, help: Kratak opis sajta (meta opis). }
+            search_enabled: { label: Prikaži tražilicu, help: 'Polje za pretragu u zaglavlju. Isključeno (zadano) = jednostavan sajt bez pretrage; uključi ako imaš puno sadržaja.' }
+        branding:
+            title: Branding
+            logo_media_id: { label: Logo, help: Prikazuje se u zaglavlju. Prazno = naziv sajta kao tekst. }
+            favicon_media_id: { label: Favicon, help: 'Ikona u kartici preglednika (PNG/JPG, kvadratna ~64px).' }
+        blog:
+            title: Blog
+            blog_posts_per_page: { label: Objava po stranici, help: 'Koliko objava prikazati po stranici na blogu i arhivama (1–50).' }
+        maintenance:
+            title: Održavanje
+            maintenance_enabled: { label: Maintenance mode, help: 'Posjetitelji vide stranicu održavanja (503); admin i dalje radi i može ući.' }
+            maintenance_message: { label: Poruka, help: Prikazuje se posjetiteljima dok je održavanje uključeno. }
+        localization:
+            title: Lokalizacija
+            app_locale: { label: Jezik, help: Zadani jezik sučelja i prijevoda. }
+            app_timezone: { label: Vremenska zona, help: Koristi se za prikaz datuma. }
+            app_date_format: { label: Format datuma, help: 'PHP date() format, npr. d.m.Y.' }
+        email:
+            title: Email
+            mail_from_name: { label: Pošiljatelj (ime), help: Ime u polju From odlaznih mailova. }
+            mail_from_email: { label: Pošiljatelj (email), help: Adresa u polju From. }
+            mail_reply_to: { label: Reply-To, help: Neobavezno; odgovori idu na ovu adresu. }
+            order_admin_email: { label: Email za narudžbe (admin), help: 'Prima obavijest o novoj plaćenoj narudžbi. Prazno = ORDER_ADMIN_EMAIL iz okoline.' }
+            smtp_host: { label: SMTP host, help: 'Npr. smtp.mailtrap.io. Prazno = koristi MAILER_DSN iz okoline.' }
+            smtp_port: { label: SMTP port, help: '587 za STARTTLS, 465 za SSL.' }
+            smtp_username: { label: SMTP korisnik }
+            smtp_password: { label: SMTP lozinka, help: Šifrirano. Ostavi prazno da zadržiš trenutnu. }
+            smtp_encryption:
+                label: Enkripcija
+                choice: { tls: STARTTLS (tls), ssl: SSL/TLS (ssl), none: Bez enkripcije }
+        footer:
+            title: Footer
+            footer_columns:
+                label: Broj kolona
+                help: 'Jedna kolona = samo tekst; dvije = tekst + izbornik.'
+                choice: { '1': 1 kolona, '2': 2 kolone }
+            footer_text: { label: Tekst, help: Prikazuje se u prvoj koloni footera. }
+            footer_menu: { label: Izbornik (2. kolona), help: 'Postojeći izbornik prikazan u drugoj koloni (kad su 2 kolone).' }
+            footer_copyright: { label: Copyright, help: 'Prazno = automatski "© {godina} {naziv sajta}".' }
+            footer_show_powered_by: { label: 'Prikaži "Pokreće Tallyst CMS"' }
     theme:
         title: Teme
         intro: 'Teme se dodaju kopiranjem mape u themes/ na serveru (FTP / kopiraj default i preimenuj); CMS ih automatski detektira. Svaka tema može imati theme.png (~880×660) kao sličicu.'

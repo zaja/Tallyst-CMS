@@ -153,7 +153,9 @@ class SettingsController extends AbstractController
             $data[$def->key] = $this->settings->getForForm($def);
         }
 
-        $builder = $this->createFormBuilder($data);
+        // Every setting label/help/choice-label is an `admin`-domain translation key (the providers
+        // emit keys); a custom form does NOT inherit EA's domain, so set it here.
+        $builder = $this->createFormBuilder($data, ['translation_domain' => 'admin']);
         foreach ($this->registry->allDefinitions() as $def) {
             $builder->add($def->key, $this->formType($def), $this->formOptions($def));
         }
