@@ -1,6 +1,6 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% form_theme form 'bootstrap_5_layout.html.twig' '@Media/admin/form/media_picker_widget.html.twig' '@Media/admin/form/tiptap_widget.html.twig' %}
+{% form_theme form '@EasyAdmin/crud/form_theme.html.twig' '@Media/admin/form/media_picker_widget.html.twig' '@Media/admin/form/tiptap_widget.html.twig' %}
 
 {% block content_title %}{{ 'admin.settings.title'|trans({}, 'admin') }}{% endblock %}
 
