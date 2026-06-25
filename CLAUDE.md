@@ -1363,6 +1363,26 @@ ONLY — it never changes config (diagnoses + instructs).
   DEFINED community-vs-paid add-on model. Only once those exist does the README gain a full
   "Contributing" section inviting third-party theme/module development. (Don't promise an add-on
   marketplace/store until it exists.)
+- **Versioning & version display — ONE system for all THREE components (deferred — do with the
+  addon/module infrastructure pass, NOT a core-only stopgap).** Core, modules, and themes version
+  INDEPENDENTLY; design a single considered system rather than something that gets rebuilt when paid
+  modules/themes arrive. Scope to work out:
+  - **Conventions per component (semver across all):** CORE (`tallyst/cms`) — already semver via git
+    tag/Packagist. MODULES (incl. future paid add-ons) — each its own version + a core-compat
+    declaration; the natural mechanism for composer-distributed modules is `require: {"tallyst/cms":
+    "^1.0"}`. THEMES — each its own version + optional core-compat. **Current state to build on:**
+    `ModuleInterface::getVersion()` ALREADY exists (FormBuilder/Media return one; the Moduli admin
+    page already shows it). **`theme.yaml` has NO `version` yet** (only name/label/author/parent — see
+    `ThemeScanner`) → add `version` (+ optional core-compat) to `theme.yaml` and `ThemeScanner`.
+  - **Runtime version source:** `Composer\InstalledVersions` for composer packages (core + module
+    packages); `theme.yaml` for themes; `getVersion()` for in-tree modules.
+  - **Unified admin view:** one "components" overview — core + installed modules + installed/active
+    themes, each with its version. Likely under **Sustav** (next to the readiness panel) or a dedicated
+    "O sustavu / Komponente" page (would unify/replace the per-version bit already on the Moduli page).
+  - **Compatibility:** how a module/theme declares the core version it needs, and a clear warning when
+    an installed component is incompatible with the running core.
+  - Ties to **semver = the addon API contract** (already in the Versioning section) and the future
+    addon distribution model. Don't build the core-only slice first — it would just be reworked.
 
 ## Adding a new module (the pattern to follow)
 Copy `modules/FormBuilder/` — it is the reference module. Its bundle class
