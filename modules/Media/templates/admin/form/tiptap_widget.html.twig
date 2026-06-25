@@ -7,39 +7,42 @@
     <div class="tiptap"
          data-controller="media--tiptap"
          data-media--tiptap-modules-value="{{ enabled_modules() }}"
+         data-media--tiptap-link-prompt-value="{{ 'admin.media.tiptap.link_prompt'|trans({}, 'admin') }}"
          data-action="media-library:select->media--tiptap#onMediaSelect">
 
         <div class="tiptap__toolbar" role="toolbar">
-            <button type="button" class="tiptap__btn" title="Podebljano" data-action="media--tiptap#bold"><b>B</b></button>
-            <button type="button" class="tiptap__btn" title="Kurziv" data-action="media--tiptap#italic"><i>I</i></button>
-            <button type="button" class="tiptap__btn" title="Precrtano" data-action="media--tiptap#strike"><s>S</s></button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.bold'|trans({}, 'admin') }}" data-action="media--tiptap#bold"><b>B</b></button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.italic'|trans({}, 'admin') }}" data-action="media--tiptap#italic"><i>I</i></button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.strike'|trans({}, 'admin') }}" data-action="media--tiptap#strike"><s>S</s></button>
             <span class="tiptap__sep"></span>
-            <button type="button" class="tiptap__btn" title="Paragraf" data-action="media--tiptap#paragraph">&para;</button>
-            <button type="button" class="tiptap__btn" title="Naslov 2" data-action="media--tiptap#h2">H2</button>
-            <button type="button" class="tiptap__btn" title="Naslov 3" data-action="media--tiptap#h3">H3</button>
-            <button type="button" class="tiptap__btn" title="Citat" data-action="media--tiptap#blockquote">&rdquo;</button>
-            <button type="button" class="tiptap__btn" title="Kod" data-action="media--tiptap#code">&lt;/&gt;</button>
-            <button type="button" class="tiptap__btn" title="Očisti formatiranje" data-action="media--tiptap#clearFormatting">&#10006; format</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.paragraph'|trans({}, 'admin') }}" data-action="media--tiptap#paragraph">&para;</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.h2'|trans({}, 'admin') }}" data-action="media--tiptap#h2">H2</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.h3'|trans({}, 'admin') }}" data-action="media--tiptap#h3">H3</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.blockquote'|trans({}, 'admin') }}" data-action="media--tiptap#blockquote">&rdquo;</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.code'|trans({}, 'admin') }}" data-action="media--tiptap#code">&lt;/&gt;</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.clear'|trans({}, 'admin') }}" data-action="media--tiptap#clearFormatting">&#10006; format</button>
             <span class="tiptap__sep"></span>
-            <button type="button" class="tiptap__btn" title="Lista" data-action="media--tiptap#bulletList">&bull; lista</button>
-            <button type="button" class="tiptap__btn" title="Numerirana lista" data-action="media--tiptap#orderedList">1. lista</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.list'|trans({}, 'admin') }}" data-action="media--tiptap#bulletList">&bull; {{ 'admin.media.tiptap.list_btn'|trans({}, 'admin') }}</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.ordered_list'|trans({}, 'admin') }}" data-action="media--tiptap#orderedList">1. {{ 'admin.media.tiptap.list_btn'|trans({}, 'admin') }}</button>
             <span class="tiptap__sep"></span>
-            <button type="button" class="tiptap__btn" title="Poveznica" data-action="media--tiptap#link">&#128279;</button>
-            <button type="button" class="tiptap__btn" title="Ukloni poveznicu" data-action="media--tiptap#unlink">&#128279;&times;</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.link'|trans({}, 'admin') }}" data-action="media--tiptap#link">&#128279;</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.unlink'|trans({}, 'admin') }}" data-action="media--tiptap#unlink">&#128279;&times;</button>
             <span class="tiptap__sep"></span>
-            <button type="button" class="tiptap__btn" title="Ubaci sliku" data-action="media--tiptap#insertImage">&#128247; Slika</button>
-            <button type="button" class="tiptap__btn" title="Slika: puna širina (odaberi sliku)" data-action="media--tiptap#toggleImageWidth">&#8596; Puna širina</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.insert_image'|trans({}, 'admin') }}" data-action="media--tiptap#insertImage">&#128247; {{ 'admin.media.tiptap.image_btn'|trans({}, 'admin') }}</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.full_width'|trans({}, 'admin') }}" data-action="media--tiptap#toggleImageWidth">&#8596; {{ 'admin.media.tiptap.full_width_btn'|trans({}, 'admin') }}</button>
             <span class="tiptap__sep"></span>
             {# Multi-column layout (Prolaz C) — core editor feature, always present (not
                module-gated): insert a fixed 2- or 3-column block at the cursor. #}
-            <button type="button" class="tiptap__btn" title="Dva stupca" data-action="media--tiptap#columns2">&#9707; 2</button>
-            <button type="button" class="tiptap__btn" title="Tri stupca" data-action="media--tiptap#columns3">&#9707; 3</button>
-            {# Module-contributed insert buttons (e.g. FormBuilder "Ubaci formu") are
-               appended here by the controller — the editor stays module-agnostic. #}
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.columns2'|trans({}, 'admin') }}" data-action="media--tiptap#columns2">&#9707; 2</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.columns3'|trans({}, 'admin') }}" data-action="media--tiptap#columns3">&#9707; 3</button>
+            {# Module-contributed insert buttons (e.g. FormBuilder "Insert form") are
+               appended here by the controller — the editor stays module-agnostic. The label of
+               that button + the form-picker modal are wired at bootstrap (NOT on a Twig element),
+               so their text is the one remaining un-translated JS spot — see CLAUDE.md i18n note. #}
             <span class="tiptap__ext" data-media--tiptap-target="toolbar"></span>
             <span class="tiptap__sep"></span>
-            <button type="button" class="tiptap__btn" title="Poništi" data-action="media--tiptap#undo">&#8630;</button>
-            <button type="button" class="tiptap__btn" title="Ponovi" data-action="media--tiptap#redo">&#8631;</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.undo'|trans({}, 'admin') }}" data-action="media--tiptap#undo">&#8630;</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.redo'|trans({}, 'admin') }}" data-action="media--tiptap#redo">&#8631;</button>
         </div>
 
         <div class="tiptap__editor" data-media--tiptap-target="editor"></div>

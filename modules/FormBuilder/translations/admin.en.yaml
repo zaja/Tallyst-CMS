@@ -42,3 +42,97 @@ admin:
         flash:
             deleted: Form deleted.
             saved: Form saved.
+        index:
+            title: Forms
+            new: + New form
+            none: 'No forms yet. Create the first one, then embed it in a page with the [form id=N] shortcode.'
+            col: { name: Name, status: Status, shortcode: Shortcode, fields: Fields }
+            status: { published: Published, draft: Draft }
+            delete: Delete
+            delete_confirm: Delete this form?
+        builder:
+            new_title: New form
+            edit_title: Edit form
+            save: Save
+            cancel: Cancel
+            basic: { title: Basics, help: 'The form''s name, slug and status.' }
+            type:
+                title: Form type
+                help: Determines which options below apply.
+                free: Free
+                free_sub: contact / sign-up
+                paid: Paid (product)
+                paid_sub: payment on submit
+            payment:
+                title: Payment
+                badge: product only
+                help: Price, currency, payment methods and variants.
+                variants_help: 'Price variants — the buyer picks one; its price is used instead of the fixed price.'
+            notify:
+                title: Notifications
+                help: 'E-mail notification on every submission (for free forms).'
+            fields:
+                title: Form fields
+                help: What the visitor fills in.
+            add_field: + Add field
+            add_variant: + Add variant
+        field:
+            new: New field
+            required_badge: required
+            move_up: Up
+            move_down: Down
+            remove: Remove field
+            conditional_toggle: Conditional display
+            conditions_legend: Display conditions (optional)
+            add_rule: + Rule
+        rule:
+            remove: Remove rule
+            op: { checked: is checked, not_checked: is not checked, equals: is, not_equals: is not, empty: is empty, not_empty: is not empty, gt: greater than, lt: less than, contains: contains }
+            field_placeholder: — field —
+            field_deleted: '(deleted: %key%)'
+            no_options: — the field has no options (add them, or use a checkbox) —
+            value_placeholder: — value —
+        variant:
+            remove: Remove variant
+        payment_info:
+            live_badge: LIVE MODE
+            live_note: '— charges go live.'
+            test_badge: TEST MODE
+            test_note: '— test keys, no real charge.'
+            unconfigured_badge: Not configured
+            unconfigured_note: '— enter the keys (or set env variables).'
+            webhook_heading: Webhook setup
+            webhook_url_label: 'Webhook URL (paste into %dashboard%):'
+            events_label: 'Required events:'
+            guide: '%dashboard% dashboard → Webhooks → Add endpoint → paste the URL → choose events. Test/sandbox and live have SEPARATE endpoints (each with its own keys/secret).'
+        webhook_check:
+            header: Payments — webhook (basic-auth trap)
+            intro: 'The most common go-live trap: if the webhook route sits behind basic auth, payment succeeds but the order stays "Processing" (the webhook returns 401 before the app, with no e-mails). The test sends an unsigned request to your own webhook URL — the real logic does NOT run (the signature fails with 400). 401 = a problem. Runs on demand (it doesn''t slow the admin).'
+            button: Check webhook (Stripe/PayPal)
+            running: Checking…
+            http_error: 'Error (HTTP %status%).'
+            network_error: 'Network error: %error%'
+            no_results: No results.
+        widget:
+            revenue_month: Revenue this month
+            revenue_total: Revenue total
+            paid_month: Paid this month
+            awaiting: Awaiting delivery
+            awaiting_link: Click for the list →
+            awaiting_none: Nothing pending
+            revenue: Revenue
+            period_7: 7 days
+            period_30: 30 days
+            period_365: 12 months
+            from: From
+            to: To
+            chart_empty: No data to display.
+            multi_currency: 'The chart shows the primary currency (%currency%). The other currencies are in the cards above.'
+            recent: Recent orders
+            no_orders: No orders yet.
+            col: { date: Date, amount: Amount, status: Status, payment: Payment }
+        picker:
+            insert: Insert form
+            close: Close
+            load_error: Couldn't load forms.
+            none: No forms yet. Create one first.

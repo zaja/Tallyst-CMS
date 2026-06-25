@@ -7,6 +7,10 @@
      data-media--library-library-url-value="{{ path('media_library_index') }}"
      data-media--library-upload-url-value="{{ path('media_upload') }}"
      data-media--library-csrf-token-value="{{ csrf_token('media_upload') }}"
+     {# JS-rendered status chrome — translated in Twig, read by the controller. #}
+     data-media--library-loading-value="{{ 'admin.media.library.loading'|trans({}, 'admin') }}"
+     data-media--library-load-error-value="{{ 'admin.media.library.load_error'|trans({}, 'admin') }}"
+     data-media--library-empty-value="{{ 'admin.media.library.empty'|trans({}, 'admin') }}"
      data-action="media-library:open->media--library#open"
      {{ picker_target|default(false) ? 'data-media--picker-target=library' : '' }}
      {{ tiptap_target|default(false) ? 'data-media--tiptap-target=library' : '' }}>
@@ -15,10 +19,10 @@
          data-action="click->media--library#backdrop">
         <div class="media-lib__dialog" role="dialog" aria-modal="true">
             <div class="media-lib__header">
-                <input type="search" class="form-control media-lib__search" placeholder="Pretraži po nazivu / alt tekstu…"
+                <input type="search" class="form-control media-lib__search" placeholder="{{ 'admin.media.library.search_placeholder'|trans({}, 'admin') }}"
                        data-media--library-target="search"
                        data-action="input->media--library#search">
-                <button type="button" class="btn-close" aria-label="Zatvori"
+                <button type="button" class="btn-close" aria-label="{{ 'admin.media.library.close'|trans({}, 'admin') }}"
                         data-action="media--library#close"></button>
             </div>
 
@@ -33,7 +37,7 @@
             <div class="media-lib__footer">
                 <button type="button" class="btn btn-outline-secondary btn-sm" hidden
                         data-media--library-target="more"
-                        data-action="media--library#loadMore">Učitaj još</button>
+                        data-action="media--library#loadMore">{{ 'admin.media.library.load_more'|trans({}, 'admin') }}</button>
             </div>
         </div>
     </div>

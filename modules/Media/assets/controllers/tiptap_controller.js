@@ -18,7 +18,7 @@ import '../styles/tiptap.css';
  */
 export default class extends Controller {
     static targets = ['editor', 'input', 'library', 'toolbar'];
-    static values = { modules: String };
+    static values = { modules: String, linkPrompt: String };
 
     connect() {
         this.editor = new Editor({
@@ -82,7 +82,7 @@ export default class extends Controller {
 
     link() {
         const previous = this.editor.getAttributes('link').href || '';
-        const url = window.prompt('URL poveznice:', previous);
+        const url = window.prompt(this.linkPromptValue, previous);
         if (url === null) {
             return; // cancelled
         }

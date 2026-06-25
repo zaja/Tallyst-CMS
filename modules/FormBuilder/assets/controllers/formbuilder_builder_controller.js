@@ -15,6 +15,9 @@ import Sortable from 'sortablejs';
  * NOT mutate inputs, so it never false-triggers the unsaved-changes guard on load.
  */
 export default class extends Controller {
+    // The "new field" summary fallback label is translated in Twig and passed as a value.
+    static values = { newFieldLabel: String };
+
     connect() {
         // Drag-drop only the FIELDS collection (variants/rules out of scope). Newly-added rows
         // are draggable automatically since Sortable watches the container.
@@ -82,7 +85,7 @@ export default class extends Controller {
         const labelOut = row.querySelector('[data-fb-summary-label]');
         const typeOut = row.querySelector('[data-fb-summary-type]');
         if (labelOut && labelInput) {
-            labelOut.textContent = labelInput.value.trim() || 'Novo polje';
+            labelOut.textContent = labelInput.value.trim() || (this.newFieldLabelValue || 'Novo polje');
         }
         if (typeOut && typeSelect && typeSelect.selectedIndex >= 0) {
             typeOut.textContent = typeSelect.options[typeSelect.selectedIndex].text;

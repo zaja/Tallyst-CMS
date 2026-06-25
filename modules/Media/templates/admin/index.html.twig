@@ -10,8 +10,7 @@
          data-media--bulk-upload-csrf-token-value="{{ csrf_token('media_upload') }}">
         <div class="card-body">
             <p class="text-muted mb-2">
-                Povuci slike ovdje (ili klikni) za dodavanje — može više odjednom.
-                Naslov i alt se automatski popune (IPTC/EXIF ili naziv datoteke).
+                {{ 'admin.media.bulk.help'|trans({}, 'admin') }}
             </p>
             <input type="file" multiple accept="image/*" data-media--bulk-upload-target="fileInput">
         </div>

@@ -13,3 +13,40 @@ admin:
             type: Tip
             created_at: Dodano
         help: { shortcode: 'Kopiraj u sadržaj stranice/objave.' }
+        bulk:
+            help: 'Povuci slike ovdje (ili klikni) za dodavanje — može više odjednom. Naslov i alt se automatski popune (IPTC/EXIF ili naziv datoteke).'
+        library:
+            search_placeholder: Pretraži po nazivu / alt tekstu…
+            close: Zatvori
+            load_more: Učitaj još
+            loading: Učitavanje…
+            load_error: Greška pri učitavanju biblioteke.
+            empty: Nema slika.
+        picker:
+            no_image: Nije odabrana slika
+            choose: Odaberi iz biblioteke
+            remove: Ukloni
+        tiptap:
+            bold: Podebljano
+            italic: Kurziv
+            strike: Precrtano
+            paragraph: Paragraf
+            h2: Naslov 2
+            h3: Naslov 3
+            blockquote: Citat
+            code: Kod
+            clear: Očisti formatiranje
+            list: Lista
+            ordered_list: Numerirana lista
+            link: Poveznica
+            unlink: Ukloni poveznicu
+            insert_image: Ubaci sliku
+            image_btn: Slika
+            full_width: 'Slika: puna širina (odaberi sliku)'
+            full_width_btn: Puna širina
+            columns2: Dva stupca
+            columns3: Tri stupca
+            undo: Poništi
+            redo: Ponovi
+            list_btn: lista
+            link_prompt: 'URL poveznice:'

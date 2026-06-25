@@ -4,18 +4,21 @@
    admin. #}
 <div class="card mb-3" data-controller="formbuilder--webhook-check"
      data-formbuilder--webhook-check-url-value="{{ path('form_builder_admin_webhook_check') }}"
-     data-formbuilder--webhook-check-csrf-value="{{ csrf_token('webhook_check') }}">
-    <div class="card-header">Plaćanja — webhook (basic-auth zamka)</div>
+     data-formbuilder--webhook-check-csrf-value="{{ csrf_token('webhook_check') }}"
+     {# JS-rendered status chrome — Twig owns the translation, JS reads these values (%status%/%error%
+        are placeholders the controller substitutes). #}
+     data-formbuilder--webhook-check-running-value="{{ 'admin.form.webhook_check.running'|trans({}, 'admin') }}"
+     data-formbuilder--webhook-check-http-error-value="{{ 'admin.form.webhook_check.http_error'|trans({}, 'admin') }}"
+     data-formbuilder--webhook-check-network-error-value="{{ 'admin.form.webhook_check.network_error'|trans({}, 'admin') }}"
+     data-formbuilder--webhook-check-no-results-value="{{ 'admin.form.webhook_check.no_results'|trans({}, 'admin') }}">
+    <div class="card-header">{{ 'admin.form.webhook_check.header'|trans({}, 'admin') }}</div>
     <div class="card-body">
         <p class="small text-muted mb-2">
-            Najčešća go-live zamka: ako je webhook ruta iza basic-autha, plaćanje uspije ali narudžba
-            ostane <strong>"U obradi"</strong> (webhook vrati 401 prije aplikacije, bez mailova). Test
-            šalje <em>nepotpisani</em> zahtjev na vlastiti webhook URL — prava logika se NE pokreće (potpis
-            padne na 400). <strong>401 = problem.</strong> Pokreće se na zahtjev (ne usporava admin).
+            {{ 'admin.form.webhook_check.intro'|trans({}, 'admin') }}
         </p>
         <button type="button" class="btn btn-outline-primary btn-sm"
                 data-formbuilder--webhook-check-target="button"
-                data-action="formbuilder--webhook-check#run">Provjeri webhook (Stripe/PayPal)</button>
+                data-action="formbuilder--webhook-check#run">{{ 'admin.form.webhook_check.button'|trans({}, 'admin') }}</button>
         <div class="mt-3" data-formbuilder--webhook-check-target="results"></div>
     </div>
 </div>

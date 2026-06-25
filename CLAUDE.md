@@ -442,6 +442,17 @@ infra + proved it on 3 keys: `security.login.submit`, `form.submit`, `theme.foot
   leave them. **CSV export headers are FIXED ENGLISH** (hardcoded literals, never `trans`/locale) — a data
   export is a global, predictable format for accountants / re-import, deterministic regardless of
   `app_locale`; `OrderCsvExportTest` asserts the English headers.
+- **JS-generated admin strings → translate in Twig, pass via Stimulus values / data-attributes.** A
+  Stimulus controller that builds UI text in JS (form-builder rule-operator labels + placeholders,
+  webhook-check status chrome, media-library loading/empty, tiptap link prompt, the "new field" summary
+  fallback) does NOT hardcode the string — Twig `|trans({}, 'admin')`s it and passes it as a `data-…-value`
+  (or a `|json_encode|e('html_attr')` object for a set, e.g. `formbuilder--rules` `labels`), and the JS
+  reads `this.xxxValue`. Params travel as `%status%`/`%error%`/`%key%` placeholders the JS `.replace()`s.
+  **The ONE exception (flagged):** the editor's **"Insert form" button + its form-picker modal**
+  (`assets/stimulus_bootstrap.js` `registerEditorExtension` label/title + `modules/FormBuilder/assets/form_picker.js`)
+  are wired at BOOTSTRAP, not mounted on a Twig element, so they can't read a per-page `trans` value —
+  they stay Croatian until a small global-i18n shim is added (`admin.form.picker.*` keys exist, ready).
+  That's the lone remaining hardcoded admin JS string after PASS 4c.
 
 ## Directory layout
 ```

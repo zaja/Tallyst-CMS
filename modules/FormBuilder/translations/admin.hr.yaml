@@ -42,3 +42,97 @@ admin:
         flash:
             deleted: Forma je obrisana.
             saved: Forma je spremljena.
+        index:
+            title: Forme
+            new: + Nova forma
+            none: 'Još nema formi. Kreirajte prvu pa je ubacite u stranicu shortcodeom [form id=N].'
+            col: { name: Naziv, status: Status, shortcode: Shortcode, fields: Polja }
+            status: { published: Objavljeno, draft: Skica }
+            delete: Obriši
+            delete_confirm: Obrisati formu?
+        builder:
+            new_title: Nova forma
+            edit_title: Uredi formu
+            save: Spremi
+            cancel: Odustani
+            basic: { title: Osnovno, help: 'Naziv, slug i status forme.' }
+            type:
+                title: Tip forme
+                help: Određuje koje su opcije ispod relevantne.
+                free: Besplatna
+                free_sub: kontakt / prijava
+                paid: Naplatna (proizvod)
+                paid_sub: plaćanje na submit
+            payment:
+                title: Naplata
+                badge: samo proizvod
+                help: Cijena, valuta, načini plaćanja i varijante.
+                variants_help: 'Varijante cijene — kupac bira jednu, njena se cijena koristi umjesto fiksne.'
+            notify:
+                title: Obavijesti
+                help: 'E-mail obavijest na svaku prijavu (za besplatne forme).'
+            fields:
+                title: Polja forme
+                help: Što posjetitelj ispunjava.
+            add_field: + Dodaj polje
+            add_variant: + Dodaj varijantu
+        field:
+            new: Novo polje
+            required_badge: obavezno
+            move_up: Gore
+            move_down: Dolje
+            remove: Ukloni polje
+            conditional_toggle: Uvjetni prikaz
+            conditions_legend: Uvjeti prikaza (opcionalno)
+            add_rule: + Pravilo
+        rule:
+            remove: Ukloni pravilo
+            op: { checked: je čekirano, not_checked: nije čekirano, equals: jednako, not_equals: nije jednako, empty: prazno, not_empty: nije prazno, gt: veće od, lt: manje od, contains: sadrži }
+            field_placeholder: — polje —
+            field_deleted: '(obrisano: %key%)'
+            no_options: — polje nema opcija (dodaj ih ili koristi checkbox) —
+            value_placeholder: — vrijednost —
+        variant:
+            remove: Ukloni varijantu
+        payment_info:
+            live_badge: LIVE MOD
+            live_note: '— naplate idu uživo.'
+            test_badge: TEST MOD
+            test_note: '— testni ključevi, nema stvarne naplate.'
+            unconfigured_badge: Nije konfigurirano
+            unconfigured_note: '— upiši ključeve (ili postavi env varijable).'
+            webhook_heading: Webhook postavljanje
+            webhook_url_label: 'Webhook URL (zalijepi u %dashboard%):'
+            events_label: 'Obavezni eventi:'
+            guide: '%dashboard% dashboard → Webhooks → Add endpoint → zalijepi URL → odaberi evente. Test/sandbox i live imaju ODVOJENE endpointe (svaki sa svojim ključevima/secretom).'
+        webhook_check:
+            header: Plaćanja — webhook (basic-auth zamka)
+            intro: 'Najčešća go-live zamka: ako je webhook ruta iza basic-autha, plaćanje uspije ali narudžba ostane "U obradi" (webhook vrati 401 prije aplikacije, bez mailova). Test šalje nepotpisani zahtjev na vlastiti webhook URL — prava logika se NE pokreće (potpis padne na 400). 401 = problem. Pokreće se na zahtjev (ne usporava admin).'
+            button: Provjeri webhook (Stripe/PayPal)
+            running: Provjeravam…
+            http_error: 'Greška (HTTP %status%).'
+            network_error: 'Mrežna greška: %error%'
+            no_results: Nema rezultata.
+        widget:
+            revenue_month: Zarada ovaj mjesec
+            revenue_total: Zarada ukupno
+            paid_month: Plaćeno ovaj mjesec
+            awaiting: Čeka isporuku
+            awaiting_link: Klikni za popis →
+            awaiting_none: Nema na čekanju
+            revenue: Zarada
+            period_7: 7 dana
+            period_30: 30 dana
+            period_365: 12 mjeseci
+            from: Od
+            to: Do
+            chart_empty: Nema podataka za prikaz.
+            multi_currency: 'Graf prikazuje primarnu valutu (%currency%). Ostale valute su u karticama iznad.'
+            recent: Zadnje narudžbe
+            no_orders: Još nema narudžbi.
+            col: { date: Datum, amount: Iznos, status: Status, payment: Plaćanje }
+        picker:
+            insert: Ubaci formu
+            close: Zatvori
+            load_error: Greška pri učitavanju formi.
+            none: Nema formi. Prvo kreiraj formu.

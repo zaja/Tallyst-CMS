@@ -1,36 +1,36 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block content_title %}Forme{% endblock %}
+{% block content_title %}{{ 'admin.form.index.title'|trans({}, 'admin') }}{% endblock %}
 
 {% block page_actions %}
-    <a class="btn btn-primary" href="{{ path('form_builder_admin_new') }}">+ Nova forma</a>
+    <a class="btn btn-primary" href="{{ path('form_builder_admin_new') }}">{{ 'admin.form.index.new'|trans({}, 'admin') }}</a>
 {% endblock %}
 
 {% block main %}
     {% if forms is empty %}
         <div class="alert alert-light">
-            Još nema formi. Kreirajte prvu pa je ubacite u stranicu shortcodeom <code>[form id=N]</code>.
+            {{ 'admin.form.index.none'|trans({}, 'admin') }}
         </div>
     {% else %}
         <table class="table table-hover">
             <thead>
-                <tr><th>Naziv</th><th>Status</th><th>Shortcode</th><th>Polja</th><th class="text-end"></th></tr>
+                <tr><th>{{ 'admin.form.index.col.name'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.status'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.shortcode'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.fields'|trans({}, 'admin') }}</th><th class="text-end"></th></tr>
             </thead>
             <tbody>
                 {% for f in forms %}
                     <tr>
                         <td><a href="{{ path('form_builder_admin_edit', {id: f.id}) }}">{{ f.name }}</a></td>
                         <td>
-                            {% if f.published %}<span class="badge badge-success">Objavljeno</span>
-                            {% else %}<span class="badge badge-secondary">Skica</span>{% endif %}
+                            {% if f.published %}<span class="badge badge-success">{{ 'admin.form.index.status.published'|trans({}, 'admin') }}</span>
+                            {% else %}<span class="badge badge-secondary">{{ 'admin.form.index.status.draft'|trans({}, 'admin') }}</span>{% endif %}
                         </td>
                         <td><code>[form id={{ f.id }}]</code></td>
                         <td>{{ f.fields|length }}</td>
                         <td class="text-end">
                             <form method="post" action="{{ path('form_builder_admin_delete', {id: f.id}) }}" class="d-inline"
-                                  onsubmit="return confirm('Obrisati formu?');">
+                                  onsubmit="return confirm('{{ 'admin.form.index.delete_confirm'|trans({}, 'admin')|e('js') }}');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete_form_' ~ f.id) }}">
-                                <button class="btn btn-sm btn-outline-danger" type="submit">Obriši</button>
+                                <button class="btn btn-sm btn-outline-danger" type="submit">{{ 'admin.form.index.delete'|trans({}, 'admin') }}</button>
                             </form>
                         </td>
                     </tr>

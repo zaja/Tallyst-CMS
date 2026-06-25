@@ -18,12 +18,14 @@ import { Controller } from '@hotwired/stimulus';
  * show/hide toggle.
  */
 
+// [stored operator value, label KEY]. Labels are translated in Twig and passed via the `labels` value
+// (e.g. checkbox's equals/not_equals show as "is checked"/"is not checked"). Operators/values unchanged.
 const OPERATORS_BY_TYPE = {
-    checkbox: [['equals', 'je čekirano'], ['not_equals', 'nije čekirano']],
-    radio: [['equals', 'jednako'], ['not_equals', 'nije jednako'], ['empty', 'prazno'], ['not_empty', 'nije prazno']],
-    select: [['equals', 'jednako'], ['not_equals', 'nije jednako'], ['empty', 'prazno'], ['not_empty', 'nije prazno']],
-    number: [['equals', 'jednako'], ['not_equals', 'nije jednako'], ['gt', 'veće od'], ['lt', 'manje od'], ['empty', 'prazno'], ['not_empty', 'nije prazno']],
-    _text: [['equals', 'jednako'], ['not_equals', 'nije jednako'], ['contains', 'sadrži'], ['empty', 'prazno'], ['not_empty', 'nije prazno']],
+    checkbox: [['equals', 'checked'], ['not_equals', 'not_checked']],
+    radio: [['equals', 'equals'], ['not_equals', 'not_equals'], ['empty', 'empty'], ['not_empty', 'not_empty']],
+    select: [['equals', 'equals'], ['not_equals', 'not_equals'], ['empty', 'empty'], ['not_empty', 'not_empty']],
+    number: [['equals', 'equals'], ['not_equals', 'not_equals'], ['gt', 'gt'], ['lt', 'lt'], ['empty', 'empty'], ['not_empty', 'not_empty']],
+    _text: [['equals', 'equals'], ['not_equals', 'not_equals'], ['contains', 'contains'], ['empty', 'empty'], ['not_empty', 'not_empty']],
 };
 const VALUELESS = new Set(['empty', 'not_empty']);
 
@@ -48,7 +50,11 @@ function option(value, label, selected = false) {
 }
 
 export default class extends Controller {
+    // Translated rule-editor labels (operators + placeholders), owned by Twig (see edit.html.twig).
+    static values = { labels: Object };
+
     connect() {
+        this.labels = this.hasLabelsValue ? this.labelsValue : {};
         this.syncDebounced = debounce(() => this.syncAll(), 60);
         this.onEdit = this.onEdit.bind(this);
         this.element.addEventListener('input', this.onEdit);
@@ -158,11 +164,11 @@ export default class extends Controller {
         // --- field proxy
         const fieldSel = document.createElement('select');
         fieldSel.className = 'form-select form-select-sm';
-        fieldSel.appendChild(option('', '— polje —'));
+        fieldSel.appendChild(option('', this.labels.field_ph || ''));
         for (const f of choices) fieldSel.appendChild(option(f.key, f.label || f.key));
         const current = realField.value.trim();
         if (current && !choices.some((f) => f.key === current)) {
-            fieldSel.appendChild(option(current, '(obrisano: ' + current + ')')); // referenced but missing
+            fieldSel.appendChild(option(current, (this.labels.field_del || '(%key%)').replace('%key%', current))); // referenced but missing
         }
         fieldSel.value = current;
 
@@ -179,7 +185,7 @@ export default class extends Controller {
         const ops = opsForType(type);
         const opSel = document.createElement('select');
         opSel.className = 'form-select form-select-sm';
-        for (const [op, label] of ops) opSel.appendChild(option(op, label));
+        for (const [op, labelKey] of ops) opSel.appendChild(option(op, this.labels[labelKey] || labelKey));
         if (ops.some(([op]) => op === realOp.value)) {
             opSel.value = realOp.value;
         } else {
@@ -216,11 +222,11 @@ export default class extends Controller {
             if (0 === opts.length) {
                 // The value list is the referenced field's own options — none defined → say so.
                 // (A single disabled option can render blank, so keep it a plain selected option.)
-                sel.appendChild(option('', '— polje nema opcija (dodaj ih ili koristi checkbox) —'));
+                sel.appendChild(option('', this.labels.no_opts || ''));
                 wrap.appendChild(sel);
                 return;
             }
-            sel.appendChild(option('', '— vrijednost —'));
+            sel.appendChild(option('', this.labels.value_ph || ''));
             for (const o of opts) sel.appendChild(option(o, o));
             if (realVal.value && !opts.includes(realVal.value)) sel.appendChild(option(realVal.value, realVal.value));
             sel.value = realVal.value;

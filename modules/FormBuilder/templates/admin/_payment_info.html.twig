@@ -5,34 +5,32 @@
 <hr>
 <div class="mb-3">
     {% if mode == 'live' %}
-        <span class="badge text-bg-success">LIVE MOD</span>
-        <span class="text-muted small">— naplate idu uživo.</span>
+        <span class="badge text-bg-success">{{ 'admin.form.payment_info.live_badge'|trans({}, 'admin') }}</span>
+        <span class="text-muted small">{{ 'admin.form.payment_info.live_note'|trans({}, 'admin') }}</span>
     {% elseif mode == 'test' %}
-        <span class="badge text-bg-warning">TEST MOD</span>
-        <span class="text-muted small">— testni ključevi, nema stvarne naplate.</span>
+        <span class="badge text-bg-warning">{{ 'admin.form.payment_info.test_badge'|trans({}, 'admin') }}</span>
+        <span class="text-muted small">{{ 'admin.form.payment_info.test_note'|trans({}, 'admin') }}</span>
     {% else %}
-        <span class="badge text-bg-secondary">Nije konfigurirano</span>
-        <span class="text-muted small">— upiši ključeve (ili postavi env varijable).</span>
+        <span class="badge text-bg-secondary">{{ 'admin.form.payment_info.unconfigured_badge'|trans({}, 'admin') }}</span>
+        <span class="text-muted small">{{ 'admin.form.payment_info.unconfigured_note'|trans({}, 'admin') }}</span>
     {% endif %}
 </div>
 
 <div class="card bg-body-tertiary">
     <div class="card-body">
-        <h3 class="h6">Webhook postavljanje</h3>
-        <p class="small mb-1">Webhook URL (zalijepi u {{ dashboard }}):</p>
+        <h3 class="h6">{{ 'admin.form.payment_info.webhook_heading'|trans({}, 'admin') }}</h3>
+        <p class="small mb-1">{{ 'admin.form.payment_info.webhook_url_label'|trans({'%dashboard%': dashboard}, 'admin') }}</p>
         <input type="text" class="form-control form-control-sm mb-2" readonly
                value="{{ url(webhook_route) }}"
                onclick="this.select()">
-        <p class="small mb-1">Obavezni eventi:</p>
+        <p class="small mb-1">{{ 'admin.form.payment_info.events_label'|trans({}, 'admin') }}</p>
         <ul class="small mb-2">
             {% for event in payment_webhook_events(provider) %}
                 <li><code>{{ event }}</code></li>
             {% endfor %}
         </ul>
         <p class="small text-muted mb-0">
-            {{ dashboard }} dashboard → Webhooks → <strong>Add endpoint</strong> → zalijepi URL →
-            odaberi evente. <strong>Test/sandbox i live imaju ODVOJENE endpointe</strong> (svaki sa
-            svojim ključevima/secretom).
+            {{ 'admin.form.payment_info.guide'|trans({'%dashboard%': dashboard}, 'admin') }}
         </p>
     </div>
 </div>

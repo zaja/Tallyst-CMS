@@ -8,11 +8,12 @@ import { Controller } from '@hotwired/stimulus';
  */
 export default class extends Controller {
     static targets = ['button', 'results'];
-    static values = { url: String, csrf: String };
+    // UI strings are translated in Twig and passed as values (httpError/networkError carry %status%/%error%).
+    static values = { url: String, csrf: String, running: String, httpError: String, networkError: String, noResults: String };
 
     async run() {
         this.buttonTarget.disabled = true;
-        this.resultsTarget.replaceChildren(this.alert('secondary', 'Provjeravam…'));
+        this.resultsTarget.replaceChildren(this.alert('secondary', this.runningValue));
 
         try {
             const res = await fetch(this.urlValue, {
@@ -21,12 +22,12 @@ export default class extends Controller {
             });
             const data = await res.json();
             if (!res.ok) {
-                this.resultsTarget.replaceChildren(this.alert('danger', data.error || ('Greška (HTTP ' + res.status + ').')));
+                this.resultsTarget.replaceChildren(this.alert('danger', data.error || this.httpErrorValue.replace('%status%', res.status)));
                 return;
             }
             this.renderResults(data.results || []);
         } catch (e) {
-            this.resultsTarget.replaceChildren(this.alert('danger', 'Mrežna greška: ' + e.message));
+            this.resultsTarget.replaceChildren(this.alert('danger', this.networkErrorValue.replace('%error%', e.message)));
         } finally {
             this.buttonTarget.disabled = false;
         }
@@ -34,7 +35,7 @@ export default class extends Controller {
 
     renderResults(results) {
         if (!results.length) {
-            this.resultsTarget.replaceChildren(this.alert('secondary', 'Nema rezultata.'));
+            this.resultsTarget.replaceChildren(this.alert('secondary', this.noResultsValue));
             return;
         }
 

@@ -18,6 +18,10 @@ export default class extends Controller {
         libraryUrl: String,
         uploadUrl: String,
         csrfToken: String,
+        // JS-rendered status chrome, translated in Twig.
+        loading: String,
+        loadError: String,
+        empty: String,
     };
 
     connect() {
@@ -89,7 +93,7 @@ export default class extends Controller {
     }
 
     async fetchPage(replace) {
-        this.setStatus('Učitavanje…');
+        this.setStatus(this.loadingValue);
         this.toggleMore(false);
 
         const url = new URL(this.libraryUrlValue, window.location.origin);
@@ -106,7 +110,7 @@ export default class extends Controller {
             }
             data = await res.json();
         } catch (e) {
-            this.setStatus('Greška pri učitavanju biblioteke.');
+            this.setStatus(this.loadErrorValue);
             return;
         }
 
@@ -119,7 +123,7 @@ export default class extends Controller {
         }
 
         if (replace && data.items.length === 0) {
-            this.setStatus('Nema slika.');
+            this.setStatus(this.emptyValue);
         } else {
             this.setStatus('');
         }

@@ -13,3 +13,40 @@ admin:
             type: Type
             created_at: Added
         help: { shortcode: 'Copy into page/post content.' }
+        bulk:
+            help: 'Drag images here (or click) to add — several at once. Title and alt fill in automatically (IPTC/EXIF or filename).'
+        library:
+            search_placeholder: Search by name / alt text…
+            close: Close
+            load_more: Load more
+            loading: Loading…
+            load_error: Couldn't load the library.
+            empty: No images.
+        picker:
+            no_image: No image selected
+            choose: Choose from library
+            remove: Remove
+        tiptap:
+            bold: Bold
+            italic: Italic
+            strike: Strikethrough
+            paragraph: Paragraph
+            h2: Heading 2
+            h3: Heading 3
+            blockquote: Quote
+            code: Code
+            clear: Clear formatting
+            list: List
+            ordered_list: Numbered list
+            link: Link
+            unlink: Remove link
+            insert_image: Insert image
+            image_btn: Image
+            full_width: 'Image: full width (select an image)'
+            full_width_btn: Full width
+            columns2: Two columns
+            columns3: Three columns
+            undo: Undo
+            redo: Redo
+            list_btn: list
+            link_prompt: 'Link URL:'

@@ -2,20 +2,23 @@
 
 {% form_theme form 'bootstrap_5_layout.html.twig' %}
 
-{% block content_title %}{{ definition.id ? 'Uredi formu' : 'Nova forma' }}{% endblock %}
+{% block content_title %}{{ (definition.id ? 'admin.form.builder.edit_title' : 'admin.form.builder.new_title')|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
     {# UI-only: which sections are relevant is DERIVED from the existing product state (has price or
        variants). No data model / flag — the toggle just reveals/hides; see form_type_controller.js. #}
     {% set isProduct = form.vars.value.isProduct() %}
-    <div data-controller="formbuilder--builder formbuilder--formtype">
+    {# The builder controller's JS-generated "new field" summary fallback is fed the translated label
+       as a Stimulus value (Twig owns the translation; JS reads it). #}
+    <div data-controller="formbuilder--builder formbuilder--formtype"
+         data-formbuilder--builder-new-field-label-value="{{ 'admin.form.field.new'|trans({}, 'admin') }}">
         {{ form_start(form, {attr: {'data-dirty-guard': ''}}) }}
 
         {# Osnovno #}
         <div class="card mb-3 fb-card">
             <div class="card-body">
-                <h2 class="h5 fb-section-title">Osnovno</h2>
-                <p class="fb-section-help">Naziv, slug i status forme.</p>
+                <h2 class="h5 fb-section-title">{{ 'admin.form.builder.basic.title'|trans({}, 'admin') }}</h2>
+                <p class="fb-section-help">{{ 'admin.form.builder.basic.help'|trans({}, 'admin') }}</p>
                 {{ form_errors(form) }}
                 {{ form_row(form.name) }}
                 <div class="row">
@@ -29,20 +32,20 @@
         {# Tip forme — UI-only toggle (buttons, nothing submitted) #}
         <div class="card mb-3 fb-card">
             <div class="card-body">
-                <h2 class="h5 fb-section-title">Tip forme</h2>
-                <p class="fb-section-help">Određuje koje su opcije ispod relevantne.</p>
+                <h2 class="h5 fb-section-title">{{ 'admin.form.builder.type.title'|trans({}, 'admin') }}</h2>
+                <p class="fb-section-help">{{ 'admin.form.builder.type.help'|trans({}, 'admin') }}</p>
                 <div class="fb-type-grid" role="group">
                     <button type="button" class="fb-type-option" data-fb-type="free"
                             data-formbuilder--formtype-target="option"
                             data-action="formbuilder--formtype#select"{{ isProduct ? '' : ' data-active' }}>
-                        <span class="fb-type-title">Besplatna</span>
-                        <span class="fb-type-sub">kontakt / prijava</span>
+                        <span class="fb-type-title">{{ 'admin.form.builder.type.free'|trans({}, 'admin') }}</span>
+                        <span class="fb-type-sub">{{ 'admin.form.builder.type.free_sub'|trans({}, 'admin') }}</span>
                     </button>
                     <button type="button" class="fb-type-option" data-fb-type="paid"
                             data-formbuilder--formtype-target="option"
                             data-action="formbuilder--formtype#select"{{ isProduct ? ' data-active' : '' }}>
-                        <span class="fb-type-title">Naplatna (proizvod)</span>
-                        <span class="fb-type-sub">plaćanje na submit</span>
+                        <span class="fb-type-title">{{ 'admin.form.builder.type.paid'|trans({}, 'admin') }}</span>
+                        <span class="fb-type-sub">{{ 'admin.form.builder.type.paid_sub'|trans({}, 'admin') }}</span>
                     </button>
                 </div>
             </div>
@@ -51,8 +54,8 @@
         {# Naplata (paid) — pre-hidden in Twig when not a product to avoid a flash before JS boots #}
         <div class="card mb-3 fb-card{{ isProduct ? '' : ' d-none' }}" data-formbuilder--formtype-target="paid">
             <div class="card-body">
-                <h2 class="h5 fb-section-title">Naplata <span class="badge fb-badge-soft">samo proizvod</span></h2>
-                <p class="fb-section-help">Cijena, valuta, načini plaćanja i varijante.</p>
+                <h2 class="h5 fb-section-title">{{ 'admin.form.builder.payment.title'|trans({}, 'admin') }} <span class="badge fb-badge-soft">{{ 'admin.form.builder.payment.badge'|trans({}, 'admin') }}</span></h2>
+                <p class="fb-section-help">{{ 'admin.form.builder.payment.help'|trans({}, 'admin') }}</p>
                 <div class="row">
                     <div class="col">{{ form_row(form.priceMinor) }}</div>
                     <div class="col">{{ form_row(form.currency) }}</div>
@@ -61,7 +64,7 @@
 
                 {{ form_errors(form.variants) }}
                 <div class="fb-subblock">
-                    <p class="fb-section-help mb-2">Varijante cijene — kupac bira jednu, njena se cijena koristi umjesto fiksne.</p>
+                    <p class="fb-section-help mb-2">{{ 'admin.form.builder.payment.variants_help'|trans({}, 'admin') }}</p>
                     <div data-fb-collection data-fb-level="variants"
                          data-prototype="{{ include('@FormBuilder/admin/_variant_row.html.twig', {variantForm: form.variants.vars.prototype})|e('html_attr') }}"
                          data-prototype-name="__variant__"
@@ -71,7 +74,7 @@
                                 {{ include('@FormBuilder/admin/_variant_row.html.twig', {variantForm: variantForm}) }}
                             {% endfor %}
                         </div>
-                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-action="formbuilder--builder#add">+ Dodaj varijantu</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-action="formbuilder--builder#add">{{ 'admin.form.builder.add_variant'|trans({}, 'admin') }}</button>
                     </div>
                 </div>
             </div>
@@ -80,8 +83,8 @@
         {# Obavijesti (free) #}
         <div class="card mb-3 fb-card{{ isProduct ? ' d-none' : '' }}" data-formbuilder--formtype-target="free">
             <div class="card-body">
-                <h2 class="h5 fb-section-title">Obavijesti</h2>
-                <p class="fb-section-help">E-mail obavijest na svaku prijavu (za besplatne forme).</p>
+                <h2 class="h5 fb-section-title">{{ 'admin.form.builder.notify.title'|trans({}, 'admin') }}</h2>
+                <p class="fb-section-help">{{ 'admin.form.builder.notify.help'|trans({}, 'admin') }}</p>
                 {{ form_row(form.notifyEnabled) }}
                 {{ form_row(form.notifyRecipient) }}
                 {{ form_row(form.notifySubject) }}
@@ -91,8 +94,8 @@
         {# Polja forme — always #}
         <div class="card mb-3 fb-card">
             <div class="card-body">
-                <h2 class="h5 fb-section-title">Polja forme</h2>
-                <p class="fb-section-help">Što posjetitelj ispunjava.</p>
+                <h2 class="h5 fb-section-title">{{ 'admin.form.builder.fields.title'|trans({}, 'admin') }}</h2>
+                <p class="fb-section-help">{{ 'admin.form.builder.fields.help'|trans({}, 'admin') }}</p>
                 {{ form_errors(form.fields) }}
 
                 {# datalist hint of existing field keys for the condition "field" inputs #}
@@ -102,7 +105,24 @@
                     {% endfor %}
                 </datalist>
 
+                {# The rules editor is JS-generated (contextual proxies): operator labels + placeholders.
+                   Twig owns the translation and passes them all as one Stimulus value (labelsValue). #}
                 <div data-fb-collection data-fb-level="fields" data-controller="formbuilder--rules"
+                     data-formbuilder--rules-labels-value="{{ {
+                         checked: 'admin.form.rule.op.checked'|trans({}, 'admin'),
+                         not_checked: 'admin.form.rule.op.not_checked'|trans({}, 'admin'),
+                         equals: 'admin.form.rule.op.equals'|trans({}, 'admin'),
+                         not_equals: 'admin.form.rule.op.not_equals'|trans({}, 'admin'),
+                         empty: 'admin.form.rule.op.empty'|trans({}, 'admin'),
+                         not_empty: 'admin.form.rule.op.not_empty'|trans({}, 'admin'),
+                         gt: 'admin.form.rule.op.gt'|trans({}, 'admin'),
+                         lt: 'admin.form.rule.op.lt'|trans({}, 'admin'),
+                         contains: 'admin.form.rule.op.contains'|trans({}, 'admin'),
+                         field_ph: 'admin.form.rule.field_placeholder'|trans({}, 'admin'),
+                         field_del: 'admin.form.rule.field_deleted'|trans({}, 'admin'),
+                         no_opts: 'admin.form.rule.no_options'|trans({}, 'admin'),
+                         value_ph: 'admin.form.rule.value_placeholder'|trans({}, 'admin')
+                     }|json_encode|e('html_attr') }}"
                      data-prototype="{{ include('@FormBuilder/admin/_field.html.twig', {fieldForm: form.fields.vars.prototype})|e('html_attr') }}"
                      data-prototype-name="__field__"
                      data-fb-index="{{ form.fields|length }}">
@@ -111,14 +131,14 @@
                             {{ include('@FormBuilder/admin/_field.html.twig', {fieldForm: fieldForm}) }}
                         {% endfor %}
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-action="formbuilder--builder#add">+ Dodaj polje</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-action="formbuilder--builder#add">{{ 'admin.form.builder.add_field'|trans({}, 'admin') }}</button>
                 </div>
             </div>
         </div>
 
         <div class="d-flex gap-2">
-            <button class="btn btn-primary" type="submit">Spremi</button>
-            <a class="btn btn-light" href="{{ path('form_builder_admin_index') }}">Odustani</a>
+            <button class="btn btn-primary" type="submit">{{ 'admin.form.builder.save'|trans({}, 'admin') }}</button>
+            <a class="btn btn-light" href="{{ path('form_builder_admin_index') }}">{{ 'admin.form.builder.cancel'|trans({}, 'admin') }}</a>
         </div>
 
         {# Every field is rendered manually above; emit only the CSRF token from the rest and disable

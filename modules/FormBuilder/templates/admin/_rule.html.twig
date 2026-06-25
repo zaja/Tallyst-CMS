@@ -13,5 +13,5 @@
         {{ form_widget(ruleForm.value, {attr: {'data-fb-rule-value': ''}}) }}
     </div>
     <div class="fb-rule-proxy" data-fb-rule-proxy hidden></div>
-    <button type="button" class="btn btn-sm btn-outline-danger fb-x" data-action="formbuilder--builder#remove" title="Ukloni pravilo">×</button>
+    <button type="button" class="btn btn-sm btn-outline-danger fb-x" data-action="formbuilder--builder#remove" title="{{ 'admin.form.rule.remove'|trans({}, 'admin') }}">×</button>
 </div>

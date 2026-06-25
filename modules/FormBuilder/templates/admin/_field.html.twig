@@ -14,7 +14,7 @@
 {% set typeValue = fieldValue ? fieldValue.type : null %}
 {% set typeChoice = fieldForm.type.vars.choices|filter(c => c.value == typeValue)|first %}
 {% set typeLabel = typeChoice ? typeChoice.label : '' %}
-{% set summaryLabel = (fieldValue ? fieldValue.label : '') ?: 'Novo polje' %}
+{% set summaryLabel = (fieldValue ? fieldValue.label : '') ?: 'admin.form.field.new'|trans({}, 'admin') %}
 <div class="fb-field-row{% if not fieldHasErrors %} fb-field-row--collapsed{% endif %}" data-fb-item>
     <div class="fb-row-head">
         <div class="fb-row-summary" data-action="click->formbuilder--builder#toggle">
@@ -22,12 +22,12 @@
             <span class="fb-handle">≡</span>
             <span class="fb-summary-label" data-fb-summary-label>{{ summaryLabel }}</span>
             <span class="badge badge-secondary fb-summary-type" data-fb-summary-type>{{ typeLabel }}</span>
-            {% if fieldValue and fieldValue.required %}<span class="badge badge-warning fb-summary-required">obavezno</span>{% endif %}
+            {% if fieldValue and fieldValue.required %}<span class="badge badge-warning fb-summary-required">{{ 'admin.form.field.required_badge'|trans({}, 'admin') }}</span>{% endif %}
         </div>
         <div class="fb-row-controls">
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="formbuilder--builder#moveUp" title="Gore">↑</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="formbuilder--builder#moveDown" title="Dolje">↓</button>
-            <button type="button" class="btn btn-sm btn-outline-danger" data-action="formbuilder--builder#remove">Ukloni polje</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="formbuilder--builder#moveUp" title="{{ 'admin.form.field.move_up'|trans({}, 'admin') }}">↑</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="formbuilder--builder#moveDown" title="{{ 'admin.form.field.move_down'|trans({}, 'admin') }}">↓</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-action="formbuilder--builder#remove">{{ 'admin.form.field.remove'|trans({}, 'admin') }}</button>
         </div>
     </div>
 
@@ -51,11 +51,11 @@
            delete (hidden rule rows still submit), like the Tip-forme toggle. No name → not submitted. #}
         <input type="checkbox" class="form-check-input" id="{{ condToggleId }}"{{ condRuleCount > 0 ? ' checked' : '' }}
                data-action="change->formbuilder--rules#toggleConditions">
-        <label class="form-check-label" for="{{ condToggleId }}">Uvjetni prikaz</label>
+        <label class="form-check-label" for="{{ condToggleId }}">{{ 'admin.form.field.conditional_toggle'|trans({}, 'admin') }}</label>
     </div>
 
     <fieldset class="fb-cond{{ condRuleCount > 0 ? '' : ' d-none' }}">
-        <legend>Uvjeti prikaza (opcionalno)</legend>
+        <legend>{{ 'admin.form.field.conditions_legend'|trans({}, 'admin') }}</legend>
         <div class="fb-cond-head">
             {{ form_row(fieldForm.conditions.action) }}
             {{ form_row(fieldForm.conditions.match) }}
@@ -70,7 +70,7 @@
                     {{ include('@FormBuilder/admin/_rule.html.twig', {ruleForm: ruleForm}) }}
                 {% endfor %}
             </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary fb-add-rule" data-action="formbuilder--builder#add">+ Pravilo</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary fb-add-rule" data-action="formbuilder--builder#add">{{ 'admin.form.field.add_rule'|trans({}, 'admin') }}</button>
         </div>
     </fieldset>
 </div>

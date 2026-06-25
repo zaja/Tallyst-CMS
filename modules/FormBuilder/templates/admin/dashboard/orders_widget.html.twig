@@ -1,9 +1,9 @@
 {# Orders/revenue dashboard widget (ROLE_ADMIN). Data from OrdersDashboardWidget::getData. #}
 {% set status_badge = {
-    'pending':   {'label': 'U obradi',      'class': 'secondary'},
-    'paid':      {'label': 'Čeka isporuku', 'class': 'warning'},
-    'fulfilled': {'label': 'Isporučeno',    'class': 'success'},
-    'refunded':  {'label': 'Refundirano',   'class': 'info'},
+    'pending':   {'label': 'admin.order.status.pending'|trans({}, 'admin'),   'class': 'secondary'},
+    'paid':      {'label': 'admin.order.status.paid'|trans({}, 'admin'),      'class': 'warning'},
+    'fulfilled': {'label': 'admin.order.status.fulfilled'|trans({}, 'admin'), 'class': 'success'},
+    'refunded':  {'label': 'admin.order.status.refunded'|trans({}, 'admin'),  'class': 'info'},
 } %}
 
 <section class="mb-4">
@@ -11,7 +11,7 @@
         <div class="col-sm-6 col-lg-3">
             <div class="card h-100">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase">Zarada ovaj mjesec</div>
+                    <div class="text-muted small text-uppercase">{{ 'admin.form.widget.revenue_month'|trans({}, 'admin') }}</div>
                     <div class="fs-5 fw-bold">
                         {% for line in revenueThisMonth %}<div>{{ line }}</div>{% else %}<div>—</div>{% endfor %}
                     </div>
@@ -21,7 +21,7 @@
         <div class="col-sm-6 col-lg-3">
             <div class="card h-100">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase">Zarada ukupno</div>
+                    <div class="text-muted small text-uppercase">{{ 'admin.form.widget.revenue_total'|trans({}, 'admin') }}</div>
                     <div class="fs-5 fw-bold">
                         {% for line in revenueTotal %}<div>{{ line }}</div>{% else %}<div>—</div>{% endfor %}
                     </div>
@@ -31,7 +31,7 @@
         <div class="col-sm-6 col-lg-3">
             <div class="card h-100">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase">Plaćeno ovaj mjesec</div>
+                    <div class="text-muted small text-uppercase">{{ 'admin.form.widget.paid_month'|trans({}, 'admin') }}</div>
                     <div class="fs-3 fw-bold">{{ paidThisMonth }}</div>
                 </div>
             </div>
@@ -39,9 +39,9 @@
         <div class="col-sm-6 col-lg-3">
             <a href="{{ awaitingUrl }}" class="card h-100 text-decoration-none {{ awaiting > 0 ? 'border-warning' : '' }}">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase">Čeka isporuku</div>
+                    <div class="text-muted small text-uppercase">{{ 'admin.form.widget.awaiting'|trans({}, 'admin') }}</div>
                     <div class="fs-3 fw-bold {{ awaiting > 0 ? 'text-warning' : '' }}">{{ awaiting }}</div>
-                    <div class="small text-muted">{{ awaiting > 0 ? 'Klikni za popis →' : 'Nema na čekanju' }}</div>
+                    <div class="small text-muted">{{ (awaiting > 0 ? 'admin.form.widget.awaiting_link' : 'admin.form.widget.awaiting_none')|trans({}, 'admin') }}</div>
                 </div>
             </a>
         </div>
@@ -53,34 +53,34 @@
          data-formbuilder--dashboard-chart-currency-value="{{ chartCurrency }}">
         <div class="card-body">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <h2 class="h5 mb-0">Zarada {{ chartCurrency ? '(' ~ chartCurrency ~ ')' }}</h2>
+                <h2 class="h5 mb-0">{{ 'admin.form.widget.revenue'|trans({}, 'admin') }} {{ chartCurrency ? '(' ~ chartCurrency ~ ')' }}</h2>
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-secondary active" data-formbuilder--dashboard-chart-target="periodBtn" data-period="7" data-action="formbuilder--dashboard-chart#setPeriod">7 dana</button>
-                        <button type="button" class="btn btn-outline-secondary" data-formbuilder--dashboard-chart-target="periodBtn" data-period="30" data-action="formbuilder--dashboard-chart#setPeriod">30 dana</button>
-                        <button type="button" class="btn btn-outline-secondary" data-formbuilder--dashboard-chart-target="periodBtn" data-period="365" data-action="formbuilder--dashboard-chart#setPeriod">12 mjeseci</button>
+                        <button type="button" class="btn btn-outline-secondary active" data-formbuilder--dashboard-chart-target="periodBtn" data-period="7" data-action="formbuilder--dashboard-chart#setPeriod">{{ 'admin.form.widget.period_7'|trans({}, 'admin') }}</button>
+                        <button type="button" class="btn btn-outline-secondary" data-formbuilder--dashboard-chart-target="periodBtn" data-period="30" data-action="formbuilder--dashboard-chart#setPeriod">{{ 'admin.form.widget.period_30'|trans({}, 'admin') }}</button>
+                        <button type="button" class="btn btn-outline-secondary" data-formbuilder--dashboard-chart-target="periodBtn" data-period="365" data-action="formbuilder--dashboard-chart#setPeriod">{{ 'admin.form.widget.period_365'|trans({}, 'admin') }}</button>
                     </div>
-                    <input type="date" class="form-control form-control-sm" style="width:auto" data-formbuilder--dashboard-chart-target="from" data-action="change->formbuilder--dashboard-chart#setRange" aria-label="Od">
-                    <input type="date" class="form-control form-control-sm" style="width:auto" data-formbuilder--dashboard-chart-target="to" data-action="change->formbuilder--dashboard-chart#setRange" aria-label="Do">
+                    <input type="date" class="form-control form-control-sm" style="width:auto" data-formbuilder--dashboard-chart-target="from" data-action="change->formbuilder--dashboard-chart#setRange" aria-label="{{ 'admin.form.widget.from'|trans({}, 'admin') }}">
+                    <input type="date" class="form-control form-control-sm" style="width:auto" data-formbuilder--dashboard-chart-target="to" data-action="change->formbuilder--dashboard-chart#setRange" aria-label="{{ 'admin.form.widget.to'|trans({}, 'admin') }}">
                 </div>
             </div>
             <div class="position-relative" style="min-height:220px">
                 <canvas data-formbuilder--dashboard-chart-target="canvas"></canvas>
-                <p class="text-muted mb-0" data-formbuilder--dashboard-chart-target="empty" hidden>Nema podataka za prikaz.</p>
+                <p class="text-muted mb-0" data-formbuilder--dashboard-chart-target="empty" hidden>{{ 'admin.form.widget.chart_empty'|trans({}, 'admin') }}</p>
             </div>
-            {% if multiCurrency %}<p class="small text-muted mt-2 mb-0">Graf prikazuje primarnu valutu ({{ chartCurrency }}). Ostale valute su u karticama iznad.</p>{% endif %}
+            {% if multiCurrency %}<p class="small text-muted mt-2 mb-0">{{ 'admin.form.widget.multi_currency'|trans({'%currency%': chartCurrency}, 'admin') }}</p>{% endif %}
         </div>
     </div>
 
     <div class="card">
         <div class="card-body">
-            <h2 class="h5 mb-3">Zadnje narudžbe</h2>
+            <h2 class="h5 mb-3">{{ 'admin.form.widget.recent'|trans({}, 'admin') }}</h2>
             {% if recent is empty %}
-                <p class="text-muted mb-0">Još nema narudžbi.</p>
+                <p class="text-muted mb-0">{{ 'admin.form.widget.no_orders'|trans({}, 'admin') }}</p>
             {% else %}
                 <div class="table-responsive">
                     <table class="table table-sm table-hover align-middle mb-0">
-                        <thead><tr><th>#</th><th>Datum</th><th>Iznos</th><th>Status</th><th>Plaćanje</th></tr></thead>
+                        <thead><tr><th>#</th><th>{{ 'admin.form.widget.col.date'|trans({}, 'admin') }}</th><th>{{ 'admin.form.widget.col.amount'|trans({}, 'admin') }}</th><th>{{ 'admin.form.widget.col.status'|trans({}, 'admin') }}</th><th>{{ 'admin.form.widget.col.payment'|trans({}, 'admin') }}</th></tr></thead>
                         <tbody>
                             {% for o in recent %}
                                 {% set b = status_badge[o.status] ?? {'label': o.status, 'class': 'secondary'} %}

@@ -6,7 +6,7 @@
         <div class="col">{{ form_row(variantForm.label) }}</div>
         <div class="col-auto" style="max-width: 11rem;">{{ form_row(variantForm.priceMinor) }}</div>
         <div class="col-auto">
-            <button type="button" class="btn btn-outline-danger" data-action="formbuilder--builder#remove" title="Ukloni varijantu">×</button>
+            <button type="button" class="btn btn-outline-danger" data-action="formbuilder--builder#remove" title="{{ 'admin.form.variant.remove'|trans({}, 'admin') }}">×</button>
         </div>
     </div>
 </div>
