@@ -69,7 +69,7 @@ Planned for future releases:
 - A WordPress importer + portable content packs
 - Optional modules (comments, …) and paid add-on modules
 
-Tallyst follows [semantic versioning](https://semver.org) from v1.0.0 — the core API is the contract for add-on modules.
+Tallyst follows [semantic versioning](https://semver.org) from v1.0.0 — the core API is the contract for add-on modules. See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ## Screenshots
 
