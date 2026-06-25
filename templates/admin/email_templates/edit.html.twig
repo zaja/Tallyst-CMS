@@ -49,6 +49,16 @@
                 <a class="btn btn-link" href="{{ path('admin_email_templates') }}">{{ 'admin.email.edit.back'|trans({}, 'admin') }}</a>
             </div>
             {{ form_end(form) }}
+
+            {# Reset to the (translatable) default by deleting the override — a SEPARATE form (not nested),
+               shown only when an override exists. The editor can't save empty, so this is the way to clear it. #}
+            {% if overridden %}
+                <form method="post" action="{{ path('admin_email_template_reset', {key: type.key}) }}" class="mt-2"
+                      onsubmit="return confirm('{{ 'admin.email.edit.reset_confirm'|trans({}, 'admin')|e('js') }}');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('reset_email_' ~ type.key) }}">
+                    <button class="btn btn-sm btn-outline-secondary" type="submit">{{ 'admin.email.edit.reset'|trans({}, 'admin') }}</button>
+                </form>
+            {% endif %}
         </div>
         <div class="col-lg-4">
             <div class="card"><div class="card-body">

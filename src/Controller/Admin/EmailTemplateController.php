@@ -104,6 +104,33 @@ class EmailTemplateController extends AbstractController
         return $this->render('admin/email_templates/edit.html.twig', [
             'form' => $form->createView(),
             'type' => $type,
+            // An override exists iff the row is persisted (has an id) → enables "Reset to default".
+            'overridden' => null !== $template->getId(),
         ]);
+    }
+
+    /**
+     * Reset a template to its (translatable) default by REMOVING the override row. The editor can't
+     * save an empty subject/body (required + reset-guard), so this is the only way to clear an
+     * override and fall back to the code default in the active locale.
+     */
+    #[Route('/{key}/reset', name: 'admin_email_template_reset', methods: ['POST'])]
+    public function reset(string $key, Request $request): Response
+    {
+        if (null === $this->registry->get($key)) {
+            throw $this->createNotFoundException(\sprintf('Unknown email type "%s".', $key));
+        }
+        if (!$this->isCsrfTokenValid('reset_email_'.$key, (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $override = $this->templates->findOneByIdentifier($key);
+        if (null !== $override) {
+            $this->em->remove($override);
+            $this->em->flush();
+        }
+        $this->addFlash('success', $this->translator->trans('admin.flash.email_reset_to_default', [], 'admin'));
+
+        return $this->redirectToRoute('admin_email_template_edit', ['key' => $key]);
     }
 }

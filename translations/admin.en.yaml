@@ -290,6 +290,8 @@ admin:
             required_disabled: This e-mail is required and can't be disabled.
             save: Save
             back: Back
+            reset: Reset to default
+            reset_confirm: Reset this template to the default? Your custom text will be removed.
             tags_heading: Available tags
             tags_intro: 'Type them into the subject or body; they''re replaced with values when sending.'
             tag_required: required
@@ -319,6 +321,7 @@ admin:
         theme_activated: Theme "%name%" activated.
         theme_invalid: The theme is not valid or does not exist.
         email_template_saved: Template saved.
+        email_reset_to_default: Template reset to the default.
         email_required_tags: 'The body must contain the required tags: %tags%'
         module_core_locked: Module "%name%" is part of the core and can't be disabled.
         module_updated: Module "%name%" updated.

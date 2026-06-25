@@ -290,6 +290,8 @@ admin:
             required_disabled: Ovaj e-mail je obavezan i ne može se onemogućiti.
             save: Spremi
             back: Natrag
+            reset: Vrati na zadano
+            reset_confirm: Vratiti predložak na zadano? Tvoj prilagođeni tekst bit će obrisan.
             tags_heading: Dostupne oznake
             tags_intro: 'Upiši ih u naslov ili sadržaj; zamijenit će se vrijednostima pri slanju.'
             tag_required: obavezno
@@ -319,6 +321,7 @@ admin:
         theme_activated: Tema "%name%" je aktivirana.
         theme_invalid: Tema nije valjana ili ne postoji.
         email_template_saved: Predložak je spremljen.
+        email_reset_to_default: Predložak je vraćen na zadano.
         email_required_tags: 'Sadržaj mora sadržavati obavezne oznake: %tags%'
         module_core_locked: Modul "%name%" je dio jezgre i ne može se isključiti.
         module_updated: Modul "%name%" je ažuriran.
