@@ -1,8 +1,10 @@
 {
+    "name": "tallyst/cms",
+    "description": "Lean, self-hosted Symfony CMS with a built-in payment-enabled form and e-commerce layer for solo developers.",
     "type": "project",
     "keywords": ["cms", "symfony", "ecommerce", "self-hosted", "payments", "stripe", "paypal"],
     "homepage": "https://github.com/zaja/Tallyst-CMS",
-    "license": "proprietary",
+    "license": "MIT",
     "authors": [
         {
             "name": "Sve je dobro j.d.o.o.",
