@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
 use Tallyst\Media\Repository\MediaRepository;
-use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Vich\UploaderBundle\Mapping\Attribute as Vich;
 
 /**
  * An uploaded image. The binary lives on disk (Vich → public/media/uploads/); this row

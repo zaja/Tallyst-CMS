@@ -21,6 +21,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -41,6 +42,7 @@ use Tallyst\FormBuilder\Service\OrderMailer;
 class OrderCrudController extends AbstractCrudController
 {
     public function __construct(
+        #[Target('orderStateMachine')]
         private readonly WorkflowInterface $orderStateMachine,
         private readonly OrderMailer $mailer,
         private readonly EntityManagerInterface $em,

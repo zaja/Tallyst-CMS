@@ -4,6 +4,7 @@ namespace Tallyst\FormBuilder\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Workflow\WorkflowInterface;
 use Tallyst\FormBuilder\Entity\Order;
@@ -27,6 +28,7 @@ class OrderPaymentSync
 {
     public function __construct(
         private readonly OrderRepository $orders,
+        #[Target('orderStateMachine')]
         private readonly WorkflowInterface $orderStateMachine,
         private readonly MessageBusInterface $bus,
         private readonly EntityManagerInterface $em,
