@@ -73,7 +73,8 @@ built now.
   delivery (post-v1).
 - **Phase 3 — Standalone installer + deployment readiness (CURRENT).** WordPress-like install
   procedure — **Pass 1 (interactive `app:install` wizard) DONE; Pass 2 (readiness panel + worker
-  heartbeat) DONE** (incl. `APP_ENV=prod` default in the installer); remaining: the worker-activation
+  heartbeat) DONE** (incl. `APP_ENV=prod` default in the installer) — both **smoke-tested on a clean
+  prod CloudPanel install**; remaining: the worker-activation
   snippet generator + encryption-key rotation command (in the readiness panel), and the Composer
   post-create hook / Packagist packaging.
 - **Post-v1 / future.** Automated digital delivery (downloads/licences); **Import / content packs**
@@ -144,6 +145,13 @@ after ANY change to JS or CSS (incl. module assets), run
 `php8.5 bin/console asset-map:compile`. Symptom of stale/missing assets: Stimulus
 controllers silently don't boot (e.g. admin buttons do nothing). `public/assets/` is
 a per-environment build artifact and is git-ignored — never commit it.
+- **⚠️ DEV serves assets LIVE; PROD serves the compiled `public/assets/` — which MUST be regenerated
+  on every deploy.** A controller that works in dev can be ABSENT in prod if `public/assets/` is stale
+  or its compile failed (`git pull` alone is NOT enough — run `importmap:install` + `asset-map:compile`
+  on deploy, then hard-refresh). Learned on the clean-prod smoke: the `formbuilder--webhook-check` button
+  was dead in prod purely because the prod `asset-map:compile` had silently failed (see the prod-compile
+  config/ bug below) so the controller never entered the served build — the JS itself was correct. When
+  an admin button is dead ONLY in prod, suspect the asset BUILD (stale/failed compile), not the JS.
 - The front-end loads the `app` entrypoint (`assets/app.js` → Stimulus + `app.css`).
 - The admin loads a SEPARATE `admin` entrypoint (`assets/admin.js` → Stimulus only, no
   front CSS) via `DashboardController::configureAssets()`, so front styles never
@@ -1152,6 +1160,13 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
     `APP_ENV=prod` **only-if-missing** (like `APP_SECRET`), so a re-run/`--force` never clobbers a
     developer's deliberate `APP_ENV=dev`; dev mode is offered via an instruction in the final
     message (`APP_ENV=dev` + `cache:clear`), not a prompt.
+  - **Asset-fallback failures are surfaced PROMINENTLY, not swallowed.** The asset steps
+    (`importmap:install`/`asset-map:compile`/`app:theme:assets:install`) stay non-fatal (the rest of
+    the install is valid), but any failure is collected and shown as a loud warning block in the final
+    message with the exact recompile commands — never a buried mid-flow `[WARNING]` under a green
+    success. Why: a silently-failed compile leaves the admin/front JS dead (Stimulus controllers don't
+    boot) on an install that otherwise looks clean — exactly the prod-smoke trap that hid the
+    webhook-button bug.
   - **⚠️ ARCHITECTURE — DB-mutating steps MUST run as fresh-kernel SUBPROCESSES (the crux).**
     `symfony/runtime` runs `Dotenv::bootEnv()` ONCE before the kernel (`usePutenv=false`), so the
     boot-time `DATABASE_URL` is frozen in `$_ENV`/`$_SERVER` and baked into the compiled container.
@@ -1174,7 +1189,11 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   - **Pieces:** `src/Install/` — `DatabaseDsnBuilder` (parts→mysql DSN + `serverVersion` formatting,
     pure), `EnvLocalWriter` (idempotent key upsert, double-quote+escape, 0600; does NOT touch the
     encryption-key block), `InstallStateDetector` (envLocal predicate + DB probes), `DatabaseProber`
-    (raw DBAL connect/ping/version), `BaselineSeeder` (theme/home/post/menu — extracted from the old
+    (raw DBAL connect/ping/version — **must use `Doctrine\DBAL\Tools\DsnParser` mapping
+    `mysql`/`mariadb`→`pdo_mysql`, NOT `DriverManager::getConnection(['url'=>$dsn])`**: DBAL 4 dropped
+    `url`-key driver derivation, so the bare-url form throws "options driver or driverClass are
+    mandatory" — surfaced only on a real install, not the isolated DsnBuilder unit test),
+    `BaselineSeeder` (theme/home/post/menu — extracted from the old
     `InstallCommand`). `src/Command/InstallCommand` (the wizard), `src/Command/InstallFinalizeCommand`
     (hidden `app:install:finalize` — seeds + creates admin in the fresh-kernel subprocess; reads the
     password env, idempotent). Unit tests: `tests/Install/*` (DsnBuilder, EnvLocalWriter,
