@@ -44,6 +44,8 @@ function registerPluginsOnce() {
 export function createMediaFilePond(input, { uploadUrl, csrfToken, onProcessed }) {
     registerPluginsOnce();
 
+    // FilePond labels translated by the admin layout (window.__tallystI18n); English fallbacks.
+    const FP = (window.__tallystI18n || {}).filePond || {};
     const pond = FilePond.create(input, {
         name: 'file',
         allowMultiple: true,
@@ -51,10 +53,10 @@ export function createMediaFilePond(input, { uploadUrl, csrfToken, onProcessed }
         credits: false,
         acceptedFileTypes: ACCEPTED_TYPES,
         maxFileSize: MAX_SIZE,
-        labelIdle: 'Povuci slike ovdje ili <span class="filepond--label-action">odaberi</span>',
-        labelFileTypeNotAllowed: 'Dozvoljene su samo slike (JPG, PNG, WEBP, GIF).',
-        labelMaxFileSizeExceeded: 'Datoteka je prevelika.',
-        labelMaxFileSize: 'Najveća veličina je {filesize}.',
+        labelIdle: FP.idle || 'Drag images here or <span class="filepond--label-action">browse</span>',
+        labelFileTypeNotAllowed: FP.type_not_allowed || 'Only images are allowed (JPG, PNG, WEBP, GIF).',
+        labelMaxFileSizeExceeded: FP.too_big || 'The file is too large.',
+        labelMaxFileSize: FP.max_size || 'Maximum size is {filesize}.',
         server: {
             process: {
                 url: uploadUrl,

@@ -3,6 +3,7 @@
 namespace App\Tests\FormBuilder;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Condition\ConditionEvaluator;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
@@ -18,7 +19,11 @@ class SubmissionValidatorTest extends TestCase
 {
     private function validator(): SubmissionValidator
     {
-        return new SubmissionValidator(new FormSchemaFactory(), new ConditionEvaluator());
+        // Error TEXT isn't asserted (only which keys error), so a passthrough translator stub suffices.
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        return new SubmissionValidator(new FormSchemaFactory(), new ConditionEvaluator(), $translator);
     }
 
     private function field(string $key, string $type, bool $required, array $conditions = []): FormField

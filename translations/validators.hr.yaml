@@ -1,2 +1,21 @@
-# validators domain (hr) — validation constraint messages. Populated in later passes.
-{}
+# validators domain (hr) — validation constraint messages.
+validation:
+    password:
+        current_required: Upiši trenutnu lozinku.
+        current_invalid: Trenutna lozinka nije ispravna.
+        new_required: Upiši novu lozinku.
+        too_short: Lozinka mora imati barem {{ limit }} znakova.
+        mismatch: Lozinke se ne podudaraju.
+    email:
+        required: Upiši svoj e-mail.
+    media:
+        image_only: Dozvoljene su samo slike (JPG, PNG, WEBP, GIF).
+    form:
+        notify_recipient_required: Unesi barem jednog primatelja kad je notifikacija uključena.
+        notify_email_invalid: 'Neispravna e-mail adresa: %email%'
+        variant_incomplete: Svaka varijanta treba naziv i cijenu veću od 0.
+    field:
+        required: Ovo polje je obavezno.
+        email: Unesite ispravan e-mail.
+        number: Unesite broj.
+        choice: Neispravan odabir.

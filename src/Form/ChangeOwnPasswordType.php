@@ -29,9 +29,9 @@ class ChangeOwnPasswordType extends AbstractType
                 'label' => 'admin.password.current',
                 'attr' => ['autocomplete' => 'current-password'],
                 'constraints' => [
-                    // Validation messages stay in the `validators` domain (Pass 6) — only labels move.
-                    new NotBlank(message: 'Upiši trenutnu lozinku.'),
-                    new SecurityAssert\UserPassword(message: 'Trenutna lozinka nije ispravna.'),
+                    // Messages are `validators`-domain keys (Symfony auto-translates them there).
+                    new NotBlank(message: 'validation.password.current_required'),
+                    new SecurityAssert\UserPassword(message: 'validation.password.current_invalid'),
                 ],
             ])
             ->add('newPassword', RepeatedType::class, [
@@ -41,14 +41,14 @@ class ChangeOwnPasswordType extends AbstractType
                 'first_options' => [
                     'label' => 'admin.password.new',
                     'constraints' => [
-                        new NotBlank(message: 'Upiši novu lozinku.'),
-                        new Length(min: 12, minMessage: 'Lozinka mora imati barem {{ limit }} znakova.', max: 4096),
+                        new NotBlank(message: 'validation.password.new_required'),
+                        new Length(min: 12, minMessage: 'validation.password.too_short', max: 4096),
                         new PasswordStrength(),
                         new NotCompromisedPassword(),
                     ],
                 ],
                 'second_options' => ['label' => 'admin.password.repeat'],
-                'invalid_message' => 'Lozinke se ne podudaraju.',
+                'invalid_message' => 'validation.password.mismatch',
             ]);
     }
 

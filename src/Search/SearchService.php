@@ -6,6 +6,7 @@ use App\Repository\CategoryRepository;
 use App\Repository\PageRepository;
 use App\Repository\PostRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Public FULLTEXT search over published content (Pages, Posts, Categories), ranked by relevance and
@@ -27,6 +28,7 @@ class SearchService
         private readonly PostRepository $posts,
         private readonly CategoryRepository $categories,
         private readonly UrlGeneratorInterface $urls,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -48,16 +50,19 @@ class SearchService
 
         $boolean = implode(' ', array_map(static fn (string $t): string => $t.'*', $tokens));
 
+        // The result-type badge is a display label → translated (messages domain, request locale). It
+        // covers both consumers: the theme {{ r.type }} badge and the /pretraga/live JSON (the JS just
+        // prints the already-translated string).
         $results = [];
         foreach ($this->pages->searchPublished($boolean, self::PER_TYPE_LIMIT) as $r) {
-            $results[] = $this->result('Stranica', 'page_show', $r['slug'], $r['title'], $r['content'], (float) $r['score'], $tokens);
+            $results[] = $this->result($this->translator->trans('search.type.page', [], 'messages'), 'page_show', $r['slug'], $r['title'], $r['content'], (float) $r['score'], $tokens);
         }
         foreach ($this->posts->searchPublished($boolean, self::PER_TYPE_LIMIT) as $r) {
             $body = ('' !== (string) $r['excerpt']) ? $r['excerpt'] : $r['content'];
-            $results[] = $this->result('Objava', 'blog_post', $r['slug'], $r['title'], $body, (float) $r['score'], $tokens);
+            $results[] = $this->result($this->translator->trans('search.type.post', [], 'messages'), 'blog_post', $r['slug'], $r['title'], $body, (float) $r['score'], $tokens);
         }
         foreach ($this->categories->search($boolean, self::PER_TYPE_LIMIT) as $r) {
-            $results[] = $this->result('Kategorija', 'category_show', $r['slug'], $r['name'], $r['description'], (float) $r['score'], $tokens);
+            $results[] = $this->result($this->translator->trans('search.type.category', [], 'messages'), 'category_show', $r['slug'], $r['name'], $r['description'], (float) $r['score'], $tokens);
         }
 
         usort($results, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);

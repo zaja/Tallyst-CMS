@@ -4,6 +4,7 @@ namespace App\Theme;
 
 use App\Entity\Theme;
 use App\Repository\ThemeRepository;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Server-side guard that stops the front-end from being bricked by deleting the theme it needs.
@@ -13,24 +14,26 @@ use App\Repository\ThemeRepository;
  */
 class ThemeDeletionGuard
 {
-    public function __construct(private readonly ThemeRepository $themes)
-    {
+    public function __construct(
+        private readonly ThemeRepository $themes,
+        private readonly TranslatorInterface $translator,
+    ) {
     }
 
-    /** @return string|null block message, or null if the delete is allowed */
+    /** @return string|null block message (admin domain), or null if the delete is allowed */
     public function blockDelete(Theme $target): ?string
     {
         // The default theme is the guaranteed fallback (git-tracked + ThemeResolver's safety net) — it
         // can NEVER be deleted, even when inactive and others exist. Defense-in-depth: V1 has no CMS
         // delete UI, but this still blocks a programmatic/forced delete.
         if ('default' === $target->getName()) {
-            return 'Default tema je obavezna i ne može se obrisati.';
+            return $this->translator->trans('admin.guard.theme.default_required', [], 'admin');
         }
         if ($target->isActive()) {
-            return 'Ne možeš obrisati aktivnu temu.';
+            return $this->translator->trans('admin.guard.theme.active', [], 'admin');
         }
         if ($this->themes->count([]) <= 1) {
-            return 'Ne možeš obrisati jedinu temu.';
+            return $this->translator->trans('admin.guard.theme.only', [], 'admin');
         }
 
         return null;

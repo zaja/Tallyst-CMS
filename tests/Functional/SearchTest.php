@@ -63,10 +63,10 @@ class SearchTest extends WebTestCase
         // Title match outranks body-only match.
         self::assertLessThan(strpos($body, 'CONTENTHIT'), strpos($body, 'TITLEHIT'), 'title hit ranked above content hit');
 
-        // Type badges present.
-        self::assertStringContainsString('Stranica', $body);
-        self::assertStringContainsString('Objava', $body);
-        self::assertStringContainsString('Kategorija', $body);
+        // Type badges present (translated; English default).
+        self::assertStringContainsString('Page', $body);
+        self::assertStringContainsString('Post', $body);
+        self::assertStringContainsString('Category', $body);
     }
 
     public function testShortQueryIsGraceful(): void

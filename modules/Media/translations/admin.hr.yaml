@@ -1,6 +1,7 @@
 # admin domain (hr) — Media back-office.
 admin:
     menu: { media: Mediji }
+    module: { desc: { media: 'Upload i upravljanje slikama (thumbnaili), logo/branding.' } }
     media:
         entity: { singular: Medij, plural: Mediji }
         field:

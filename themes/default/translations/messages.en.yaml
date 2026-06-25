@@ -3,6 +3,7 @@ theme:
     nav:
         skip_link: Skip to content
         menu_toggle: Open menu
+        submenu_toggle: Show submenu
     search:
         title: Search
         placeholder: Search…
@@ -12,6 +13,7 @@ theme:
         prompt: Enter a search term.
         no_results: 'No results for “%query%”.'
         results_for: 'Results for “%query%” (%count%):'
+        show_all: Show all results →
     pagination:
         label: Pagination
         previous: ‹ Previous
@@ -21,6 +23,7 @@ theme:
         back_to_blog: Back to blog
     blog:
         title: Blog
+        no_posts: No posts yet.
     category:
         all_posts: All posts
     footer:

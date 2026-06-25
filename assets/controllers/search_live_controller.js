@@ -14,7 +14,7 @@ import { Controller } from '@hotwired/stimulus';
  */
 export default class extends Controller {
     static targets = ['input', 'dropdown'];
-    static values = { url: String };
+    static values = { url: String, showAll: String };
 
     connect() {
         this.seq = 0;
@@ -97,7 +97,7 @@ export default class extends Controller {
         const all = document.createElement('a');
         all.className = 'live-search-all';
         all.href = `${this.element.getAttribute('action')}?q=${encodeURIComponent(q)}`;
-        all.textContent = 'Prikaži sve rezultate →';
+        all.textContent = this.showAllValue || 'Show all results →';
         this.dropdownTarget.appendChild(all);
         this.items.push(all);
 

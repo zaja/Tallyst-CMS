@@ -2,6 +2,7 @@
 
 namespace Tallyst\FormBuilder\Service;
 
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Condition\ConditionEvaluator;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
@@ -19,6 +20,7 @@ class SubmissionValidator
     public function __construct(
         private readonly FormSchemaFactory $schemas,
         private readonly ConditionEvaluator $evaluator,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -57,8 +59,9 @@ class SubmissionValidator
     {
         $blank = '' === $value || false === $value || null === $value;
 
+        // Front form errors → `validators` domain (request locale; the public form is a normal request).
         if ($field->isRequired() && $blank) {
-            return 'Ovo polje je obavezno.';
+            return $this->translator->trans('validation.field.required', [], 'validators');
         }
 
         if ($blank) {
@@ -67,11 +70,11 @@ class SubmissionValidator
 
         return match ($field->getType()) {
             FormField::TYPE_EMAIL => false === filter_var((string) $value, \FILTER_VALIDATE_EMAIL)
-                ? 'Unesite ispravan e-mail.' : null,
+                ? $this->translator->trans('validation.field.email', [], 'validators') : null,
             FormField::TYPE_NUMBER => !is_numeric((string) $value)
-                ? 'Unesite broj.' : null,
+                ? $this->translator->trans('validation.field.number', [], 'validators') : null,
             FormField::TYPE_SELECT, FormField::TYPE_RADIO => !in_array((string) $value, $field->getOptions(), true)
-                ? 'Neispravan odabir.' : null,
+                ? $this->translator->trans('validation.field.choice', [], 'validators') : null,
             default => null,
         };
     }

@@ -38,7 +38,7 @@ class Media
     #[Assert\Image(
         maxSize: '5M',
         mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-        mimeTypesMessage: 'Dozvoljene su samo slike (JPG, PNG, WEBP, GIF).',
+        mimeTypesMessage: 'validation.media.image_only',
     )]
     private ?File $imageFile = null;
 

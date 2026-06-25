@@ -1,2 +1,22 @@
-# validators domain (en) — validation constraint messages (Symfony uses this domain). Later passes.
-{}
+# validators domain (en) — Symfony auto-translates constraint `message:` (and buildViolation) here.
+# Front-form errors (SubmissionValidator) live here too. {{ limit }} / %email% are constraint params.
+validation:
+    password:
+        current_required: Enter your current password.
+        current_invalid: The current password is incorrect.
+        new_required: Enter a new password.
+        too_short: The password must be at least {{ limit }} characters.
+        mismatch: The passwords do not match.
+    email:
+        required: Enter your e-mail.
+    media:
+        image_only: Only images are allowed (JPG, PNG, WEBP, GIF).
+    form:
+        notify_recipient_required: Enter at least one recipient when notifications are on.
+        notify_email_invalid: 'Invalid e-mail address: %email%'
+        variant_incomplete: Each variant needs a name and a price greater than 0.
+    field:
+        required: This field is required.
+        email: Please enter a valid e-mail.
+        number: Please enter a number.
+        choice: Invalid selection.

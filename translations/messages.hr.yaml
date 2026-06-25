@@ -32,3 +32,5 @@ reset:
         submit: Spremi novu lozinku
 maintenance:
     title_suffix: održavanje
+search:
+    type: { page: Stranica, post: Objava, category: Kategorija }

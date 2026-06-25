@@ -22,11 +22,15 @@ const app = startStimulusApp();
 // EditorShortcodeConverterInterface). The node is always registered so existing [form]
 // embeds round-trip safely; the toolbar button is gated by the editor against the enabled
 // modules list (so a disabled FormBuilder shows no button).
+// Translations for this bootstrap-wired button live in a tiny global set by the admin layout
+// (templates/bundles/EasyAdminBundle/layout.html.twig) — it can't read a per-page Twig element.
+// English fallback so it never crashes if the global is somehow absent.
+const fpI18n = (window.__tallystI18n || {}).formPicker || {};
 registerEditorExtension({
     // key MUST match FormBuilderModule::getName() so enabled_modules() gating works.
     key: 'form_builder',
     node: FormEmbed,
-    toolbar: { label: '📋 Forma', title: 'Ubaci formu', action: (editor) => openFormPicker(editor) },
+    toolbar: { label: '📋 ' + (fpI18n.insert || 'Insert form'), title: fpI18n.insert || 'Insert form', action: (editor) => openFormPicker(editor) },
 });
 
 // FormBuilder module controllers (one of the 5 per-module app-side touch points; see CLAUDE.md).

@@ -328,9 +328,10 @@ class FormDefinition
             return;
         }
 
+        // buildViolation messages translate via the `validators` domain (keys; %email% as a param).
         $recipients = $this->getNotifyRecipientList();
         if ([] === $recipients) {
-            $context->buildViolation('Unesi barem jednog primatelja kad je notifikacija uključena.')
+            $context->buildViolation('validation.form.notify_recipient_required')
                 ->atPath('notifyRecipient')->addViolation();
 
             return;
@@ -338,7 +339,8 @@ class FormDefinition
 
         foreach ($recipients as $recipient) {
             if (false === filter_var($recipient, \FILTER_VALIDATE_EMAIL)) {
-                $context->buildViolation('Neispravna e-mail adresa: '.$recipient)
+                $context->buildViolation('validation.form.notify_email_invalid')
+                    ->setParameter('%email%', $recipient)
                     ->atPath('notifyRecipient')->addViolation();
             }
         }
@@ -352,7 +354,7 @@ class FormDefinition
             $label = trim((string) ($v['label'] ?? ''));
             $price = (int) ($v['priceMinor'] ?? 0);
             if ('' === $label || $price <= 0) {
-                $context->buildViolation('Svaka varijanta treba naziv i cijenu veću od 0.')
+                $context->buildViolation('validation.form.variant_incomplete')
                     ->atPath('variants['.$i.']')->addViolation();
             }
         }

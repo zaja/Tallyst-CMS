@@ -92,6 +92,27 @@ admin:
         current: Trenutna lozinka
         new: Nova lozinka
         repeat: Ponovi novu lozinku
+    guard:
+        lockout:
+            delete_self: Ne možeš obrisati vlastiti račun.
+            delete_last_admin: Ne možeš obrisati zadnjeg administratora.
+            demote_self: Ne možeš ukloniti vlastitu administratorsku rolu.
+            demote_last_admin: Ne možeš ukloniti zadnju administratorsku rolu.
+        theme:
+            default_required: Default tema je obavezna i ne može se obrisati.
+            active: Ne možeš obrisati aktivnu temu.
+            only: Ne možeš obrisati jedinu temu.
+    maintenance_banner:
+        title: Maintenance mode je aktivan
+        note: '— javni dio je nedostupan posjetiteljima.'
+        link: Isključi u Postavke → Održavanje
+    js:
+        dirty_guard: Imaš nespremljene promjene. Napustiti stranicu bez spremanja?
+        filepond:
+            idle: 'Povuci slike ovdje ili <span class="filepond--label-action">odaberi</span>'
+            type_not_allowed: Dozvoljene su samo slike (JPG, PNG, WEBP, GIF).
+            too_big: Datoteka je prevelika.
+            max_size: 'Najveća veličina je {filesize}.'
     dashboard:
         welcome: Dobrodošli u Tallyst CMS.
         choose: Odaberite sekciju iz izbornika lijevo.
@@ -111,6 +132,8 @@ admin:
             placeholder: email@primjer.hr
             send: Pošalji
             note: 'Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.'
+            subject: Tallyst — test e-pošte
+            body: 'Ovo je test poruka iz Tallyst Postavki. Ako je vidiš, SMTP konfiguracija radi.'
         general:
             title: Općenito
             site_name: { label: Naziv sajta, help: Prikazuje se u zaglavlju i naslovu. }

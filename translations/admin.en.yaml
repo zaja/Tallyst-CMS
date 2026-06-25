@@ -92,6 +92,28 @@ admin:
         current: Current password
         new: New password
         repeat: Repeat new password
+    guard:
+        lockout:
+            delete_self: You can't delete your own account.
+            delete_last_admin: You can't delete the last administrator.
+            demote_self: You can't remove your own administrator role.
+            demote_last_admin: You can't remove the last administrator role.
+        theme:
+            default_required: The default theme is required and can't be deleted.
+            active: You can't delete the active theme.
+            only: You can't delete the only theme.
+    maintenance_banner:
+        title: Maintenance mode is active
+        note: '— the public site is unavailable to visitors.'
+        link: Turn it off in Settings → Maintenance
+    # Bootstrap-wired admin JS (no per-page Twig element) — set into window.__tallystI18n by the EA layout.
+    js:
+        dirty_guard: You have unsaved changes. Leave the page without saving?
+        filepond:
+            idle: 'Drag images here or <span class="filepond--label-action">browse</span>'
+            type_not_allowed: Only images are allowed (JPG, PNG, WEBP, GIF).
+            too_big: The file is too large.
+            max_size: 'Maximum size is {filesize}.'
     dashboard:
         welcome: Welcome to Tallyst CMS.
         choose: Choose a section from the menu on the left.
@@ -111,6 +133,8 @@ admin:
             placeholder: name@example.com
             send: Send
             note: 'Sends via the current configuration; the result reports which transport was used.'
+            subject: Tallyst — test e-mail
+            body: 'This is a test message from Tallyst Settings. If you can see it, the SMTP configuration works.'
         general:
             title: General
             site_name: { label: Site name, help: Shown in the header and the title. }

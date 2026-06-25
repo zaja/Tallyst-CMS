@@ -19,6 +19,9 @@
     }
     window.__tallystDirtyGuard = true;
 
+    // Translated by the admin layout (window.__tallystI18n); English fallback.
+    const dirtyMsg = (window.__tallystI18n || {}).dirtyGuard || 'You have unsaved changes. Leave the page without saving?';
+
     const snapshots = new WeakMap();
     let saving = false;
 
@@ -78,7 +81,7 @@
 
     // In-app (Turbo Drive) navigation — links within the admin.
     document.addEventListener('turbo:before-visit', (event) => {
-        if (!saving && isDirty() && !window.confirm('Imaš nespremljene promjene. Napustiti stranicu bez spremanja?')) {
+        if (!saving && isDirty() && !window.confirm(dirtyMsg)) {
             event.preventDefault();
         }
     });

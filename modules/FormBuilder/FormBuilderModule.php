@@ -29,7 +29,8 @@ class FormBuilderModule implements AdminModuleInterface
 
     public function getDescription(): string
     {
-        return 'Gradnja formi s uvjetnom logikom; [form id=N] pretvara sadržaj stranice u formu.';
+        // admin-domain key — the Moduli page renders module.description|trans (admin).
+        return 'admin.module.desc.form_builder';
     }
 
     public function isCore(): bool

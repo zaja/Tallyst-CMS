@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\UnitOfWork;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class AdminLockoutGuardTest extends TestCase
 {
@@ -18,8 +19,11 @@ class AdminLockoutGuardTest extends TestCase
         $users->method('countAdmins')->willReturn($adminCount);
         $security = $this->createStub(Security::class);
         $security->method('getUser')->willReturn($currentUser);
+        // Message text isn't asserted (only block-or-not), so a passthrough translator stub suffices.
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        return new AdminLockoutGuard($users, $security);
+        return new AdminLockoutGuard($users, $security, $translator);
     }
 
     private function user(string $email, array $roles): User

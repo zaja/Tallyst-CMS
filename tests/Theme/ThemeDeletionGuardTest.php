@@ -6,6 +6,7 @@ use App\Entity\Theme;
 use App\Repository\ThemeRepository;
 use App\Theme\ThemeDeletionGuard;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Stops the front-end from being bricked: the active theme and the only theme can't be deleted.
@@ -16,8 +17,10 @@ class ThemeDeletionGuardTest extends TestCase
     {
         $themes = $this->createStub(ThemeRepository::class);
         $themes->method('count')->willReturn($themeCount);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        return new ThemeDeletionGuard($themes);
+        return new ThemeDeletionGuard($themes, $translator);
     }
 
     private function theme(bool $active): Theme

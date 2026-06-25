@@ -22,7 +22,7 @@
                     <tr>
                         <td>
                             <strong>{{ module.label }}</strong><br>
-                            <span class="text-muted small">{{ module.description }}</span>
+                            <span class="text-muted small">{{ module.description|trans({}, 'admin') }}</span>
                         </td>
                         <td>{{ module.version }}</td>
                         <td>

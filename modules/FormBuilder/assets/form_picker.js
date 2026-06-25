@@ -9,6 +9,9 @@ import './styles/form_picker.css';
 
 const LIST_URL = '/admin/forms-list';
 
+// Translations set by the admin layout (bootstrap-wired modal, no per-page element). English fallbacks.
+const i18n = () => (window.__tallystI18n || {}).formPicker || {};
+
 async function fetchForms() {
     const res = await fetch(LIST_URL, { headers: { Accept: 'application/json' } });
     if (!res.ok) {
@@ -18,15 +21,16 @@ async function fetchForms() {
 }
 
 function buildModal() {
+    const t = i18n();
     const backdrop = document.createElement('div');
     backdrop.className = 'fb-form-picker__backdrop';
     backdrop.innerHTML = `
         <div class="fb-form-picker__dialog" role="dialog" aria-modal="true">
             <div class="fb-form-picker__header">
-                <strong>Odaberi formu</strong>
-                <button type="button" class="btn-close" aria-label="Zatvori"></button>
+                <strong>${t.title || 'Select a form'}</strong>
+                <button type="button" class="btn-close" aria-label="${t.close || 'Close'}"></button>
             </div>
-            <p class="fb-form-picker__status text-muted">Učitavanje…</p>
+            <p class="fb-form-picker__status text-muted">${t.loading || 'Loading…'}</p>
             <ul class="fb-form-picker__list"></ul>
         </div>`;
     return backdrop;
@@ -52,16 +56,17 @@ export async function openFormPicker(editor) {
     document.body.appendChild(backdrop);
     document.body.style.overflow = 'hidden';
 
+    const t = i18n();
     let forms;
     try {
         forms = await fetchForms();
     } catch (e) {
-        status.textContent = 'Greška pri učitavanju formi.';
+        status.textContent = t.load_error || "Couldn't load forms.";
         return;
     }
 
     if (forms.length === 0) {
-        status.textContent = 'Nema formi. Prvo kreiraj formu.';
+        status.textContent = t.none || 'No forms yet. Create one first.';
         return;
     }
     status.hidden = true;
@@ -72,7 +77,7 @@ export async function openFormPicker(editor) {
         btn.type = 'button';
         btn.className = 'fb-form-picker__item';
         btn.innerHTML = `<span>${form.name}</span>`
-            + (form.published ? '' : ' <span class="badge badge-secondary">skica</span>');
+            + (form.published ? '' : ` <span class="badge badge-secondary">${t.draft || 'draft'}</span>`);
         btn.addEventListener('click', () => {
             editor.chain().focus().insertContent({
                 type: 'formEmbed',

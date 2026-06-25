@@ -8,7 +8,7 @@
             <a href="{{ item.url }}">{{ item.label }}</a>
             {% if has_children %}
                 <button class="submenu-toggle" type="button" aria-expanded="false"
-                        aria-label="Prikaži podizbornik: {{ item.label }}">
+                        aria-label="{{ 'theme.nav.submenu_toggle'|trans }}: {{ item.label }}">
                     <span class="caret" aria-hidden="true"></span>
                 </button>
                 {{ include('menu_items.html.twig', {items: item.children, depth: depth + 1}) }}

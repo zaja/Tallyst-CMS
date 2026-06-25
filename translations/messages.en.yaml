@@ -33,3 +33,5 @@ reset:
         submit: Save new password
 maintenance:
     title_suffix: maintenance
+search:
+    type: { page: Page, post: Post, category: Category }

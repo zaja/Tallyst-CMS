@@ -1,6 +1,7 @@
 # admin domain (hr) — FormBuilder back-office (Orders).
 admin:
     menu: { forms: Forme, orders: Narudžbe }
+    module: { desc: { form_builder: 'Gradnja formi s uvjetnom logikom; [form id=N] pretvara sadržaj stranice u formu.' } }
     order:
         entity: { singular: Narudžba, plural: Narudžbe }
         title: { detail: 'Narudžba #%id%' }
@@ -77,6 +78,7 @@ admin:
                 help: Što posjetitelj ispunjava.
             add_field: + Dodaj polje
             add_variant: + Dodaj varijantu
+            duplicate_keys: 'Ključevi polja moraju biti jedinstveni unutar forme. Duplikati: %keys%'
         field:
             new: Novo polje
             required_badge: obavezno
@@ -167,9 +169,12 @@ admin:
             col: { date: Datum, amount: Iznos, status: Status, payment: Plaćanje }
         picker:
             insert: Ubaci formu
+            title: Odaberi formu
             close: Zatvori
+            loading: Učitavanje…
             load_error: Greška pri učitavanju formi.
             none: Nema formi. Prvo kreiraj formu.
+            draft: skica
     condition:
         action_label: Radnja
         action: { show: Prikaži polje ako, hide: Sakrij polje ako }

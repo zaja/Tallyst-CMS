@@ -1,7 +1,7 @@
 {# Shared blog/archive card grid. Input: `posts` (Post[]). Reused by the blog index and
    category archives. Category link → category archive (category_show). #}
 {% if posts is empty %}
-    <p>Još nema objava.</p>
+    <p>{{ 'theme.blog.no_posts'|trans }}</p>
 {% else %}
     <ul class="post-list">
         {% for post in posts %}

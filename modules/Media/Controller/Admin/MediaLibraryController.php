@@ -80,7 +80,7 @@ class MediaLibraryController extends AbstractController
     public function upload(Request $request): Response
     {
         if (!$this->isCsrfTokenValid(self::UPLOAD_CSRF_ID, (string) $request->headers->get('X-CSRF-Token'))) {
-            return new Response('Nevažeći CSRF token.', Response::HTTP_FORBIDDEN);
+            return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
         }
 
         $file = $this->firstUploadedFile($request);

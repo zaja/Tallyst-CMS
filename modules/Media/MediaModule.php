@@ -29,7 +29,8 @@ class MediaModule implements AdminModuleInterface
 
     public function getDescription(): string
     {
-        return 'Upload i upravljanje slikama (thumbnaili), logo/branding.';
+        // admin-domain key — the Moduli page renders module.description|trans (admin).
+        return 'admin.module.desc.media';
     }
 
     public function isCore(): bool

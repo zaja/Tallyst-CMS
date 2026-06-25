@@ -3,6 +3,7 @@ theme:
     nav:
         skip_link: Prijeđi na sadržaj
         menu_toggle: Otvori izbornik
+        submenu_toggle: Prikaži podizbornik
     search:
         title: Pretraga
         placeholder: Pretraži…
@@ -12,6 +13,7 @@ theme:
         prompt: Upiši pojam za pretragu.
         no_results: 'Nema rezultata za „%query%”.'
         results_for: 'Rezultati za „%query%” (%count%):'
+        show_all: Prikaži sve rezultate →
     pagination:
         label: Stranice
         previous: ‹ Prethodna
@@ -21,6 +23,7 @@ theme:
         back_to_blog: Natrag na blog
     blog:
         title: Blog
+        no_posts: Još nema objava.
     category:
         all_posts: Sve objave
     footer:

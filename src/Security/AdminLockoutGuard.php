@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Server-side guard rails that stop an admin from locking everyone (or themselves) out of
@@ -20,17 +21,18 @@ class AdminLockoutGuard
     public function __construct(
         private readonly UserRepository $users,
         private readonly Security $security,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
-    /** @return string|null block message, or null if the delete is allowed */
+    /** @return string|null block message (admin domain), or null if the delete is allowed */
     public function blockDelete(User $target): ?string
     {
         if ($this->isCurrentUser($target)) {
-            return 'Ne možeš obrisati vlastiti račun.';
+            return $this->translator->trans('admin.guard.lockout.delete_self', [], 'admin');
         }
         if ($this->isAdmin($target) && $this->users->countAdmins() <= 1) {
-            return 'Ne možeš obrisati zadnjeg administratora.';
+            return $this->translator->trans('admin.guard.lockout.delete_last_admin', [], 'admin');
         }
 
         return null;
@@ -53,10 +55,10 @@ class AdminLockoutGuard
         }
 
         if ($this->isCurrentUser($target)) {
-            return 'Ne možeš ukloniti vlastitu administratorsku rolu.';
+            return $this->translator->trans('admin.guard.lockout.demote_self', [], 'admin');
         }
         if ($this->users->countAdmins() <= 1) {
-            return 'Ne možeš ukloniti zadnju administratorsku rolu.';
+            return $this->translator->trans('admin.guard.lockout.demote_last_admin', [], 'admin');
         }
 
         return null;

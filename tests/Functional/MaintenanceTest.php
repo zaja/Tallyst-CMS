@@ -76,7 +76,7 @@ class MaintenanceTest extends WebTestCase
         $this->client->loginUser($this->makeAdmin());
         $this->client->request('GET', '/admin');
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('Maintenance mode je aktivan', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('Maintenance mode is active', (string) $this->client->getResponse()->getContent());
     }
 
     public function testAdminNoBannerWhenOff(): void

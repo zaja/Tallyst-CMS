@@ -1,12 +1,38 @@
-{# App override of the EA admin layout: adds a global "maintenance mode active" reminder on EVERY admin
-   page (overrides the flash_messages block + calls parent()). Bootstrap alert-warning = dark-mode safe. #}
+{# App override of the EA admin layout: (1) a global "maintenance mode active" reminder on EVERY admin
+   page; (2) a tiny global i18n object for BOOTSTRAP-wired editor JS that can't read a per-page Twig
+   element (the "Insert form" button + form-picker modal — see CLAUDE.md / form_picker.js). #}
 {% extends '@!EasyAdmin/layout.html.twig' %}
 
 {% block flash_messages %}
+    {# Inline (non-module) script: runs during HTML parse, BEFORE the deferred importmap module
+       (stimulus_bootstrap.js) executes — so the global is set in time for registerEditorExtension.
+       Carries ONLY the form-picker strings; extend this object if more bootstrap-JS strings appear,
+       do NOT grow a general i18n runtime. #}
+    <script>
+        window.__tallystI18n = {
+            formPicker: {
+                insert: {{ 'admin.form.picker.insert'|trans({}, 'admin')|json_encode|raw }},
+                title: {{ 'admin.form.picker.title'|trans({}, 'admin')|json_encode|raw }},
+                close: {{ 'admin.form.picker.close'|trans({}, 'admin')|json_encode|raw }},
+                loading: {{ 'admin.form.picker.loading'|trans({}, 'admin')|json_encode|raw }},
+                load_error: {{ 'admin.form.picker.load_error'|trans({}, 'admin')|json_encode|raw }},
+                none: {{ 'admin.form.picker.none'|trans({}, 'admin')|json_encode|raw }},
+                draft: {{ 'admin.form.picker.draft'|trans({}, 'admin')|json_encode|raw }}
+            },
+            dirtyGuard: {{ 'admin.js.dirty_guard'|trans({}, 'admin')|json_encode|raw }},
+            filePond: {
+                idle: {{ 'admin.js.filepond.idle'|trans({}, 'admin')|json_encode|raw }},
+                type_not_allowed: {{ 'admin.js.filepond.type_not_allowed'|trans({}, 'admin')|json_encode|raw }},
+                too_big: {{ 'admin.js.filepond.too_big'|trans({}, 'admin')|json_encode|raw }},
+                max_size: {{ 'admin.js.filepond.max_size'|trans({}, 'admin')|json_encode|raw }}
+            }
+        };
+    </script>
+
     {% if setting('maintenance_enabled') %}
         <div class="alert alert-warning m-3 mb-0" role="alert">
-            ⚠ <strong>Maintenance mode je aktivan</strong> — javni dio je nedostupan posjetiteljima.
-            <a href="{{ path('admin_settings') }}" class="alert-link">Isključi u Postavke → Održavanje</a>
+            ⚠ <strong>{{ 'admin.maintenance_banner.title'|trans({}, 'admin') }}</strong> {{ 'admin.maintenance_banner.note'|trans({}, 'admin') }}
+            <a href="{{ path('admin_settings') }}" class="alert-link">{{ 'admin.maintenance_banner.link'|trans({}, 'admin') }}</a>
         </div>
     {% endif %}
     {{ parent() }}

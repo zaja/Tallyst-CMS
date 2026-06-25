@@ -122,8 +122,8 @@ class SettingsController extends AbstractController
         $email = (new Email())
             ->from(new Address($fromEmail, (string) $this->settings->get('mail_from_name')))
             ->to($to)
-            ->subject('Tallyst — test e-pošte')
-            ->text('Ovo je test poruka iz Tallyst Postavki. Ako je vidiš, SMTP konfiguracija radi.');
+            ->subject($this->translator->trans('admin.settings.test_mail.subject', [], 'admin'))
+            ->text($this->translator->trans('admin.settings.test_mail.body', [], 'admin'));
 
         $replyTo = (string) $this->settings->get('mail_reply_to');
         if ('' !== $replyTo) {

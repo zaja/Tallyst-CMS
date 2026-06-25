@@ -2,6 +2,7 @@
 admin:
     # Sidebar items the module contributes via getAdminMenuItems() (merge into core admin.menu.*).
     menu: { forms: Forms, orders: Orders }
+    module: { desc: { form_builder: 'Build forms with conditional logic; [form id=N] turns page content into a form.' } }
     order:
         entity: { singular: Order, plural: Orders }
         title: { detail: 'Order #%id%' }
@@ -78,6 +79,7 @@ admin:
                 help: What the visitor fills in.
             add_field: + Add field
             add_variant: + Add variant
+            duplicate_keys: 'Field keys must be unique within the form. Duplicates: %keys%'
         field:
             new: New field
             required_badge: required
@@ -168,9 +170,12 @@ admin:
             col: { date: Date, amount: Amount, status: Status, payment: Payment }
         picker:
             insert: Insert form
+            title: Select a form
             close: Close
+            loading: Loading…
             load_error: Couldn't load forms.
             none: No forms yet. Create one first.
+            draft: draft
     condition:
         action_label: Action
         action: { show: Show the field if, hide: Hide the field if }

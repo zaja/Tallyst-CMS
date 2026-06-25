@@ -77,7 +77,7 @@ class FormBuilderController extends AbstractController
             $duplicates = $this->duplicateKeys($definition);
             if ([] !== $duplicates) {
                 $form->get('fields')->addError(new FormError(
-                    'Ključevi polja moraju biti jedinstveni unutar forme. Duplikati: '.implode(', ', $duplicates),
+                    $this->translator->trans('admin.form.builder.duplicate_keys', ['%keys%' => implode(', ', $duplicates)], 'admin'),
                 ));
             } else {
                 $this->forms->save($definition);
