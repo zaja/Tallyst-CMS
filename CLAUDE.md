@@ -1206,6 +1206,23 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   Tallyst creates/updates the Stripe webhook endpoint via the API (so the admin doesn't hand-add it),
   and a "check Stripe config" diagnostic that reads the configured endpoint and warns if
   `charge.refunded` (or any `REQUIRED_WEBHOOK_EVENTS`) is missing.
+- **EasyAdmin `#[AdminDashboard]` / pretty-URL migration (DEFERRED — its own pass, NOT a syntax cleanup).**
+  EA 4.24 emits an INFO deprecation that `DashboardController` should carry
+  `#[AdminDashboard(routePath: '/admin', routeName: 'admin')]` (mandatory in **EA 5.0**). **DO NOT treat
+  this as a one-line fix:** applying the attribute switches EA into route-based **"pretty URLs"** — it
+  generates ~100 per-action routes (`admin_order_index → /admin/order`, `admin_page_edit →
+  /admin/page/{entityId}/edit`, …) and REPLACES the legacy `/admin?crudControllerFqcn=…&crudAction=…`
+  query-param scheme. `/admin` itself stays `admin → /admin`, but anything that hardcodes a legacy admin
+  URL breaks (it broke `OrderCsvExportTest`, which GETs `/admin?crudControllerFqcn=…&crudAction=exportCsv`).
+  EA-generated links (`linkToCrud`/`linkToRoute`) and `AdminUrlGenerator` adapt automatically; the risk is
+  hardcoded `?crudControllerFqcn=` URLs in tests/templates/redirects. **When done (with EA 5.0 or a
+  deliberate migration), its own `/plan`:** re-apply the attribute, update tests to the new URL format,
+  AUDIT every admin URL/redirect/link for hardcoded legacy query-param usage, and full CRUD smoke (every
+  list/new/edit/detail/custom-action page, menu, export, dashboard deep-links). Tracked here because the
+  2026-06-25 deprecation pass deliberately STOPPED at this (it shipped only the syntax-only fixes:
+  `#[Target('orderStateMachine')]` + Vich `Annotation`→`Attribute`). The remaining INFO deprecations on a
+  prod `cache:clear` are this EA one and Vich's OWN factory tagged-iterator (vendor code — awaits a Vich
+  release); neither is ours to silence without a library migration.
 - **Go-live checklist (a release GATE, not a feature).** Before the public domain goes live:
   worker running as a DAEMON (systemd/supervisor, not a manual shell — see the Readiness Panel
   below), `APP_ENV=prod` (never dev/debug on the public domain), LIVE Stripe keys + the webhook
