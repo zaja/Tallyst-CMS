@@ -1,6 +1,7 @@
 {# App override of the EA admin layout: (1) a global "maintenance mode active" reminder on EVERY admin
    page; (2) a tiny global i18n object for BOOTSTRAP-wired editor JS that can't read a per-page Twig
-   element (the "Insert form" button + form-picker modal — see CLAUDE.md / form_picker.js). #}
+   element (the "Insert form" button + form-picker modal — see CLAUDE.md / form_picker.js);
+   (3) a discreet core-version line at the bottom of the sidebar (support/troubleshooting). #}
 {% extends '@!EasyAdmin/layout.html.twig' %}
 
 {% block flash_messages %}
@@ -36,4 +37,13 @@
         </div>
     {% endif %}
     {{ parent() }}
+{% endblock %}
+
+{# Discreet "Tallyst v1.1.0" at the bottom of the sidebar (under the menu). Version is read from
+   Composer metadata via VersionProvider (no hardcoding); falls back to "(dev)" on a git clone. #}
+{% block sidebar %}
+    {{ parent() }}
+    <div class="tallyst-version text-muted small px-3 py-2 mt-auto" style="opacity: .65;">
+        Tallyst {{ tallyst_version().coreVersion }}
+    </div>
 {% endblock %}
