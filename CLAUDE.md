@@ -130,6 +130,15 @@ Plain `php` / `composer` can resolve the wrong PHP version and break installs.
   page-as-product), and GD-generated neutral demo images. See "Default theme & demo content".
 - Install deps: `php8.5 /usr/local/bin/composer install`
 - Add a package: `php8.5 /usr/local/bin/composer require <pkg>`
+- **⚠️ EDITING composer.json METADATA (name/description/license) — Flex strips it.** After a MANUAL
+  edit to `composer.json` metadata, a plugin-enabled composer write-op (`composer update` /
+  `run-script` / `require`) can SELECTIVELY strip `name`/`description` and revert `license` to
+  `"proprietary"` (and delete an untracked `LICENSE`) — Symfony Flex's JsonManipulator rewriting on
+  composer events. `composer validate` is read-only (safe). Rule: after editing composer.json
+  metadata, **do NOT run a plugin-composer-write-op before committing**, OR run it with
+  `--no-plugins` (e.g. `composer update --lock --no-install --no-plugins` to refresh the lock hash).
+  ALWAYS re-check `composer.json` (and `LICENSE`) right before commit/tag — **Packagist reads the
+  TAGGED composer.json from GitHub**, so a stripped tag ships wrong metadata. (Bit the v1.0.0 prep.)
 - Clear cache: `php8.5 bin/console cache:clear`
 - Create migration: `php8.5 bin/console make:migration`
 - Run migrations: `php8.5 bin/console doctrine:migrations:migrate`
