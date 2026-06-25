@@ -1,4 +1,34 @@
 # messages domain (hr) — front / visitor / shared, core-owned keys.
+field:
+    email: E-mail
+    password: Lozinka
+    new_password: Nova lozinka
+    repeat_password: Ponovi lozinku
 security:
     login:
+        title: Prijava — Tallyst Admin
         submit: Prijava
+        forgot: Zaboravljena lozinka?
+    '2fa':
+        title: Dvostruka provjera — Tallyst Admin
+        heading: Dvostruka provjera
+        code_label: Kod iz aplikacije (ili backup kod)
+        submit: Potvrdi
+        cancel: Odustani (odjava)
+reset:
+    back_to_login: Natrag na prijavu
+    request:
+        title: Zaboravljena lozinka
+        intro: Pošaljemo ti link za postavljanje nove lozinke.
+        submit: Pošalji link
+    check:
+        title: Provjeri e-mail
+        sent: Ako za tu adresu postoji račun, upravo smo poslali e-mail s linkom za promjenu lozinke.
+        link_valid: Link vrijedi %duration%.
+        no_email: Ako e-mail ne stigne, provjeri spam ili %retry%.
+        retry: pokušaj ponovno
+    reset:
+        title: Nova lozinka
+        submit: Spremi novu lozinku
+maintenance:
+    title_suffix: održavanje

@@ -1,5 +1,35 @@
 # messages domain (en) — front / visitor / shared, core-owned keys.
 # Default language: English. Extracted strings land here across the i18n passes.
+field:
+    email: E-mail
+    password: Password
+    new_password: New password
+    repeat_password: Repeat password
 security:
     login:
+        title: Sign in — Tallyst Admin
         submit: Sign in
+        forgot: Forgot password?
+    '2fa':
+        title: Two-factor authentication — Tallyst Admin
+        heading: Two-factor authentication
+        code_label: Code from your app (or a backup code)
+        submit: Verify
+        cancel: Cancel (sign out)
+reset:
+    back_to_login: Back to sign in
+    request:
+        title: Forgot password
+        intro: We will send you a link to set a new password.
+        submit: Send link
+    check:
+        title: Check your e-mail
+        sent: If an account exists for that address, we have just sent an e-mail with a password-reset link.
+        link_valid: The link is valid for %duration%.
+        no_email: If the e-mail does not arrive, check your spam or %retry%.
+        retry: try again
+    reset:
+        title: New password
+        submit: Save new password
+maintenance:
+    title_suffix: maintenance

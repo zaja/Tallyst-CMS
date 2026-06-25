@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="hr">
+<html lang="{{ app.request.locale|default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dvostruka provjera — Tallyst Admin</title>
+    <title>{{ 'security.2fa.title'|trans }}</title>
     {# Standalone page styled like templates/security/login.html.twig. #}
     <style>
         * { box-sizing: border-box; }
@@ -22,13 +22,13 @@
 </head>
 <body>
     <form class="card" action="{{ checkPathUrl ? checkPathUrl : path(checkPathRoute) }}" method="post">
-        <h1>Dvostruka provjera</h1>
+        <h1>{{ 'security.2fa.heading'|trans }}</h1>
 
         {% if authenticationError %}
             <div class="error">{{ authenticationError|trans(authenticationErrorData, 'SchebTwoFactorBundle') }}</div>
         {% endif %}
 
-        <label for="_auth_code">Kod iz aplikacije (ili backup kod)</label>
+        <label for="_auth_code">{{ 'security.2fa.code_label'|trans }}</label>
         <input id="_auth_code" type="text" name="{{ authCodeParameterName }}" autocomplete="one-time-code"
                inputmode="numeric" autofocus>
 
@@ -36,9 +36,9 @@
             <input type="hidden" name="{{ csrfParameterName }}" value="{{ csrf_token(csrfTokenId) }}">
         {% endif %}
 
-        <button type="submit">Potvrdi</button>
+        <button type="submit">{{ 'security.2fa.submit'|trans }}</button>
 
-        <p class="muted"><a href="{{ logoutPath }}">Odustani (odjava)</a></p>
+        <p class="muted"><a href="{{ logoutPath }}">{{ 'security.2fa.cancel'|trans }}</a></p>
     </form>
 </body>
 </html>

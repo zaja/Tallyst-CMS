@@ -1,27 +1,26 @@
 {% extends 'layout.html.twig' %}
 
-{% block title %}Narudžba #{{ order.id }} — Tallyst{% endblock %}
+{% block title %}{{ 'form.thankyou.page_title'|trans({'%id%': order.id}) }}{% endblock %}
 
 {% block body %}
+    {% set order_ref %}<strong>#{{ order.id }}</strong>{% endset %}
     <article class="fb-thankyou">
-        <h1>Hvala!</h1>
+        <h1>{{ 'form.thankyou.title'|trans }}</h1>
 
         {# Admin-editable copy (Postavke → Narudžbe); the SettingDefinition default applies when unset. #}
         <div class="fb-thankyou-message">{{ setting('thank_you_message')|render_content }}</div>
 
         {% if order.paid %}
-            <p>Vaše plaćanje je zaprimljeno. Narudžba <strong>#{{ order.id }}</strong> je potvrđena
-               i poslali smo vam potvrdu e-mailom.</p>
+            <p>{{ 'form.thankyou.paid'|trans({'%order%': order_ref})|raw }}</p>
         {% else %}
-            <p>Zaprimili smo vašu narudžbu <strong>#{{ order.id }}</strong>. Plaćanje se još obrađuje —
-               potvrdu ćete dobiti e-mailom čim bude dovršeno. Možete osvježiti ovu stranicu za nekoliko trenutaka.</p>
+            <p>{{ 'form.thankyou.processing'|trans({'%order%': order_ref})|raw }}</p>
         {% endif %}
 
         <p>
-            Iznos:
+            {{ 'form.thankyou.amount'|trans }}
             <strong>{{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}</strong>
         </p>
 
-        <p><a href="{{ path('home') }}">&larr; Natrag na početnu</a></p>
+        <p><a href="{{ path('home') }}">&larr; {{ 'form.thankyou.back_home'|trans }}</a></p>
     </article>
 {% endblock %}

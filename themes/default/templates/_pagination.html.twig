@@ -3,11 +3,11 @@
    page. Links keep the existing route params (e.g. the category slug) and only swap ?page. #}
 {% if lastPage > 1 %}
     {% set window = 2 %}
-    <nav class="pagination" aria-label="Stranice">
+    <nav class="pagination" aria-label="{{ 'theme.pagination.label'|trans }}">
         {% if page > 1 %}
-            <a class="pagination-step" rel="prev" href="{{ path(route, routeParams|merge({page: page - 1})) }}">‹ Prethodna</a>
+            <a class="pagination-step" rel="prev" href="{{ path(route, routeParams|merge({page: page - 1})) }}">{{ 'theme.pagination.previous'|trans }}</a>
         {% else %}
-            <span class="pagination-step is-disabled" aria-disabled="true">‹ Prethodna</span>
+            <span class="pagination-step is-disabled" aria-disabled="true">{{ 'theme.pagination.previous'|trans }}</span>
         {% endif %}
 
         {% set shown = [] %}
@@ -29,9 +29,9 @@
         {% endfor %}
 
         {% if page < lastPage %}
-            <a class="pagination-step" rel="next" href="{{ path(route, routeParams|merge({page: page + 1})) }}">Sljedeća ›</a>
+            <a class="pagination-step" rel="next" href="{{ path(route, routeParams|merge({page: page + 1})) }}">{{ 'theme.pagination.next'|trans }}</a>
         {% else %}
-            <span class="pagination-step is-disabled" aria-disabled="true">Sljedeća ›</span>
+            <span class="pagination-step is-disabled" aria-disabled="true">{{ 'theme.pagination.next'|trans }}</span>
         {% endif %}
     </nav>
 {% endif %}

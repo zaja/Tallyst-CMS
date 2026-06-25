@@ -1,10 +1,10 @@
 {% extends 'layout.html.twig' %}
 
-{% block title %}Blog — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
+{% block title %}{{ 'theme.blog.title'|trans }} — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
 
 {% block body %}
     <header class="page-header">
-        <h1>Blog</h1>
+        <h1>{{ 'theme.blog.title'|trans }}</h1>
     </header>
 
     {{ include('_posts_list.html.twig', {posts: page.items}) }}

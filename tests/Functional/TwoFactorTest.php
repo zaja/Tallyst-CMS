@@ -35,7 +35,7 @@ class TwoFactorTest extends WebTestCase
 
         // No challenge — straight into the back-office.
         self::assertResponseIsSuccessful();
-        self::assertStringNotContainsString('Dvostruka provjera', $client->getResponse()->getContent());
+        self::assertStringNotContainsString('Two-factor authentication', $client->getResponse()->getContent());
     }
 
     public function testTwoFactorChallengeWithValidTotp(): void
@@ -45,13 +45,13 @@ class TwoFactorTest extends WebTestCase
         $user = $this->createUser('Passw0rd-1234', $secret);
 
         $this->passwordLogin($client, $user, 'Passw0rd-1234');
-        self::assertStringContainsString('Dvostruka provjera', $client->getResponse()->getContent(), 'lands on the 2FA challenge');
+        self::assertStringContainsString('Two-factor authentication', $client->getResponse()->getContent(), 'lands on the 2FA challenge');
 
-        $client->submitForm('Potvrdi', ['_auth_code' => TOTP::createFromSecret($secret)->now()]);
+        $client->submit($client->getCrawler()->filter('form')->form(['_auth_code' => TOTP::createFromSecret($secret)->now()]));
 
         // Fully authenticated — on the dashboard, not the challenge.
         self::assertResponseIsSuccessful();
-        self::assertStringNotContainsString('Dvostruka provjera', $client->getResponse()->getContent());
+        self::assertStringNotContainsString('Two-factor authentication', $client->getResponse()->getContent());
     }
 
     public function testTwoFactorRejectsInvalidCode(): void
@@ -61,10 +61,10 @@ class TwoFactorTest extends WebTestCase
         $user = $this->createUser('Passw0rd-1234', $secret);
 
         $this->passwordLogin($client, $user, 'Passw0rd-1234');
-        $client->submitForm('Potvrdi', ['_auth_code' => '000000']);
+        $client->submit($client->getCrawler()->filter('form')->form(['_auth_code' => '000000']));
 
         // Still on the challenge, and still gated: /admin bounces back to the 2FA form.
-        self::assertStringContainsString('Dvostruka provjera', $client->getResponse()->getContent());
+        self::assertStringContainsString('Two-factor authentication', $client->getResponse()->getContent());
         $client->followRedirects(false);
         $client->request('GET', '/admin');
         self::assertResponseRedirects('/admin/2fa');
@@ -77,10 +77,10 @@ class TwoFactorTest extends WebTestCase
         $user = $this->createUser('Passw0rd-1234', $secret, 'RECOVER1234');
 
         $this->passwordLogin($client, $user, 'Passw0rd-1234');
-        $client->submitForm('Potvrdi', ['_auth_code' => 'RECOVER1234']);
+        $client->submit($client->getCrawler()->filter('form')->form(['_auth_code' => 'RECOVER1234']));
 
         self::assertResponseIsSuccessful();
-        self::assertStringNotContainsString('Dvostruka provjera', $client->getResponse()->getContent());
+        self::assertStringNotContainsString('Two-factor authentication', $client->getResponse()->getContent());
 
         // One-time: the backup code is invalidated (persisted) after use.
         $em = static::getContainer()->get(EntityManagerInterface::class);
@@ -104,7 +104,7 @@ class TwoFactorTest extends WebTestCase
         $this->passwordLogin($client, $user, 'NewPassw0rd-9');
 
         // 2FA still gates the new password — reset is not a back door.
-        self::assertStringContainsString('Dvostruka provjera', $client->getResponse()->getContent());
+        self::assertStringContainsString('Two-factor authentication', $client->getResponse()->getContent());
     }
 
     public function testEnrolmentActivatesOnlyAfterValidCode(): void

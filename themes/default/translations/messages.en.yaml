@@ -1,4 +1,27 @@
 # messages domain (en) — default theme. Registered by ThemeTranslationPass (parent before child).
 theme:
+    nav:
+        skip_link: Skip to content
+        menu_toggle: Open menu
+    search:
+        title: Search
+        placeholder: Search…
+        label: Search
+        submit: Search
+        too_short: Type at least 3 characters to search.
+        prompt: Enter a search term.
+        no_results: 'No results for “%query%”.'
+        results_for: 'Results for “%query%” (%count%):'
+    pagination:
+        label: Pagination
+        previous: ‹ Previous
+        next: Next ›
+    post:
+        byline: By %author%
+        back_to_blog: Back to blog
+    blog:
+        title: Blog
+    category:
+        all_posts: All posts
     footer:
         powered_by: Powered by

@@ -1,4 +1,27 @@
 # messages domain (hr) — default theme.
 theme:
+    nav:
+        skip_link: Prijeđi na sadržaj
+        menu_toggle: Otvori izbornik
+    search:
+        title: Pretraga
+        placeholder: Pretraži…
+        label: Pretraži
+        submit: Traži
+        too_short: Upiši barem 3 znaka za pretragu.
+        prompt: Upiši pojam za pretragu.
+        no_results: 'Nema rezultata za „%query%”.'
+        results_for: 'Rezultati za „%query%” (%count%):'
+    pagination:
+        label: Stranice
+        previous: ‹ Prethodna
+        next: Sljedeća ›
+    post:
+        byline: 'Autor: %author%'
+        back_to_blog: Natrag na blog
+    blog:
+        title: Blog
+    category:
+        all_posts: Sve objave
     footer:
         powered_by: Pokreće

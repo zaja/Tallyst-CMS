@@ -29,7 +29,7 @@ class ResetPasswordTest extends WebTestCase
         $user = $this->createUser('oldpw');
 
         $client->request('GET', '/admin/reset-password');
-        $client->submitForm('Pošalji link', ['reset_password_request_form[email]' => $user->getEmail()]);
+        $client->submit($client->getCrawler()->filter('form')->form(['reset_password_request_form[email]' => $user->getEmail()]));
 
         self::assertResponseRedirects('/admin/reset-password/check-email');
         self::assertQueuedEmailCount(1);
@@ -41,7 +41,7 @@ class ResetPasswordTest extends WebTestCase
         $client = static::createClient();
 
         $client->request('GET', '/admin/reset-password');
-        $client->submitForm('Pošalji link', ['reset_password_request_form[email]' => 'nobody-'.bin2hex(random_bytes(4)).'@test.local']);
+        $client->submit($client->getCrawler()->filter('form')->form(['reset_password_request_form[email]' => 'nobody-'.bin2hex(random_bytes(4)).'@test.local']));
 
         // Anti-enumeration: identical redirect to known-user case, but no e-mail.
         self::assertResponseRedirects('/admin/reset-password/check-email');
@@ -61,10 +61,10 @@ class ResetPasswordTest extends WebTestCase
         $client->followRedirect();
 
         $new = 'Tallyst-N0va-2026!';
-        $client->submitForm('Spremi novu lozinku', [
+        $client->submit($client->getCrawler()->filter('form')->form([
             'change_password_form[plainPassword][first]' => $new,
             'change_password_form[plainPassword][second]' => $new,
-        ]);
+        ]));
         self::assertResponseRedirects('/admin/login');
 
         // Re-read from DB and confirm the new password works (login would succeed).

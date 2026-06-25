@@ -1,24 +1,24 @@
 {% extends 'layout.html.twig' %}
 
-{% block title %}Pretraga{% if query %}: {{ query }}{% endif %} — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
+{% block title %}{{ 'theme.search.title'|trans }}{% if query %}: {{ query }}{% endif %} — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
 
 {% block meta %}<meta name="robots" content="noindex">{% endblock %}
 
 {% block body %}
     <article class="page-content">
         <header class="page-header">
-            <h1>Pretraga</h1>
+            <h1>{{ 'theme.search.title'|trans }}</h1>
         </header>
 
         <div class="prose">
             {% if state == 'short' %}
-                <p class="search-note">Upiši barem 3 znaka za pretragu.</p>
+                <p class="search-note">{{ 'theme.search.too_short'|trans }}</p>
             {% elseif state == 'empty' %}
                 <p class="search-note">
-                    {% if query %}Nema rezultata za „{{ query }}".{% else %}Upiši pojam za pretragu.{% endif %}
+                    {% if query %}{{ 'theme.search.no_results'|trans({'%query%': query}) }}{% else %}{{ 'theme.search.prompt'|trans }}{% endif %}
                 </p>
             {% else %}
-                <p class="search-note">Rezultati za „{{ query }}" ({{ results|length }}):</p>
+                <p class="search-note">{{ 'theme.search.results_for'|trans({'%query%': query, '%count%': results|length}) }}</p>
                 <ul class="search-results">
                     {% for r in results %}
                         <li class="search-result">

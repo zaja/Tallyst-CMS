@@ -73,14 +73,14 @@ class SearchTest extends WebTestCase
     {
         $this->client->request('GET', '/pretraga', ['q' => 'tv']);
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('Upiši barem 3 znaka', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('Type at least 3 characters', (string) $this->client->getResponse()->getContent());
     }
 
     public function testNoResultsMessage(): void
     {
         $this->client->request('GET', '/pretraga', ['q' => 'nepostojeci'.bin2hex(random_bytes(4))]);
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('Nema rezultata', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('No results', (string) $this->client->getResponse()->getContent());
     }
 
     public function testQueryIsEscapedAgainstXss(): void

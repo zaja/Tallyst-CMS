@@ -1,3 +1,18 @@
 # messages domain (en) — FormBuilder module. Auto-discovered via the bundle's translations/ dir.
 form:
     submit: Send
+    success: Thank you! Your response has been received.
+    honeypot: Leave this field empty
+    price: 'Price:'
+    tax_note: Price includes %name% (%rate%%).
+    choose_option: Choose an option
+    payment_method: Payment method
+    payment_unavailable: Payment is currently unavailable.
+    checkout: Continue to payment
+    thankyou:
+        page_title: 'Order #%id% — Tallyst'
+        title: Thank you!
+        paid: Your payment has been received. Order %order% is confirmed and we have e-mailed you a receipt.
+        processing: We have received your order %order%. Payment is still processing — you will get a confirmation e-mail as soon as it completes. You can refresh this page in a moment.
+        amount: 'Amount:'
+        back_home: Back to home

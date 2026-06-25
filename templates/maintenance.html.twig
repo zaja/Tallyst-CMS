@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="hr">
+<html lang="{{ app.request.locale|default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
-    <title>{{ setting('site_name')|default('Tallyst') }} — održavanje</title>
+    <title>{{ setting('site_name')|default('Tallyst') }} — {{ 'maintenance.title_suffix'|trans }}</title>
     {# Standalone (no theme/nav — the site is "down"); inline-styled like the reset-password pages. #}
     <style>
         * { box-sizing: border-box; }

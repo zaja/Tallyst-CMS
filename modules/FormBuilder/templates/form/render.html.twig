@@ -5,7 +5,7 @@
 
 <div class="fb-form-wrap">
     {% if submitted %}
-        <div class="fb-success" role="status">Hvala! Vaš odgovor je zaprimljen.</div>
+        <div class="fb-success" role="status">{{ 'form.success'|trans }}</div>
     {% endif %}
 
     {# data-turbo="false": the submit may 303-redirect to an external payment page
@@ -22,17 +22,17 @@
 
         {# Honeypot: hidden from humans; bots that fill it are silently dropped. #}
         <div class="fb-hp" aria-hidden="true">
-            <label>Ostavite ovo polje prazno
+            <label>{{ 'form.honeypot'|trans }}
                 <input type="text" name="_hp" tabindex="-1" autocomplete="off">
             </label>
         </div>
 
         {% if form.priceMinor and not form.hasVariants %}
-            <p class="fb-price">Cijena: <strong>{{ (form.priceMinor / 100)|number_format(2, ',', '.') }} {{ (form.currency ?: 'eur')|upper }}</strong></p>
+            <p class="fb-price">{{ 'form.price'|trans }} <strong>{{ (form.priceMinor / 100)|number_format(2, ',', '.') }} {{ (form.currency ?: 'eur')|upper }}</strong></p>
         {% endif %}
 
         {% if tax.enabled|default(false) and form.isProduct %}
-            <p class="fb-tax">Cijena uključuje {{ tax.name }} ({{ tax.rate }}%).</p>
+            <p class="fb-tax">{{ 'form.tax_note'|trans({'%name%': tax.name, '%rate%': tax.rate}) }}</p>
         {% endif %}
 
         {% if form.description %}<p class="fb-desc">{{ form.description }}</p>{% endif %}
@@ -92,11 +92,11 @@
         {% if form.isProduct %}
             {% set methods = payment_methods|default([]) %}
             {% if methods is empty %}
-                <p class="fb-error">Plaćanje trenutno nije dostupno.</p>
+                <p class="fb-error">{{ 'form.payment_unavailable'|trans }}</p>
             {% else %}
                 {% if form.hasVariants %}
                     <div class="fb-field fb-variants">
-                        <label>Odaberi opciju <span class="fb-req">*</span></label>
+                        <label>{{ 'form.choose_option'|trans }} <span class="fb-req">*</span></label>
                         <div class="fb-choices">
                             {% for v in form.variants %}
                                 <label class="fb-choice">
@@ -109,7 +109,7 @@
                 {% endif %}
                 {% if methods|length > 1 %}
                     <div class="fb-field fb-payment">
-                        <label>Način plaćanja <span class="fb-req">*</span></label>
+                        <label>{{ 'form.payment_method'|trans }} <span class="fb-req">*</span></label>
                         <div class="fb-choices">
                             {% for m in methods %}
                                 <label class="fb-choice">
@@ -122,7 +122,7 @@
                 {% else %}
                     <input type="hidden" name="payment_method" value="{{ methods[0].name }}">
                 {% endif %}
-                <button type="submit" class="fb-submit">Nastavi na plaćanje</button>
+                <button type="submit" class="fb-submit">{{ 'form.checkout'|trans }}</button>
             {% endif %}
         {% else %}
             <button type="submit" class="fb-submit">{{ 'form.submit'|trans }}</button>

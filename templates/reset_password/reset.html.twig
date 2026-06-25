@@ -1,13 +1,13 @@
 {% extends 'reset_password/_layout.html.twig' %}
 
-{% block title %}Nova lozinka — Tallyst{% endblock %}
+{% block title %}{{ 'reset.reset.title'|trans }} — Tallyst{% endblock %}
 
 {% block body %}
-    <h1>Nova lozinka</h1>
+    <h1>{{ 'reset.reset.title'|trans }}</h1>
 
     {{ form_start(resetForm) }}
-        {{ form_row(resetForm.plainPassword.first, {label: 'Nova lozinka'}) }}
-        {{ form_row(resetForm.plainPassword.second, {label: 'Ponovi lozinku'}) }}
-        <button type="submit">Spremi novu lozinku</button>
+        {{ form_row(resetForm.plainPassword.first, {label: 'field.new_password'|trans}) }}
+        {{ form_row(resetForm.plainPassword.second, {label: 'field.repeat_password'|trans}) }}
+        <button type="submit">{{ 'reset.reset.submit'|trans }}</button>
     {{ form_end(resetForm) }}
 {% endblock %}

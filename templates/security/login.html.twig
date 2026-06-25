@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="hr">
+<html lang="{{ app.request.locale|default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Prijava — Tallyst Admin</title>
+    <title>{{ 'security.login.title'|trans }}</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f3f4f6; color: #1a1a1a; margin: 0; display: flex; min-height: 100vh; align-items: center; justify-content: center; }
@@ -24,10 +24,10 @@
             <div class="error">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
         {% endif %}
 
-        <label for="username">E-mail</label>
+        <label for="username">{{ 'field.email'|trans }}</label>
         <input type="email" id="username" name="_username" value="{{ last_username }}" autocomplete="username" required autofocus>
 
-        <label for="password">Lozinka</label>
+        <label for="password">{{ 'field.password'|trans }}</label>
         <input type="password" id="password" name="_password" autocomplete="current-password" required>
 
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
@@ -35,7 +35,7 @@
         <button type="submit">{{ 'security.login.submit'|trans }}</button>
 
         <p style="text-align: center; margin: 1rem 0 0; font-size: .9rem;">
-            <a href="{{ path('app_forgot_password_request') }}" style="color: #2563eb; text-decoration: none;">Zaboravljena lozinka?</a>
+            <a href="{{ path('app_forgot_password_request') }}" style="color: #2563eb; text-decoration: none;">{{ 'security.login.forgot'|trans }}</a>
         </p>
     </form>
 </body>

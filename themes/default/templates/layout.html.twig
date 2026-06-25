@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ setting('app_locale')|default('hr') }}">
+<html lang="{{ app.request.locale|default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,14 +12,14 @@
     {% block javascripts %}{{ importmap('app') }}{% endblock %}
 </head>
 <body>
-    <a class="skip-link" href="#main">Prijeđi na sadržaj</a>
+    <a class="skip-link" href="#main">{{ 'theme.nav.skip_link'|trans }}</a>
 
     {# is-nav-open is toggled by nav.js (progressive enhancement); without JS the nav
        falls back to a visible nested list. #}
     <header class="site-header" data-nav>
         <div class="container">
             {{ render_branding() }}
-            <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Otvori izbornik" aria-controls="site-nav">
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-label="{{ 'theme.nav.menu_toggle'|trans }}" aria-controls="site-nav">
                 <span class="bars" aria-hidden="true"></span>
             </button>
             {{ render_menu('main') }}
@@ -29,11 +29,11 @@
                       data-controller="search--live"
                       data-search--live-url-value="{{ path('search_live') }}"
                       data-action="keydown->search--live#keydown">
-                    <input type="search" name="q" placeholder="Pretraži…" aria-label="Pretraži" autocomplete="off"
+                    <input type="search" name="q" placeholder="{{ 'theme.search.placeholder'|trans }}" aria-label="{{ 'theme.search.label'|trans }}" autocomplete="off"
                            value="{{ app.request.query.get('q') }}"
                            data-search--live-target="input"
                            data-action="input->search--live#onInput">
-                    <button type="submit" aria-label="Traži">🔍</button>
+                    <button type="submit" aria-label="{{ 'theme.search.submit'|trans }}">🔍</button>
                     <div class="live-search-dropdown" role="listbox" data-search--live-target="dropdown" hidden></div>
                 </form>
             {% endif %}

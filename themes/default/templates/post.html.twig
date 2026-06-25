@@ -10,7 +10,7 @@
             {% if post.publishedAt or post.category or has_byline %}
                 <p class="page-meta post-meta">
                     {% if post.publishedAt %}<time datetime="{{ post.publishedAt|date('c') }}">{{ app_date(post.publishedAt) }}</time>{% endif %}
-                    {% if has_byline %}{{ post.publishedAt ? ' · ' : '' }}Autor: {{ post.author.nickname }}{% endif %}
+                    {% if has_byline %}{{ post.publishedAt ? ' · ' : '' }}{{ 'theme.post.byline'|trans({'%author%': post.author.nickname}) }}{% endif %}
                     {% if post.category %} · <a href="{{ path('category_show', {slug: post.category.slug}) }}">{{ post.category.name }}</a>{% endif %}
                 </p>
             {% endif %}
@@ -19,5 +19,5 @@
         {{ post.content|render_content }}
     </article>
 
-    <p class="prose"><a href="{{ path('blog_index') }}">&larr; Natrag na blog</a></p>
+    <p class="prose"><a href="{{ path('blog_index') }}">&larr; {{ 'theme.post.back_to_blog'|trans }}</a></p>
 {% endblock %}
