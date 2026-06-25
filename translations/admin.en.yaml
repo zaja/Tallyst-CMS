@@ -88,6 +88,10 @@ admin:
     setting:
         entity: { singular: Setting, plural: Settings }
         field: { key: Key, value: Value }
+    password:
+        current: Current password
+        new: New password
+        repeat: Repeat new password
     dashboard:
         welcome: Welcome to Tallyst CMS.
         choose: Choose a section from the menu on the left.

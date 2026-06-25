@@ -85,6 +85,33 @@ admin:
             conditional_toggle: Conditional display
             conditions_legend: Display conditions (optional)
             add_rule: + Rule
+            label: Field label
+            key: Key
+            key_help: 'Unique within the form. Empty = generated from the label.'
+            type: Type
+            type_option: { text: Text, email: E-mail, textarea: Long text, number: Number, select: Dropdown, checkbox: Checkbox, radio: Radio }
+            placeholder: Placeholder
+            required: Required
+            options: Options (one per line)
+            options_help: For a dropdown / radio only.
+        def:
+            name: Form name
+            slug: Slug
+            slug_help: Empty = generated from the name.
+            description: Description
+            status: Status
+            status_option: { draft: Draft, published: Published }
+            price: Price
+            price_help: 'Empty = a free form. With a price the form becomes a product (payment on submit). Ignored when variants exist.'
+            currency: Currency
+            payment_methods: Allowed payment methods
+            payment_methods_help: 'Empty = all configured. The buyer is offered the intersection of the selected and the configured.'
+            notify_enabled: Send an e-mail on submission
+            notify_enabled_help: Free forms only. Paid forms send an order confirmation.
+            notify_recipient: Recipient(s)
+            notify_recipient_help: 'E-mail; separate several with commas.'
+            notify_subject: Subject (optional)
+            notify_subject_help: 'Empty = "New submission: <form name>".'
         rule:
             remove: Remove rule
             op: { checked: is checked, not_checked: is not checked, equals: is, not_equals: is not, empty: is empty, not_empty: is not empty, gt: greater than, lt: less than, contains: contains }
@@ -94,6 +121,8 @@ admin:
             value_placeholder: — value —
         variant:
             remove: Remove variant
+            name: Variant name
+            price: Price
         payment_info:
             live_badge: LIVE MODE
             live_note: '— charges go live.'
@@ -136,3 +165,12 @@ admin:
             close: Close
             load_error: Couldn't load forms.
             none: No forms yet. Create one first.
+    condition:
+        action_label: Action
+        action: { show: Show the field if, hide: Hide the field if }
+        match_label: Match
+        match: { all: all conditions (AND), any: any condition (OR) }
+        field: Field (key)
+        field_placeholder: e.g. country
+        operator: Operator
+        value: Value

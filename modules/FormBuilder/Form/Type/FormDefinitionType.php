@@ -31,27 +31,29 @@ class FormDefinitionType extends AbstractType
         }
 
         $builder
-            ->add('name', TextType::class, ['label' => 'Naziv forme', 'empty_data' => ''])
+            ->add('name', TextType::class, ['label' => 'admin.form.def.name', 'empty_data' => ''])
             ->add('slug', TextType::class, [
                 'required' => false,
                 'empty_data' => '',
-                'label' => 'Slug',
-                'help' => 'Prazno = generira se iz naziva.',
+                'label' => 'admin.form.def.slug',
+                'help' => 'admin.form.def.slug_help',
             ])
-            ->add('description', TextareaType::class, ['required' => false, 'label' => 'Opis'])
+            ->add('description', TextareaType::class, ['required' => false, 'label' => 'admin.form.def.description'])
             ->add('status', ChoiceType::class, [
-                'label' => 'Status',
-                'choices' => ['Skica' => FormDefinition::STATUS_DRAFT, 'Objavljeno' => FormDefinition::STATUS_PUBLISHED],
+                'label' => 'admin.form.def.status',
+                // Choice LABELS are translation keys; stored VALUES (draft/published) are untouched.
+                'choices' => ['admin.form.def.status_option.draft' => FormDefinition::STATUS_DRAFT, 'admin.form.def.status_option.published' => FormDefinition::STATUS_PUBLISHED],
             ])
             ->add('priceMinor', MoneyType::class, [
                 'required' => false,
                 'currency' => false,
-                'label' => 'Cijena',
-                'help' => 'Prazno = forma bez naplate. S cijenom forma postaje proizvod (plaćanje na submit). Ignorira se ako postoje varijante.',
+                'label' => 'admin.form.def.price',
+                'help' => 'admin.form.def.price_help',
             ])
             ->add('currency', ChoiceType::class, [
                 'required' => false,
-                'label' => 'Valuta',
+                'label' => 'admin.form.def.currency',
+                // Currency codes are language-neutral labels (left untranslated).
                 'choices' => ['EUR' => 'eur', 'USD' => 'usd', 'GBP' => 'gbp'],
                 'placeholder' => '—',
             ])
@@ -67,27 +69,27 @@ class FormDefinitionType extends AbstractType
             ])
             ->add('allowedPaymentMethods', ChoiceType::class, [
                 'required' => false,
-                'label' => 'Dozvoljeni načini plaćanja',
+                'label' => 'admin.form.def.payment_methods',
                 'choices' => $methodChoices,
                 'multiple' => true,
                 'expanded' => true,
-                'help' => 'Prazno = svi konfigurirani. Kupcu se nudi presjek odabranih i konfiguriranih.',
+                'help' => 'admin.form.def.payment_methods_help',
             ])
             // Submission notification (free forms only — priced forms use order mails).
             ->add('notifyEnabled', CheckboxType::class, [
                 'required' => false,
-                'label' => 'Pošalji e-mail na prijavu',
-                'help' => 'Samo za besplatne forme. Plaćene forme šalju potvrdu narudžbe.',
+                'label' => 'admin.form.def.notify_enabled',
+                'help' => 'admin.form.def.notify_enabled_help',
             ])
             ->add('notifyRecipient', TextType::class, [
                 'required' => false,
-                'label' => 'Primatelj(i)',
-                'help' => 'E-mail; više njih odvoji zarezom.',
+                'label' => 'admin.form.def.notify_recipient',
+                'help' => 'admin.form.def.notify_recipient_help',
             ])
             ->add('notifySubject', TextType::class, [
                 'required' => false,
-                'label' => 'Subject (opcionalno)',
-                'help' => 'Prazno = "Nova prijava: <naziv forme>".',
+                'label' => 'admin.form.def.notify_subject',
+                'help' => 'admin.form.def.notify_subject_help',
             ])
             ->add('fields', CollectionType::class, [
                 'label' => false,
@@ -116,6 +118,8 @@ class FormDefinitionType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['data_class' => FormDefinition::class]);
+        // All builder labels/help/choice-labels translate via the `admin` domain (inherited by the
+        // nested field/variant/condition sub-forms). EA chrome stays in EasyAdminBundle.
+        $resolver->setDefaults(['data_class' => FormDefinition::class, 'translation_domain' => 'admin']);
     }
 }

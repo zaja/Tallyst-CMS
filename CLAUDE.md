@@ -453,6 +453,17 @@ infra + proved it on 3 keys: `security.login.submit`, `form.submit`, `theme.foot
   are wired at BOOTSTRAP, not mounted on a Twig element, so they can't read a per-page `trans` value —
   they stay Croatian until a small global-i18n shim is added (`admin.form.picker.*` keys exist, ready).
   That's the lone remaining hardcoded admin JS string after PASS 4c.
+- **Custom (non-EA) Symfony FormType labels → `translation_domain: 'admin'` in `configureOptions`.** A
+  form type rendered in a custom controller/template (form-builder `FormDefinitionType`/`FormFieldType`/
+  `VariantType`/`ConditionsType`/`ConditionRuleType`, core `ChangeOwnPasswordType`) sets
+  `setDefaults([... , 'translation_domain' => 'admin'])`, so every `'label'`/`'help'`/choice-LABEL becomes
+  an `admin.*` translation key (the nested collection entry types inherit, but set it explicitly anyway).
+  Choice VALUES (draft/published, the field-type/operator/show-hide constants) are UNTOUCHED — only the
+  displayed label translates, never the saved model. An HTML `attr.placeholder` is NOT covered by the form
+  domain → translate it with the injected `TranslatorInterface` (e.g. `ConditionRuleType`). Constraint
+  messages + `invalid_message` stay literal (the `validators` domain = Pass 6). A label set in the TEMPLATE
+  via `form_row(.., {label: '…'|trans})` (e.g. the reset-password fields) wins over the form type, so that
+  type needs no change.
 
 ## Directory layout
 ```

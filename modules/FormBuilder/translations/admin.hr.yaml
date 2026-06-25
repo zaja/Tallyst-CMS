@@ -85,6 +85,33 @@ admin:
             conditional_toggle: Uvjetni prikaz
             conditions_legend: Uvjeti prikaza (opcionalno)
             add_rule: + Pravilo
+            label: Naziv polja
+            key: Key
+            key_help: 'Jedinstven po formi. Prazno = generira se iz naziva.'
+            type: Tip
+            type_option: { text: Tekst, email: E-mail, textarea: Dugi tekst, number: Broj, select: Padajući izbornik, checkbox: Potvrdni okvir, radio: Radio }
+            placeholder: Placeholder
+            required: Obavezno
+            options: Opcije (jedna po retku)
+            options_help: Samo za padajući izbornik / radio.
+        def:
+            name: Naziv forme
+            slug: Slug
+            slug_help: Prazno = generira se iz naziva.
+            description: Opis
+            status: Status
+            status_option: { draft: Skica, published: Objavljeno }
+            price: Cijena
+            price_help: 'Prazno = forma bez naplate. S cijenom forma postaje proizvod (plaćanje na submit). Ignorira se ako postoje varijante.'
+            currency: Valuta
+            payment_methods: Dozvoljeni načini plaćanja
+            payment_methods_help: 'Prazno = svi konfigurirani. Kupcu se nudi presjek odabranih i konfiguriranih.'
+            notify_enabled: Pošalji e-mail na prijavu
+            notify_enabled_help: Samo za besplatne forme. Plaćene forme šalju potvrdu narudžbe.
+            notify_recipient: Primatelj(i)
+            notify_recipient_help: 'E-mail; više njih odvoji zarezom.'
+            notify_subject: Subject (opcionalno)
+            notify_subject_help: 'Prazno = "Nova prijava: <naziv forme>".'
         rule:
             remove: Ukloni pravilo
             op: { checked: je čekirano, not_checked: nije čekirano, equals: jednako, not_equals: nije jednako, empty: prazno, not_empty: nije prazno, gt: veće od, lt: manje od, contains: sadrži }
@@ -94,6 +121,8 @@ admin:
             value_placeholder: — vrijednost —
         variant:
             remove: Ukloni varijantu
+            name: Naziv varijante
+            price: Cijena
         payment_info:
             live_badge: LIVE MOD
             live_note: '— naplate idu uživo.'
@@ -136,3 +165,12 @@ admin:
             close: Zatvori
             load_error: Greška pri učitavanju formi.
             none: Nema formi. Prvo kreiraj formu.
+    condition:
+        action_label: Radnja
+        action: { show: Prikaži polje ako, hide: Sakrij polje ako }
+        match_label: Podudaranje
+        match: { all: svi uvjeti (I), any: bilo koji uvjet (ILI) }
+        field: Polje (key)
+        field_placeholder: npr. drzava
+        operator: Operator
+        value: Vrijednost

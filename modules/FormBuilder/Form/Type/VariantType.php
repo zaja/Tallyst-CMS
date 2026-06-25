@@ -7,6 +7,7 @@ use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * One price-variant row in the builder (a plain array {label, priceMinor}, not an entity). Price is
@@ -18,11 +19,11 @@ class VariantType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('label', TextType::class, ['label' => 'Naziv varijante', 'empty_data' => ''])
+            ->add('label', TextType::class, ['label' => 'admin.form.variant.name', 'empty_data' => ''])
             ->add('priceMinor', MoneyType::class, [
                 'required' => false,
                 'currency' => false,
-                'label' => 'Cijena',
+                'label' => 'admin.form.variant.price',
             ]);
 
         $builder->get('priceMinor')->addModelTransformer(new CallbackTransformer(
@@ -35,5 +36,11 @@ class VariantType extends AbstractType
                 return (int) round(((float) $major) * 100);
             },
         ));
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        // Variant row labels translate via the `admin` domain (explicit; it's a collection entry type).
+        $resolver->setDefaults(['translation_domain' => 'admin']);
     }
 }

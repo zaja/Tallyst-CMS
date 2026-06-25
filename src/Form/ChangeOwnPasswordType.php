@@ -6,6 +6,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Core\Validator\Constraints as SecurityAssert;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -25,9 +26,10 @@ class ChangeOwnPasswordType extends AbstractType
         $builder
             ->add('currentPassword', PasswordType::class, [
                 'mapped' => false,
-                'label' => 'Trenutna lozinka',
+                'label' => 'admin.password.current',
                 'attr' => ['autocomplete' => 'current-password'],
                 'constraints' => [
+                    // Validation messages stay in the `validators` domain (Pass 6) — only labels move.
                     new NotBlank(message: 'Upiši trenutnu lozinku.'),
                     new SecurityAssert\UserPassword(message: 'Trenutna lozinka nije ispravna.'),
                 ],
@@ -37,7 +39,7 @@ class ChangeOwnPasswordType extends AbstractType
                 'mapped' => false,
                 'options' => ['attr' => ['autocomplete' => 'new-password']],
                 'first_options' => [
-                    'label' => 'Nova lozinka',
+                    'label' => 'admin.password.new',
                     'constraints' => [
                         new NotBlank(message: 'Upiši novu lozinku.'),
                         new Length(min: 12, minMessage: 'Lozinka mora imati barem {{ limit }} znakova.', max: 4096),
@@ -45,8 +47,14 @@ class ChangeOwnPasswordType extends AbstractType
                         new NotCompromisedPassword(),
                     ],
                 ],
-                'second_options' => ['label' => 'Ponovi novu lozinku'],
+                'second_options' => ['label' => 'admin.password.repeat'],
                 'invalid_message' => 'Lozinke se ne podudaraju.',
             ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        // Field labels translate via the `admin` domain; validation messages keep the validators domain.
+        $resolver->setDefaults(['translation_domain' => 'admin']);
     }
 }

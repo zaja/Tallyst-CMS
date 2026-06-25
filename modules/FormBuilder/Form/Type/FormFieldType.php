@@ -16,36 +16,38 @@ use Tallyst\FormBuilder\Form\DataTransformer\ConditionsTransformer;
 
 class FormFieldType extends AbstractType
 {
+    // Choice LABELS are `admin`-domain translation keys; stored VALUES (the FormField type
+    // constants) are untouched — translating display never changes the saved model.
     private const TYPE_LABELS = [
-        'Tekst' => FormField::TYPE_TEXT,
-        'E-mail' => FormField::TYPE_EMAIL,
-        'Dugi tekst' => FormField::TYPE_TEXTAREA,
-        'Broj' => FormField::TYPE_NUMBER,
-        'Padajući izbornik' => FormField::TYPE_SELECT,
-        'Potvrdni okvir' => FormField::TYPE_CHECKBOX,
-        'Radio' => FormField::TYPE_RADIO,
+        'admin.form.field.type_option.text' => FormField::TYPE_TEXT,
+        'admin.form.field.type_option.email' => FormField::TYPE_EMAIL,
+        'admin.form.field.type_option.textarea' => FormField::TYPE_TEXTAREA,
+        'admin.form.field.type_option.number' => FormField::TYPE_NUMBER,
+        'admin.form.field.type_option.select' => FormField::TYPE_SELECT,
+        'admin.form.field.type_option.checkbox' => FormField::TYPE_CHECKBOX,
+        'admin.form.field.type_option.radio' => FormField::TYPE_RADIO,
     ];
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('label', TextType::class, ['label' => 'Naziv polja', 'empty_data' => ''])
+            ->add('label', TextType::class, ['label' => 'admin.form.field.label', 'empty_data' => ''])
             ->add('key', TextType::class, [
                 'required' => false,
                 'empty_data' => '',
-                'label' => 'Key',
-                'help' => 'Jedinstven po formi. Prazno = generira se iz naziva.',
+                'label' => 'admin.form.field.key',
+                'help' => 'admin.form.field.key_help',
             ])
             ->add('type', ChoiceType::class, [
-                'label' => 'Tip',
+                'label' => 'admin.form.field.type',
                 'choices' => self::TYPE_LABELS,
             ])
-            ->add('placeholder', TextType::class, ['required' => false, 'label' => 'Placeholder'])
-            ->add('required', CheckboxType::class, ['required' => false, 'label' => 'Obavezno'])
+            ->add('placeholder', TextType::class, ['required' => false, 'label' => 'admin.form.field.placeholder'])
+            ->add('required', CheckboxType::class, ['required' => false, 'label' => 'admin.form.field.required'])
             ->add('options', TextareaType::class, [
                 'required' => false,
-                'label' => 'Opcije (jedna po retku)',
-                'help' => 'Samo za padajući izbornik / radio.',
+                'label' => 'admin.form.field.options',
+                'help' => 'admin.form.field.options_help',
             ])
             ->add('position', HiddenType::class)
             ->add('conditions', ConditionsType::class, ['label' => false]);
@@ -69,6 +71,6 @@ class FormFieldType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['data_class' => FormField::class]);
+        $resolver->setDefaults(['data_class' => FormField::class, 'translation_domain' => 'admin']);
     }
 }

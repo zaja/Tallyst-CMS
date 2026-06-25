@@ -88,6 +88,10 @@ admin:
     setting:
         entity: { singular: Postavka, plural: Postavke }
         field: { key: Ključ, value: Vrijednost }
+    password:
+        current: Trenutna lozinka
+        new: Nova lozinka
+        repeat: Ponovi novu lozinku
     dashboard:
         welcome: Dobrodošli u Tallyst CMS.
         choose: Odaberite sekciju iz izbornika lijevo.
