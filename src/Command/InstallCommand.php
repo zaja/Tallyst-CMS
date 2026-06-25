@@ -285,20 +285,31 @@ class InstallCommand extends Command
         }
 
         // --- ASSET FALLBACK (git-clone install without the Composer hook) --------------------
+        // Asset steps are non-fatal (the rest of the install is fine), BUT a silent failure here
+        // leaves the admin/front JS dead (e.g. Stimulus controllers never boot) on a "successful"
+        // install — so any failure is collected and surfaced PROMINENTLY in the final message with
+        // the exact recompile command, never just a buried mid-flow warning.
+        $assetFailures = [];
         if ($input->getOption('skip-assets')) {
             $io->writeln('• --skip-assets — preskačem asset korak.');
         } else {
             $io->section('Asseti (fallback)');
-            $this->runConsole($io, ['importmap:install'], $this->childEnv(), true);
+            if (!$this->runConsole($io, ['importmap:install'], $this->childEnv(), true)) {
+                $assetFailures[] = 'importmap:install';
+            }
 
             if ($force || !is_file($this->projectDir.'/public/assets/manifest.json')) {
-                $this->runConsole($io, ['asset-map:compile'], $this->childEnv(), true);
+                if (!$this->runConsole($io, ['asset-map:compile'], $this->childEnv(), true)) {
+                    $assetFailures[] = 'asset-map:compile';
+                }
             } else {
                 $io->writeln('• Asseti već kompajlirani — preskačem.');
             }
 
             if ($force || !is_dir($this->projectDir.'/public/themes/default')) {
-                $this->runConsole($io, ['app:theme:assets:install'], $this->childEnv(), true);
+                if (!$this->runConsole($io, ['app:theme:assets:install'], $this->childEnv(), true)) {
+                    $assetFailures[] = 'app:theme:assets:install';
+                }
             } else {
                 $io->writeln('• Theme asseti već objavljeni — preskačem.');
             }
@@ -307,6 +318,17 @@ class InstallCommand extends Command
         $this->runConsole($io, ['cache:clear'], $this->childEnv(), true);
 
         // --- FINAL MESSAGE ------------------------------------------------------------------
+        if ([] !== $assetFailures) {
+            // Loud, not buried: a failed compile means dead admin/front JS despite a "successful" install.
+            $io->warning([
+                'Asseti NISU u potpunosti kompajlirani ('.implode(', ', $assetFailures).') — admin/front JavaScript možda neće raditi (npr. gumbi koji ništa ne rade).',
+                'Pokreni ručno pa hard-refresh u pregledniku:',
+                '  php8.5 bin/console importmap:install',
+                '  php8.5 bin/console asset-map:compile',
+                '  php8.5 bin/console app:theme:assets:install',
+            ]);
+        }
+
         $io->success('Tallyst je instaliran.');
         $io->writeln([
             sprintf('Otvori <info>%s/admin</info> i prijavi se kao <info>%s</info>.', $siteUrl, $adminEmail),
