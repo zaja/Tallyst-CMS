@@ -63,9 +63,12 @@ class EmailTemplateController extends AbstractController
 
         $template = $this->templates->findOneByIdentifier($key) ?? new EmailTemplate($key);
 
+        // defaultSubject/defaultBody are `emails`-domain KEYS — resolve them (request locale = app_locale)
+        // so the editor pre-fills with the actual default TEXT, not the key. The admin's saved override
+        // is free-form (stored verbatim, never a key).
         $data = [
-            'subject' => '' !== $template->getSubject() ? $template->getSubject() : $type->defaultSubject,
-            'body' => '' !== $template->getBody() ? $template->getBody() : $type->defaultBody,
+            'subject' => '' !== $template->getSubject() ? $template->getSubject() : $this->translator->trans($type->defaultSubject, [], 'emails'),
+            'body' => '' !== $template->getBody() ? $template->getBody() : $this->translator->trans($type->defaultBody, [], 'emails'),
             'enabled' => $type->canDisable ? $template->isEnabled() : true,
         ];
 

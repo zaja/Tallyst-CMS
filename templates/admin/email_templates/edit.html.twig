@@ -2,7 +2,7 @@
 
 {% form_theme form 'bootstrap_5_layout.html.twig' %}
 
-{% block content_title %}{{ 'admin.email.edit.title'|trans({'%label%': type.label}, 'admin') }}{% endblock %}
+{% block content_title %}{{ 'admin.email.edit.title'|trans({'%label%': type.label|trans({}, 'emails')}, 'admin') }}{% endblock %}
 
 {% block main %}
     <div class="row">
@@ -30,7 +30,7 @@
                             <button type="button" class="email-editor__btn email-editor__btn--tag"
                                     data-action="email-editor#insertTag"
                                     data-email-editor-tag-param="{{ '{' ~ tag ~ '}' }}"
-                                    title="{{ 'admin.email.edit.insert_tag'|trans({'%desc%': desc}, 'admin') }}">{{ '{' ~ tag ~ '}' }}</button>
+                                    title="{{ 'admin.email.edit.insert_tag'|trans({'%desc%': desc|trans({}, 'emails')}, 'admin') }}">{{ '{' ~ tag ~ '}' }}</button>
                         {% endfor %}
                     </div>
                     <div class="email-editor__editor" data-email-editor-target="editor"></div>
@@ -59,7 +59,7 @@
                         <li class="mb-2">
                             <code>{{ '{' ~ tag ~ '}' }}</code>
                             {% if tag in type.requiredTags %}<span class="badge badge-danger">{{ 'admin.email.edit.tag_required'|trans({}, 'admin') }}</span>{% endif %}
-                            <br><span class="text-muted">{{ desc }}</span>
+                            <br><span class="text-muted">{{ desc|trans({}, 'emails') }}</span>
                         </li>
                     {% endfor %}
                 </ul>

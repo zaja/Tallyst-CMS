@@ -11,6 +11,7 @@ use App\Settings\SettingsManager;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RequestContext;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
 
@@ -51,7 +52,13 @@ class EmailRendererTest extends TestCase
         $urls = $this->createStub(UrlGeneratorInterface::class);
         $urls->method('getContext')->willReturn((new RequestContext())->setScheme('https')->setHost('example.test'));
 
-        return new EmailRenderer($templates, new EmailTypeRegistry([$provider]), $twig, $settings, $urls);
+        // Passthrough translator (returns the id) — mirrors a real translator with no catalog match,
+        // so this provider's LITERAL defaultSubject/defaultBody render unchanged and the security
+        // assertions below still hold. (Real types pass `emails` keys; here we test behaviour, not text.)
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        return new EmailRenderer($templates, new EmailTypeRegistry([$provider]), $twig, $settings, $urls, $translator);
     }
 
     public function testTagValuesAreHtmlEscapedInBody(): void

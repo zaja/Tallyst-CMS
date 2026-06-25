@@ -16,7 +16,7 @@
         <tbody>
             {% for row in rows %}
                 <tr>
-                    <td>{{ row.type.label }}</td>
+                    <td>{{ row.type.label|trans({}, 'emails') }}</td>
                     <td>
                         {% if row.enabled %}
                             <span class="badge badge-success">{{ 'admin.email.index.badge.enabled'|trans({}, 'admin') }}</span>

@@ -14,122 +14,94 @@ class FormBuilderEmailTypeProvider implements EmailTypeProviderInterface
 {
     public function getEmailTypes(): iterable
     {
+        // Label/tag-descriptions/defaultSubject/defaultBody are `emails`-domain keys (the actual default
+        // text lives in modules/FormBuilder/translations/emails.<locale>.yaml). Tag VALUES are unchanged.
         yield new EmailType(
             key: 'order_confirmation',
-            label: 'Potvrda narudžbe (kupcu)',
+            label: 'email.order_confirmation.label',
             tags: [
-                'order_id' => 'Broj narudžbe.',
-                'amount' => 'Iznos (formatiran).',
-                'currency' => 'Valuta.',
-                'tax_amount' => 'Iznos poreza (formatiran).',
-                'net_amount' => 'Neto iznos (bez poreza).',
-                'tax_rate' => 'Porezna stopa (%).',
-                'tax_name' => 'Naziv poreza.',
-                'form_name' => 'Naziv forme/proizvoda.',
-                'variant' => 'Odabrana varijanta (prazno ako nema).',
-                'site_name' => 'Naziv sajta.',
+                'order_id' => 'email.order_confirmation.tag.order_id',
+                'amount' => 'email.order_confirmation.tag.amount',
+                'currency' => 'email.order_confirmation.tag.currency',
+                'tax_amount' => 'email.order_confirmation.tag.tax_amount',
+                'net_amount' => 'email.order_confirmation.tag.net_amount',
+                'tax_rate' => 'email.order_confirmation.tag.tax_rate',
+                'tax_name' => 'email.order_confirmation.tag.tax_name',
+                'form_name' => 'email.order_confirmation.tag.form_name',
+                'variant' => 'email.order_confirmation.tag.variant',
+                'site_name' => 'email.order_confirmation.tag.site_name',
             ],
             requiredTags: [],
             canDisable: true,
-            defaultSubject: 'Potvrda narudžbe #{order_id}',
-            defaultBody: <<<HTML
-                <p>Hvala na narudžbi!</p>
-                <p><strong>Narudžba #{order_id}</strong><br>
-                Proizvod: {form_name}<br>
-                Iznos: {amount} {currency}<br>
-                Status: plaćeno</p>
-                <p>{site_name}</p>
-                HTML,
+            defaultSubject: 'email.order_confirmation.subject',
+            defaultBody: 'email.order_confirmation.body',
         );
 
         yield new EmailType(
             key: 'order_admin',
-            label: 'Nova narudžba (administratoru)',
+            label: 'email.order_admin.label',
             tags: [
-                'order_id' => 'Broj narudžbe.',
-                'amount' => 'Iznos (formatiran).',
-                'currency' => 'Valuta.',
-                'tax_amount' => 'Iznos poreza (formatiran).',
-                'net_amount' => 'Neto iznos (bez poreza).',
-                'tax_rate' => 'Porezna stopa (%).',
-                'tax_name' => 'Naziv poreza.',
-                'form_name' => 'Naziv forme/proizvoda.',
-                'variant' => 'Odabrana varijanta (prazno ako nema).',
-                'customer_email' => 'E-mail kupca.',
-                'site_name' => 'Naziv sajta.',
+                'order_id' => 'email.order_admin.tag.order_id',
+                'amount' => 'email.order_admin.tag.amount',
+                'currency' => 'email.order_admin.tag.currency',
+                'tax_amount' => 'email.order_admin.tag.tax_amount',
+                'net_amount' => 'email.order_admin.tag.net_amount',
+                'tax_rate' => 'email.order_admin.tag.tax_rate',
+                'tax_name' => 'email.order_admin.tag.tax_name',
+                'form_name' => 'email.order_admin.tag.form_name',
+                'variant' => 'email.order_admin.tag.variant',
+                'customer_email' => 'email.order_admin.tag.customer_email',
+                'site_name' => 'email.order_admin.tag.site_name',
             ],
             requiredTags: [],
             canDisable: true,
-            defaultSubject: 'Nova plaćena narudžba #{order_id}',
-            defaultBody: <<<HTML
-                <p>Nova plaćena narudžba.</p>
-                <p><strong>Narudžba #{order_id}</strong><br>
-                Forma: {form_name}<br>
-                Iznos: {amount} {currency}<br>
-                Kupac: {customer_email}</p>
-                HTML,
+            defaultSubject: 'email.order_admin.subject',
+            defaultBody: 'email.order_admin.body',
         );
 
         yield new EmailType(
             key: 'order_delivered',
-            label: 'Narudžba isporučena (kupcu)',
+            label: 'email.order_delivered.label',
             tags: [
-                'order_id' => 'Broj narudžbe.',
-                'form_name' => 'Naziv forme/proizvoda.',
-                'variant' => 'Odabrana varijanta (prazno ako nema).',
-                'site_name' => 'Naziv sajta.',
+                'order_id' => 'email.order_delivered.tag.order_id',
+                'form_name' => 'email.order_delivered.tag.form_name',
+                'variant' => 'email.order_delivered.tag.variant',
+                'site_name' => 'email.order_delivered.tag.site_name',
             ],
             requiredTags: [],
             canDisable: true,
-            defaultSubject: 'Vaša narudžba #{order_id} je isporučena',
-            defaultBody: <<<HTML
-                <p>Dobre vijesti — vaša narudžba je isporučena.</p>
-                <p><strong>Narudžba #{order_id}</strong><br>
-                Proizvod: {form_name}</p>
-                <p>Hvala na povjerenju!</p>
-                <p>{site_name}</p>
-                HTML,
+            defaultSubject: 'email.order_delivered.subject',
+            defaultBody: 'email.order_delivered.body',
         );
 
         yield new EmailType(
             key: 'order_refunded',
-            label: 'Narudžba refundirana (kupcu)',
+            label: 'email.order_refunded.label',
             tags: [
-                'order_id' => 'Broj narudžbe.',
-                'amount' => 'Iznos (formatiran).',
-                'form_name' => 'Naziv forme/proizvoda.',
-                'variant' => 'Odabrana varijanta (prazno ako nema).',
-                'site_name' => 'Naziv sajta.',
+                'order_id' => 'email.order_refunded.tag.order_id',
+                'amount' => 'email.order_refunded.tag.amount',
+                'form_name' => 'email.order_refunded.tag.form_name',
+                'variant' => 'email.order_refunded.tag.variant',
+                'site_name' => 'email.order_refunded.tag.site_name',
             ],
             requiredTags: [],
             canDisable: true,
-            defaultSubject: 'Povrat za narudžbu #{order_id}',
-            defaultBody: <<<HTML
-                <p>Vaša narudžba je refundirana.</p>
-                <p><strong>Narudžba #{order_id}</strong><br>
-                Proizvod: {form_name}<br>
-                Vraćeni iznos: {amount}</p>
-                <p>Sredstva će se vratiti na vaš način plaćanja u uobičajenom roku.</p>
-                <p>{site_name}</p>
-                HTML,
+            defaultSubject: 'email.order_refunded.subject',
+            defaultBody: 'email.order_refunded.body',
         );
 
         yield new EmailType(
             key: 'form_notification',
-            label: 'Obavijest o prijavi forme',
+            label: 'email.form_notification.label',
             tags: [
-                'form_name' => 'Naziv forme.',
-                'submission_summary' => 'Sažetak prijave (polje: vrijednost).',
-                'site_name' => 'Naziv sajta.',
+                'form_name' => 'email.form_notification.tag.form_name',
+                'submission_summary' => 'email.form_notification.tag.submission_summary',
+                'site_name' => 'email.form_notification.tag.site_name',
             ],
             requiredTags: [],
             canDisable: true,
-            defaultSubject: 'Nova prijava: {form_name}',
-            defaultBody: <<<HTML
-                <p>Nova prijava forme „{form_name}".</p>
-                <pre>{submission_summary}</pre>
-                <p>{site_name}</p>
-                HTML,
+            defaultSubject: 'email.form_notification.subject',
+            defaultBody: 'email.form_notification.body',
         );
     }
 }

@@ -1,2 +1,16 @@
-# emails domain (en) — email-type default subjects/bodies. Populated in later passes.
-{}
+# emails domain (en) — DEFAULT subjects/bodies + type labels/tag descriptions. Admin per-template
+# OVERRIDES stay free-form (never translated). The {tags} are replaced by EmailRenderer after trans.
+# Rendered with the app_locale Setting as an explicit locale (so the async worker uses the right one).
+email:
+    password_reset:
+        label: Password reset
+        subject: 'Password reset — {site_name}'
+        body: |
+            <p>Hi,</p>
+            <p>A password reset was requested for your account on {site_name}. To set a new password, open this link:</p>
+            <p><a href="{reset_url}">{reset_url}</a></p>
+            <p>If you didn't request it, you can safely ignore this e-mail.</p>
+            <p>{site_name}</p>
+        tag:
+            reset_url: Link to set a new password (required).
+            site_name: The site name.

@@ -1,2 +1,14 @@
-# emails domain (hr) — email-type default subjects/bodies. Populated in later passes.
-{}
+# emails domain (hr) — DEFAULT subjects/bodies + type labels/tag descriptions.
+email:
+    password_reset:
+        label: Promjena lozinke
+        subject: 'Promjena lozinke — {site_name}'
+        body: |
+            <p>Bok,</p>
+            <p>Zatražena je promjena lozinke za tvoj račun na {site_name}. Za postavljanje nove lozinke otvori poveznicu:</p>
+            <p><a href="{reset_url}">{reset_url}</a></p>
+            <p>Ako nisi ti zatražio/la promjenu, slobodno zanemari ovaj e-mail.</p>
+            <p>{site_name}</p>
+        tag:
+            reset_url: Poveznica za postavljanje nove lozinke (obavezno).
+            site_name: Naziv sajta.

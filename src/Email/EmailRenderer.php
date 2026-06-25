@@ -5,6 +5,7 @@ namespace App\Email;
 use App\Repository\EmailTemplateRepository;
 use App\Settings\SettingsManager;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
 /**
@@ -29,6 +30,7 @@ class EmailRenderer
         private readonly Environment $twig,
         private readonly SettingsManager $settings,
         private readonly UrlGeneratorInterface $urls,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -45,13 +47,19 @@ class EmailRenderer
             throw new \InvalidArgumentException(\sprintf('Unknown email type "%s".', $typeKey));
         }
 
+        // The CODE defaults are `emails`-domain keys; translate them with the configured app_locale —
+        // an EXPLICIT locale because mail renders in the async worker, which has no request locale.
+        // Admin OVERRIDES are free-form content and pass through verbatim (never translated).
+        $locale = (string) ($this->settings->get('app_locale') ?: 'en');
         $override = $this->templates->findOneByIdentifier($typeKey);
         $subjectTpl = match (true) {
             null !== $subjectOverride && '' !== trim($subjectOverride) => $subjectOverride,
             $override && '' !== trim($override->getSubject()) => $override->getSubject(),
-            default => $type->defaultSubject,
+            default => $this->translator->trans($type->defaultSubject, [], 'emails', $locale),
         };
-        $bodyTpl = ($override && '' !== trim($override->getBody())) ? $override->getBody() : $type->defaultBody;
+        $bodyTpl = ($override && '' !== trim($override->getBody()))
+            ? $override->getBody()
+            : $this->translator->trans($type->defaultBody, [], 'emails', $locale);
 
         // site_name is auto-provided (callers needn't repeat it); explicit values win.
         $values = array_merge(['site_name' => (string) ($this->settings->get('site_name') ?: 'Tallyst')], $tagValues);

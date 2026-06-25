@@ -1,0 +1,85 @@
+# emails domain (en) — FormBuilder order/form email defaults. Auto-discovered via the bundle.
+email:
+    order_confirmation:
+        label: Order confirmation (to the customer)
+        subject: 'Order confirmation #{order_id}'
+        body: |
+            <p>Thank you for your order!</p>
+            <p><strong>Order #{order_id}</strong><br>
+            Product: {form_name}<br>
+            Amount: {amount} {currency}<br>
+            Status: paid</p>
+            <p>{site_name}</p>
+        tag:
+            order_id: Order number.
+            amount: Amount (formatted).
+            currency: Currency.
+            tax_amount: Tax amount (formatted).
+            net_amount: Net amount (excl. tax).
+            tax_rate: Tax rate (%).
+            tax_name: Tax name.
+            form_name: Form/product name.
+            variant: Selected variant (empty if none).
+            site_name: The site name.
+    order_admin:
+        label: New order (to the admin)
+        subject: 'New paid order #{order_id}'
+        body: |
+            <p>A new paid order.</p>
+            <p><strong>Order #{order_id}</strong><br>
+            Form: {form_name}<br>
+            Amount: {amount} {currency}<br>
+            Customer: {customer_email}</p>
+        tag:
+            order_id: Order number.
+            amount: Amount (formatted).
+            currency: Currency.
+            tax_amount: Tax amount (formatted).
+            net_amount: Net amount (excl. tax).
+            tax_rate: Tax rate (%).
+            tax_name: Tax name.
+            form_name: Form/product name.
+            variant: Selected variant (empty if none).
+            customer_email: Customer e-mail.
+            site_name: The site name.
+    order_delivered:
+        label: Order delivered (to the customer)
+        subject: 'Your order #{order_id} has been delivered'
+        body: |
+            <p>Good news — your order has been delivered.</p>
+            <p><strong>Order #{order_id}</strong><br>
+            Product: {form_name}</p>
+            <p>Thank you for your trust!</p>
+            <p>{site_name}</p>
+        tag:
+            order_id: Order number.
+            form_name: Form/product name.
+            variant: Selected variant (empty if none).
+            site_name: The site name.
+    order_refunded:
+        label: Order refunded (to the customer)
+        subject: 'Refund for order #{order_id}'
+        body: |
+            <p>Your order has been refunded.</p>
+            <p><strong>Order #{order_id}</strong><br>
+            Product: {form_name}<br>
+            Refunded amount: {amount}</p>
+            <p>The funds will return to your payment method within the usual time.</p>
+            <p>{site_name}</p>
+        tag:
+            order_id: Order number.
+            amount: Amount (formatted).
+            form_name: Form/product name.
+            variant: Selected variant (empty if none).
+            site_name: The site name.
+    form_notification:
+        label: Form submission notification
+        subject: 'New submission: {form_name}'
+        body: |
+            <p>A new submission of the form "{form_name}".</p>
+            <pre>{submission_summary}</pre>
+            <p>{site_name}</p>
+        tag:
+            form_name: Form name.
+            submission_summary: 'Submission summary (field: value).'
+            site_name: The site name.

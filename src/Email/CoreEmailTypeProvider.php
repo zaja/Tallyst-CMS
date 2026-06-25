@@ -9,23 +9,19 @@ class CoreEmailTypeProvider implements EmailTypeProviderInterface
 {
     public function getEmailTypes(): iterable
     {
+        // Label/tag-descriptions/defaultSubject/defaultBody are `emails`-domain keys (translated at the
+        // render site: labels/tags in the admin, subject/body in EmailRenderer with the app_locale).
         yield new EmailType(
             key: 'password_reset',
-            label: 'Promjena lozinke',
+            label: 'email.password_reset.label',
             tags: [
-                'reset_url' => 'Poveznica za postavljanje nove lozinke (obavezno).',
-                'site_name' => 'Naziv sajta.',
+                'reset_url' => 'email.password_reset.tag.reset_url',
+                'site_name' => 'email.password_reset.tag.site_name',
             ],
             requiredTags: ['reset_url'],
             canDisable: false,
-            defaultSubject: 'Promjena lozinke — {site_name}',
-            defaultBody: <<<HTML
-                <p>Bok,</p>
-                <p>Zatražena je promjena lozinke za tvoj račun na {site_name}. Za postavljanje nove lozinke otvori poveznicu:</p>
-                <p><a href="{reset_url}">{reset_url}</a></p>
-                <p>Ako nisi ti zatražio/la promjenu, slobodno zanemari ovaj e-mail.</p>
-                <p>{site_name}</p>
-                HTML,
+            defaultSubject: 'email.password_reset.subject',
+            defaultBody: 'email.password_reset.body',
         );
     }
 }
