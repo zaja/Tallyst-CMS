@@ -249,6 +249,15 @@ class InstallCommand extends Command
             $pairs['APP_SECRET'] = bin2hex(random_bytes(16));
             $io->writeln('• Generiran APP_SECRET.');
         }
+        // Default to PROD (safe: neutral error pages, optimised) without asking. Most installs are
+        // production; a developer who wants dev gets an instruction in the final message. Only-if-
+        // missing, so a re-run/--force never clobbers a developer's deliberate APP_ENV=dev.
+        if ($this->envWriter->hasNonEmpty('APP_ENV')) {
+            $io->writeln('• APP_ENV već postavljen u .env.local — zadržan.');
+        } else {
+            $pairs['APP_ENV'] = 'prod';
+            $io->writeln('• Postavljen APP_ENV=prod (sigurno za produkciju).');
+        }
         $this->envWriter->upsert($pairs);
         $io->writeln('• Zapisani DATABASE_URL, DEFAULT_URI, ORDER_ADMIN_EMAIL (perms 0600).');
 
@@ -307,8 +316,11 @@ class InstallCommand extends Command
             '       systemctl --user restart tallyst-messenger',
             '     (user-level systemd unit u ~/.config/systemd/user/ + `loginctl enable-linger` — vidi CLAUDE.md)',
             '  2) Unesi Stripe/PayPal ključeve i SMTP u Postavke (admin).',
-            '  3) Za produkciju: APP_ENV=prod, live ključevi, te webhook endpoint BEZ basic-auth',
+            '  3) Live Stripe/PayPal ključevi + webhook endpoint BEZ basic-auth',
             '       (/webhook/stripe + /webhook/paypal — inače plaćanje uspije ali narudžba ostane "U obradi").',
+            '',
+            '<comment>Mod:</comment> instalacija je u PROD modu (neutralne greške, optimizirano) — preporučeno.',
+            '  Za razvojni mod (detaljne greške/debug) postavi APP_ENV=dev u .env.local, pa cache:clear.',
         ]);
 
         return Command::SUCCESS;
@@ -380,6 +392,12 @@ class InstallCommand extends Command
             'DEFAULT_URI' => false,
             'ORDER_ADMIN_EMAIL' => false,
             'SETTINGS_ENCRYPTION_KEY' => false,
+            // Strip APP_ENV/APP_DEBUG too: Dotenv won't let .env.local override an env var the
+            // child inherited from the parent ($_SERVER/$_ENV — and bootEnv even sets APP_DEBUG),
+            // so without this the subprocesses would run in the parent's (dev) mode instead of the
+            // prod we just wrote to .env.local. Unset → each child recomputes prod + APP_DEBUG=0.
+            'APP_ENV' => false,
+            'APP_DEBUG' => false,
         ], $extra);
     }
 
