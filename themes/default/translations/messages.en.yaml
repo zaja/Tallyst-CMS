@@ -1,0 +1,4 @@
+# messages domain (en) — default theme. Registered by ThemeTranslationPass (parent before child).
+theme:
+    footer:
+        powered_by: Powered by

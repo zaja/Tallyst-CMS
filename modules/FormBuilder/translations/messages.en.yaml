@@ -1,0 +1,3 @@
+# messages domain (en) — FormBuilder module. Auto-discovered via the bundle's translations/ dir.
+form:
+    submit: Send

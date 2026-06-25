@@ -133,8 +133,8 @@ class TwoFactorTest extends WebTestCase
     private function passwordLogin(KernelBrowser $client, User $user, string $password): void
     {
         $client->followRedirects(true);
-        $client->request('GET', '/admin/login');
-        $client->submitForm('Prijava', ['_username' => $user->getEmail(), '_password' => $password]);
+        $crawler = $client->request('GET', '/admin/login');
+        $client->submit($crawler->filter('form')->form(['_username' => $user->getEmail(), '_password' => $password]));
     }
 
     private function createUser(string $password, ?string $totpSecret = null, ?string $backupCode = null): User

@@ -1,0 +1,4 @@
+# messages domain (hr) — default theme.
+theme:
+    footer:
+        powered_by: Pokreće

@@ -1,0 +1,4 @@
+# messages domain (hr) — front / visitor / shared, core-owned keys.
+security:
+    login:
+        submit: Prijava

@@ -32,7 +32,7 @@
 
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-        <button type="submit">Prijava</button>
+        <button type="submit">{{ 'security.login.submit'|trans }}</button>
 
         <p style="text-align: center; margin: 1rem 0 0; font-size: .9rem;">
             <a href="{{ path('app_forgot_password_request') }}" style="color: #2563eb; text-decoration: none;">Zaboravljena lozinka?</a>

@@ -1,0 +1,5 @@
+# messages domain (en) — front / visitor / shared, core-owned keys.
+# Default language: English. Extracted strings land here across the i18n passes.
+security:
+    login:
+        submit: Sign in

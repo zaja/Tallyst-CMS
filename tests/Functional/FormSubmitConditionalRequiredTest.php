@@ -30,13 +30,13 @@ class FormSubmitConditionalRequiredTest extends WebTestCase
         // 1) a != yes → b (required) is hidden → submit succeeds, one submission stored.
         $crawler = $client->request('GET', '/'.$slug);
         self::assertResponseIsSuccessful('form page renders');
-        $form = $crawler->selectButton('Pošalji')->form(['a' => 'no', 'b' => '']);
+        $form = $crawler->filter('button.fb-submit')->form(['a' => 'no', 'b' => '']);
         $client->submit($form);
         self::assertSame(1, $this->submissionCount($em), 'hidden required field must not block submit');
 
         // 2) a == yes → b (required) is visible but empty → blocked, no new submission.
         $crawler = $client->request('GET', '/'.$slug);
-        $form = $crawler->selectButton('Pošalji')->form(['a' => 'yes', 'b' => '']);
+        $form = $crawler->filter('button.fb-submit')->form(['a' => 'yes', 'b' => '']);
         $client->submit($form);
         self::assertSame(1, $this->submissionCount($em), 'visible empty required field must block submit');
     }

@@ -67,7 +67,7 @@
             <div class="footer-branding">
                 <span>{{ footer_copyright ?: '© ' ~ 'now'|date('Y') ~ ' ' ~ (setting('site_name')|default('Tallyst')) }}</span>
                 {% if setting('footer_show_powered_by') %}
-                    <span>Pokreće <a href="https://github.com/zaja/Tallyst-CMS" rel="noopener">Tallyst CMS</a></span>
+                    <span>{{ 'theme.footer.powered_by'|trans }} <a href="https://github.com/zaja/Tallyst-CMS" rel="noopener">Tallyst CMS</a></span>
                 {% endif %}
             </div>
         </div>

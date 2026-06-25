@@ -29,13 +29,13 @@ class LoginThrottlingTest extends WebTestCase
 
         // Exhaust the local limiter with wrong passwords.
         for ($i = 0; $i < self::MAX_ATTEMPTS; ++$i) {
-            $client->request('GET', '/admin/login');
-            $client->submitForm('Prijava', ['_username' => $user->getEmail(), '_password' => 'wrong-'.$i]);
+            $crawler = $client->request('GET', '/admin/login');
+            $client->submit($crawler->filter('form')->form(['_username' => $user->getEmail(), '_password' => 'wrong-'.$i]));
         }
 
         // Next attempt uses the CORRECT password — still bounced to login (throttled), not /admin.
-        $client->request('GET', '/admin/login');
-        $client->submitForm('Prijava', ['_username' => $user->getEmail(), '_password' => 'Correct-Passw0rd-1']);
+        $crawler = $client->request('GET', '/admin/login');
+        $client->submit($crawler->filter('form')->form(['_username' => $user->getEmail(), '_password' => 'Correct-Passw0rd-1']));
         self::assertResponseRedirects('/admin/login');
 
         // And not authenticated: an admin page bounces to login.

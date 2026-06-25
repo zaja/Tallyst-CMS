@@ -2,4 +2,7 @@ framework:
     default_locale: en
     translator:
         default_path: '%kernel.project_dir%/translations'
+        # Missing keys in the active locale fall back to English (the default language).
+        fallbacks:
+            - en
         providers:

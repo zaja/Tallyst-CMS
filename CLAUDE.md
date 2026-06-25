@@ -382,6 +382,39 @@ This pass is intentionally scoped: **footer config, per-page hero, dark mode are
   remains for alt/title tweaks and image replacement (replacing the file changes the image
   everywhere that Media id is referenced — featured FK, `[image id=N]`, `logo_media_id`).
 
+## Translations / UI i18n (NON-NEGOTIABLE convention)
+UI **interface** is translatable; **content stays single-language** (we do NOT do content i18n). **One
+global `app_locale` Setting governs BOTH admin and front** — `LocaleSubscriber` (kernel.request, prio
+100) reads it and `setLocale()`s every main request (no per-user, no per-visitor, no front switcher).
+Edited at **Postavke → Lokalizacija → "Jezik"** (CHOICE `en`/`hr`). **Default = English; Croatian is the
+second language.** `translation.yaml`: `default_locale: en`, `fallbacks: [en]` (a missing/un-extracted
+key falls back to its English default). EVERY user-facing string — core, themes, modules — goes through
+`trans()` / `|trans`; hardcoding UI text is not allowed. (Extraction is phased across passes — ~480
+strings; the visitor-front is small, the bulk is admin + settings + email + readiness. PASS 2 built the
+infra + proved it on 3 keys: `security.login.submit`, `form.submit`, `theme.footer.powered_by`.)
+- **Domains:** `messages` (front / visitor / shared / flash / **theme** strings), `admin` (back-office
+  UI), `validators` (constraint messages — Symfony uses this domain automatically), `emails` (email-type
+  **default** subjects/bodies; admin overrides stay free-form content).
+- **Key naming:** dotted, context-prefixed — `order.status.pending`, `admin.menu.content`,
+  `theme.nav.skip_link`, `email.reset.subject`.
+- **Where each component carries its catalogs (the unified convention):**
+  - **Core** → `translations/<domain>.<locale>.yaml`.
+  - **Modules** → `modules/<Name>/translations/<domain>.<locale>.yaml` — **auto-discovered, no wiring**
+    (a module is a registered bundle whose `getPath()` is `modules/<Name>/`, so Symfony scans its
+    `translations/`; confirmed working in PASS 2).
+  - **Themes** → `themes/<name>/translations/<domain>.<locale>.yaml` — themes are NOT bundles, so
+    **`App\Theme\ThemeTranslationPass`** (compiler pass, registered in `Kernel::build()`) globs
+    `themes/*/translations/` and registers each with the translator, **parent BEFORE child** (a child
+    theme overrides parent keys — same inheritance as templates/assets). Theme Twig uses plain `|trans`
+    (`messages` domain), `theme.*` keys. A third-party theme just drops a `translations/` folder.
+- **CLI / commands stay ENGLISH-only** — `app:install` runs before the DB/Settings exist, so it can't
+  read `app_locale`; other commands follow Symfony's English-console norm. Not translated.
+- **The English catalog is authored content** (translate from the existing Croatian — natural English,
+  not literal), not just a mechanical key-swap.
+- **Functional tests must interact with forms LOCALE-AGNOSTICALLY** — select the submit button by a
+  stable selector (`$crawler->filter('form')->form([...])`, or `filter('button.fb-submit')`), NEVER by
+  translated button text — so translating UI never breaks the suite.
+
 ## Directory layout
 ```
 src/                  # CORE
