@@ -73,7 +73,12 @@ Tallyst follows [semantic versioning](https://semver.org) from v1.0.0 — the co
 
 ## Screenshots
 
-_Coming soon._
+<p align="center">
+  <a href="docs/images/admin-dark.png"><img src="docs/images/admin-dark.png" width="49%" alt="Tallyst admin — dark theme"></a>
+  <a href="docs/images/admin-light.png"><img src="docs/images/admin-light.png" width="49%" alt="Tallyst admin — light theme"></a>
+</p>
+
+<p align="center"><sub>The EasyAdmin back office — dark and light themes. Click an image for the full size.</sub></p>
 
 ## Feedback
 
