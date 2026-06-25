@@ -39,9 +39,14 @@
     {{ parent() }}
 {% endblock %}
 
-{# Discreet "Tallyst v1.1.0" at the bottom of the sidebar (under the menu). Version is read from
-   Composer metadata via VersionProvider (no hardcoding); falls back to "(dev)" on a git clone. #}
+{# Discreet "Tallyst v1.1.0" pinned to the BOTTOM of the sidebar (under the menu). Version is read
+   from Composer metadata via VersionProvider (no hardcoding); falls back to "(dev)" on a git clone.
+   The EA `.wrapper` is a grid with min-block-size:100vh, so `.sidebar-wrapper` is full-height; making
+   `.sidebar` a full-height flex column lets `mt-auto` push the version to the very bottom. #}
 {% block sidebar %}
+    <style>
+        .sidebar-wrapper > .sidebar { display: flex; flex-direction: column; min-block-size: 100%; }
+    </style>
     {{ parent() }}
     <div class="tallyst-version text-muted small px-3 py-2 mt-auto" style="opacity: .65;">
         Tallyst {{ tallyst_version().coreVersion }}
