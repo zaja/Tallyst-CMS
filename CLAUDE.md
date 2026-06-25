@@ -72,9 +72,10 @@ built now.
   + provider choice + per-product limit, price variants, and inclusive tax + CSV export. **NOT** automated
   delivery (post-v1).
 - **Phase 3 — Standalone installer + deployment readiness (CURRENT).** WordPress-like install
-  procedure — **Pass 1 (interactive `app:install` wizard) DONE**; remaining: the Deployment
-  Readiness Panel (worker activation snippet + heartbeat status + encryption-key status + go-live
-  checks) and the Composer post-create hook / Packagist packaging.
+  procedure — **Pass 1 (interactive `app:install` wizard) DONE; Pass 2 (readiness panel + worker
+  heartbeat) DONE** (incl. `APP_ENV=prod` default in the installer); remaining: the worker-activation
+  snippet generator + encryption-key rotation command (in the readiness panel), and the Composer
+  post-create hook / Packagist packaging.
 - **Post-v1 / future.** Automated digital delivery (downloads/licences); **Import / content packs**
   (a content importer with format adapters — see the backlog); and any deferred item that later
   passes the target-user filter.
@@ -1141,10 +1142,16 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
   → DB prompts with **live connection validation** (raw DBAL probe, re-prompt loop, never proceeds
   on a broken connection; auto-detects `serverVersion` for the DSN) → admin email/password (hidden,
   confirmed) + site name + `DEFAULT_URI` → write `.env.local` (idempotent upsert; `APP_SECRET`
-  generate-if-missing/never-rotate; encryption key via `EncryptionKeyProvisioner`; perms 0600) →
-  migrations + seed + admin + asset fallback + `cache:clear` → Ghost-style final message
-  (worker / Stripe-PayPal / prod+webhook). Optional CI flags (`--db-* --admin-* --site-* --force
-  --skip-assets`) + the `TALLYST_ADMIN_PASSWORD` env for unattended install.
+  generate-if-missing/never-rotate; **`APP_ENV=prod` by DEFAULT, only-if-missing** — see below;
+  encryption key via `EncryptionKeyProvisioner`; perms 0600) → migrations + seed + admin + asset
+  fallback + `cache:clear` → Ghost-style final message (worker / Stripe-PayPal / prod+webhook; +
+  a dev-mode instruction). Optional CI flags (`--db-* --admin-* --site-* --force --skip-assets`)
+  + the `TALLYST_ADMIN_PASSWORD` env for unattended install.
+  - **APP_ENV=prod by default (no prompt).** Most installs are production; a dev-mode Symfony
+    default would expose detailed stack traces on a public site + run slower. The wizard writes
+    `APP_ENV=prod` **only-if-missing** (like `APP_SECRET`), so a re-run/`--force` never clobbers a
+    developer's deliberate `APP_ENV=dev`; dev mode is offered via an instruction in the final
+    message (`APP_ENV=dev` + `cache:clear`), not a prompt.
   - **⚠️ ARCHITECTURE — DB-mutating steps MUST run as fresh-kernel SUBPROCESSES (the crux).**
     `symfony/runtime` runs `Dotenv::bootEnv()` ONCE before the kernel (`usePutenv=false`), so the
     boot-time `DATABASE_URL` is frozen in `$_ENV`/`$_SERVER` and baked into the compiled container.
@@ -1155,8 +1162,12 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
     FRESH kernel reading the new `.env.local`. **Symfony Process inherits `$_SERVER`+`$_ENV`, so the
     child would otherwise see the parent's stale `DATABASE_URL` (and Dotenv lets a present env var
     win over the file)** — the wizard passes a child env that sets the `.env`-managed keys
-    (`DATABASE_URL`/`APP_SECRET`/`DEFAULT_URI`/`ORDER_ADMIN_EMAIL`/`SETTINGS_ENCRYPTION_KEY`) to
-    `false` (Process removes them) so the child re-reads them fresh from the file. The DB connection
+    (`DATABASE_URL`/`APP_SECRET`/`DEFAULT_URI`/`ORDER_ADMIN_EMAIL`/`SETTINGS_ENCRYPTION_KEY` **plus
+    `APP_ENV`/`APP_DEBUG`**) to `false` (Process removes them) so the child re-reads them fresh from
+    the file. `APP_ENV`/`APP_DEBUG` MUST be stripped too or the subprocesses keep the parent's (dev)
+    mode — `bootEnv` even derives `APP_DEBUG` from `APP_ENV` and won't override an inherited value, so
+    without the strip the migrate/finalize/asset/cache steps would run dev despite `.env.local=prod`.
+    The DB connection
     test + the install guard use a RAW `DriverManager` connection built from the inputs (independent
     of the container). The admin password is forwarded via the **private child env**
     (`TALLYST_ADMIN_PASSWORD`), never argv (argv shows in `ps`/history).
@@ -1169,8 +1180,9 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
     password env, idempotent). Unit tests: `tests/Install/*` (DsnBuilder, EnvLocalWriter,
     StateDetector predicate) + `tests/Command/InstallFinalizeCommandTest` (validation). The
     interactive wizard itself is smoke-only (user runs it on a clean CloudPanel site/empty DB).
-  - **NOT in Pass 1 (later passes):** readiness panel (below), the Composer `post-create-project-cmd`
-    hook + Packagist packaging, web installer, SMTP in the wizard (deferred to Postavke → Email).
+  - **NOT in Pass 1 (later passes):** the Composer `post-create-project-cmd` hook + Packagist
+    packaging, web installer, SMTP in the wizard (deferred to Postavke → Email). (Readiness panel =
+    Pass 2, DONE — see "Readiness panel" below.)
 - **Stripe auto-webhook-setup + config diagnostics (NOT built).** Beyond the pass-3 copy-paste guide:
   Tallyst creates/updates the Stripe webhook endpoint via the API (so the admin doesn't hand-add it),
   and a "check Stripe config" diagnostic that reads the configured endpoint and warns if
@@ -1215,30 +1227,41 @@ Order matters (see Roadmap): theme + demo content are the *lens*, then footer/he
     publicly reachable" routes — `/webhook/stripe`, `/webhook/paypal`, **`/sitemap.xml`, `/robots.txt`** —
     must bypass any future maintenance mode / basic-auth (crawlers + payment providers can't authenticate).
 
-### Deployment Readiness Panel (Phase 3 — installer faza — NE gradi se sad)
-Admin "Sustav/Deployment" panel: operativni go-live status + generirani setup snippeti.
-Dizajn-dogovor za installer fazu.
-
-- Worker aktivacija: generira stvarnu komandu/config za messenger worker. ODLUKA:
-  daemon (systemd/supervisor), NE cron (odabran trajni worker). Generira s detektiranim
-  putanjama (php8.5, project dir, bin/console messenger:consume async). CMS GENERIRA,
-  admin POKRENE kao server user — CMS nikad ne izvršava (web app ne smije instalirati
-  system servise = sigurnosna granica). Napomena: daemon setup traži root. (PRAKSA, naučeno
-  2026-06-21: user-level systemd unit u `~/.config/systemd/user/` + `loginctl enable-linger`
-  radi BEZ roota i preživi logout/reboot — tako je i pokrenut trenutni worker; system-level
-  `/etc/systemd/system` s `User=` i dalje traži root.)
-- Worker status indikator: preko HEARTBEATA, NE detekcije procesa (bez shell_exec/ps —
-  često ugašeno, krhko, security smell). Worker piše "last seen" timestamp na Messenger
-  WorkerRunningEvent (throttlano, u cache/status store); panel čita → ✓ aktivan ako svjež,
-  ✗ ako star. Dopuna: health red (broj pending + dob najstarije, iz Doctrine transport tablice).
-- Vidljivost komande: de-emfazirana (collapsible) kad radi, istaknuta kad ne radi — NE
-  skrivati potpuno (stari heartbeat ≠ sigurno mrtav; komanda je korisna referenca i kad radi).
-- Enkripcijski ključ u istom panelu: status SETTINGS_ENCRYPTION_KEY (postavljen/fali →
-  app:install); rotacija = jedan secret (SMTP lozinka), promijeni ključ + ponovno upiši
-  lozinku (write-only re-enkriptira); rotate-key komanda tek ako se enkriptirani settingsi
-  namnože; decrypt-fail graciozno (env fallback + upozorenje).
-- Ostali readiness checkovi (future): APP_ENV=prod provjera, mailer konfiguriran + test.
-- Preduvjet: heartbeat subscriber je mali enabling dio (može se dodati i ranije ako zatreba).
+### Readiness panel (deployment readiness) — DONE (Pass 2)
+Admin screen **Sustav → Provjera spremnosti** (`/admin/readiness`, `ReadinessController`, ROLE_ADMIN,
+EA shell) that AUTO-diagnoses whether the install is configured + production-ready. Informational
+ONLY — it never changes config (diagnoses + instructs).
+- **Honesty is the core principle — FOUR statuses** (`App\Readiness\Status`): OK / WARNING / PROBLEM /
+  **MANUAL ("🔍 provjeri ručno")**. MANUAL is the deliberate honest result for checks the app can't
+  verify with certainty (worker liveness, webhook reachability, real TLS) — shown with instructions,
+  NEVER faked green, so a green badge can be trusted. Don't add a check that claims green it can't prove.
+- **Tagged-provider IoC** (`ReadinessCheckProviderInterface`, `#[AutoconfigureTag('app.readiness_check')]`
+  → `ReadinessReport` aggregates + groups + counts; same idiom as settings/dashboard widgets, so modules
+  can add checks). Core ships two: **`ConfigReadinessProvider`** (pure → unit-tested: APP_SECRET,
+  SETTINGS_ENCRYPTION_KEY base64→32B, HTTPS via DEFAULT_URI scheme, APP_ENV [dev→WARNING "za produkciju
+  prod", NOT fatal — local dev is legit], DEFAULT_URI absolute/not-localhost, mail [DB SMTP or MAILER_DSN;
+  smtp-password decryptable; mail_from; order_admin_email not the placeholder]) and **`InfraReadinessProvider`**
+  (smoke: assets manifest, published theme, var/+uploads writable, pending migrations via `DependencyFactory`,
+  worker heartbeat + queue backlog/failed).
+- **Worker = HEARTBEAT (now EXISTS, was the planned enabling part):** `App\Messenger\WorkerHeartbeat`
+  (cache.app: key + freshness window) + `WorkerHeartbeatSubscriber` (throttled write on Messenger
+  `WorkerRunningEvent`). Panel: fresh→OK, stale/missing→**MANUAL** (never a hard "dead" claim — a just-
+  restarted worker hasn't beaten yet; the systemctl hint is shown). NO `shell_exec`/`ps` (brittle/security
+  smell). Supplementary: `messenger_messages` backlog (queue_name='default' undelivered) + failed count.
+- **Webhook 401 self-test (the recurring go-live trap):** FormBuilder-owned (it owns the webhook routes)
+  on-demand button → `WebhookReachabilityProbe` POSTs an EMPTY/UNSIGNED body to its own webhook URL (built
+  from DEFAULT_URI). The unsigned body fails signature verification INSIDE the controller → HTTP **400**
+  (no order logic runs — SAFE). **401 = front basic-auth blocks the route** (payment succeeds but the order
+  stays "U obradi"). Honest caveat surfaced: a 401 can be a FALSE alarm under an IP-allowlist (the call
+  isn't from a Stripe/PayPal IP), and a self-call can fail on hairpin NAT → MANUAL. On-demand (button) so
+  the HTTP test never slows the admin (`form_builder_admin_webhook_check`, JSON, CSRF; `formbuilder--webhook-check`
+  Stimulus renders verdicts XSS-safe). Core panel includes the FB partial (loose Twig coupling, like `_payment_info`).
+- **Still future (NOT in Pass 2):** the panel REPORTS worker status but does NOT generate the worker
+  activation snippet (the original "CMS generates the systemd/`messenger:consume async` command with detected
+  paths; admin runs it as the server user — CMS never installs system services = security boundary"; user-level
+  unit in `~/.config/systemd/user/` + `loginctl enable-linger` works rootless, learned 2026-06-21). Also future:
+  an encryption-key rotation command (rotate the one secret = SMTP password, write-only re-encrypts; only if
+  encrypted settings multiply).
 
 ### Post-v1 / future (deferred — NOT v1)
 - **Theme upload via browser (V2 — Shopify-model).** V1 is auto-detect + activate (folders dropped into
@@ -1291,7 +1314,14 @@ Dizajn-dogovor za installer fazu.
 Copy `modules/FormBuilder/` — it is the reference module. Its bundle class
 (`AbstractBundle`) self-registers its Doctrine mapping and its `config/services.php`,
 and overrides `getPath()` to `__DIR__` (the bundle lives in `modules/<Name>/`, not a
-`src/` subdir, so the default heuristic mis-resolves it). Implement `ModuleInterface`
+`src/` subdir, so the default heuristic mis-resolves it).
+- **⚠️ The module's `config/services.php` MUST exclude `config/` in its `->load('Tallyst\\<Name>\\',
+  __DIR__.'/../')` PSR-4 scan** (alongside `Entity/` and the `*Bundle.php`). The scan globs the module
+  root for service classes; `config/services.php` is a DI config file, not a class, so the scan derives a
+  bogus FQCN (`Tallyst\<Name>\config\services`) from it. **DEV tolerates this; the PROD container compile
+  THROWS** "Expected to find class … in file …/config/services.php". This bit both FormBuilder and Media
+  (latent — surfaced only once `app:install` started compiling the prod container). Any new module with a
+  `config/` loader: exclude `__DIR__.'/../config/'`. Implement `ModuleInterface`
 (metadata → shows in the registry; **`isCore()`** — core modules can't be disabled) and optionally
 `AdminModuleInterface` (`getAdminMenuItems()` returns **section-keyed** items
 `[AdminModuleInterface::SECTION_CONTENT => [MenuItem…], SECTION_SALES => […]]` — the dashboard places
