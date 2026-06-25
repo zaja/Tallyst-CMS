@@ -1,10 +1,22 @@
 {
     "type": "project",
+    "keywords": ["cms", "symfony", "ecommerce", "self-hosted", "payments", "stripe", "paypal"],
+    "homepage": "https://github.com/zaja/Tallyst-CMS",
     "license": "proprietary",
+    "authors": [
+        {
+            "name": "Sve je dobro j.d.o.o.",
+            "homepage": "https://tallyst.org"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/zaja/Tallyst-CMS/issues",
+        "source": "https://github.com/zaja/Tallyst-CMS"
+    },
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.4",
+        "php": ">=8.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "doctrine/doctrine-bundle": "^3.2",
@@ -99,6 +111,11 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "post-create-project-cmd": [
+            "@php bin/console importmap:install",
+            "@php bin/console asset-map:compile",
+            "@php bin/console app:theme:assets:install"
         ]
     },
     "conflict": {

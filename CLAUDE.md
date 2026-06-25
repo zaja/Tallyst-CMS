@@ -71,17 +71,18 @@ built now.
   admin actions, refund (admin + provider webhook), Stripe + PayPal config in Postavke, PayPal processor
   + provider choice + per-product limit, price variants, and inclusive tax + CSV export. **NOT** automated
   delivery (post-v1).
-- **Phase 3 — Standalone installer + deployment readiness (CURRENT).** WordPress-like install
-  procedure — **Pass 1 (interactive `app:install` wizard) DONE; Pass 2 (readiness panel + worker
-  heartbeat) DONE** (incl. `APP_ENV=prod` default in the installer) — both **smoke-tested on a clean
-  prod CloudPanel install**; remaining: the worker-activation
-  snippet generator + encryption-key rotation command (in the readiness panel), and the Composer
-  post-create hook / Packagist packaging.
+- **Phase 3 — Standalone installer + deployment readiness — DONE → v1.0.0.** WordPress-like install:
+  **Pass 1 (interactive `app:install` wizard) DONE; Pass 2 (readiness panel + worker heartbeat) DONE**
+  (incl. `APP_ENV=prod` default) — both **smoke-tested on a clean prod CloudPanel install**; **Pass 3
+  (Packagist packaging: `tallyst/cms` composer metadata + MIT LICENSE + `post-create-project-cmd`
+  asset hook) DONE** → **v1.0.0** (cut by a manual `git tag`, the user's action). Deferred (in the
+  readiness panel, post-1.0): worker-activation snippet generator + encryption-key rotation command.
+  Next: README / install guide.
 - **Post-v1 / future.** Automated digital delivery (downloads/licences); **Import / content packs**
   (a content importer with format adapters — see the backlog); and any deferred item that later
   passes the target-user filter.
 
-## Versioning (semver — rule ACTIVE from v1.0.0)
+## Versioning (semver — ACTIVE as of v1.0.0)
 Tallyst follows **semver (MAJOR.MINOR.PATCH)** from the first stable release.
 - **PATCH** = bugfix (backward-compatible). **MINOR** = new feature (backward-compatible).
   **MAJOR** = breaking change (a core-API change that may break existing installs/addons).
@@ -89,9 +90,10 @@ Tallyst follows **semver (MAJOR.MINOR.PATCH)** from the first stable release.
 - **Semver is the API CONTRACT to the addon ecosystem:** MINOR/PATCH must NOT break addons (core
   API stays stable); MAJOR signals "addons: re-check compatibility". Addons declare the compatible
   core version (`"tallyst/cms": "^1.0"`).
-- **Timing:** the rule **activates at v1.0.0** (end of Phase 3 — installer done, Tallyst distributed).
-  Before v1.0.0 (active development) tagging is NOT required (no Packagist sync yet). The current
-  dev (tallystorg) builds toward v1.0.0.
+- **Timing:** the rule is **ACTIVE as of v1.0.0** (end of Phase 3 — installer + readiness done,
+  distribution-ready). Packaging (Pass 3) is committed; **v1.0.0 is cut by a manual `git tag` (the
+  user runs it — irreversible + triggers Packagist sync), not by Claude.** From v1.0.0 on, every
+  release is tagged.
 
 ## WHAT
 A Symfony 8 application built on three pillars:
