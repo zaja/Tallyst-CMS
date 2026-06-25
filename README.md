@@ -40,7 +40,7 @@ php8.5 bin/console app:install
 > If your default `php` is older than 8.5, run Composer through the right binary:
 > `php8.5 $(which composer) create-project tallyst/cms my-site`
 
-A detailed installation guide (server setup, the background worker for e-mail/orders, going live) is coming in `docs/INSTALL.md`.
+For the full version — server setup, the background worker for e-mail/orders, webhooks, and going live — see the [detailed installation guide](docs/INSTALL.md).
 
 ## Requirements
 
