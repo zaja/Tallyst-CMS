@@ -1,5 +1,6 @@
 # admin domain (en) — Media back-office. Auto-discovered via the bundle.
 admin:
+    menu: { media: Media }
     media:
         entity: { singular: Media, plural: Media }
         field:

@@ -43,11 +43,13 @@ class FormBuilderModule implements AdminModuleInterface
         // setPermission here just hides the links from editors. Forme = a content tool (Sadržaj);
         // Narudžbe = sales data (Prodaja). The dashboard places each group into the matching section.
         return [
+            // Labels are admin-domain keys — the dashboard's translation_domain ('admin') translates
+            // every menu item (incl. these module-contributed ones) via MenuFactory.
             AdminModuleInterface::SECTION_CONTENT => [
-                MenuItem::linkToRoute('Forme', 'fa fa-wpforms', 'form_builder_admin_index')->setPermission('ROLE_ADMIN'),
+                MenuItem::linkToRoute('admin.menu.forms', 'fa fa-wpforms', 'form_builder_admin_index')->setPermission('ROLE_ADMIN'),
             ],
             AdminModuleInterface::SECTION_SALES => [
-                MenuItem::linkTo(OrderCrudController::class, 'Narudžbe', 'fa fa-receipt')->setPermission('ROLE_ADMIN'),
+                MenuItem::linkTo(OrderCrudController::class, 'admin.menu.orders', 'fa fa-receipt')->setPermission('ROLE_ADMIN'),
             ],
         ];
     }

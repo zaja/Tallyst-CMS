@@ -1,5 +1,6 @@
 # admin domain (hr) — Media back-office.
 admin:
+    menu: { media: Mediji }
     media:
         entity: { singular: Medij, plural: Mediji }
         field:

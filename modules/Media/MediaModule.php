@@ -43,7 +43,8 @@ class MediaModule implements AdminModuleInterface
         // favicon) moved into Postavke → Branding (admin-only), so no standalone item here.
         return [
             AdminModuleInterface::SECTION_CONTENT => [
-                MenuItem::linkTo(MediaCrudController::class, 'Mediji', 'fa fa-images'),
+                // Admin-domain key — translated by the dashboard's translation_domain via MenuFactory.
+                MenuItem::linkTo(MediaCrudController::class, 'admin.menu.media', 'fa fa-images'),
             ],
         ];
     }

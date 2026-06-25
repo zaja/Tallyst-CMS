@@ -1,5 +1,7 @@
 # admin domain (en) — FormBuilder back-office (Orders). Auto-discovered via the bundle.
 admin:
+    # Sidebar items the module contributes via getAdminMenuItems() (merge into core admin.menu.*).
+    menu: { forms: Forms, orders: Orders }
     order:
         entity: { singular: Order, plural: Orders }
         title: { detail: 'Order #%id%' }
