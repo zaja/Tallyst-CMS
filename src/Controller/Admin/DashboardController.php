@@ -154,6 +154,7 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToRoute('Postavke', 'fa fa-gear', 'admin_settings')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkToRoute('Email predlošci', 'fa fa-envelope-open-text', 'admin_email_templates')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkTo(UserCrudController::class, 'Korisnici', 'fa fa-users')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToRoute('Provjera spremnosti', 'fa fa-clipboard-check', 'admin_readiness')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkToRoute('Sigurnost', 'fa fa-shield-halved', 'admin_security');
 
         yield MenuItem::section('Izgled')->setPermission('ROLE_ADMIN');

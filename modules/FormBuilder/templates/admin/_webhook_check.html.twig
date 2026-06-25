@@ -1,0 +1,21 @@
+{# Readiness panel: on-demand webhook 401 self-test. FormBuilder owns the webhook routes, so this
+   partial (button + probe controller) lives here and is included by templates/admin/readiness.html.twig
+   (loose Twig coupling, like _payment_info). On-demand (button) so the HTTP self-test never slows the
+   admin. #}
+<div class="card mb-3" data-controller="formbuilder--webhook-check"
+     data-formbuilder--webhook-check-url-value="{{ path('form_builder_admin_webhook_check') }}"
+     data-formbuilder--webhook-check-csrf-value="{{ csrf_token('webhook_check') }}">
+    <div class="card-header">Plaćanja — webhook (basic-auth zamka)</div>
+    <div class="card-body">
+        <p class="small text-muted mb-2">
+            Najčešća go-live zamka: ako je webhook ruta iza basic-autha, plaćanje uspije ali narudžba
+            ostane <strong>"U obradi"</strong> (webhook vrati 401 prije aplikacije, bez mailova). Test
+            šalje <em>nepotpisani</em> zahtjev na vlastiti webhook URL — prava logika se NE pokreće (potpis
+            padne na 400). <strong>401 = problem.</strong> Pokreće se na zahtjev (ne usporava admin).
+        </p>
+        <button type="button" class="btn btn-outline-primary btn-sm"
+                data-formbuilder--webhook-check-target="button"
+                data-action="formbuilder--webhook-check#run">Provjeri webhook (Stripe/PayPal)</button>
+        <div class="mt-3" data-formbuilder--webhook-check-target="results"></div>
+    </div>
+</div>
