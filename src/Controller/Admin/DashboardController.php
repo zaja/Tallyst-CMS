@@ -96,6 +96,10 @@ class DashboardController extends AbstractDashboardController
     {
         return Dashboard::new()
             ->setTitle('Tallyst CMS')
+            // All OUR admin labels (menu + CRUD field/entity/title/help/action) translate via the
+            // `admin` domain. EA's own chrome (Save/Delete/pagination/filters) stays in the
+            // EasyAdminBundle domain — untouched.
+            ->setTranslationDomain('admin')
             ->setFaviconPath('favicon.ico');
     }
 
@@ -126,42 +130,42 @@ class DashboardController extends AbstractDashboardController
             }
         }
 
-        yield MenuItem::linkToDashboard('Nadzorna ploča', 'fa fa-gauge');
+        yield MenuItem::linkToDashboard('admin.menu.dashboard', 'fa fa-gauge');
 
         // SADRŽAJ — core content + module content tools (Forme [admin], Mediji [editor]). Editor-visible.
-        yield MenuItem::section('Sadržaj');
-        yield MenuItem::linkTo(PageCrudController::class, 'Stranice', 'fa fa-file-lines');
-        yield MenuItem::linkTo(PostCrudController::class, 'Objave', 'fa fa-newspaper');
-        yield MenuItem::linkTo(CategoryCrudController::class, 'Kategorije', 'fa fa-tags');
+        yield MenuItem::section('admin.menu.section.content');
+        yield MenuItem::linkTo(PageCrudController::class, 'admin.menu.pages', 'fa fa-file-lines');
+        yield MenuItem::linkTo(PostCrudController::class, 'admin.menu.posts', 'fa fa-newspaper');
+        yield MenuItem::linkTo(CategoryCrudController::class, 'admin.menu.categories', 'fa fa-tags');
         yield from $moduleItems[AdminModuleInterface::SECTION_CONTENT] ?? [];
 
         // PRODAJA — only when a module contributes sales items (FormBuilder Narudžbe). Admin-only,
         // and conditional so editors never see an empty section header.
         if (!empty($moduleItems[AdminModuleInterface::SECTION_SALES])) {
-            yield MenuItem::section('Prodaja')->setPermission('ROLE_ADMIN');
+            yield MenuItem::section('admin.menu.section.sales')->setPermission('ROLE_ADMIN');
             yield from $moduleItems[AdminModuleInterface::SECTION_SALES];
         }
 
         // Admin-only sections — setPermission on the header hides it from editors (no empty headers).
         // The real gate is #[IsGranted('ROLE_ADMIN')] on each controller.
-        yield MenuItem::section('Navigacija')->setPermission('ROLE_ADMIN');
-        yield MenuItem::linkTo(MenuCrudController::class, 'Izbornici', 'fa fa-bars')->setPermission('ROLE_ADMIN');
-        yield MenuItem::linkTo(MenuItemCrudController::class, 'Stavke izbornika', 'fa fa-list')->setPermission('ROLE_ADMIN');
+        yield MenuItem::section('admin.menu.section.navigation')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkTo(MenuCrudController::class, 'admin.menu.menus', 'fa fa-bars')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkTo(MenuItemCrudController::class, 'admin.menu.menu_items', 'fa fa-list')->setPermission('ROLE_ADMIN');
 
         // SUSTAV — header has NO permission because Sigurnost (self-service 2FA) is editor-visible;
         // the admin-only items carry their own ROLE_ADMIN.
-        yield MenuItem::section('Sustav');
-        yield MenuItem::linkToRoute('Postavke', 'fa fa-gear', 'admin_settings')->setPermission('ROLE_ADMIN');
-        yield MenuItem::linkToRoute('Email predlošci', 'fa fa-envelope-open-text', 'admin_email_templates')->setPermission('ROLE_ADMIN');
-        yield MenuItem::linkTo(UserCrudController::class, 'Korisnici', 'fa fa-users')->setPermission('ROLE_ADMIN');
-        yield MenuItem::linkToRoute('Provjera spremnosti', 'fa fa-clipboard-check', 'admin_readiness')->setPermission('ROLE_ADMIN');
-        yield MenuItem::linkToRoute('Sigurnost', 'fa fa-shield-halved', 'admin_security');
+        yield MenuItem::section('admin.menu.section.system');
+        yield MenuItem::linkToRoute('admin.menu.settings', 'fa fa-gear', 'admin_settings')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToRoute('admin.menu.email_templates', 'fa fa-envelope-open-text', 'admin_email_templates')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkTo(UserCrudController::class, 'admin.menu.users', 'fa fa-users')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToRoute('admin.menu.readiness', 'fa fa-clipboard-check', 'admin_readiness')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToRoute('admin.menu.security', 'fa fa-shield-halved', 'admin_security');
 
-        yield MenuItem::section('Izgled')->setPermission('ROLE_ADMIN');
-        yield MenuItem::linkToRoute('Teme', 'fa fa-palette', 'admin_themes')->setPermission('ROLE_ADMIN');
+        yield MenuItem::section('admin.menu.section.appearance')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToRoute('admin.menu.themes', 'fa fa-palette', 'admin_themes')->setPermission('ROLE_ADMIN');
 
         // MODULI — only the registry page (admin-only); module items now live in their own sections.
-        yield MenuItem::section('Moduli')->setPermission('ROLE_ADMIN');
-        yield MenuItem::linkToRoute('Instalirani moduli', 'fa fa-puzzle-piece', 'admin_modules')->setPermission('ROLE_ADMIN');
+        yield MenuItem::section('admin.menu.section.modules')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToRoute('admin.menu.modules', 'fa fa-puzzle-piece', 'admin_modules')->setPermission('ROLE_ADMIN');
     }
 }

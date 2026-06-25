@@ -19,14 +19,14 @@ class MenuCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('Izbornik')
-            ->setEntityLabelInPlural('Izbornici');
+            ->setEntityLabelInSingular('admin.menu_entity.entity.singular')
+            ->setEntityLabelInPlural('admin.menu_entity.entity.plural');
     }
 
     public function configureFields(string $pageName): iterable
     {
-        yield TextField::new('name', 'Naziv');
-        yield TextField::new('location', 'Lokacija')
-            ->setHelp('Jedinstveni identifikator mjesta, npr. main ili footer.');
+        yield TextField::new('name', 'admin.menu_entity.field.name');
+        yield TextField::new('location', 'admin.menu_entity.field.location')
+            ->setHelp('admin.menu_entity.help.location');
     }
 }

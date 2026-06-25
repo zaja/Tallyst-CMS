@@ -1,0 +1,32 @@
+# admin domain (hr) — FormBuilder back-office (Orders).
+admin:
+    order:
+        entity: { singular: Narudžba, plural: Narudžbe }
+        title: { detail: 'Narudžba #%id%' }
+        field:
+            created_at: Datum
+            form: Forma
+            amount: Iznos
+            status: Status
+            provider: Plaćanje
+            mode: Mod
+            variant: Varijanta
+            customer: Kupac
+            net: Neto
+            tax: Porez
+            tax_rate: Stopa (%)
+            tax_name: Naziv poreza
+            submission: Podaci forme
+        status: { pending: U obradi, paid: Čeka isporuku, fulfilled: Isporučeno, refunded: Refundirano }
+        mode: { test: Test, live: Live }
+        action:
+            mark_fulfilled: Označi isporučeno
+            resend: Pošalji ponovno potvrdu
+            refund: Refundiraj
+            export: Izvezi narudžbe
+            payment_dashboard: Otvori u dashboardu plaćanja
+            back_to_list: Na popis
+        confirm:
+            mark_fulfilled: Označiti ovu narudžbu kao isporučenu?
+            resend: Ponovno poslati potvrdu kupcu?
+            refund: Refundirati ovu narudžbu? Novac se vraća kupcu.

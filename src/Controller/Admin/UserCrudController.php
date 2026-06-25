@@ -49,8 +49,8 @@ class UserCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('Korisnik')
-            ->setEntityLabelInPlural('Korisnici')
+            ->setEntityLabelInSingular('admin.user.entity.singular')
+            ->setEntityLabelInPlural('admin.user.entity.plural')
             ->setDefaultSort(['email' => 'ASC']);
     }
 
@@ -69,28 +69,28 @@ class UserCrudController extends AbstractCrudController
     {
         $isNew = Crud::PAGE_NEW === $pageName;
 
-        yield EmailField::new('email', 'E-mail');
-        yield TextField::new('nickname', 'Nadimak (prikazno ime)')
-            ->setHelp('Prikazuje se kao autor objava. Prazno = bez bylinea.');
-        yield TextField::new('name', 'Ime i prezime')
-            ->setHelp('Rezervirano — koristit će se kasnije (npr. naplata).')
+        yield EmailField::new('email', 'admin.user.field.email');
+        yield TextField::new('nickname', 'admin.user.field.nickname')
+            ->setHelp('admin.user.help.nickname');
+        yield TextField::new('name', 'admin.user.field.name')
+            ->setHelp('admin.user.help.name')
             ->hideOnIndex();
-        yield ChoiceField::new('roles', 'Role')
-            ->setChoices(['Administrator' => 'ROLE_ADMIN', 'Urednik' => 'ROLE_EDITOR'])
+        yield ChoiceField::new('roles', 'admin.user.field.roles')
+            ->setChoices(['admin.user.role.admin' => 'ROLE_ADMIN', 'admin.user.role.editor' => 'ROLE_EDITOR'])
             ->allowMultipleChoices()
             ->renderExpanded()
             ->renderAsBadges(['ROLE_ADMIN' => 'danger', 'ROLE_EDITOR' => 'info']);
 
         // Form-only + unmapped: blank on edit = unchanged, plaintext never touches the entity
         // (the POST_SUBMIT listener hashes it only when filled).
-        yield TextField::new('plainPassword', $isNew ? 'Lozinka' : 'Nova lozinka')
+        yield TextField::new('plainPassword', $isNew ? 'admin.user.field.password' : 'admin.user.field.new_password')
             ->setFormType(PasswordType::class)
             ->setFormTypeOptions([
                 'mapped' => false,
                 'required' => $isNew,
                 'attr' => ['autocomplete' => 'new-password'],
             ])
-            ->setHelp($isNew ? 'Min. 8 znakova.' : 'Ostavi prazno da zadržiš trenutnu lozinku.')
+            ->setHelp($isNew ? 'admin.user.help.password_new' : 'admin.user.help.password_edit')
             ->onlyOnForms();
     }
 

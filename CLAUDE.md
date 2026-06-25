@@ -413,7 +413,20 @@ infra + proved it on 3 keys: `security.login.submit`, `form.submit`, `theme.foot
   not literal), not just a mechanical key-swap.
 - **Functional tests must interact with forms LOCALE-AGNOSTICALLY** — select the submit button by a
   stable selector (`$crawler->filter('form')->form([...])`, or `filter('button.fb-submit')`), NEVER by
-  translated button text — so translating UI never breaks the suite.
+  translated button text — so translating UI never breaks the suite. (Assert displayed text against the
+  English default.)
+- **EasyAdmin admin labels — ONE switch.** `DashboardController::configureDashboard()` sets
+  `->setTranslationDomain('admin')`, so ALL of OUR admin labels translate via the `admin` domain: CRUD
+  field labels + help + entity labels + page titles + `ChoiceField`/filter choice labels + custom action
+  labels, AND the dashboard menu (sections + links). Pattern: the label STRING becomes a translation key
+  (`admin.<entity>.field.<x>`, `admin.<entity>.entity.singular|plural`, `admin.<entity>.status.<x>`,
+  `admin.menu.*`); EA `t()`s the key in the `admin` domain. EA's OWN chrome (Save/Delete/New/pagination/
+  filters) stays in the `EasyAdminBundle` domain — untouched. A dynamic page title or a JS `confirm()` in
+  an action needs the injected `TranslatorInterface` (`$this->translator->trans($key, $params, 'admin')`,
+  a plain string) — NOT a closure returning `t()`. Module CRUD labels live in
+  `modules/<Name>/translations/admin.<locale>.yaml` (auto-discovered). Un-converted labels render
+  literally (graceful), so the switch is incremental. The `Menu` ENTITY CRUD uses `admin.menu_entity.*`
+  to avoid clashing with the dashboard `admin.menu.*`.
 
 ## Directory layout
 ```

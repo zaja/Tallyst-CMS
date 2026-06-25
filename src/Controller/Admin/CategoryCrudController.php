@@ -22,16 +22,16 @@ class CategoryCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('Kategorija')
-            ->setEntityLabelInPlural('Kategorije')
+            ->setEntityLabelInSingular('admin.category.entity.singular')
+            ->setEntityLabelInPlural('admin.category.entity.plural')
             ->addFormTheme('@Media/admin/form/media_picker_widget.html.twig');
     }
 
     public function configureFields(string $pageName): iterable
     {
-        yield TextField::new('name', 'Naziv');
+        yield TextField::new('name', 'admin.category.field.name');
         yield SlugField::new('slug')->setTargetFieldName('name');
-        yield TextareaField::new('description', 'Opis')->hideOnIndex();
-        yield MediaPickerField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
+        yield TextareaField::new('description', 'admin.category.field.description')->hideOnIndex();
+        yield MediaPickerField::new('featuredImage', 'admin.category.field.featured_image')->hideOnIndex();
     }
 }

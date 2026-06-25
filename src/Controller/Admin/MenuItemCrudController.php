@@ -21,20 +21,20 @@ class MenuItemCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('Stavka izbornika')
-            ->setEntityLabelInPlural('Stavke izbornika')
+            ->setEntityLabelInSingular('admin.menu_item.entity.singular')
+            ->setEntityLabelInPlural('admin.menu_item.entity.plural')
             ->setDefaultSort(['position' => 'ASC']);
     }
 
     public function configureFields(string $pageName): iterable
     {
-        yield AssociationField::new('menu', 'Izbornik');
-        yield TextField::new('label', 'Oznaka');
-        yield AssociationField::new('page', 'Stranica')->hideOnIndex()
-            ->setHelp('Interna stranica. Ima prednost pred URL-om ako je postavljena.');
-        yield TextField::new('url', 'URL')->hideOnIndex()
-            ->setHelp('Vanjski ili prilagođeni URL. Koristi se ako stranica nije odabrana.');
-        yield AssociationField::new('parent', 'Roditelj')->hideOnIndex();
-        yield IntegerField::new('position', 'Pozicija');
+        yield AssociationField::new('menu', 'admin.menu_item.field.menu');
+        yield TextField::new('label', 'admin.menu_item.field.label');
+        yield AssociationField::new('page', 'admin.menu_item.field.page')->hideOnIndex()
+            ->setHelp('admin.menu_item.help.page');
+        yield TextField::new('url', 'admin.menu_item.field.url')->hideOnIndex()
+            ->setHelp('admin.menu_item.help.url');
+        yield AssociationField::new('parent', 'admin.menu_item.field.parent')->hideOnIndex();
+        yield IntegerField::new('position', 'admin.menu_item.field.position');
     }
 }

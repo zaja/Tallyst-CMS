@@ -1,2 +1,90 @@
-# admin domain (en) — back-office (EasyAdmin) UI strings. Populated in later extraction passes.
-{}
+# admin domain (en) — back-office (EasyAdmin) UI. EA's own chrome stays in the EasyAdminBundle domain.
+admin:
+    menu:
+        dashboard: Dashboard
+        pages: Pages
+        posts: Posts
+        categories: Categories
+        menus: Menus
+        menu_items: Menu items
+        settings: Settings
+        email_templates: E-mail templates
+        users: Users
+        readiness: Readiness check
+        security: Security
+        themes: Themes
+        modules: Installed modules
+        section:
+            content: Content
+            sales: Sales
+            navigation: Navigation
+            system: System
+            appearance: Appearance
+            modules: Modules
+    page:
+        entity: { singular: Page, plural: Pages }
+        field:
+            title: Title
+            status: Status
+            content: Content
+            template: Template
+            meta_title: Meta title
+            meta_description: Meta description
+            position: Position
+            hero_enabled: Hero enabled
+            hero_image: Hero image
+            hero_title: Hero title
+            hero_text: Hero text
+            hero_cta_label: CTA label
+            hero_cta_url: CTA link
+        status: { draft: Draft, published: Published }
+        fieldset: { hero: Hero section (optional) }
+        help:
+            template: 'Theme template name, e.g. page.html.twig. Empty = default.'
+            hero: 'A hero with text over an image, at the top of the page. Shown only when enabled and an image or title is set.'
+            hero_title: 'Empty = the page title is used.'
+            hero_cta_url: 'E.g. /contact or https://… The button shows only when both the label AND the link are set.'
+    post:
+        entity: { singular: Post, plural: Posts }
+        field:
+            title: Title
+            status: Status
+            category: Category
+            author: Author
+            featured_image: Featured image
+            published_at: Published
+            excerpt: Excerpt
+            content: Content
+        status: { draft: Draft, published: Published }
+        help: { author: 'Defaults to you. Changeable.' }
+    category:
+        entity: { singular: Category, plural: Categories }
+        field: { name: Name, description: Description, featured_image: Featured image }
+    menu_entity:
+        entity: { singular: Menu, plural: Menus }
+        field: { name: Name, location: Location }
+        help: { location: 'A unique location identifier, e.g. main or footer.' }
+    menu_item:
+        entity: { singular: Menu item, plural: Menu items }
+        field: { menu: Menu, label: Label, page: Page, url: URL, parent: Parent, position: Position }
+        help:
+            page: 'An internal page. Takes precedence over the URL when set.'
+            url: 'An external or custom URL. Used when no page is selected.'
+    user:
+        entity: { singular: User, plural: Users }
+        field:
+            email: E-mail
+            nickname: Nickname (display name)
+            name: Full name
+            roles: Roles
+            password: Password
+            new_password: New password
+        role: { admin: Administrator, editor: Editor }
+        help:
+            nickname: 'Shown as the post author. Empty = no byline.'
+            name: 'Reserved — used later (e.g. billing).'
+            password_new: 'Min. 8 characters.'
+            password_edit: 'Leave empty to keep the current password.'
+    setting:
+        entity: { singular: Setting, plural: Settings }
+        field: { key: Key, value: Value }

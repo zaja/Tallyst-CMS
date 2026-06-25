@@ -1,0 +1,32 @@
+# admin domain (en) — FormBuilder back-office (Orders). Auto-discovered via the bundle.
+admin:
+    order:
+        entity: { singular: Order, plural: Orders }
+        title: { detail: 'Order #%id%' }
+        field:
+            created_at: Date
+            form: Form
+            amount: Amount
+            status: Status
+            provider: Payment
+            mode: Mode
+            variant: Variant
+            customer: Customer
+            net: Net
+            tax: Tax
+            tax_rate: Rate (%)
+            tax_name: Tax name
+            submission: Form data
+        status: { pending: Processing, paid: Awaiting delivery, fulfilled: Delivered, refunded: Refunded }
+        mode: { test: Test, live: Live }
+        action:
+            mark_fulfilled: Mark delivered
+            resend: Resend confirmation
+            refund: Refund
+            export: Export orders
+            payment_dashboard: Open in payment dashboard
+            back_to_list: Back to list
+        confirm:
+            mark_fulfilled: Mark this order as delivered?
+            resend: Resend the confirmation to the customer?
+            refund: Refund this order? The money is returned to the customer.

@@ -22,13 +22,13 @@ class SettingCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('Postavka')
-            ->setEntityLabelInPlural('Postavke');
+            ->setEntityLabelInSingular('admin.setting.entity.singular')
+            ->setEntityLabelInPlural('admin.setting.entity.plural');
     }
 
     public function configureFields(string $pageName): iterable
     {
-        yield TextField::new('name', 'Ključ');
-        yield TextareaField::new('value', 'Vrijednost');
+        yield TextField::new('name', 'admin.setting.field.key');
+        yield TextareaField::new('value', 'admin.setting.field.value');
     }
 }

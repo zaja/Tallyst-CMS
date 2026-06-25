@@ -1,0 +1,15 @@
+# admin domain (hr) — Media back-office.
+admin:
+    media:
+        entity: { singular: Medij, plural: Mediji }
+        field:
+            image: Slika
+            preview: Pregled
+            title: Naslov
+            shortcode: Shortcode
+            alt: Alt tekst
+            file: Datoteka
+            dimensions: Dimenzije
+            type: Tip
+            created_at: Dodano
+        help: { shortcode: 'Kopiraj u sadržaj stranice/objave.' }

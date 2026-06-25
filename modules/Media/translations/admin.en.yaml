@@ -1,0 +1,15 @@
+# admin domain (en) — Media back-office. Auto-discovered via the bundle.
+admin:
+    media:
+        entity: { singular: Media, plural: Media }
+        field:
+            image: Image
+            preview: Preview
+            title: Title
+            shortcode: Shortcode
+            alt: Alt text
+            file: File
+            dimensions: Dimensions
+            type: Type
+            created_at: Added
+        help: { shortcode: 'Copy into page/post content.' }

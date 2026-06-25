@@ -1,2 +1,90 @@
-# admin domain (hr) — back-office (EasyAdmin) UI strings. Populated in later extraction passes.
-{}
+# admin domain (hr) — back-office (EasyAdmin) UI.
+admin:
+    menu:
+        dashboard: Nadzorna ploča
+        pages: Stranice
+        posts: Objave
+        categories: Kategorije
+        menus: Izbornici
+        menu_items: Stavke izbornika
+        settings: Postavke
+        email_templates: Email predlošci
+        users: Korisnici
+        readiness: Provjera spremnosti
+        security: Sigurnost
+        themes: Teme
+        modules: Instalirani moduli
+        section:
+            content: Sadržaj
+            sales: Prodaja
+            navigation: Navigacija
+            system: Sustav
+            appearance: Izgled
+            modules: Moduli
+    page:
+        entity: { singular: Stranica, plural: Stranice }
+        field:
+            title: Naslov
+            status: Status
+            content: Sadržaj
+            template: Predložak
+            meta_title: Meta naslov
+            meta_description: Meta opis
+            position: Pozicija
+            hero_enabled: Hero uključen
+            hero_image: Hero slika
+            hero_title: Hero naslov
+            hero_text: Hero tekst
+            hero_cta_label: CTA labela
+            hero_cta_url: CTA poveznica
+        status: { draft: Skica, published: Objavljeno }
+        fieldset: { hero: Hero sekcija (opcionalno) }
+        help:
+            template: 'Naziv theme predloška, npr. page.html.twig. Prazno = zadani.'
+            hero: 'Hero s tekstom preko slike, na vrhu stranice. Prikazuje se samo kad je uključen i postavljena je slika ili naslov.'
+            hero_title: 'Prazno = koristi se naslov stranice.'
+            hero_cta_url: 'Npr. /kontakt ili https://… Gumb se prikazuje samo kad su labela I poveznica postavljene.'
+    post:
+        entity: { singular: Objava, plural: Objave }
+        field:
+            title: Naslov
+            status: Status
+            category: Kategorija
+            author: Autor
+            featured_image: Naslovna slika
+            published_at: Objavljeno
+            excerpt: Sažetak
+            content: Sadržaj
+        status: { draft: Skica, published: Objavljeno }
+        help: { author: 'Zadano: ti. Promjenjivo.' }
+    category:
+        entity: { singular: Kategorija, plural: Kategorije }
+        field: { name: Naziv, description: Opis, featured_image: Naslovna slika }
+    menu_entity:
+        entity: { singular: Izbornik, plural: Izbornici }
+        field: { name: Naziv, location: Lokacija }
+        help: { location: 'Jedinstveni identifikator mjesta, npr. main ili footer.' }
+    menu_item:
+        entity: { singular: Stavka izbornika, plural: Stavke izbornika }
+        field: { menu: Izbornik, label: Oznaka, page: Stranica, url: URL, parent: Roditelj, position: Pozicija }
+        help:
+            page: 'Interna stranica. Ima prednost pred URL-om ako je postavljena.'
+            url: 'Vanjski ili prilagođeni URL. Koristi se ako stranica nije odabrana.'
+    user:
+        entity: { singular: Korisnik, plural: Korisnici }
+        field:
+            email: E-mail
+            nickname: Nadimak (prikazno ime)
+            name: Ime i prezime
+            roles: Role
+            password: Lozinka
+            new_password: Nova lozinka
+        role: { admin: Administrator, editor: Urednik }
+        help:
+            nickname: 'Prikazuje se kao autor objava. Prazno = bez bylinea.'
+            name: 'Rezervirano — koristit će se kasnije (npr. naplata).'
+            password_new: 'Min. 8 znakova.'
+            password_edit: 'Ostavi prazno da zadržiš trenutnu lozinku.'
+    setting:
+        entity: { singular: Postavka, plural: Postavke }
+        field: { key: Ključ, value: Vrijednost }

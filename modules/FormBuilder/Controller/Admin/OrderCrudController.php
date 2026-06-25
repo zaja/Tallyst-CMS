@@ -27,6 +27,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Workflow\WorkflowInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Entity\Order;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\OrderRepository;
@@ -48,6 +49,7 @@ class OrderCrudController extends AbstractCrudController
         private readonly EntityManagerInterface $em,
         private readonly PaymentProcessorRegistry $payments,
         private readonly OrderRepository $orders,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -59,53 +61,55 @@ class OrderCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('Narudžba')
-            ->setEntityLabelInPlural('Narudžbe')
+            ->setEntityLabelInSingular('admin.order.entity.singular')
+            ->setEntityLabelInPlural('admin.order.entity.plural')
             ->setDefaultSort(['id' => 'DESC'])
-            ->setPageTitle('detail', static fn (Order $order): string => 'Narudžba #'.$order->getId());
+            ->setPageTitle('detail', fn (Order $order): string => $this->translator->trans('admin.order.title.detail', ['%id%' => $order->getId()], 'admin'));
     }
 
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            ->add(ChoiceFilter::new('status', 'Status')->setChoices([
-                'U obradi' => Order::STATUS_PENDING,
-                'Čeka isporuku' => Order::STATUS_PAID,
-                'Isporučeno' => Order::STATUS_FULFILLED,
-                'Refundirano' => Order::STATUS_REFUNDED,
+            ->add(ChoiceFilter::new('status', 'admin.order.field.status')->setChoices([
+                'admin.order.status.pending' => Order::STATUS_PENDING,
+                'admin.order.status.paid' => Order::STATUS_PAID,
+                'admin.order.status.fulfilled' => Order::STATUS_FULFILLED,
+                'admin.order.status.refunded' => Order::STATUS_REFUNDED,
             ]))
-            ->add(ChoiceFilter::new('provider', 'Plaćanje')->setChoices(['Stripe' => 'stripe', 'PayPal' => 'paypal']))
-            ->add(ChoiceFilter::new('paymentMode', 'Mod')->setChoices(['Test' => 'test', 'Live' => 'live']))
+            ->add(ChoiceFilter::new('provider', 'admin.order.field.provider')->setChoices(['Stripe' => 'stripe', 'PayPal' => 'paypal']))
+            ->add(ChoiceFilter::new('paymentMode', 'admin.order.field.mode')->setChoices(['admin.order.mode.test' => 'test', 'admin.order.mode.live' => 'live']))
             // Date RANGE: clean date-only pickers; pick "između" in the comparison for od/do.
             // (Defaulting to "između" is unsafe — EA throws if BETWEEN is applied with empty dates.)
-            ->add(DateTimeFilter::new('createdAt', 'Datum')
+            ->add(DateTimeFilter::new('createdAt', 'admin.order.field.created_at')
                 ->setFormTypeOption('value_type', DateType::class)
                 ->setFormTypeOption('value_type_options', ['widget' => 'single_text']))
-            ->add(TextFilter::new('variantLabel', 'Varijanta'));
+            ->add(TextFilter::new('variantLabel', 'admin.order.field.variant'));
     }
 
     public function configureActions(Actions $actions): Actions
     {
-        $markFulfilled = Action::new('markFulfilled', 'Označi isporučeno', 'fa fa-truck')
+        $confirm = fn (string $key): array => ['onclick' => "return confirm('".$this->translator->trans($key, [], 'admin')."')"];
+
+        $markFulfilled = Action::new('markFulfilled', 'admin.order.action.mark_fulfilled', 'fa fa-truck')
             ->linkToCrudAction('markFulfilled')
             ->displayIf(static fn (Order $order): bool => Order::STATUS_PAID === $order->getStatus())
-            ->setHtmlAttributes(['onclick' => "return confirm('Označiti ovu narudžbu kao isporučenu?')"]);
+            ->setHtmlAttributes($confirm('admin.order.confirm.mark_fulfilled'));
 
-        $resend = Action::new('resendConfirmation', 'Pošalji ponovno potvrdu', 'fa fa-envelope')
+        $resend = Action::new('resendConfirmation', 'admin.order.action.resend', 'fa fa-envelope')
             ->linkToCrudAction('resendConfirmation')
             ->displayIf(static fn (Order $order): bool => \in_array($order->getStatus(), [Order::STATUS_PAID, Order::STATUS_FULFILLED], true))
-            ->setHtmlAttributes(['onclick' => "return confirm('Ponovno poslati potvrdu kupcu?')"]);
+            ->setHtmlAttributes($confirm('admin.order.confirm.resend'));
 
-        $refund = Action::new('refundOrder', 'Refundiraj', 'fa fa-rotate-left')
+        $refund = Action::new('refundOrder', 'admin.order.action.refund', 'fa fa-rotate-left')
             ->linkToCrudAction('refundOrder')
             ->displayIf(static fn (Order $order): bool => \in_array($order->getStatus(), [Order::STATUS_PAID, Order::STATUS_FULFILLED], true))
-            ->setHtmlAttributes(['onclick' => "return confirm('Refundirati ovu narudžbu? Novac se vraća kupcu.')"]);
+            ->setHtmlAttributes($confirm('admin.order.confirm.refund'));
 
-        $export = Action::new('exportCsv', 'Izvezi narudžbe', 'fa fa-file-csv')
+        $export = Action::new('exportCsv', 'admin.order.action.export', 'fa fa-file-csv')
             ->linkToCrudAction('exportCsv')
             ->createAsGlobalAction();
 
-        $dashboard = Action::new('paymentDashboard', 'Otvori u dashboardu plaćanja', 'fa fa-arrow-up-right-from-square')
+        $dashboard = Action::new('paymentDashboard', 'admin.order.action.payment_dashboard', 'fa fa-arrow-up-right-from-square')
             ->linkToUrl(fn (Order $order): string => (string) $this->payments->get($order->getProvider())->dashboardUrl($order))
             ->displayIf(fn (Order $order): bool => null !== $this->payments->get($order->getProvider())->dashboardUrl($order))
             ->setHtmlAttributes(['target' => '_blank', 'rel' => 'noopener']);
@@ -114,7 +118,7 @@ class OrderCrudController extends AbstractCrudController
             ->disable(Action::NEW, Action::EDIT, Action::DELETE, Action::BATCH_DELETE)
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             // Make EA's built-in detail→index action an unmistakable "back to list" button.
-            ->update(Crud::PAGE_DETAIL, Action::INDEX, fn (Action $a): Action => $a->setLabel('Na popis')->setIcon('fa fa-arrow-left'))
+            ->update(Crud::PAGE_DETAIL, Action::INDEX, fn (Action $a): Action => $a->setLabel('admin.order.action.back_to_list')->setIcon('fa fa-arrow-left'))
             ->add(Crud::PAGE_INDEX, $markFulfilled)
             ->add(Crud::PAGE_DETAIL, $markFulfilled)
             ->add(Crud::PAGE_INDEX, $resend)
@@ -128,16 +132,16 @@ class OrderCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         yield IdField::new('id', '#');
-        yield DateTimeField::new('createdAt', 'Datum');
-        yield AssociationField::new('form', 'Forma');
-        yield TextField::new('amountFormatted', 'Iznos');
+        yield DateTimeField::new('createdAt', 'admin.order.field.created_at');
+        yield AssociationField::new('form', 'admin.order.field.form');
+        yield TextField::new('amountFormatted', 'admin.order.field.amount');
         // Badge semantics: paid = awaiting delivery (a to-do), fulfilled = delivered.
-        yield ChoiceField::new('status', 'Status')
+        yield ChoiceField::new('status', 'admin.order.field.status')
             ->setChoices([
-                'U obradi' => Order::STATUS_PENDING,
-                'Čeka isporuku' => Order::STATUS_PAID,
-                'Isporučeno' => Order::STATUS_FULFILLED,
-                'Refundirano' => Order::STATUS_REFUNDED,
+                'admin.order.status.pending' => Order::STATUS_PENDING,
+                'admin.order.status.paid' => Order::STATUS_PAID,
+                'admin.order.status.fulfilled' => Order::STATUS_FULFILLED,
+                'admin.order.status.refunded' => Order::STATUS_REFUNDED,
             ])
             ->renderAsBadges([
                 Order::STATUS_PENDING => 'secondary',
@@ -146,22 +150,22 @@ class OrderCrudController extends AbstractCrudController
                 Order::STATUS_REFUNDED => 'info',
             ]);
         // Provider at a glance in the list (badge, like status).
-        yield ChoiceField::new('provider', 'Plaćanje')
+        yield ChoiceField::new('provider', 'admin.order.field.provider')
             ->setChoices(['Stripe' => 'stripe', 'PayPal' => 'paypal'])
             ->renderAsBadges(['stripe' => 'primary', 'paypal' => 'info']);
-        yield TextField::new('variantLabel', 'Varijanta');
-        yield TextField::new('customerEmail', 'Kupac');
+        yield TextField::new('variantLabel', 'admin.order.field.variant');
+        yield TextField::new('customerEmail', 'admin.order.field.customer');
 
-        yield TextField::new('netFormatted', 'Neto')->onlyOnDetail();
-        yield TextField::new('taxFormatted', 'Porez')->onlyOnDetail();
-        yield TextField::new('taxRate', 'Stopa (%)')->onlyOnDetail();
-        yield TextField::new('taxName', 'Naziv poreza')->onlyOnDetail();
+        yield TextField::new('netFormatted', 'admin.order.field.net')->onlyOnDetail();
+        yield TextField::new('taxFormatted', 'admin.order.field.tax')->onlyOnDetail();
+        yield TextField::new('taxRate', 'admin.order.field.tax_rate')->onlyOnDetail();
+        yield TextField::new('taxName', 'admin.order.field.tax_name')->onlyOnDetail();
         yield TextField::new('customerIp', 'IP')->onlyOnDetail();
 
-        yield TextField::new('paymentMode', 'Mod')->onlyOnDetail();
+        yield TextField::new('paymentMode', 'admin.order.field.mode')->onlyOnDetail();
         yield TextField::new('providerSessionId', 'Checkout session')->onlyOnDetail();
         yield TextField::new('providerPaymentIntentId', 'Payment intent')->onlyOnDetail();
-        yield TextareaField::new('submissionSummary', 'Podaci forme')->onlyOnDetail();
+        yield TextareaField::new('submissionSummary', 'admin.order.field.submission')->onlyOnDetail();
     }
 
     /**

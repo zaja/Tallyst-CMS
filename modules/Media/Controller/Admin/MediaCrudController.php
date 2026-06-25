@@ -29,8 +29,8 @@ class MediaCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('Medij')
-            ->setEntityLabelInPlural('Mediji')
+            ->setEntityLabelInSingular('admin.media.entity.singular')
+            ->setEntityLabelInPlural('admin.media.entity.plural')
             ->setDefaultSort(['id' => 'DESC'])
             // The index carries a FilePond bulk-upload panel (the create path); the old
             // single-file "new" form is gone.
@@ -47,7 +47,7 @@ class MediaCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         // Upload field (forms only) — VichImageType handles the actual upload + preview.
-        yield TextField::new('imageFile', 'Slika')
+        yield TextField::new('imageFile', 'admin.media.field.image')
             ->setFormType(VichImageType::class)
             ->setFormTypeOptions([
                 'allow_delete' => false,
@@ -58,17 +58,17 @@ class MediaCrudController extends AbstractCrudController
             ->onlyOnForms();
 
         // Thumbnail (Liip "thumb") for index/detail.
-        yield ImageField::new('imageName', 'Pregled')
+        yield ImageField::new('imageName', 'admin.media.field.preview')
             ->setTemplatePath('@Media/admin/field/thumb.html.twig')
             ->hideOnForm();
 
-        yield TextField::new('title', 'Naslov');
-        yield TextField::new('imageShortcode', 'Shortcode')->hideOnForm()
-            ->setHelp('Kopiraj u sadržaj stranice/objave.');
-        yield TextField::new('alt', 'Alt tekst')->hideOnIndex();
-        yield TextField::new('originalName', 'Datoteka')->hideOnForm();
-        yield TextField::new('dimensionsLabel', 'Dimenzije')->hideOnForm();
-        yield TextField::new('mimeType', 'Tip')->onlyOnDetail();
-        yield DateTimeField::new('createdAt', 'Dodano')->hideOnForm();
+        yield TextField::new('title', 'admin.media.field.title');
+        yield TextField::new('imageShortcode', 'admin.media.field.shortcode')->hideOnForm()
+            ->setHelp('admin.media.help.shortcode');
+        yield TextField::new('alt', 'admin.media.field.alt')->hideOnIndex();
+        yield TextField::new('originalName', 'admin.media.field.file')->hideOnForm();
+        yield TextField::new('dimensionsLabel', 'admin.media.field.dimensions')->hideOnForm();
+        yield TextField::new('mimeType', 'admin.media.field.type')->onlyOnDetail();
+        yield DateTimeField::new('createdAt', 'admin.media.field.created_at')->hideOnForm();
     }
 }

@@ -48,8 +48,8 @@ class PostCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('Objava')
-            ->setEntityLabelInPlural('Objave')
+            ->setEntityLabelInSingular('admin.post.entity.singular')
+            ->setEntityLabelInPlural('admin.post.entity.plural')
             ->setDefaultSort(['publishedAt' => 'DESC', 'id' => 'DESC'])
             ->addFormTheme('@Media/admin/form/media_picker_widget.html.twig')
             ->addFormTheme('@Media/admin/form/tiptap_widget.html.twig');
@@ -57,18 +57,18 @@ class PostCrudController extends AbstractCrudController
 
     public function configureFields(string $pageName): iterable
     {
-        yield TextField::new('title', 'Naslov');
+        yield TextField::new('title', 'admin.post.field.title');
         yield SlugField::new('slug')->setTargetFieldName('title');
-        yield ChoiceField::new('status', 'Status')
-            ->setChoices(['Skica' => Post::STATUS_DRAFT, 'Objavljeno' => Post::STATUS_PUBLISHED])
+        yield ChoiceField::new('status', 'admin.post.field.status')
+            ->setChoices(['admin.post.status.draft' => Post::STATUS_DRAFT, 'admin.post.status.published' => Post::STATUS_PUBLISHED])
             ->renderAsBadges([Post::STATUS_DRAFT => 'secondary', Post::STATUS_PUBLISHED => 'success']);
-        yield AssociationField::new('category', 'Kategorija');
-        yield AssociationField::new('author', 'Autor')
+        yield AssociationField::new('category', 'admin.post.field.category');
+        yield AssociationField::new('author', 'admin.post.field.author')
             ->setFormTypeOption('choice_label', static fn (User $u): string => $u->getNickname() ?: $u->getEmail())
-            ->setHelp('Zadano: ti. Promjenjivo.');
-        yield MediaPickerField::new('featuredImage', 'Naslovna slika')->hideOnIndex();
-        yield DateTimeField::new('publishedAt', 'Objavljeno')->hideOnIndex();
-        yield TextareaField::new('excerpt', 'Sažetak')->hideOnIndex();
-        yield TiptapField::new('content', 'Sadržaj')->hideOnIndex();
+            ->setHelp('admin.post.help.author');
+        yield MediaPickerField::new('featuredImage', 'admin.post.field.featured_image')->hideOnIndex();
+        yield DateTimeField::new('publishedAt', 'admin.post.field.published_at')->hideOnIndex();
+        yield TextareaField::new('excerpt', 'admin.post.field.excerpt')->hideOnIndex();
+        yield TiptapField::new('content', 'admin.post.field.content')->hideOnIndex();
     }
 }
