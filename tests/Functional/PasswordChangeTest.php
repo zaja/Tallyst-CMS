@@ -28,11 +28,11 @@ class PasswordChangeTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         $new = 'Totally-New-Pw-42';
-        $client->submitForm('Promijeni lozinku', [
+        $client->submit($client->getCrawler()->filter('form')->form([
             'change_own_password[currentPassword]' => 'Old-Passw0rd-1',
             'change_own_password[newPassword][first]' => $new,
             'change_own_password[newPassword][second]' => $new,
-        ]);
+        ]));
         self::assertResponseRedirects('/admin/security');
 
         // THE gotcha: still authenticated after changing your own password.
@@ -55,11 +55,11 @@ class PasswordChangeTest extends WebTestCase
 
         $client->request('GET', '/admin/security');
         $new = 'Totally-New-Pw-42';
-        $client->submitForm('Promijeni lozinku', [
+        $client->submit($client->getCrawler()->filter('form')->form([
             'change_own_password[currentPassword]' => 'WRONG-current',
             'change_own_password[newPassword][first]' => $new,
             'change_own_password[newPassword][second]' => $new,
-        ]);
+        ]));
 
         // Not a successful change (no PRG redirect to itself) and the password is unchanged.
         self::assertFalse($client->getResponse()->isRedirect(), 'invalid submit re-renders, not redirects');
@@ -79,11 +79,11 @@ class PasswordChangeTest extends WebTestCase
         $client->loginUser($user);
 
         $client->request('GET', '/admin/security');
-        $client->submitForm('Promijeni lozinku', [
+        $client->submit($client->getCrawler()->filter('form')->form([
             'change_own_password[currentPassword]' => 'Old-Passw0rd-1',
             'change_own_password[newPassword][first]' => 'short',
             'change_own_password[newPassword][second]' => 'short',
-        ]);
+        ]));
 
         $container = static::getContainer();
         $em = $container->get(EntityManagerInterface::class);

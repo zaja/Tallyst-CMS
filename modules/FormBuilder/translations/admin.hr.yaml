@@ -30,3 +30,15 @@ admin:
             mark_fulfilled: Označiti ovu narudžbu kao isporučenu?
             resend: Ponovno poslati potvrdu kupcu?
             refund: Refundirati ovu narudžbu? Novac se vraća kupcu.
+        flash:
+            marked_fulfilled: 'Narudžba #%id% označena kao isporučena.'
+            mark_failed: 'Narudžbu #%id% nije moguće označiti isporučenom (status: %status%).'
+            no_email: 'Narudžba #%id% nema e-mail kupca.'
+            resent: 'Potvrda za narudžbu #%id% ponovno poslana.'
+            refund_failed: 'Refund nije uspio: %error%'
+            refunded: 'Narudžba #%id% je refundirana.'
+            already_refunded: 'Narudžba #%id% je već refundirana.'
+    form:
+        flash:
+            deleted: Forma je obrisana.
+            saved: Forma je spremljena.

@@ -11,6 +11,7 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
 use Tallyst\FormBuilder\Entity\FormSubmission;
@@ -48,6 +49,7 @@ class FormSubmitController extends AbstractController
         private readonly LoggerInterface $logger,
         #[Autowire(service: 'limiter.form_submit')]
         private readonly RateLimiterFactory $formSubmitLimiter,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -148,7 +150,7 @@ class FormSubmitController extends AbstractController
         // Provider = the buyer's choice ∩ what's configured-and-allowed. Never a dead end / 500.
         $available = $this->payments->availableFor($form->getAllowedPaymentMethods());
         if ([] === $available) {
-            $this->addFlash('danger', 'Plaćanje trenutno nije dostupno.');
+            $this->addFlash('danger', $this->translator->trans('form.payment_unavailable', [], 'messages'));
 
             return $this->redirect($return);
         }
@@ -158,7 +160,7 @@ class FormSubmitController extends AbstractController
             if (1 === count($available)) {
                 $chosen = $available[0]; // single option → the form sends it hidden
             } else {
-                $this->addFlash('danger', 'Odaberite ispravan način plaćanja.');
+                $this->addFlash('danger', $this->translator->trans('form.invalid_payment_method', [], 'messages'));
 
                 return $this->redirect($return);
             }
@@ -172,7 +174,7 @@ class FormSubmitController extends AbstractController
             $raw = $request->request->get('variant');
             $variant = $form->variantAt(is_numeric($raw) ? (int) $raw : -1);
             if (null === $variant) {
-                $this->addFlash('danger', 'Odaberite ispravnu opciju.');
+                $this->addFlash('danger', $this->translator->trans('form.invalid_option', [], 'messages'));
 
                 return $this->redirect($return);
             }

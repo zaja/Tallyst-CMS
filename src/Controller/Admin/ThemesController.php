@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Theme management (V1): auto-detect themes from themes/, show them (thumbnail + metadata + active
@@ -29,6 +30,7 @@ class ThemesController extends AbstractController
         private readonly ThemeResolver $resolver,
         private readonly ThemeRepository $themes,
         private readonly EntityManagerInterface $em,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -47,7 +49,7 @@ class ThemesController extends AbstractController
 
         // Only a detected, valid theme can be activated — never point the site at a broken theme.
         if (!$this->scanner->isValidTheme($name)) {
-            $this->addFlash('danger', 'Tema nije valjana ili ne postoji.');
+            $this->addFlash('danger', $this->translator->trans('admin.flash.theme_invalid', [], 'admin'));
 
             return $this->redirectToRoute('admin_themes');
         }
@@ -60,7 +62,7 @@ class ThemesController extends AbstractController
         $this->em->persist($theme);
         $this->em->flush();
 
-        $this->addFlash('success', \sprintf('Tema "%s" je aktivirana.', $name));
+        $this->addFlash('success', $this->translator->trans('admin.flash.theme_activated', ['%name%' => $name], 'admin'));
 
         return $this->redirectToRoute('admin_themes');
     }

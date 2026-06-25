@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Self-service 2FA management ("Sigurnost"). Each user enrols their OWN device:
@@ -31,6 +32,7 @@ class SecurityController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly TotpAuthenticatorInterface $totp,
         private readonly UserPasswordHasherInterface $hasher,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -49,7 +51,7 @@ class SecurityController extends AbstractController
             // refreshUser sees a mismatch and logs the user out (the classic gotcha).
             $user->setPassword($this->hasher->hashPassword($user, (string) $passwordForm->get('newPassword')->getData()));
             $this->em->flush();
-            $this->addFlash('success', 'Lozinka je promijenjena.');
+            $this->addFlash('success', $this->translator->trans('admin.flash.password_changed', [], 'admin'));
 
             return $this->redirectToRoute('admin_security');
         }
@@ -79,7 +81,7 @@ class SecurityController extends AbstractController
             }
             $code = trim((string) $request->request->get('code'));
             if (null === $user->getTotpSecret() || !$this->totp->checkCode($user, $code)) {
-                $this->addFlash('danger', 'Kod nije ispravan. Skeniraj QR i pokušaj ponovno.');
+                $this->addFlash('danger', $this->translator->trans('admin.flash.two_factor_code_invalid', [], 'admin'));
 
                 return $this->redirectToRoute('admin_security_2fa_enable');
             }
@@ -90,7 +92,7 @@ class SecurityController extends AbstractController
             $this->em->flush();
 
             $request->getSession()->set(self::SESSION_BACKUP_KEY, $plain);
-            $this->addFlash('success', 'Dvostruka provjera je uključena.');
+            $this->addFlash('success', $this->translator->trans('admin.flash.two_factor_enabled', [], 'admin'));
 
             return $this->redirectToRoute('admin_security_2fa_backup_codes');
         }
@@ -128,14 +130,14 @@ class SecurityController extends AbstractController
 
         // Re-auth: a hijacked session must not be able to strip 2FA without the password.
         if (!$this->hasher->isPasswordValid($user, (string) $request->request->get('password'))) {
-            $this->addFlash('danger', 'Lozinka nije ispravna — 2FA nije isključen.');
+            $this->addFlash('danger', $this->translator->trans('admin.flash.two_factor_password_invalid', [], 'admin'));
 
             return $this->redirectToRoute('admin_security');
         }
 
         $user->setTotpSecret(null)->setTotpEnabled(false)->setBackupCodes(null);
         $this->em->flush();
-        $this->addFlash('success', 'Dvostruka provjera je isključena.');
+        $this->addFlash('success', $this->translator->trans('admin.flash.two_factor_disabled', [], 'admin'));
 
         return $this->redirectToRoute('admin_security');
     }

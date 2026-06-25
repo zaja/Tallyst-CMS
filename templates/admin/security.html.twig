@@ -2,44 +2,44 @@
 
 {% form_theme passwordForm 'bootstrap_5_layout.html.twig' %}
 
-{% block content_title %}Sigurnost{% endblock %}
+{% block content_title %}{{ 'admin.security.title'|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
     <div class="card">
         <div class="card-body" style="max-width: 36rem;">
-            <h2 class="h5">Dvostruka provjera (2FA)</h2>
+            <h2 class="h5">{{ 'admin.security.two_factor.heading'|trans({}, 'admin') }}</h2>
 
             {% if enabled %}
-                <p><span class="badge badge-success">Uključeno</span>
-                   Prijava traži kod iz authenticator aplikacije.</p>
+                <p><span class="badge badge-success">{{ 'admin.security.two_factor.enabled_badge'|trans({}, 'admin') }}</span>
+                   {{ 'admin.security.two_factor.enabled_text'|trans({}, 'admin') }}</p>
                 <hr>
-                <p class="text-muted">Za isključivanje potvrdi svojom lozinkom.</p>
+                <p class="text-muted">{{ 'admin.security.two_factor.disable_hint'|trans({}, 'admin') }}</p>
                 <form method="post" action="{{ path('admin_security_2fa_disable') }}" class="row g-2 align-items-end" style="max-width: 26rem;">
                     <input type="hidden" name="_token" value="{{ csrf_token('2fa_disable') }}">
                     <div class="col">
-                        <label class="form-label" for="pw">Lozinka</label>
+                        <label class="form-label" for="pw">{{ 'admin.security.password'|trans({}, 'admin') }}</label>
                         <input class="form-control" id="pw" type="password" name="password" autocomplete="current-password" required>
                     </div>
                     <div class="col-auto">
-                        <button class="btn btn-outline-danger" type="submit">Isključi 2FA</button>
+                        <button class="btn btn-outline-danger" type="submit">{{ 'admin.security.two_factor.disable_button'|trans({}, 'admin') }}</button>
                     </div>
                 </form>
             {% else %}
-                <p><span class="badge badge-secondary">Isključeno</span>
-                   Dodaj drugi faktor (kod iz aplikacije) za jaču zaštitu računa.</p>
-                <a class="btn btn-primary" href="{{ path('admin_security_2fa_enable') }}">Uključi 2FA</a>
+                <p><span class="badge badge-secondary">{{ 'admin.security.two_factor.disabled_badge'|trans({}, 'admin') }}</span>
+                   {{ 'admin.security.two_factor.disabled_text'|trans({}, 'admin') }}</p>
+                <a class="btn btn-primary" href="{{ path('admin_security_2fa_enable') }}">{{ 'admin.security.two_factor.enable_button'|trans({}, 'admin') }}</a>
             {% endif %}
         </div>
     </div>
 
     <div class="card mt-3">
         <div class="card-body" style="max-width: 36rem;">
-            <h2 class="h5">Promjena lozinke</h2>
+            <h2 class="h5">{{ 'admin.security.change_password.heading'|trans({}, 'admin') }}</h2>
             {{ form_start(passwordForm) }}
                 {{ form_row(passwordForm.currentPassword) }}
                 {{ form_row(passwordForm.newPassword.first) }}
                 {{ form_row(passwordForm.newPassword.second) }}
-                <button class="btn btn-primary" type="submit">Promijeni lozinku</button>
+                <button class="btn btn-primary" type="submit">{{ 'admin.security.change_password.submit'|trans({}, 'admin') }}</button>
             {{ form_end(passwordForm) }}
         </div>
     </div>

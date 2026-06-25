@@ -1,16 +1,15 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block content_title %}Email predlošci{% endblock %}
+{% block content_title %}{{ 'admin.email.index.title'|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
-    <p class="text-muted">Uredi naslov i sadržaj e-mailova koje sustav šalje. Zadane vrijednosti
-        koriste se dok ih ne urediš.</p>
+    <p class="text-muted">{{ 'admin.email.index.intro'|trans({}, 'admin') }}</p>
     <table class="table">
         <thead>
             <tr>
-                <th>Tip</th>
-                <th>Status</th>
-                <th>Uređeno</th>
+                <th>{{ 'admin.email.index.col.type'|trans({}, 'admin') }}</th>
+                <th>{{ 'admin.email.index.col.status'|trans({}, 'admin') }}</th>
+                <th>{{ 'admin.email.index.col.edited'|trans({}, 'admin') }}</th>
                 <th></th>
             </tr>
         </thead>
@@ -20,14 +19,14 @@
                     <td>{{ row.type.label }}</td>
                     <td>
                         {% if row.enabled %}
-                            <span class="badge badge-success">Omogućeno</span>
+                            <span class="badge badge-success">{{ 'admin.email.index.badge.enabled'|trans({}, 'admin') }}</span>
                         {% else %}
-                            <span class="badge badge-secondary">Onemogućeno</span>
+                            <span class="badge badge-secondary">{{ 'admin.email.index.badge.disabled'|trans({}, 'admin') }}</span>
                         {% endif %}
                     </td>
-                    <td>{{ row.overridden ? 'Da' : '— (zadano)' }}</td>
+                    <td>{{ row.overridden ? 'admin.email.index.overridden_yes'|trans({}, 'admin') : 'admin.email.index.overridden_no'|trans({}, 'admin') }}</td>
                     <td class="text-end">
-                        <a class="btn btn-sm btn-secondary" href="{{ path('admin_email_template_edit', {key: row.type.key}) }}">Uredi</a>
+                        <a class="btn btn-sm btn-secondary" href="{{ path('admin_email_template_edit', {key: row.type.key}) }}">{{ 'admin.email.index.edit'|trans({}, 'admin') }}</a>
                     </td>
                 </tr>
             {% endfor %}

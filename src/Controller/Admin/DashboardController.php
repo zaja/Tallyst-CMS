@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class DashboardController extends AbstractDashboardController
 {
@@ -26,6 +27,7 @@ class DashboardController extends AbstractDashboardController
         private readonly ModuleStateManager $moduleState,
         #[AutowireIterator('app.dashboard_widget')]
         private readonly iterable $widgets,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -81,13 +83,13 @@ class DashboardController extends AbstractDashboardController
 
         // Core modules can't be disabled — reject even a direct/forged request (UI hides the toggle too).
         if ($module->isCore()) {
-            $this->addFlash('warning', \sprintf('Modul "%s" je dio jezgre i ne može se isključiti.', $module->getLabel()));
+            $this->addFlash('warning', $this->translator->trans('admin.flash.module_core_locked', ['%name%' => $module->getLabel()], 'admin'));
 
             return $this->redirectToRoute('admin_modules');
         }
 
         $this->moduleState->setEnabled($name, !$this->moduleState->isEnabled($name));
-        $this->addFlash('success', \sprintf('Modul "%s" je ažuriran.', $name));
+        $this->addFlash('success', $this->translator->trans('admin.flash.module_updated', ['%name%' => $name], 'admin'));
 
         return $this->redirectToRoute('admin_modules');
     }

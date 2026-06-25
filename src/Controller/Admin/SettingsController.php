@@ -23,6 +23,7 @@ use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\Media\Form\Type\MediaIdPickerType;
 use Tallyst\Media\Form\Type\TiptapType;
 
@@ -39,6 +40,7 @@ class SettingsController extends AbstractController
     public function __construct(
         private readonly SettingsRegistry $registry,
         private readonly SettingsManager $settings,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -50,7 +52,7 @@ class SettingsController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->settings->setMany($form->getData());
-            $this->addFlash('success', 'Postavke su spremljene.');
+            $this->addFlash('success', $this->translator->trans('admin.flash.settings_saved', [], 'admin'));
 
             return $this->redirectToRoute('admin_settings');
         }
@@ -74,12 +76,12 @@ class SettingsController extends AbstractController
 
         $to = trim((string) $request->request->get('test_to')) ?: $this->defaultTestRecipient();
         if ('' === $to) {
-            $this->addFlash('warning', 'Upiši adresu primatelja (ili postavi "Pošiljatelj (email)").');
+            $this->addFlash('warning', $this->translator->trans('admin.flash.test_mail_recipient', [], 'admin'));
 
             return $this->redirectToRoute('admin_settings');
         }
         if (false === filter_var($to, \FILTER_VALIDATE_EMAIL)) {
-            $this->addFlash('warning', \sprintf('"%s" nije ispravna email adresa.', $to));
+            $this->addFlash('warning', $this->translator->trans('admin.flash.test_mail_invalid', ['%email%' => $to], 'admin'));
 
             return $this->redirectToRoute('admin_settings');
         }
@@ -97,12 +99,12 @@ class SettingsController extends AbstractController
         // From, and some SMTP servers reject a missing/mismatched From — a false failure).
         try {
             $transport->send($this->buildTestEmail($to));
-            $this->addFlash('success', \sprintf('Poslano na %s preko %s.', $to, $via));
+            $this->addFlash('success', $this->translator->trans('admin.flash.test_mail_sent', ['%to%' => $to, '%via%' => $via], 'admin'));
         } catch (TransportExceptionInterface $e) {
             // The REAL transport error (auth failed, connection refused, …), not a generic one.
-            $this->addFlash('danger', \sprintf('Slanje preko %s nije uspjelo: %s', $via, $e->getMessage()));
+            $this->addFlash('danger', $this->translator->trans('admin.flash.test_mail_failed', ['%via%' => $via, '%error%' => $e->getMessage()], 'admin'));
         } catch (\Throwable $e) {
-            $this->addFlash('danger', \sprintf('Greška (%s): %s', (new \ReflectionClass($e))->getShortName(), $e->getMessage()));
+            $this->addFlash('danger', $this->translator->trans('admin.flash.test_mail_error', ['%type%' => (new \ReflectionClass($e))->getShortName(), '%error%' => $e->getMessage()], 'admin'));
         }
 
         return $this->redirectToRoute('admin_settings');

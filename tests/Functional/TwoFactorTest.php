@@ -122,7 +122,7 @@ class TwoFactorTest extends WebTestCase
         $secret = $em->getRepository(User::class)->find($user->getId())->getTotpSecret();
         self::assertNotNull($secret);
 
-        $client->submitForm('Potvrdi i uključi', ['code' => TOTP::createFromSecret($secret)->now()]);
+        $client->submit($client->getCrawler()->filter('form[action*="2fa"]')->form(['code' => TOTP::createFromSecret($secret)->now()]));
         self::assertResponseRedirects('/admin/security/2fa/backup-codes');
 
         $em->clear();

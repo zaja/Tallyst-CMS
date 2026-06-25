@@ -1,12 +1,12 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block content_title %}Nadzorna ploča{% endblock %}
+{% block content_title %}{{ 'admin.menu.dashboard'|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
     {% for widget in widgets %}
         {{ include(widget.template, widget.data) }}
     {% else %}
-        <p class="lead">Dobrodošli u Tallyst CMS.</p>
-        <p>Odaberite sekciju iz izbornika lijevo.</p>
+        <p class="lead">{{ 'admin.dashboard.welcome'|trans({}, 'admin') }}</p>
+        <p>{{ 'admin.dashboard.choose'|trans({}, 'admin') }}</p>
     {% endfor %}
 {% endblock %}

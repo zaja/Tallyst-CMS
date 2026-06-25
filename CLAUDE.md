@@ -427,6 +427,21 @@ infra + proved it on 3 keys: `security.login.submit`, `form.submit`, `theme.foot
   `modules/<Name>/translations/admin.<locale>.yaml` (auto-discovered). Un-converted labels render
   literally (graceful), so the switch is incremental. The `Menu` ENTITY CRUD uses `admin.menu_entity.*`
   to avoid clashing with the dashboard `admin.menu.*`.
+- **Admin Twig templates + flash + non-CRUD forms (NOT EA CRUD) use the `admin` domain EXPLICITLY.**
+  Custom admin templates (`templates/admin/*`: settings, themes, modules, readiness chrome, security/2fa,
+  email templates, dashboard, content widget) are NOT EA-label-rendered, so the dashboard
+  `setTranslationDomain('admin')` does NOT reach them — every `|trans` MUST pass the domain:
+  `{{ 'admin.x.y'|trans({}, 'admin') }}` (and `{{ 'admin.x'|trans({'%n%': v}, 'admin') }}` for params).
+  Default Twig `|trans` is the `messages` domain — forgetting the 3rd arg silently shows the key. Flash
+  messages and non-CRUD custom form labels go through the **injected `TranslatorInterface`**
+  (`$this->translator->trans($key, $params, 'admin')`, a plain string — NOT a TranslatableMessage), so
+  any controller that flashes needs the translator in its constructor. Admin flash keys = `admin.flash.*`
+  (core) / `admin.<entity>.flash.*` (module); front-facing flash (e.g. `FormSubmitController`) uses the
+  `messages` domain (`form.*`). **Readiness:** translate only the TWIG chrome; the check
+  `label`/`detail`/`fix`/`group`/`status.label` come from the PHP providers + `Status` enum (Pass 5/6) —
+  leave them. **CSV export headers are FIXED ENGLISH** (hardcoded literals, never `trans`/locale) — a data
+  export is a global, predictable format for accountants / re-import, deterministic regardless of
+  `app_locale`; `OrderCsvExportTest` asserts the English headers.
 
 ## Directory layout
 ```

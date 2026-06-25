@@ -2,14 +2,13 @@
 
 {% form_theme form 'bootstrap_5_layout.html.twig' '@Media/admin/form/media_picker_widget.html.twig' '@Media/admin/form/tiptap_widget.html.twig' %}
 
-{% block content_title %}Postavke{% endblock %}
+{% block content_title %}{{ 'admin.settings.title'|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
     {% if smtp_password_unreadable %}
         <div class="alert alert-warning">
             <i class="fa fa-triangle-exclamation"></i>
-            SMTP lozinku nije moguće dekriptirati (ključ promijenjen ili izgubljen). Mailovi
-            privremeno koriste <code>MAILER_DSN</code> iz okoline. Upiši lozinku ponovno i spremi.
+            {{ 'admin.settings.smtp_unreadable'|trans({}, 'admin') }}
         </div>
     {% endif %}
 
@@ -41,16 +40,16 @@
                                separate <form> (rendered after the main form via the HTML5 form=
                                attribute) so we don't nest forms. #}
                             <hr>
-                            <label for="test_to" class="form-label fw-semibold">Pošalji test mail</label>
+                            <label for="test_to" class="form-label fw-semibold">{{ 'admin.settings.test_mail.label'|trans({}, 'admin') }}</label>
                             <div class="input-group">
                                 <input type="hidden" name="_token" value="{{ csrf_token('settings_test_email') }}" form="settings-test-email">
                                 <input type="email" id="test_to" name="test_to" class="form-control" form="settings-test-email"
-                                       value="{{ test_to_default }}" placeholder="email@primjer.hr">
+                                       value="{{ test_to_default }}" placeholder="{{ 'admin.settings.test_mail.placeholder'|trans({}, 'admin') }}">
                                 <button class="btn btn-secondary" type="submit" form="settings-test-email">
-                                    <i class="fa fa-paper-plane"></i> Pošalji
+                                    <i class="fa fa-paper-plane"></i> {{ 'admin.settings.test_mail.send'|trans({}, 'admin') }}
                                 </button>
                             </div>
-                            <small class="text-muted d-block mt-1">Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.</small>
+                            <small class="text-muted d-block mt-1">{{ 'admin.settings.test_mail.note'|trans({}, 'admin') }}</small>
                         {% endif %}
 
                         {# Payment sections: mode badge + webhook setup guide (FormBuilder-owned partial). #}
@@ -66,7 +65,7 @@
     </div>
 
     <div class="mt-3">
-        <button class="btn btn-primary" type="submit">Spremi postavke</button>
+        <button class="btn btn-primary" type="submit">{{ 'admin.settings.save'|trans({}, 'admin') }}</button>
     </div>
     {{ form_end(form) }}
 

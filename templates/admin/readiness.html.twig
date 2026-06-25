@@ -1,22 +1,21 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block content_title %}Provjera spremnosti{% endblock %}
+{% block content_title %}{{ 'admin.readiness.title'|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
     <div class="alert alert-light border">
-        Automatska dijagnostika postavki i spremnosti za produkciju. Panel <strong>samo javlja</strong> —
-        ništa ne mijenja. Za stavke koje aplikacija ne može pouzdano provjeriti (worker, webhook, TLS)
-        prikazuje se <span class="badge badge-secondary">🔍 Provjeri ručno</span> uz upute — nikad lažno
-        zeleno, da zelenom možeš vjerovati.
+        {{ 'admin.readiness.intro_before'|trans({}, 'admin') }}
+        <span class="badge badge-secondary">🔍 {{ 'admin.readiness.manual'|trans({}, 'admin') }}</span>
+        {{ 'admin.readiness.intro_after'|trans({}, 'admin') }}
     </div>
 
     <div class="card mb-3">
         <div class="card-body d-flex flex-wrap gap-3 align-items-center">
-            <strong>{{ summary.total }} provjera:</strong>
-            <span><span class="badge badge-success">✅ {{ summary.ok }}</span> OK</span>
-            <span><span class="badge badge-warning">⚠ {{ summary.warning }}</span> upozorenja</span>
-            <span><span class="badge badge-danger">❌ {{ summary.problem }}</span> problema</span>
-            <span><span class="badge badge-secondary">🔍 {{ summary.manual }}</span> ručno</span>
+            <strong>{{ 'admin.readiness.summary'|trans({'%count%': summary.total}, 'admin') }}</strong>
+            <span><span class="badge badge-success">✅ {{ summary.ok }}</span> {{ 'admin.readiness.ok'|trans({}, 'admin') }}</span>
+            <span><span class="badge badge-warning">⚠ {{ summary.warning }}</span> {{ 'admin.readiness.warning'|trans({}, 'admin') }}</span>
+            <span><span class="badge badge-danger">❌ {{ summary.problem }}</span> {{ 'admin.readiness.problem'|trans({}, 'admin') }}</span>
+            <span><span class="badge badge-secondary">🔍 {{ summary.manual }}</span> {{ 'admin.readiness.manual_count'|trans({}, 'admin') }}</span>
         </div>
     </div>
 
@@ -31,7 +30,7 @@
                                 <strong>{{ c.label }}</strong>
                                 <div class="text-muted small">{{ c.detail }}</div>
                                 {% if c.fix %}
-                                    <div class="small mt-1"><span class="text-muted">Popravak:</span> {{ c.fix }}</div>
+                                    <div class="small mt-1"><span class="text-muted">{{ 'admin.readiness.fix'|trans({}, 'admin') }}</span> {{ c.fix }}</div>
                                 {% endif %}
                             </div>
                             <span class="badge {{ c.status.badgeClass }} flex-shrink-0">{{ c.status.icon }} {{ c.status.label }}</span>

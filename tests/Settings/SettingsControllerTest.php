@@ -7,6 +7,7 @@ use App\Settings\SettingsManager;
 use App\Settings\SettingsRegistry;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Mime\Email;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The test-mail message is sent straight to the transport (bypassing the Messenger bus), so
@@ -24,7 +25,7 @@ class SettingsControllerTest extends TestCase
         $manager = $this->createStub(SettingsManager::class);
         $manager->method('get')->willReturnCallback(fn (string $key) => $settings[$key] ?? null);
 
-        return new class($this->createStub(SettingsRegistry::class), $manager) extends SettingsController {
+        return new class($this->createStub(SettingsRegistry::class), $manager, $this->createStub(TranslatorInterface::class)) extends SettingsController {
             public function buildTestEmailPublic(string $to): Email
             {
                 return $this->buildTestEmail($to);

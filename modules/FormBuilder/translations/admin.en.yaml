@@ -30,3 +30,15 @@ admin:
             mark_fulfilled: Mark this order as delivered?
             resend: Resend the confirmation to the customer?
             refund: Refund this order? The money is returned to the customer.
+        flash:
+            marked_fulfilled: 'Order #%id% marked as delivered.'
+            mark_failed: 'Order #%id% can''t be marked delivered (status: %status%).'
+            no_email: 'Order #%id% has no customer e-mail.'
+            resent: 'The confirmation for order #%id% was resent.'
+            refund_failed: 'Refund failed: %error%'
+            refunded: 'Order #%id% refunded.'
+            already_refunded: 'Order #%id% is already refunded.'
+    form:
+        flash:
+            deleted: Form deleted.
+            saved: Form saved.

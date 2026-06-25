@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Form\Type\FormDefinitionType;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
@@ -30,6 +31,7 @@ class FormBuilderController extends AbstractController
     public function __construct(
         private readonly FormDefinitionRepository $forms,
         private readonly SluggerInterface $slugger,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -58,7 +60,7 @@ class FormBuilderController extends AbstractController
     {
         if ($this->isCsrfTokenValid('delete_form_'.$form->getId(), (string) $request->request->get('_token'))) {
             $this->forms->remove($form);
-            $this->addFlash('success', 'Forma je obrisana.');
+            $this->addFlash('success', $this->translator->trans('admin.form.flash.deleted', [], 'admin'));
         }
 
         return $this->redirectToRoute('form_builder_admin_index');
@@ -79,7 +81,7 @@ class FormBuilderController extends AbstractController
                 ));
             } else {
                 $this->forms->save($definition);
-                $this->addFlash('success', 'Forma je spremljena.');
+                $this->addFlash('success', $this->translator->trans('admin.form.flash.saved', [], 'admin'));
 
                 return $this->redirectToRoute('form_builder_admin_edit', ['id' => $definition->getId()]);
             }

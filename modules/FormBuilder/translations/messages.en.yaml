@@ -8,6 +8,8 @@ form:
     choose_option: Choose an option
     payment_method: Payment method
     payment_unavailable: Payment is currently unavailable.
+    invalid_payment_method: Choose a valid payment method.
+    invalid_option: Choose a valid option.
     checkout: Continue to payment
     thankyou:
         page_title: 'Order #%id% — Tallyst'

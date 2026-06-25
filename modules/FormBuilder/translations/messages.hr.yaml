@@ -8,6 +8,8 @@ form:
     choose_option: Odaberi opciju
     payment_method: Način plaćanja
     payment_unavailable: Plaćanje trenutno nije dostupno.
+    invalid_payment_method: Odaberite ispravan način plaćanja.
+    invalid_option: Odaberite ispravnu opciju.
     checkout: Nastavi na plaćanje
     thankyou:
         page_title: 'Narudžba #%id% — Tallyst'

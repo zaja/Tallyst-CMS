@@ -36,8 +36,8 @@ class OrderCsvExportTest extends WebTestCase
         self::assertStringContainsString('paid-stripe@t.local', $all);
         self::assertStringContainsString('pending-paypal@t.local', $all);
         self::assertStringContainsString('paid-paypal@t.local', $all);
-        self::assertStringContainsString('Podaci kupca', $all, 'header column present');
-        self::assertStringContainsString('Mod', $all);
+        self::assertStringContainsString('Customer data', $all, 'header column present (CSV headers are fixed English)');
+        self::assertStringContainsString('Mode', $all);
         self::assertStringNotContainsString('Zemlja', $all);
         self::assertStringNotContainsString('VAT ID', $all);
         self::assertStringContainsString('"ime: Goran Zajec; tvrtka: Sve je dobro, j.d.o.o."', $all, 'newlines flattened + comma value RFC-quoted into one cell');

@@ -88,3 +88,125 @@ admin:
     setting:
         entity: { singular: Postavka, plural: Postavke }
         field: { key: Ključ, value: Vrijednost }
+    dashboard:
+        welcome: Dobrodošli u Tallyst CMS.
+        choose: Odaberite sekciju iz izbornika lijevo.
+        widget:
+            posts: Objave
+            pages: Stranice
+            recent_posts: Zadnje objave
+            no_posts: Još nema objava.
+            col: { title: Naslov, status: Status, date: Datum }
+            status: { published: Objavljeno, draft: Skica }
+    settings:
+        title: Postavke
+        save: Spremi postavke
+        smtp_unreadable: 'SMTP lozinku nije moguće dekriptirati (ključ promijenjen ili izgubljen). Mailovi privremeno koriste MAILER_DSN iz okoline. Upiši lozinku ponovno i spremi.'
+        test_mail:
+            label: Pošalji test mail
+            placeholder: email@primjer.hr
+            send: Pošalji
+            note: 'Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.'
+    theme:
+        title: Teme
+        intro: 'Teme se dodaju kopiranjem mape u themes/ na serveru (FTP / kopiraj default i preimenuj); CMS ih automatski detektira. Svaka tema može imati theme.png (~880×660) kao sličicu.'
+        none: Nije pronađena nijedna tema.
+        badge: { active: Aktivna, default: Default }
+        parent_label: 'roditelj:'
+        parent_missing: 'Roditeljska tema %name% ne postoji — tema ne može raditi.'
+        invalid: 'Nevaljana tema (nedostaje layout.html.twig).'
+        button: { activate: Aktiviraj, active: Aktivna }
+        activate_invalid_title: Tema mora biti valjana
+    module:
+        title: Instalirani moduli
+        none: 'Još nema instaliranih modula. Modul se pojavljuje ovdje čim ga dodate kao bundle koji implementira ModuleInterface.'
+        col: { module: Modul, version: Verzija, status: Status, action: Akcija }
+        badge: { core: Core, enabled: Uključen, disabled: Isključen }
+        core_locked: Dio jezgre — ne može se isključiti
+        button: { enable: Uključi, disable: Isključi }
+    readiness:
+        title: Provjera spremnosti
+        intro_before: 'Automatska dijagnostika postavki i spremnosti za produkciju. Panel samo javlja — ništa ne mijenja. Za stavke koje aplikacija ne može pouzdano provjeriti (worker, webhook, TLS) prikazuje se'
+        intro_after: 'uz upute — nikad lažno zeleno, da zelenom možeš vjerovati.'
+        manual: Provjeri ručno
+        summary: '%count% provjera:'
+        ok: OK
+        warning: upozorenja
+        problem: problema
+        manual_count: ručno
+        fix: 'Popravak:'
+    security:
+        title: Sigurnost
+        password: Lozinka
+        two_factor:
+            heading: Dvostruka provjera (2FA)
+            enabled_badge: Uključeno
+            enabled_text: Prijava traži kod iz authenticator aplikacije.
+            disable_hint: Za isključivanje potvrdi svojom lozinkom.
+            disable_button: Isključi 2FA
+            disabled_badge: Isključeno
+            disabled_text: Dodaj drugi faktor (kod iz aplikacije) za jaču zaštitu računa.
+            enable_button: Uključi 2FA
+        change_password:
+            heading: Promjena lozinke
+            submit: Promijeni lozinku
+        enable:
+            title: Uključivanje 2FA
+            step1: 'Skeniraj QR kod u authenticator aplikaciji (Google Authenticator, Authy, 1Password…).'
+            step2: Upiši 6-znamenkasti kod koji aplikacija prikaže.
+            qr_alt: 2FA QR kod
+            manual_hint: 'Ne možeš skenirati? Ručno upiši tajni ključ:'
+            code_label: Kod iz aplikacije
+            confirm: Potvrdi i uključi
+            cancel: Odustani
+        backup:
+            title: Backup kodovi
+            warning: 'Spremi ove kodove na sigurno — prikazuju se samo sada. Svaki vrijedi jednom i omogućuje prijavu ako izgubiš pristup authenticator aplikaciji.'
+            done: Gotovo
+    email:
+        index:
+            title: Email predlošci
+            intro: 'Uredi naslov i sadržaj e-mailova koje sustav šalje. Zadane vrijednosti koriste se dok ih ne urediš.'
+            col: { type: Tip, status: Status, edited: Uređeno }
+            badge: { enabled: Omogućeno, disabled: Onemogućeno }
+            overridden_yes: Da
+            overridden_no: '— (zadano)'
+            edit: Uredi
+        edit:
+            title: 'Email: %label%'
+            field: { subject: Naslov (subject), body: Sadržaj (HTML), enabled: Omogućeno }
+            required_disabled: Ovaj e-mail je obavezan i ne može se onemogućiti.
+            save: Spremi
+            back: Natrag
+            tags_heading: Dostupne oznake
+            tags_intro: 'Upiši ih u naslov ili sadržaj; zamijenit će se vrijednostima pri slanju.'
+            tag_required: obavezno
+            insert_tag: 'Ubaci: %desc%'
+            toolbar:
+                bold: Podebljano
+                italic: Kurziv
+                link: Poveznica
+                bullet_list: Lista
+                ordered_list: Numerirana lista
+                h2: Naslov 2
+                h3: Naslov 3
+                paragraph: Paragraf
+                clear: Očisti formatiranje
+    flash:
+        settings_saved: Postavke su spremljene.
+        test_mail_recipient: 'Upiši adresu primatelja (ili postavi "Pošiljatelj (email)").'
+        test_mail_invalid: '"%email%" nije ispravna email adresa.'
+        test_mail_sent: Poslano na %to% preko %via%.
+        test_mail_failed: 'Slanje preko %via% nije uspjelo: %error%'
+        test_mail_error: 'Greška (%type%): %error%'
+        password_changed: Lozinka je promijenjena.
+        two_factor_enabled: Dvostruka provjera je uključena.
+        two_factor_disabled: Dvostruka provjera je isključena.
+        two_factor_code_invalid: Kod nije ispravan. Skeniraj QR i pokušaj ponovno.
+        two_factor_password_invalid: Lozinka nije ispravna — 2FA nije isključen.
+        theme_activated: Tema "%name%" je aktivirana.
+        theme_invalid: Tema nije valjana ili ne postoji.
+        email_template_saved: Predložak je spremljen.
+        email_required_tags: 'Sadržaj mora sadržavati obavezne oznake: %tags%'
+        module_core_locked: Modul "%name%" je dio jezgre i ne može se isključiti.
+        module_updated: Modul "%name%" je ažuriran.

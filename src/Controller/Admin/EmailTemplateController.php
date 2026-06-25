@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Basic editor for the editable email templates (PASS 1 — plain textarea body; the rich
@@ -32,6 +33,7 @@ class EmailTemplateController extends AbstractController
         private readonly EmailTemplateRepository $templates,
         private readonly EmailRenderer $renderer,
         private readonly EntityManagerInterface $em,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -68,10 +70,10 @@ class EmailTemplateController extends AbstractController
         ];
 
         $builder = $this->createFormBuilder($data)
-            ->add('subject', TextType::class, ['label' => 'Naslov (subject)'])
-            ->add('body', TextareaType::class, ['label' => 'Sadržaj (HTML)', 'attr' => ['rows' => 16]]);
+            ->add('subject', TextType::class, ['label' => $this->translator->trans('admin.email.edit.field.subject', [], 'admin')])
+            ->add('body', TextareaType::class, ['label' => $this->translator->trans('admin.email.edit.field.body', [], 'admin'), 'attr' => ['rows' => 16]]);
         if ($type->canDisable) {
-            $builder->add('enabled', CheckboxType::class, ['label' => 'Omogućeno', 'required' => false]);
+            $builder->add('enabled', CheckboxType::class, ['label' => $this->translator->trans('admin.email.edit.field.enabled', [], 'admin'), 'required' => false]);
         }
         $form = $builder->getForm();
         $form->handleRequest($request);
@@ -80,7 +82,7 @@ class EmailTemplateController extends AbstractController
             $values = $form->getData();
             $missing = $this->renderer->bodyMissingRequiredTags($key, (string) $values['body']);
             if ([] !== $missing) {
-                $this->addFlash('danger', \sprintf('Sadržaj mora sadržavati obavezne oznake: %s', implode(', ', array_map(static fn (string $t): string => '{'.$t.'}', $missing))));
+                $this->addFlash('danger', $this->translator->trans('admin.flash.email_required_tags', ['%tags%' => implode(', ', array_map(static fn (string $t): string => '{'.$t.'}', $missing))], 'admin'));
             } else {
                 $template->setIdentifier($key)
                     ->setSubject((string) $values['subject'])
@@ -90,7 +92,7 @@ class EmailTemplateController extends AbstractController
 
                 $this->em->persist($template);
                 $this->em->flush();
-                $this->addFlash('success', 'Predložak je spremljen.');
+                $this->addFlash('success', $this->translator->trans('admin.flash.email_template_saved', [], 'admin'));
 
                 return $this->redirectToRoute('admin_email_template_edit', ['key' => $key]);
             }

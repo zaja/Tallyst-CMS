@@ -3,13 +3,13 @@
     <div class="row g-3 mb-3">
         <div class="col-sm-6 col-lg-3">
             <div class="card h-100"><div class="card-body">
-                <div class="text-muted small text-uppercase">Objave</div>
+                <div class="text-muted small text-uppercase">{{ 'admin.dashboard.widget.posts'|trans({}, 'admin') }}</div>
                 <div class="fs-3 fw-bold">{{ postCount }}</div>
             </div></div>
         </div>
         <div class="col-sm-6 col-lg-3">
             <div class="card h-100"><div class="card-body">
-                <div class="text-muted small text-uppercase">Stranice</div>
+                <div class="text-muted small text-uppercase">{{ 'admin.dashboard.widget.pages'|trans({}, 'admin') }}</div>
                 <div class="fs-3 fw-bold">{{ pageCount }}</div>
             </div></div>
         </div>
@@ -17,18 +17,18 @@
 
     <div class="card">
         <div class="card-body">
-            <h2 class="h5 mb-3">Zadnje objave</h2>
+            <h2 class="h5 mb-3">{{ 'admin.dashboard.widget.recent_posts'|trans({}, 'admin') }}</h2>
             {% if posts is empty %}
-                <p class="text-muted mb-0">Još nema objava.</p>
+                <p class="text-muted mb-0">{{ 'admin.dashboard.widget.no_posts'|trans({}, 'admin') }}</p>
             {% else %}
                 <div class="table-responsive">
                     <table class="table table-sm table-hover align-middle mb-0">
-                        <thead><tr><th>Naslov</th><th>Status</th><th>Datum</th></tr></thead>
+                        <thead><tr><th>{{ 'admin.dashboard.widget.col.title'|trans({}, 'admin') }}</th><th>{{ 'admin.dashboard.widget.col.status'|trans({}, 'admin') }}</th><th>{{ 'admin.dashboard.widget.col.date'|trans({}, 'admin') }}</th></tr></thead>
                         <tbody>
                             {% for p in posts %}
                                 <tr>
                                     <td><a href="{{ p.editUrl }}">{{ p.title }}</a></td>
-                                    <td><span class="badge badge-{{ p.published ? 'success' : 'secondary' }}">{{ p.published ? 'Objavljeno' : 'Skica' }}</span></td>
+                                    <td><span class="badge badge-{{ p.published ? 'success' : 'secondary' }}">{{ (p.published ? 'admin.dashboard.widget.status.published' : 'admin.dashboard.widget.status.draft')|trans({}, 'admin') }}</span></td>
                                     <td>{{ p.date ?? '—' }}</td>
                                 </tr>
                             {% endfor %}

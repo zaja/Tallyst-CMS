@@ -187,7 +187,10 @@ class OrderCrudController extends AbstractCrudController
         $response = new StreamedResponse(function () use ($orders, $money): void {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['ID', 'Datum', 'Bruto', 'Neto', 'Porez', 'Stopa', 'Naziv poreza', 'Valuta', 'Provider', 'Mod', 'Status', 'E-mail', 'Varijanta', 'Podaci kupca'], ',', '"', '');
+            // CSV headers are FIXED ENGLISH (never localised, NOT through trans) — a data export is a
+            // global, predictable format for accountants / external systems / re-import, independent of
+            // the admin's UI language. Deterministic regardless of app_locale.
+            fputcsv($out, ['ID', 'Date', 'Gross', 'Net', 'Tax', 'Rate', 'Tax name', 'Currency', 'Provider', 'Mode', 'Status', 'E-mail', 'Variant', 'Customer data'], ',', '"', '');
             foreach ($orders as $o) {
                 // Form data on one CSV line: flatten the summary's newlines (fputcsv handles commas/quotes).
                 $customerData = str_replace(["\r\n", "\n", "\r"], '; ', $o->getSubmissionSummary());
@@ -228,9 +231,9 @@ class OrderCrudController extends AbstractCrudController
             $this->orderStateMachine->apply($order, 'fulfill');
             $this->em->flush();
             $this->mailer->sendDelivered($order);
-            $this->addFlash('success', \sprintf('Narudžba #%d označena kao isporučena.', $order->getId()));
+            $this->addFlash('success', $this->translator->trans('admin.order.flash.marked_fulfilled', ['%id%' => $order->getId()], 'admin'));
         } else {
-            $this->addFlash('warning', \sprintf('Narudžbu #%d nije moguće označiti isporučenom (status: %s).', $order->getId(), $order->getStatus()));
+            $this->addFlash('warning', $this->translator->trans('admin.order.flash.mark_failed', ['%id%' => $order->getId(), '%status%' => $order->getStatus()], 'admin'));
         }
 
         return $this->redirect($this->backToDetail($urls, $order));
@@ -244,10 +247,10 @@ class OrderCrudController extends AbstractCrudController
         }
 
         if (null === $order->getCustomerEmail() || '' === $order->getCustomerEmail()) {
-            $this->addFlash('warning', \sprintf('Narudžba #%d nema e-mail kupca.', $order->getId()));
+            $this->addFlash('warning', $this->translator->trans('admin.order.flash.no_email', ['%id%' => $order->getId()], 'admin'));
         } else {
             $this->mailer->sendConfirmation($order);
-            $this->addFlash('success', \sprintf('Potvrda za narudžbu #%d ponovno poslana.', $order->getId()));
+            $this->addFlash('success', $this->translator->trans('admin.order.flash.resent', ['%id%' => $order->getId()], 'admin'));
         }
 
         return $this->redirect($this->backToDetail($urls, $order));
@@ -264,7 +267,7 @@ class OrderCrudController extends AbstractCrudController
         try {
             $this->payments->get($order->getProvider())->refund($order);
         } catch (\Throwable $e) {
-            $this->addFlash('danger', \sprintf('Refund nije uspio: %s', $e->getMessage()));
+            $this->addFlash('danger', $this->translator->trans('admin.order.flash.refund_failed', ['%error%' => $e->getMessage()], 'admin'));
 
             return $this->redirect($this->backToDetail($urls, $order));
         }
@@ -277,9 +280,9 @@ class OrderCrudController extends AbstractCrudController
             $this->orderStateMachine->apply($order, 'refund');
             $this->em->flush();
             $this->mailer->sendRefunded($order);
-            $this->addFlash('success', \sprintf('Narudžba #%d je refundirana.', $order->getId()));
+            $this->addFlash('success', $this->translator->trans('admin.order.flash.refunded', ['%id%' => $order->getId()], 'admin'));
         } else {
-            $this->addFlash('info', \sprintf('Narudžba #%d je već refundirana.', $order->getId()));
+            $this->addFlash('info', $this->translator->trans('admin.order.flash.already_refunded', ['%id%' => $order->getId()], 'admin'));
         }
 
         return $this->redirect($this->backToDetail($urls, $order));

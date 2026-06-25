@@ -88,3 +88,125 @@ admin:
     setting:
         entity: { singular: Setting, plural: Settings }
         field: { key: Key, value: Value }
+    dashboard:
+        welcome: Welcome to Tallyst CMS.
+        choose: Choose a section from the menu on the left.
+        widget:
+            posts: Posts
+            pages: Pages
+            recent_posts: Recent posts
+            no_posts: No posts yet.
+            col: { title: Title, status: Status, date: Date }
+            status: { published: Published, draft: Draft }
+    settings:
+        title: Settings
+        save: Save settings
+        smtp_unreadable: 'The SMTP password can''t be decrypted (the key changed or was lost). Mail temporarily uses MAILER_DSN from the environment. Re-enter the password and save.'
+        test_mail:
+            label: Send a test mail
+            placeholder: name@example.com
+            send: Send
+            note: 'Sends via the current configuration; the result reports which transport was used.'
+    theme:
+        title: Themes
+        intro: 'Themes are added by copying a folder into themes/ on the server (FTP / copy default and rename); the CMS detects them automatically. A theme may include a theme.png (~880×660) thumbnail.'
+        none: No themes found.
+        badge: { active: Active, default: Default }
+        parent_label: 'parent:'
+        parent_missing: 'The parent theme %name% does not exist — the theme can''t work.'
+        invalid: 'Invalid theme (layout.html.twig is missing).'
+        button: { activate: Activate, active: Active }
+        activate_invalid_title: The theme must be valid
+    module:
+        title: Installed modules
+        none: 'No modules installed yet. A module appears here as soon as you add it as a bundle implementing ModuleInterface.'
+        col: { module: Module, version: Version, status: Status, action: Action }
+        badge: { core: Core, enabled: Enabled, disabled: Disabled }
+        core_locked: Part of the core — cannot be disabled
+        button: { enable: Enable, disable: Disable }
+    readiness:
+        title: Readiness check
+        intro_before: 'Automatic diagnostics of the configuration and production-readiness. The panel only reports — it changes nothing. For items the app can''t verify with certainty (worker, webhook, TLS) it shows'
+        intro_after: 'with instructions — never a false green, so you can trust green.'
+        manual: Check manually
+        summary: '%count% checks:'
+        ok: OK
+        warning: warnings
+        problem: problems
+        manual_count: manual
+        fix: 'Fix:'
+    security:
+        title: Security
+        password: Password
+        two_factor:
+            heading: Two-factor authentication (2FA)
+            enabled_badge: Enabled
+            enabled_text: Sign-in requires a code from your authenticator app.
+            disable_hint: To disable, confirm with your password.
+            disable_button: Disable 2FA
+            disabled_badge: Disabled
+            disabled_text: Add a second factor (a code from an app) for stronger account protection.
+            enable_button: Enable 2FA
+        change_password:
+            heading: Change password
+            submit: Change password
+        enable:
+            title: Enable 2FA
+            step1: 'Scan the QR code in an authenticator app (Google Authenticator, Authy, 1Password…).'
+            step2: Enter the 6-digit code the app shows.
+            qr_alt: 2FA QR code
+            manual_hint: 'Can''t scan? Enter the secret key manually:'
+            code_label: Code from your app
+            confirm: Confirm and enable
+            cancel: Cancel
+        backup:
+            title: Backup codes
+            warning: 'Store these codes somewhere safe — they''re shown only now. Each works once and lets you sign in if you lose access to your authenticator app.'
+            done: Done
+    email:
+        index:
+            title: E-mail templates
+            intro: 'Edit the subject and body of the e-mails the system sends. The defaults are used until you edit them.'
+            col: { type: Type, status: Status, edited: Edited }
+            badge: { enabled: Enabled, disabled: Disabled }
+            overridden_yes: 'Yes'
+            overridden_no: '— (default)'
+            edit: Edit
+        edit:
+            title: 'E-mail: %label%'
+            field: { subject: Subject, body: Body (HTML), enabled: Enabled }
+            required_disabled: This e-mail is required and can't be disabled.
+            save: Save
+            back: Back
+            tags_heading: Available tags
+            tags_intro: 'Type them into the subject or body; they''re replaced with values when sending.'
+            tag_required: required
+            insert_tag: 'Insert: %desc%'
+            toolbar:
+                bold: Bold
+                italic: Italic
+                link: Link
+                bullet_list: List
+                ordered_list: Numbered list
+                h2: Heading 2
+                h3: Heading 3
+                paragraph: Paragraph
+                clear: Clear formatting
+    flash:
+        settings_saved: Settings saved.
+        test_mail_recipient: 'Enter a recipient address (or set "Sender (e-mail)").'
+        test_mail_invalid: '"%email%" is not a valid e-mail address.'
+        test_mail_sent: Sent to %to% via %via%.
+        test_mail_failed: 'Sending via %via% failed: %error%'
+        test_mail_error: 'Error (%type%): %error%'
+        password_changed: Password changed.
+        two_factor_enabled: Two-factor authentication enabled.
+        two_factor_disabled: Two-factor authentication disabled.
+        two_factor_code_invalid: The code is incorrect. Scan the QR again and retry.
+        two_factor_password_invalid: Wrong password — 2FA was not disabled.
+        theme_activated: Theme "%name%" activated.
+        theme_invalid: The theme is not valid or does not exist.
+        email_template_saved: Template saved.
+        email_required_tags: 'The body must contain the required tags: %tags%'
+        module_core_locked: Module "%name%" is part of the core and can't be disabled.
+        module_updated: Module "%name%" updated.

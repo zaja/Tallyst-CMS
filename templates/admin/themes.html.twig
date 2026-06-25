@@ -1,15 +1,14 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block content_title %}Teme{% endblock %}
+{% block content_title %}{{ 'admin.theme.title'|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
     <div class="alert alert-light border">
-        Teme se dodaju kopiranjem mape u <code>themes/</code> na serveru (FTP / kopiraj <code>default</code> i
-        preimenuj); CMS ih automatski detektira. Svaka tema može imati <code>theme.png</code> (~880×660) kao sličicu.
+        {{ 'admin.theme.intro'|trans({}, 'admin') }}
     </div>
 
     {% if themes is empty %}
-        <p class="text-muted">Nije pronađena nijedna tema.</p>
+        <p class="text-muted">{{ 'admin.theme.none'|trans({}, 'admin') }}</p>
     {% else %}
         <div class="row g-3">
             {% for t in themes %}
@@ -27,28 +26,28 @@
                         <div class="card-body">
                             <h2 class="h6 mb-1">
                                 {{ t.label }}
-                                {% if t.active %}<span class="badge badge-success">Aktivna</span>{% endif %}
-                                {% if t.isDefault %}<span class="badge badge-info">Default</span>{% endif %}
+                                {% if t.active %}<span class="badge badge-success">{{ 'admin.theme.badge.active'|trans({}, 'admin') }}</span>{% endif %}
+                                {% if t.isDefault %}<span class="badge badge-info">{{ 'admin.theme.badge.default'|trans({}, 'admin') }}</span>{% endif %}
                             </h2>
                             <p class="small text-muted mb-2">
-                                <code>{{ t.name }}</code>{% if t.author %} · {{ t.author }}{% endif %}{% if t.parent %} · roditelj: <code>{{ t.parent }}</code>{% endif %}
+                                <code>{{ t.name }}</code>{% if t.author %} · {{ t.author }}{% endif %}{% if t.parent %} · {{ 'admin.theme.parent_label'|trans({}, 'admin') }} <code>{{ t.parent }}</code>{% endif %}
                             </p>
 
                             {% if t.parentMissing %}
-                                <p class="small text-danger mb-2">Roditeljska tema <code>{{ t.parent }}</code> ne postoji — tema ne može raditi.</p>
+                                <p class="small text-danger mb-2">{{ 'admin.theme.parent_missing'|trans({'%name%': '<code>' ~ t.parent ~ '</code>'}, 'admin')|raw }}</p>
                             {% elseif not t.valid %}
-                                <p class="small text-danger mb-2">Nevaljana tema (nedostaje <code>layout.html.twig</code>).</p>
+                                <p class="small text-danger mb-2">{{ 'admin.theme.invalid'|trans({}, 'admin') }}</p>
                             {% endif %}
 
                             {% if t.active %}
-                                <button class="btn btn-sm btn-secondary" disabled>Aktivna</button>
+                                <button class="btn btn-sm btn-secondary" disabled>{{ 'admin.theme.button.active'|trans({}, 'admin') }}</button>
                             {% elseif t.valid and not t.parentMissing %}
                                 <form method="post" action="{{ path('admin_themes_activate', {name: t.name}) }}" class="d-inline">
                                     <input type="hidden" name="_token" value="{{ csrf_token('activate-theme-' ~ t.name) }}">
-                                    <button class="btn btn-sm btn-primary" type="submit">Aktiviraj</button>
+                                    <button class="btn btn-sm btn-primary" type="submit">{{ 'admin.theme.button.activate'|trans({}, 'admin') }}</button>
                                 </form>
                             {% else %}
-                                <button class="btn btn-sm btn-primary" disabled title="Tema mora biti valjana">Aktiviraj</button>
+                                <button class="btn btn-sm btn-primary" disabled title="{{ 'admin.theme.activate_invalid_title'|trans({}, 'admin') }}">{{ 'admin.theme.button.activate'|trans({}, 'admin') }}</button>
                             {% endif %}
                         </div>
                     </div>
