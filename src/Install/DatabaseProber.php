@@ -4,6 +4,7 @@ namespace App\Install;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
 
 /**
  * Opens a RAW DBAL connection straight from a DSN — independent of the kernel's compiled
@@ -14,7 +15,17 @@ class DatabaseProber
 {
     public function connect(string $dsn): Connection
     {
-        return DriverManager::getConnection(['url' => $dsn]);
+        // DBAL 4's DriverManager no longer derives the driver from a `url` param — it needs an
+        // explicit `driver`/`driverClass` (else "The options driver or driverClass are mandatory").
+        // DsnParser maps the DSN scheme (mysql/mariadb → pdo_mysql) to a full params array.
+        // The Symfony container parses the same mysql:// DSN fine via its own config — this only
+        // fixes the manual, out-of-container probe; the .env.local DATABASE_URL format is unchanged.
+        $params = (new DsnParser([
+            'mysql' => 'pdo_mysql',
+            'mariadb' => 'pdo_mysql',
+        ]))->parse($dsn);
+
+        return DriverManager::getConnection($params);
     }
 
     /**
