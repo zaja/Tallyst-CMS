@@ -28,3 +28,7 @@
 ###< project ###
 /node_modules/
 CLAUDE.md
+# Internal planning/diagnosis notes (not part of the distributed CMS).
+/UPGRADE-DIAGNOSIS.md
+/UPGRADE-SIMPLIFY.md
+/ROADMAP.md
