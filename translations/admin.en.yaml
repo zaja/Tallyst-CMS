@@ -271,7 +271,7 @@ admin:
         worker:
             label: Messenger worker
             detail: { active: 'Active — last seen %seconds%s ago (heartbeat).', empty: 'The worker has not reported (heartbeat empty) — it may not be running, or it was just started/restarted and has not beaten yet.', stale: 'The worker last reported %seconds%s ago (stale) — it may have stopped.', suffix: ' Can''t confirm 100% from the app.' }
-            fix: 'Check manually: systemctl --user status tallyst-messenger (restart if needed). The heartbeat refreshes while the worker runs.'
+            fix: 'Example — the exact command depends on your server (systemd / supervisor / manual). Check: `systemctl --user status tallyst-messenger`. To run the worker as a persistent service: `systemctl --user restart tallyst-messenger` (user-level systemd unit in ~/.config/systemd/user/ + `loginctl enable-linger`), or run `php8.5 bin/console messenger:consume async` under your process manager. The heartbeat refreshes while the worker runs.'
         queue:
             label: Message queue
             detail: { error: 'Cannot read the queue: %error%', failed: '%failed% failed message(s) (and %pending% pending).', backlog: '%pending% messages pending — if the number grows, the worker probably is not running.', ok: '%pending% pending, %failed% failed.' }

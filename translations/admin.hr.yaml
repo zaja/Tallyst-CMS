@@ -270,7 +270,7 @@ admin:
         worker:
             label: Messenger worker
             detail: { active: 'Aktivan — zadnji put viđen prije %seconds% s (heartbeat).', empty: 'Worker se nije javio (heartbeat prazan) — možda ne radi, ili je tek pokrenut/restartan i još nije „kucnuo".', stale: 'Worker se zadnji put javio prije %seconds% s (zastarjelo) — možda je stao.', suffix: ' Ne mogu 100% potvrditi iz aplikacije.' }
-            fix: 'Provjeri ručno: systemctl --user status tallyst-messenger (pa po potrebi restart). Heartbeat se osvježava dok worker radi.'
+            fix: 'Primjer — točna naredba ovisi o vašem serveru (systemd / supervisor / ručno). Provjera: `systemctl --user status tallyst-messenger`. Za pokretanje workera kao trajnog servisa: `systemctl --user restart tallyst-messenger` (user-level systemd unit u ~/.config/systemd/user/ + `loginctl enable-linger`), ili pokreni `php8.5 bin/console messenger:consume async` kroz vaš process manager. Heartbeat se osvježava dok worker radi.'
         queue:
             label: Red poruka
             detail: { error: 'Ne mogu pročitati red poruka: %error%', failed: '%failed% neuspjelih poruka (i %pending% na čekanju).', backlog: '%pending% poruka na čekanju — ako broj raste, worker vjerojatno ne radi.', ok: '%pending% na čekanju, %failed% neuspjelih.' }
