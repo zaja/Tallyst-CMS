@@ -126,6 +126,7 @@ admin:
     settings:
         title: Postavke
         save: Spremi postavke
+        secret_unchanged: '•••• nepromijenjeno'
         smtp_unreadable: 'SMTP lozinku nije moguće dekriptirati (ključ promijenjen ili izgubljen). Mailovi privremeno koriste MAILER_DSN iz okoline. Upiši lozinku ponovno i spremi.'
         test_mail:
             label: Pošalji test mail

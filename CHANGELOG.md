@@ -19,6 +19,12 @@ core-API change is a MAJOR (flagged ⚠).
   (git path, a one-time bridge for `create-project` installs, and a manual
   fallback).
 
+### Fixed
+
+- **English admin no longer shows a Croatian placeholder** on encrypted settings
+  fields (Stripe/PayPal secrets). The "leave blank to keep" placeholder is now
+  localized.
+
 ## [1.1.0] — 2026-06-25
 
 ### Added

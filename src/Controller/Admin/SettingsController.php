@@ -202,7 +202,12 @@ class SettingsController extends AbstractController
             // this field — an autofilled (non-empty) value would bypass the empty=keep guard and
             // overwrite the real secret on Save (it silently broke the SMTP password before).
             $options['always_empty'] = true;
-            $options['attr'] = ['placeholder' => '•••• nepromijenjeno', 'autocomplete' => 'new-password'];
+            // The placeholder is an attr (not auto-translated by the form's domain) → translate it
+            // explicitly. Only the displayed text changes; the write-only mask logic is untouched.
+            $options['attr'] = [
+                'placeholder' => $this->translator->trans('admin.settings.secret_unchanged', [], 'admin'),
+                'autocomplete' => 'new-password',
+            ];
         }
 
         return $options;

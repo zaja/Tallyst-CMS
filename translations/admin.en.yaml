@@ -127,6 +127,7 @@ admin:
     settings:
         title: Settings
         save: Save settings
+        secret_unchanged: '•••• unchanged'
         smtp_unreadable: 'The SMTP password can''t be decrypted (the key changed or was lost). Mail temporarily uses MAILER_DSN from the environment. Re-enter the password and save.'
         test_mail:
             label: Send a test mail
