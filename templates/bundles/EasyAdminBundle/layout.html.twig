@@ -56,15 +56,25 @@
             align-items: center;
             gap: 4px;
         }
+        /* A clear, bold +/− toggle indicator (the JS appends a '▾' glyph which we hide via
+           font-size:0 and replace with ::before, so the collapse JS stays untouched). + when
+           collapsed, − when expanded — far more legible than a faint caret. */
         .menu-collapse-caret {
             margin-inline-start: auto;
             flex: 0 0 auto;
-            font-size: 1.35em;
+            font-size: 0; /* hide the JS '▾' glyph; ::before carries the visible indicator */
             line-height: 1;
-            transition: transform .15s ease;
         }
-        /* ▾ open (expanded) → rotate to ▸ when collapsed. */
-        .menu-header-contents[aria-expanded="false"] .menu-collapse-caret { transform: rotate(-90deg); }
+        .menu-collapse-caret::before {
+            content: '+';
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1;
+            opacity: 1;
+        }
+        .menu-header-contents[aria-expanded="true"] .menu-collapse-caret::before {
+            content: '\2212'; /* − minus sign (U+2212) when expanded */
+        }
     </style>
     {{ parent() }}
     <div class="tallyst-version text-muted small px-3 py-2 mt-auto" style="opacity: .65;">
