@@ -4,10 +4,13 @@
 
 {% block main %}
     {# Dark-mode polish (CSS only): the intro is a theme-aware .card (was alert-light → a light blob
-       in dark), and the section dividers follow var(--bs-border-color) (the default list-group border
-       read too light in dark). Both are var(--bs-*)-driven, so light mode is unchanged. #}
+       in dark). The list-group dividers used --bs-border-color, but EA's dark theme leaves that token
+       LIGHT (it maps to :root's light --border-color, never overridden for dark) — so the dividers read
+       bright. Use --bs-table-border-color instead (EA themes it dark in dark via --true-gray-800, the
+       same token the CRUD tables use correctly); it's only defined in the dark block, so fall back to
+       --bs-border-color for light mode. #}
     <style>
-        .readiness-panel .list-group-item { border-color: var(--bs-border-color); }
+        .readiness-panel .list-group-item { border-color: var(--bs-table-border-color, var(--bs-border-color)); }
     </style>
     <div class="readiness-panel">
     <div class="card mb-3">
