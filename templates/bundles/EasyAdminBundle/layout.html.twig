@@ -48,8 +48,22 @@
         .sidebar-wrapper > .sidebar { display: flex; flex-direction: column; min-block-size: 100%; }
         /* Collapsible SYSTEM section (admin--menu-collapse): hide its items when collapsed. */
         .menu-item.menu-section-collapsed { display: none !important; }
-        .js-tallyst-system { display: inline-flex; align-items: center; width: 100%; }
-        .menu-collapse-caret { margin-inline-start: auto; font-size: .7em; transition: transform .15s ease; }
+        /* Lay the SYSTEM header out as one row (EA defaults menu-header-contents to display:block),
+           so the caret sits INLINE with the label and never wraps onto a second line. Scoped to the
+           SYSTEM section via :has so other section headers are untouched. */
+        #main-menu .menu .menu-header:has(.js-tallyst-system) .menu-header-contents {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .menu-collapse-caret {
+            margin-inline-start: auto;
+            flex: 0 0 auto;
+            font-size: .9em;
+            line-height: 1;
+            transition: transform .15s ease;
+        }
+        /* ▾ open (expanded) → rotate to ▸ when collapsed. */
         .menu-header-contents[aria-expanded="false"] .menu-collapse-caret { transform: rotate(-90deg); }
     </style>
     {{ parent() }}
