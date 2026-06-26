@@ -53,7 +53,7 @@ class OrdersDashboardWidget implements DashboardWidgetInterface
         if (null !== $primary) {
             foreach ($this->orders->revenueByDay(new \DateTimeImmutable('-13 months')) as $row) {
                 if ($row['currency'] === $primary) {
-                    $series[] = ['d' => $row['day'], 'total' => $row['total']];
+                    $series[] = ['d' => $row['day'], 'total' => $row['total'], 'orders' => $row['orders']];
                 }
             }
         }

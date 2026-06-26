@@ -23,6 +23,11 @@ core-API change is a MAJOR (flagged ⚠).
   Posts, and Categories have a "Preview" link that opens the live page in a new tab.
   The Menu items list can be filtered by parent menu. The sidebar "System" section
   is collapsible (collapsed by default, remembered across reloads).
+- **Dashboard chart shows orders alongside revenue.** The revenue chart now plots the
+  order count as a second line on its own axis, so you see both at a glance.
+- **Readiness: worker-startup example.** When the background worker isn't confirmed
+  running, the readiness panel now shows an example command to start it (with an honest
+  "depends on your server" note).
 
 ### Fixed
 

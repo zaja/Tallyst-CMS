@@ -108,14 +108,15 @@ class OrderRepository extends ServiceEntityRepository
     }
 
     /**
-     * Daily revenue (minor) per currency since a date — the chart series. GROUP BY day in the DB.
+     * Daily revenue (minor) + order count per currency since a date — the chart series. GROUP BY day
+     * in the DB.
      *
-     * @return list<array{day: string, currency: string, total: int}>
+     * @return list<array{day: string, currency: string, total: int, orders: int}>
      */
     public function revenueByDay(\DateTimeImmutable $since): array
     {
         $rows = $this->createQueryBuilder('o')
-            ->select("SUBSTRING(o.createdAt, 1, 10) AS day, o.currency AS currency, SUM(o.amountMinor) AS total")
+            ->select("SUBSTRING(o.createdAt, 1, 10) AS day, o.currency AS currency, SUM(o.amountMinor) AS total, COUNT(o.id) AS orders")
             ->where('o.status IN (:statuses)')
             ->andWhere('o.createdAt >= :since')
             ->setParameter('statuses', self::REVENUE_STATUSES)
@@ -129,6 +130,7 @@ class OrderRepository extends ServiceEntityRepository
             'day' => (string) $r['day'],
             'currency' => (string) $r['currency'],
             'total' => (int) $r['total'],
+            'orders' => (int) $r['orders'],
         ], $rows);
     }
 

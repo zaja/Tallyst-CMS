@@ -99,6 +99,14 @@ class OrderDashboardStatsTest extends KernelTestCase
             self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}$/', $r['day']);
             self::assertContains($r['currency'], ['eur', 'usd']);
         }
+
+        // Order count per bucket (the chart's second series): 4 revenue orders total
+        // (2 eur this-month + 1 usd this-month + 1 eur last-month); refunded/pending excluded.
+        $orders = array_sum(array_map(static fn (array $r): int => $r['orders'], $rows));
+        self::assertSame(4, $orders, 'paid+fulfilled only; refunded & pending excluded');
+        $eurThisMonth = array_filter($rows, static fn (array $r): bool => 'eur' === $r['currency'] && 3000 === $r['total']);
+        self::assertCount(1, $eurThisMonth, 'the two same-day eur revenue orders group into one bucket');
+        self::assertSame(2, reset($eurThisMonth)['orders'], 'that bucket counts 2 orders');
     }
 
     public function testRecentOrdersLimitAndOrder(): void
