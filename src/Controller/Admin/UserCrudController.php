@@ -35,6 +35,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 class UserCrudController extends AbstractCrudController
 {
+    use AdminCrudPolishTrait;
+
     public function __construct(
         private readonly UserPasswordHasherInterface $hasher,
         private readonly AdminLockoutGuard $guard,
@@ -48,10 +50,10 @@ class UserCrudController extends AbstractCrudController
 
     public function configureCrud(Crud $crud): Crud
     {
-        return $crud
+        return $this->inlineRowActions($crud
             ->setEntityLabelInSingular('admin.user.entity.singular')
             ->setEntityLabelInPlural('admin.user.entity.plural')
-            ->setDefaultSort(['email' => 'ASC']);
+            ->setDefaultSort(['email' => 'ASC']));
     }
 
     public function configureActions(Actions $actions): Actions
@@ -60,9 +62,12 @@ class UserCrudController extends AbstractCrudController
         // admin). Server-side enforcement stays in deleteEntity (mirrors blockDelete exactly).
         $hideWhenBlocked = fn (Action $a): Action => $a->displayIf(fn (User $u): bool => null === $this->guard->blockDelete($u));
 
-        return $actions
+        $actions = $actions
             ->update(Crud::PAGE_INDEX, Action::DELETE, $hideWhenBlocked)
             ->update(Crud::PAGE_DETAIL, Action::DELETE, $hideWhenBlocked);
+
+        // No preview (users have no public URL).
+        return $this->addBackToListAction($actions);
     }
 
     public function configureFields(string $pageName): iterable

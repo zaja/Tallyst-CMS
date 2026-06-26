@@ -18,6 +18,9 @@ core-API change is a MAJOR (flagged ⚠).
   git + Composer + finalize flow, and an "Upgrading" guide in the install docs
   (git path, a one-time bridge for `create-project` installs, and a manual
   fallback).
+- **Admin list polish.** Row actions (Edit/Delete) now show inline instead of
+  hidden in a "⋮" menu, New/Edit screens have a "Back to list" button, and Pages,
+  Posts, and Categories have a "Preview" link that opens the live page in a new tab.
 
 ### Fixed
 

@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Page;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
@@ -12,6 +13,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tallyst\Media\Field\MediaPickerField;
 use Tallyst\Media\Field\TiptapField;
@@ -19,6 +21,13 @@ use Tallyst\Media\Field\TiptapField;
 #[IsGranted('ROLE_EDITOR')]
 class PageCrudController extends AbstractCrudController
 {
+    use AdminCrudPolishTrait;
+
+    public function __construct(
+        private readonly UrlGeneratorInterface $urlGenerator,
+    ) {
+    }
+
     public static function getEntityFqcn(): string
     {
         return Page::class;
@@ -26,12 +35,26 @@ class PageCrudController extends AbstractCrudController
 
     public function configureCrud(Crud $crud): Crud
     {
-        return $crud
+        return $this->inlineRowActions($crud
             ->setEntityLabelInSingular('admin.page.entity.singular')
             ->setEntityLabelInPlural('admin.page.entity.plural')
             ->setDefaultSort(['position' => 'ASC', 'id' => 'DESC'])
             ->addFormTheme('@Media/admin/form/media_picker_widget.html.twig')
-            ->addFormTheme('@Media/admin/form/tiptap_widget.html.twig');
+            ->addFormTheme('@Media/admin/form/tiptap_widget.html.twig'));
+    }
+
+    public function configureActions(Actions $actions): Actions
+    {
+        // Preview the live page (home slug → "/", others → /{slug}); only for published pages.
+        $actions = $this->addPreviewAction(
+            $actions,
+            fn (Page $p): string => 'home' === $p->getSlug()
+                ? $this->urlGenerator->generate('home', [], UrlGeneratorInterface::ABSOLUTE_URL)
+                : $this->urlGenerator->generate('page_show', ['slug' => $p->getSlug()], UrlGeneratorInterface::ABSOLUTE_URL),
+            static fn (Page $p): bool => $p->isPublished(),
+        );
+
+        return $this->addBackToListAction($actions);
     }
 
     public function configureFields(string $pageName): iterable

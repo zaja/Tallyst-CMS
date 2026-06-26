@@ -1,5 +1,8 @@
 # admin domain (en) — back-office (EasyAdmin) UI. EA's own chrome stays in the EasyAdminBundle domain.
 admin:
+    action:
+        back_to_list: Back to list
+        preview: Preview
     menu:
         dashboard: Dashboard
         pages: Pages

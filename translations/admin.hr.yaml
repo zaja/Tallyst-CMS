@@ -1,5 +1,8 @@
 # admin domain (hr) — back-office (EasyAdmin) UI.
 admin:
+    action:
+        back_to_list: Natrag na popis
+        preview: Pregled
     menu:
         dashboard: Nadzorna ploča
         pages: Stranice

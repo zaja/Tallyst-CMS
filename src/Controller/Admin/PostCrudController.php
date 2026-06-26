@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 
 use App\Entity\Post;
 use App\Entity\User;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
@@ -13,6 +14,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tallyst\Media\Field\MediaPickerField;
 use Tallyst\Media\Field\TiptapField;
@@ -20,8 +22,11 @@ use Tallyst\Media\Field\TiptapField;
 #[IsGranted('ROLE_EDITOR')]
 class PostCrudController extends AbstractCrudController
 {
+    use AdminCrudPolishTrait;
+
     public function __construct(
         private readonly Security $security,
+        private readonly UrlGeneratorInterface $urlGenerator,
     ) {
     }
 
@@ -47,12 +52,24 @@ class PostCrudController extends AbstractCrudController
 
     public function configureCrud(Crud $crud): Crud
     {
-        return $crud
+        return $this->inlineRowActions($crud
             ->setEntityLabelInSingular('admin.post.entity.singular')
             ->setEntityLabelInPlural('admin.post.entity.plural')
             ->setDefaultSort(['publishedAt' => 'DESC', 'id' => 'DESC'])
             ->addFormTheme('@Media/admin/form/media_picker_widget.html.twig')
-            ->addFormTheme('@Media/admin/form/tiptap_widget.html.twig');
+            ->addFormTheme('@Media/admin/form/tiptap_widget.html.twig'));
+    }
+
+    public function configureActions(Actions $actions): Actions
+    {
+        // Preview the live post (/blog/{slug}); only for published posts.
+        $actions = $this->addPreviewAction(
+            $actions,
+            fn (Post $p): string => $this->urlGenerator->generate('blog_post', ['slug' => $p->getSlug()], UrlGeneratorInterface::ABSOLUTE_URL),
+            static fn (Post $p): bool => $p->isPublished(),
+        );
+
+        return $this->addBackToListAction($actions);
     }
 
     public function configureFields(string $pageName): iterable

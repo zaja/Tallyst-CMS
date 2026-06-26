@@ -2,6 +2,7 @@
 
 namespace Tallyst\Media\Controller\Admin;
 
+use App\Controller\Admin\AdminCrudPolishTrait;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
@@ -21,6 +22,8 @@ use Vich\UploaderBundle\Form\Type\VichImageType;
 #[IsGranted('ROLE_EDITOR')]
 class MediaCrudController extends AbstractCrudController
 {
+    use AdminCrudPolishTrait;
+
     public static function getEntityFqcn(): string
     {
         return Media::class;
@@ -28,20 +31,21 @@ class MediaCrudController extends AbstractCrudController
 
     public function configureCrud(Crud $crud): Crud
     {
-        return $crud
+        return $this->inlineRowActions($crud
             ->setEntityLabelInSingular('admin.media.entity.singular')
             ->setEntityLabelInPlural('admin.media.entity.plural')
             ->setDefaultSort(['id' => 'DESC'])
             // The index carries a FilePond bulk-upload panel (the create path); the old
             // single-file "new" form is gone.
-            ->overrideTemplate('crud/index', '@Media/admin/index.html.twig');
+            ->overrideTemplate('crud/index', '@Media/admin/index.html.twig'));
     }
 
     public function configureActions(Actions $actions): Actions
     {
         // Create = bulk upload on the index panel; NEW is disabled so there's no hidden
         // second single-file upload route. Edit stays for alt/title tweaks + image replace.
-        return $actions->disable(Action::NEW);
+        // No preview (media has no public page). Back-to-list on Edit.
+        return $this->addBackToListAction($actions->disable(Action::NEW));
     }
 
     public function configureFields(string $pageName): iterable
