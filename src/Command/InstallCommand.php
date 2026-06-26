@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Console\ConsoleStepRunner;
 use App\Install\DatabaseDsnBuilder;
 use App\Install\DatabaseProber;
 use App\Install\InstallStateDetector;
@@ -15,7 +16,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Process\Process;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Validation;
 
@@ -47,6 +47,7 @@ class InstallCommand extends Command
         private readonly DatabaseDsnBuilder $dsnBuilder,
         private readonly DatabaseProber $prober,
         private readonly InstallStateDetector $state,
+        private readonly ConsoleStepRunner $steps,
     ) {
         parent::__construct();
     }
@@ -268,16 +269,16 @@ class InstallCommand extends Command
         // --- SUBPROCESSES (fresh kernel each; read the new .env.local) -----------------------
         $io->section('Migracije i seed (svjež kernel, nova baza)');
 
-        if (!$this->runConsole($io, ['doctrine:migrations:migrate', '--no-interaction'], $this->childEnv())) {
+        if (!$this->steps->run($io, ['doctrine:migrations:migrate', '--no-interaction'], $this->steps->childEnv())) {
             $io->error('.env.local je zapisan, ali shema NIJE kreirana. Popravi problem s bazom (gore) i ponovno pokreni `php8.5 bin/console app:install` — idempotentno je.');
 
             return Command::FAILURE;
         }
 
-        if (!$this->runConsole(
+        if (!$this->steps->run(
             $io,
             ['app:install:finalize', '--email='.$adminEmail, '--role=ROLE_ADMIN', '--site-name='.$siteName],
-            $this->childEnv([self::PASSWORD_ENV => $adminPass]),
+            $this->steps->childEnv([self::PASSWORD_ENV => $adminPass]),
         )) {
             $io->error('Seed / izrada admina nije uspjela (gore). Popravi i ponovno pokreni `app:install` — idempotentno je.');
 
@@ -294,12 +295,12 @@ class InstallCommand extends Command
             $io->writeln('• --skip-assets — preskačem asset korak.');
         } else {
             $io->section('Asseti (fallback)');
-            if (!$this->runConsole($io, ['importmap:install'], $this->childEnv(), true)) {
+            if (!$this->steps->run($io, ['importmap:install'], $this->steps->childEnv(), true)) {
                 $assetFailures[] = 'importmap:install';
             }
 
             if ($force || !is_file($this->projectDir.'/public/assets/manifest.json')) {
-                if (!$this->runConsole($io, ['asset-map:compile'], $this->childEnv(), true)) {
+                if (!$this->steps->run($io, ['asset-map:compile'], $this->steps->childEnv(), true)) {
                     $assetFailures[] = 'asset-map:compile';
                 }
             } else {
@@ -307,7 +308,7 @@ class InstallCommand extends Command
             }
 
             if ($force || !is_dir($this->projectDir.'/public/themes/default')) {
-                if (!$this->runConsole($io, ['app:theme:assets:install'], $this->childEnv(), true)) {
+                if (!$this->steps->run($io, ['app:theme:assets:install'], $this->steps->childEnv(), true)) {
                     $assetFailures[] = 'app:theme:assets:install';
                 }
             } else {
@@ -315,7 +316,7 @@ class InstallCommand extends Command
             }
         }
 
-        $this->runConsole($io, ['cache:clear'], $this->childEnv(), true);
+        $this->steps->run($io, ['cache:clear'], $this->steps->childEnv(), true);
 
         // --- FINAL MESSAGE ------------------------------------------------------------------
         if ([] !== $assetFailures) {
@@ -395,57 +396,6 @@ class InstallCommand extends Command
         $v = getenv(self::PASSWORD_ENV);
 
         return false !== $v && '' !== $v ? $v : null;
-    }
-
-    /**
-     * Build a child-process env: strip the .env-managed keys (so the child re-reads them FRESH
-     * from the .env.local we just wrote — a present env var would otherwise win over the file),
-     * plus any extras (e.g. the admin password). `false` removes a var from the child env.
-     *
-     * @param array<string, string> $extra
-     *
-     * @return array<string, string|false>
-     */
-    private function childEnv(array $extra = []): array
-    {
-        return array_merge([
-            'DATABASE_URL' => false,
-            'APP_SECRET' => false,
-            'DEFAULT_URI' => false,
-            'ORDER_ADMIN_EMAIL' => false,
-            'SETTINGS_ENCRYPTION_KEY' => false,
-            // Strip APP_ENV/APP_DEBUG too: Dotenv won't let .env.local override an env var the
-            // child inherited from the parent ($_SERVER/$_ENV — and bootEnv even sets APP_DEBUG),
-            // so without this the subprocesses would run in the parent's (dev) mode instead of the
-            // prod we just wrote to .env.local. Unset → each child recomputes prod + APP_DEBUG=0.
-            'APP_ENV' => false,
-            'APP_DEBUG' => false,
-        ], $extra);
-    }
-
-    /**
-     * @param array<int, string>        $args
-     * @param array<string, string|false> $env
-     */
-    private function runConsole(SymfonyStyle $io, array $args, array $env, bool $warnOnly = false): bool
-    {
-        $io->writeln('<info>→ php bin/console '.implode(' ', $args).'</info>');
-
-        $process = new Process(array_merge([\PHP_BINARY, 'bin/console'], $args), $this->projectDir, $env);
-        $process->setTimeout(600);
-        $process->run(static function (string $type, string $buffer) use ($io): void {
-            $io->write($buffer);
-        });
-
-        if ($process->isSuccessful()) {
-            return true;
-        }
-
-        if ($warnOnly) {
-            $io->warning('Korak nije uspio (nastavljam): php bin/console '.implode(' ', $args));
-        }
-
-        return false;
     }
 
     private function isAbsoluteHttpUrl(string $url): bool
