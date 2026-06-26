@@ -3,8 +3,12 @@
 {% block content_title %}{{ 'admin.theme.title'|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
-    <div class="alert alert-light border">
-        {{ 'admin.theme.intro'|trans({}, 'admin') }}
+    {# Dark-mode: a theme-aware .card instead of .alert.alert-light (which is a light blob in dark) —
+       same fix as the readiness intro box. #}
+    <div class="card mb-3">
+        <div class="card-body">
+            {{ 'admin.theme.intro'|trans({}, 'admin') }}
+        </div>
     </div>
 
     {% if themes is empty %}
