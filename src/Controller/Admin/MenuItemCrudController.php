@@ -5,10 +5,12 @@ namespace App\Controller\Admin;
 use App\Entity\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_ADMIN')]
@@ -32,6 +34,13 @@ class MenuItemCrudController extends AbstractCrudController
     public function configureActions(Actions $actions): Actions
     {
         return $this->addBackToListAction($actions);
+    }
+
+    public function configureFilters(Filters $filters): Filters
+    {
+        // Filter the (otherwise merged) list by parent menu — useful as soon as there's >1 menu.
+        // The menu column is already shown on the index, so it's clear which menu each item belongs to.
+        return $filters->add(EntityFilter::new('menu', 'admin.menu_item.field.menu'));
     }
 
     public function configureFields(string $pageName): iterable
