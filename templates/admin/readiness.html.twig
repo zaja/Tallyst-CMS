@@ -3,10 +3,19 @@
 {% block content_title %}{{ 'admin.readiness.title'|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
-    <div class="alert alert-light border">
-        {{ 'admin.readiness.intro_before'|trans({}, 'admin') }}
-        <span class="badge badge-secondary">🔍 {{ 'admin.readiness.manual'|trans({}, 'admin') }}</span>
-        {{ 'admin.readiness.intro_after'|trans({}, 'admin') }}
+    {# Dark-mode polish (CSS only): the intro is a theme-aware .card (was alert-light → a light blob
+       in dark), and the section dividers follow var(--bs-border-color) (the default list-group border
+       read too light in dark). Both are var(--bs-*)-driven, so light mode is unchanged. #}
+    <style>
+        .readiness-panel .list-group-item { border-color: var(--bs-border-color); }
+    </style>
+    <div class="readiness-panel">
+    <div class="card mb-3">
+        <div class="card-body">
+            {{ 'admin.readiness.intro_before'|trans({}, 'admin') }}
+            <span class="badge badge-secondary">🔍 {{ 'admin.readiness.manual'|trans({}, 'admin') }}</span>
+            {{ 'admin.readiness.intro_after'|trans({}, 'admin') }}
+        </div>
     </div>
 
     <div class="card mb-3">
@@ -44,4 +53,5 @@
     {# On-demand webhook 401 self-test — FormBuilder owns the webhook routes (loose Twig coupling,
        like Postavke includes _payment_info). FormBuilder is a core module, so it's always present. #}
     {{ include('@FormBuilder/admin/_webhook_check.html.twig') }}
+    </div>
 {% endblock %}
