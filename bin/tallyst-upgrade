@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# tallyst-upgrade — one-command upgrade UX over the supported 2-command path.
+#
+# Usage:  bin/tallyst-upgrade [vX.Y.Z] [-- finalize-options]
+#   bin/tallyst-upgrade            # upgrade to the latest tag
+#   bin/tallyst-upgrade v1.2.0     # upgrade to a specific tag
+#   bin/tallyst-upgrade v1.2.0 --no-backup   # extra args go to app:upgrade:finalize
+#
+# Why a shell wrapper is SAFE (unlike one big PHP command): each step is a SEPARATE
+# process — git swaps the code atomically, then a FRESH composer and a FRESH php read the
+# NEW code. No process rewrites its own running code mid-flight.
+#
+# It does NOT restart the messenger worker — that needs ops privileges and stays a visible
+# step (app:upgrade:finalize prints the exact command at the end).
+set -euo pipefail
+
+PHP=${PHP:-php8.5}
+COMPOSER=${COMPOSER:-/usr/local/bin/composer}
+
+# Run from the project root (this script lives in bin/).
+cd "$(dirname "$0")/.."
+
+# 1) Sanity: a git checkout is the supported swap mechanism. A create-project copy has no
+#    .git — point the user at the one-time bridge in docs/INSTALL.md ("Upgrading").
+if [ ! -d .git ]; then
+  echo "Error: no .git directory found." >&2
+  echo "This looks like a create-project install. Adopt git once (see the 'Upgrading'" >&2
+  echo "section of docs/INSTALL.md), then re-run this script." >&2
+  exit 1
+fi
+
+TAG="${1:-}"
+
+# 2) Code swap (visible, atomic; git reports a conflict if you edited core).
+echo "==> Fetching tags…"
+git fetch --tags
+
+if [ -z "$TAG" ]; then
+  TAG="$(git describe --tags --abbrev=0 origin/main)"
+  echo "==> No tag given — using the latest: $TAG"
+fi
+
+echo "==> Checking out $TAG…"
+git checkout "$TAG"
+
+# 3) Dependencies (deterministic from the lock file; the only step that touches vendor/).
+echo "==> Installing dependencies…"
+"$PHP" "$COMPOSER" install --no-interaction --no-dev --optimize-autoloader
+
+# 4) Finalize: backup -> cache:clear -> migrate -> assets -> cache (fresh kernel each).
+#    Pass through any extra args after the tag (e.g. --no-backup).
+echo "==> Finalizing upgrade…"
+"$PHP" bin/console app:upgrade:finalize "${@:2}"

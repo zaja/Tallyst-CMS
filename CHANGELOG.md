@@ -8,6 +8,17 @@ from v1.0.0 on. Semver is the API contract to the add-on ecosystem: a `Fixed`
 change is a PATCH, an `Added` or `Changed` change is a MINOR, and a breaking
 core-API change is a MAJOR (flagged ⚠).
 
+## [Unreleased]
+
+### Added
+
+- **Supported upgrade path.** A new `app:upgrade:finalize` command runs every
+  deterministic upgrade step in order (automatic database backup → migrations →
+  asset rebuild), with a `bin/tallyst-upgrade` one-command wrapper over the full
+  git + Composer + finalize flow, and an "Upgrading" guide in the install docs
+  (git path, a one-time bridge for `create-project` installs, and a manual
+  fallback).
+
 ## [1.1.0] — 2026-06-25
 
 ### Added

@@ -130,7 +130,64 @@ The installer sets **`APP_ENV=prod`** by default (neutral error pages, optimized
 
 ---
 
-## 5. The readiness panel
+## 5. Upgrading
+
+Tallyst ships as a single project (not a `vendor/` package), so the supported way to move to a newer version is a **git checkout of the new tag + one finalize command**. The code swap is a visible, atomic git step; everything deterministic after it (DB backup, migrations, asset rebuild) is one command.
+
+### Before you upgrade — back up first
+
+`app:upgrade:finalize` makes a **database** dump automatically (into `var/backups/`), but it can't back up what lives outside the database. Back these up yourself:
+
+- **`.env.local`** — ⚠️ especially `SETTINGS_ENCRYPTION_KEY`. Losing it permanently kills your stored SMTP password (it can't be decrypted).
+- **`public/media/`** — your uploads (git-ignored, never in the release).
+- **Any custom themes** under `themes/<your-theme>/`.
+
+### The supported path — git (2 commands)
+
+```bash
+git fetch --tags && git checkout vX.Y.Z && composer install
+php8.5 bin/console app:upgrade:finalize
+```
+
+- **git** swaps the code atomically — and *reports a conflict* if you edited core files (so you find out instead of silently losing your changes).
+- **`app:upgrade:finalize`** runs the rest, in order: DB backup → `cache:clear` (before migrate) → `doctrine:migrations:migrate` → asset rebuild (`importmap:install` + `asset-map:compile` + `app:theme:assets:install`) → `cache:clear`. It's idempotent — safe to re-run if a step fails.
+- Then **restart the worker** (a visible, ops step — the command can't do it for you):
+
+  ```bash
+  systemctl --user restart tallyst-messenger
+  ```
+
+- **Shortcut:** `bin/tallyst-upgrade vX.Y.Z` runs all three (git checkout + composer + finalize) in one command. Omit the tag to take the latest. Extra args pass through, e.g. `bin/tallyst-upgrade vX.Y.Z --no-backup`.
+
+### One-time bridge for `create-project` installs (no `.git`)
+
+A `composer create-project` copy has no git history. Adopt git over the existing tree **once** — it's safe, because `.env.local`, `public/media/`, and custom themes are git-ignored, so `checkout -f` leaves them untouched:
+
+```bash
+git init && git remote add origin https://github.com/zaja/Tallyst-CMS.git
+git fetch --tags && git checkout -f vX.Y.Z
+```
+
+After that, the normal 2-command path (above) works for every future upgrade.
+
+### Manual fallback (no git at all)
+
+1. Back up the database, `.env.local`, `public/media/`, and custom themes.
+2. Download the new release (the tag zip, or `composer create-project` into a temp dir).
+3. Replace the core folders — `src/`, `modules/`, `templates/`, `config/`, `themes/default/`, `translations/`, `assets/`, `migrations/` — **keeping** your `.env.local`, `public/media/`, and custom themes.
+4. `composer install`, then `php8.5 bin/console app:upgrade:finalize`.
+
+⚠️ Manual folder replacement **silently overwrites** any edits you made to core files — the git path is strongly preferred because it surfaces conflicts instead.
+
+### After every upgrade
+
+- **Restart the messenger worker** (it keeps running the old code until you do).
+- **Hard-refresh** the browser — stale compiled assets can linger in the browser cache.
+- Open the **readiness panel** (below) to confirm everything is green.
+
+---
+
+## 6. The readiness panel
 
 After installing — and again before going live — open **Sustav → Provjera spremnosti** (*System → Readiness check*, at `/admin/readiness`). It auto-checks what matters and shows ✅ / ⚠ / ❌ per item with a fix hint:
 
@@ -146,7 +203,7 @@ It's honest by design: checks it can't verify with certainty (worker liveness, w
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 | Symptom | Cause & fix |
 | --- | --- |
