@@ -38,9 +38,9 @@ admin:
         delete:
             heading: Delete demo
             help: 'Removes the demo set by its fixed handles — the demo pages, blog posts, categories, forms, sample images, the demo author, and the main menu the demo builds. Any other pages or posts you created are left untouched.'
-            warning: 'This also removes the home page and the main menu (the demo owns these). Use it on a preview install, not after building your real site on them — you can re-add a home page with Install demo.'
+            warning: 'This also deletes the home page and the main menu — including any changes you''ve made to them. If you built your real site on the home page or main menu, those edits are lost (you can re-add a home page with Install demo). Use this on a preview install.'
             button: Delete demo
-            confirm: Delete all demo content (including the home page and main menu)?
+            confirm: Delete all demo content? This also deletes the home page and main menu, including any changes you made to them.
         flash:
             installed: Demo content installed.
             deleted: Demo content deleted.
