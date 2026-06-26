@@ -28,6 +28,9 @@ core-API change is a MAJOR (flagged ⚠).
 - **Readiness: worker-startup example.** When the background worker isn't confirmed
   running, the readiness panel now shows an example command to start it (with an honest
   "depends on your server" note).
+- **Install/remove demo content from the admin.** A new System → Demo content screen
+  installs the demo set (pages, posts, menu, forms, sample images) to preview the
+  front-end, or removes it — with a clear note about exactly what delete removes.
 
 ### Fixed
 

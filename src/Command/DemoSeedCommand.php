@@ -89,11 +89,21 @@ class DemoSeedCommand extends Command
     protected function configure(): void
     {
         $this->addOption('fresh', null, InputOption::VALUE_NONE, 'Delete the existing demo set first, then recreate it (full reset).');
+        $this->addOption('clear', null, InputOption::VALUE_NONE, 'Delete the demo set and stop (do NOT recreate it). The uninstall path.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+
+        // --clear = uninstall: delete the demo set by its fixed handles, then stop (no reseed).
+        if ($input->getOption('clear')) {
+            $io->section('Brišem demo sadržaj (--clear)');
+            $this->clearDemo($io);
+            $io->success('Demo sadržaj je obrisan.');
+
+            return Command::SUCCESS;
+        }
 
         if ($input->getOption('fresh')) {
             $io->section('Brišem postojeći demo (--fresh)');

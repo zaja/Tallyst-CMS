@@ -17,6 +17,7 @@ admin:
         security: Sigurnost
         themes: Teme
         modules: Instalirani moduli
+        demo: Demo sadržaj
         toggle_section: Otvori/zatvori sekciju
         section:
             content: Sadržaj
@@ -25,6 +26,26 @@ admin:
             system: Sustav
             appearance: Izgled
             modules: Moduli
+    demo:
+        title: Demo sadržaj
+        intro: Instaliraj gotov demo sadržaj za pregled front-enda, ili ga ukloni kad završiš s isprobavanjem.
+        takes_a_moment: Ovo može potrajati nekoliko sekundi.
+        status: { installed: Demo sadržaj je instaliran, not_installed: Nema demo sadržaja }
+        install:
+            heading: Instaliraj demo
+            help: 'Dodaje primjer stranica, objava, 2-razinski izbornik, demo forme (uključujući stranicu-kao-proizvod) i primjer slika. Sigurno za višekratno pokretanje — postojeće demo stavke se preskaču, nikad ne dupliciraju.'
+            button: Instaliraj demo
+        delete:
+            heading: Obriši demo
+            help: 'Uklanja demo set po fiksnim oznakama — demo stranice, objave, kategorije, forme, primjer slike, demo autora i glavni izbornik koji demo gradi. Ostali sadržaj koji si sam izradio ostaje netaknut.'
+            warning: 'Ovo također uklanja početnu stranicu i glavni izbornik (demo ih posjeduje). Koristi na preview instalaciji, ne nakon što si izgradio pravi sajt na njima — početnu stranicu možeš ponovno dodati s Instaliraj demo.'
+            button: Obriši demo
+            confirm: Obrisati sav demo sadržaj (uključujući početnu stranicu i glavni izbornik)?
+        flash:
+            installed: Demo sadržaj je instaliran.
+            deleted: Demo sadržaj je obrisan.
+            failed: Demo naredba nije uspjela — provjeri logove servera.
+            csrf: 'Nevažeći sigurnosni token, pokušaj ponovno.'
     page:
         entity: { singular: Stranica, plural: Stranice }
         field:

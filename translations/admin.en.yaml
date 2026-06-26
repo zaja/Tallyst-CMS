@@ -17,6 +17,7 @@ admin:
         security: Security
         themes: Themes
         modules: Installed modules
+        demo: Demo content
         toggle_section: Toggle section
         section:
             content: Content
@@ -25,6 +26,26 @@ admin:
             system: System
             appearance: Appearance
             modules: Modules
+    demo:
+        title: Demo content
+        intro: Install ready-made demo content to preview the front-end, or remove it when you're done evaluating.
+        takes_a_moment: This can take a few seconds.
+        status: { installed: Demo content is installed, not_installed: No demo content }
+        install:
+            heading: Install demo
+            help: 'Adds example pages, blog posts, a 2-level menu, demo forms (including a page-as-product), and sample images. Safe to run repeatedly — existing demo items are skipped, never duplicated.'
+            button: Install demo
+        delete:
+            heading: Delete demo
+            help: 'Removes the demo set by its fixed handles — the demo pages, blog posts, categories, forms, sample images, the demo author, and the main menu the demo builds. Any other pages or posts you created are left untouched.'
+            warning: 'This also removes the home page and the main menu (the demo owns these). Use it on a preview install, not after building your real site on them — you can re-add a home page with Install demo.'
+            button: Delete demo
+            confirm: Delete all demo content (including the home page and main menu)?
+        flash:
+            installed: Demo content installed.
+            deleted: Demo content deleted.
+            failed: The demo command failed — check the server logs.
+            csrf: 'Invalid security token, please try again.'
     page:
         entity: { singular: Page, plural: Pages }
         field:

@@ -163,6 +163,7 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToRoute('admin.menu.email_templates', 'fa fa-envelope-open-text', 'admin_email_templates')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkTo(UserCrudController::class, 'admin.menu.users', 'fa fa-users')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkToRoute('admin.menu.readiness', 'fa fa-clipboard-check', 'admin_readiness')->setPermission('ROLE_ADMIN');
+        yield MenuItem::linkToRoute('admin.menu.demo', 'fa fa-wand-magic-sparkles', 'admin_demo')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkToRoute('admin.menu.security', 'fa fa-shield-halved', 'admin_security');
 
         yield MenuItem::section('admin.menu.section.appearance')->setPermission('ROLE_ADMIN');

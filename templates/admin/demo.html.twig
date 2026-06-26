@@ -1,0 +1,56 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}{{ 'admin.demo.title'|trans({}, 'admin') }}{% endblock %}
+
+{% block main %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="mb-1">{{ 'admin.demo.intro'|trans({}, 'admin') }}</p>
+            <p class="small text-muted mb-0">
+                {% if installed %}
+                    <span class="badge badge-success">{{ 'admin.demo.status.installed'|trans({}, 'admin') }}</span>
+                {% else %}
+                    <span class="badge badge-secondary">{{ 'admin.demo.status.not_installed'|trans({}, 'admin') }}</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        {# Install — additive seed (idempotent). #}
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">{{ 'admin.demo.install.heading'|trans({}, 'admin') }}</div>
+                <div class="card-body d-flex flex-column">
+                    <p class="small mb-3">{{ 'admin.demo.install.help'|trans({}, 'admin') }}</p>
+                    <form method="post" action="{{ path('admin_demo_install') }}" class="mt-auto">
+                        <input type="hidden" name="_token" value="{{ csrf_token('demo-install') }}">
+                        <button type="submit" class="btn btn-primary">
+                            {{ 'admin.demo.install.button'|trans({}, 'admin') }}
+                        </button>
+                        <span class="small text-muted ms-2">{{ 'admin.demo.takes_a_moment'|trans({}, 'admin') }}</span>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {# Delete — uninstall (--clear). HONEST about removing the home page + main menu. #}
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">{{ 'admin.demo.delete.heading'|trans({}, 'admin') }}</div>
+                <div class="card-body d-flex flex-column">
+                    <p class="small mb-2">{{ 'admin.demo.delete.help'|trans({}, 'admin') }}</p>
+                    <p class="small text-warning mb-3">⚠ {{ 'admin.demo.delete.warning'|trans({}, 'admin') }}</p>
+                    <form method="post" action="{{ path('admin_demo_delete') }}" class="mt-auto"
+                          onsubmit="return confirm('{{ 'admin.demo.delete.confirm'|trans({}, 'admin')|e('js') }}');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('demo-delete') }}">
+                        <button type="submit" class="btn btn-outline-danger">
+                            {{ 'admin.demo.delete.button'|trans({}, 'admin') }}
+                        </button>
+                        <span class="small text-muted ms-2">{{ 'admin.demo.takes_a_moment'|trans({}, 'admin') }}</span>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
