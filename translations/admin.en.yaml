@@ -17,6 +17,7 @@ admin:
         security: Security
         themes: Themes
         modules: Installed modules
+        toggle_section: Toggle section
         section:
             content: Content
             sales: Sales

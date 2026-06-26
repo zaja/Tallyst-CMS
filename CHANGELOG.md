@@ -21,7 +21,8 @@ core-API change is a MAJOR (flagged ⚠).
 - **Admin list polish.** Row actions (Edit/Delete) now show inline instead of
   hidden in a "⋮" menu, New/Edit screens have a "Back to list" button, and Pages,
   Posts, and Categories have a "Preview" link that opens the live page in a new tab.
-  The Menu items list can be filtered by parent menu.
+  The Menu items list can be filtered by parent menu. The sidebar "System" section
+  is collapsible (collapsed by default, remembered across reloads).
 
 ### Fixed
 

@@ -17,6 +17,7 @@ admin:
         security: Sigurnost
         themes: Teme
         modules: Instalirani moduli
+        toggle_section: Otvori/zatvori sekciju
         section:
             content: Sadržaj
             sales: Prodaja

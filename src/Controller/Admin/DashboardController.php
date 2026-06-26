@@ -155,8 +155,10 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(MenuItemCrudController::class, 'admin.menu.menu_items', 'fa fa-list')->setPermission('ROLE_ADMIN');
 
         // SUSTAV — header has NO permission because Sigurnost (self-service 2FA) is editor-visible;
-        // the admin-only items carry their own ROLE_ADMIN.
-        yield MenuItem::section('admin.menu.section.system');
+        // the admin-only items carry their own ROLE_ADMIN. The marker class lets the sidebar
+        // collapse controller (admin--menu-collapse) find this section (EA sections expose no
+        // setHtmlAttributes, only setCssClass).
+        yield MenuItem::section('admin.menu.section.system')->setCssClass('js-tallyst-system');
         yield MenuItem::linkToRoute('admin.menu.settings', 'fa fa-gear', 'admin_settings')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkToRoute('admin.menu.email_templates', 'fa fa-envelope-open-text', 'admin_email_templates')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkTo(UserCrudController::class, 'admin.menu.users', 'fa fa-users')->setPermission('ROLE_ADMIN');
