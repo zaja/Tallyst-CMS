@@ -27,6 +27,10 @@ class FormDefinition
     #[ORM\Column]
     private ?int $id = null;
 
+    /** Marks content seeded by app:demo:seed, so the uninstaller can remove exactly the demo set. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $isDemo = false;
+
     #[ORM\Column(length: 191)]
     private string $name = '';
 
@@ -395,5 +399,17 @@ class FormDefinition
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function isDemo(): bool
+    {
+        return $this->isDemo;
+    }
+
+    public function setIsDemo(bool $isDemo): static
+    {
+        $this->isDemo = $isDemo;
+
+        return $this;
     }
 }

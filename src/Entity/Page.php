@@ -29,6 +29,10 @@ class Page
     #[ORM\Column]
     private ?int $id = null;
 
+    /** Marks content seeded by app:demo:seed, so the uninstaller can remove exactly the demo set. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $isDemo = false;
+
     #[ORM\Column(length: 191)]
     private string $title;
 
@@ -280,6 +284,18 @@ class Page
     public function setPosition(int $position): static
     {
         $this->position = $position;
+
+        return $this;
+    }
+
+    public function isDemo(): bool
+    {
+        return $this->isDemo;
+    }
+
+    public function setIsDemo(bool $isDemo): static
+    {
+        $this->isDemo = $isDemo;
 
         return $this;
     }

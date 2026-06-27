@@ -28,6 +28,10 @@ class Order
     #[ORM\Column]
     private ?int $id = null;
 
+    /** Marks orders placed through a demo form, so the uninstaller can remove exactly the demo set. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $isDemo = false;
+
     #[ORM\ManyToOne(targetEntity: FormDefinition::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?FormDefinition $form = null;
@@ -384,5 +388,17 @@ class Order
         }
 
         return implode("\n", $lines);
+    }
+
+    public function isDemo(): bool
+    {
+        return $this->isDemo;
+    }
+
+    public function setIsDemo(bool $isDemo): static
+    {
+        $this->isDemo = $isDemo;
+
+        return $this;
     }
 }
