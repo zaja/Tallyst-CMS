@@ -3,18 +3,22 @@
 {% block content_title %}{{ 'admin.demo.title'|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
-    <div class="card mb-3">
-        <div class="card-body">
-            <p class="mb-1">{{ 'admin.demo.intro'|trans({}, 'admin') }}</p>
-            <p class="small text-muted mb-0">
-                {% if installed %}
-                    <span class="badge badge-success">{{ 'admin.demo.status.installed'|trans({}, 'admin') }}</span>
-                {% else %}
-                    <span class="badge badge-secondary">{{ 'admin.demo.status.not_installed'|trans({}, 'admin') }}</span>
-                {% endif %}
-            </p>
-        </div>
+    {# THE dominant message: the clean-site boundary. The single prominent thing on this page —
+       we assert the boundary; the admin honours it. (alert-warning, like the maintenance banner —
+       dark-mode-safe, unlike alert-light.) #}
+    <div class="alert alert-warning" role="alert">
+        <h5 class="alert-heading mb-2">⚠ {{ 'admin.demo.boundary.heading'|trans({}, 'admin') }}</h5>
+        <p class="mb-0">{{ 'admin.demo.boundary.body'|trans({}, 'admin') }}</p>
     </div>
+
+    <p class="small text-muted mb-3">
+        {{ 'admin.demo.intro'|trans({}, 'admin') }}
+        {% if installed %}
+            <span class="badge badge-success ms-1">{{ 'admin.demo.status.installed'|trans({}, 'admin') }}</span>
+        {% else %}
+            <span class="badge badge-secondary ms-1">{{ 'admin.demo.status.not_installed'|trans({}, 'admin') }}</span>
+        {% endif %}
+    </p>
 
     <div class="row g-3">
         {# Install — additive seed (idempotent). #}
@@ -22,7 +26,7 @@
             <div class="card h-100">
                 <div class="card-header">{{ 'admin.demo.install.heading'|trans({}, 'admin') }}</div>
                 <div class="card-body d-flex flex-column">
-                    <p class="small mb-3">{{ 'admin.demo.install.help'|trans({}, 'admin') }}</p>
+                    <p class="small mb-3">{{ 'admin.demo.install.summary'|trans({}, 'admin') }}</p>
                     <form method="post" action="{{ path('admin_demo_install') }}" class="mt-auto">
                         <input type="hidden" name="_token" value="{{ csrf_token('demo-install') }}">
                         <button type="submit" class="btn btn-primary">
@@ -34,13 +38,12 @@
             </div>
         </div>
 
-        {# Delete — uninstall (--clear). HONEST about removing the home page + main menu. #}
+        {# Uninstall — flag-based delete (--clear). #}
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header">{{ 'admin.demo.delete.heading'|trans({}, 'admin') }}</div>
                 <div class="card-body d-flex flex-column">
-                    <p class="small mb-2">{{ 'admin.demo.delete.help'|trans({}, 'admin') }}</p>
-                    <p class="small text-warning mb-3">⚠ {{ 'admin.demo.delete.warning'|trans({}, 'admin') }}</p>
+                    <p class="small mb-3">{{ 'admin.demo.delete.summary'|trans({}, 'admin') }}</p>
                     <form method="post" action="{{ path('admin_demo_delete') }}" class="mt-auto"
                           onsubmit="return confirm('{{ 'admin.demo.delete.confirm'|trans({}, 'admin')|e('js') }}');">
                         <input type="hidden" name="_token" value="{{ csrf_token('demo-delete') }}">
@@ -54,20 +57,23 @@
         </div>
     </div>
 
-    {# Make permanent — clear the demo flag (one-way; the uninstaller can no longer remove it). #}
+    {# Make permanent — an ADVANCED, one-way action. Deliberately secondary: a slim row, muted text,
+       a small outline button (NOT a primary CTA). #}
     <div class="card mt-3">
-        <div class="card-header">{{ 'admin.demo.unflag.heading'|trans({}, 'admin') }}</div>
-        <div class="card-body">
-            <p class="small mb-2">{{ 'admin.demo.unflag.help'|trans({}, 'admin') }}</p>
-            <p class="small text-warning mb-3">⚠ {{ 'admin.demo.unflag.warning'|trans({}, 'admin') }}</p>
-            <form method="post" action="{{ path('admin_demo_unflag') }}"
-                  onsubmit="return confirm('{{ 'admin.demo.unflag.confirm'|trans({}, 'admin')|e('js') }}');">
-                <input type="hidden" name="_token" value="{{ csrf_token('demo-unflag') }}">
-                <button type="submit" class="btn btn-outline-secondary">
-                    {{ 'admin.demo.unflag.button'|trans({}, 'admin') }}
-                </button>
-                <span class="small text-muted ms-2">{{ 'admin.demo.takes_a_moment'|trans({}, 'admin') }}</span>
-            </form>
+        <div class="card-body py-2">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="small">
+                    <strong>{{ 'admin.demo.unflag.heading'|trans({}, 'admin') }}</strong>
+                    <span class="text-muted ms-1">{{ 'admin.demo.unflag.summary'|trans({}, 'admin') }}</span>
+                </div>
+                <form method="post" action="{{ path('admin_demo_unflag') }}"
+                      onsubmit="return confirm('{{ 'admin.demo.unflag.confirm'|trans({}, 'admin')|e('js') }}');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('demo-unflag') }}">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                        {{ 'admin.demo.unflag.button'|trans({}, 'admin') }}
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 {% endblock %}

@@ -31,20 +31,21 @@ admin:
         intro: Instaliraj gotov demo sadržaj za pregled front-enda, ili ga ukloni kad završiš s isprobavanjem.
         takes_a_moment: Ovo može potrajati nekoliko sekundi.
         status: { installed: Demo sadržaj je instaliran, not_installed: Nema demo sadržaja }
+        boundary:
+            heading: Demo sadržaj koristi SAMO na čistom sajtu
+            body: 'Instaliraj ga odmah nakon postavljanja, prije nego išta sam napraviš — NIKAD na sajtu gdje već imaš stvarni sadržaj, izbornik ili footer, jer demo postavlja svoj izbornik i footer. Ako ovo ignoriraš, radiš nepodržano i na vlastitu odgovornost.'
         install:
             heading: Instaliraj demo
-            help: 'Dodaje primjer stranica, objava, 2-razinski izbornik, demo forme (uključujući stranicu-kao-proizvod) i primjer slika. Sigurno za višekratno pokretanje — postojeće demo stavke se preskaču, nikad ne dupliciraju.'
+            summary: 'Posija ~16 stranica, 15 objava, izbornik, demo forme i slike. Sve je označeno kao demo.'
             button: Instaliraj demo
         delete:
             heading: Obriši demo
-            help: 'Uklanja demo set po fiksnim oznakama — demo stranice, objave, kategorije, forme, primjer slike, demo autora i glavni izbornik koji demo gradi. Ostali sadržaj koji si sam izradio ostaje netaknut.'
-            warning: 'Ovo također briše početnu stranicu i glavni izbornik — uključujući sve izmjene koje si na njima napravio. Ako si izgradio pravi sajt na početnoj stranici ili glavnom izborniku, te izmjene se gube (početnu stranicu možeš ponovno dodati s Instaliraj demo). Koristi na preview instalaciji.'
+            summary: 'Briše SVE označeno kao demo — stranice, objave, izbornik, forme, slike i narudžbe nastale kroz demo forme. Sadržaj kojem si maknuo demo flag ostaje.'
             button: Obriši demo
-            confirm: Obrisati sav demo sadržaj? Ovo također briše početnu stranicu i glavni izbornik, uključujući izmjene koje si na njima napravio.
+            confirm: 'Obrisati sav demo sadržaj? Ovo uklanja sve što je još označeno kao demo.'
         unflag:
             heading: Učini demo trajnim
-            help: 'Uklanja demo oznaku sa sveg demo sadržaja i pretvara ga u trajan, stvaran sadržaj koji možeš dalje uređivati i nadograđivati.'
-            warning: 'No time gubiš mogućnost uklanjanja demo sadržaja preko Obriši demo — od sad ga brišeš ručno, kao i svaki drugi sadržaj. Svjesna, jednosmjerna razmjena.'
+            summary: 'Pretvara demo u trajan sadržaj. Gubiš mogućnost brisanja uninstalerom.'
             button: Makni demo oznaku
             confirm: 'Učiniti sav demo sadržaj trajnim? Više ga nećeš moći ukloniti preko Obriši demo.'
         flash:

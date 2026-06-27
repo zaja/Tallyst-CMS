@@ -20,16 +20,14 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * A MECHANISM over the existing command (richer demo CONTENT is a separate, later effort).
  *
  * Runs the command as a fresh-kernel subprocess via ConsoleStepRunner (the demo logic lives in the
- * command, not a service). Delete targets only the demo's FIXED handles — but that set includes the
- * `home` page and the `main` menu the demo owns, so the UI says so honestly (no "untouched" overclaim).
+ * command, not a service). Three actions: Install (additive seed), Delete (--clear, removes exactly the
+ * is_demo=true rows), and Make-permanent (--unflag, clears the flag → the content becomes real and the
+ * uninstaller no longer touches it). The page leads with the clean-site boundary as its dominant message.
  */
 #[Route('/admin/demo', defaults: ['dashboardControllerFqcn' => 'App\Controller\Admin\DashboardController'])]
 #[IsGranted('ROLE_ADMIN')]
 class DemoController extends AbstractController
 {
-    // A clearly-demo page slug (NOT 'home', which app:install also creates) → "demo present" signal.
-    private const DEMO_MARKER_SLUG = 'o-nama';
-
     public function __construct(
         private readonly ConsoleStepRunner $steps,
         private readonly PageRepository $pages,
@@ -103,7 +101,9 @@ class DemoController extends AbstractController
 
     private function isInstalled(): bool
     {
-        return null !== $this->pages->findOneBy(['slug' => self::DEMO_MARKER_SLUG]);
+        // Flag-based: a demo page carrying is_demo=true. More robust than a fixed slug — it follows a
+        // renamed slug AND correctly reads "not installed" after --unflag (the content is permanent now).
+        return null !== $this->pages->findOneBy(['isDemo' => true]);
     }
 
     /**

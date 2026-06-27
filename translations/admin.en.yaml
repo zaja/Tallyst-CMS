@@ -31,20 +31,21 @@ admin:
         intro: Install ready-made demo content to preview the front-end, or remove it when you're done evaluating.
         takes_a_moment: This can take a few seconds.
         status: { installed: Demo content is installed, not_installed: No demo content }
+        boundary:
+            heading: Use demo content on a CLEAN site only
+            body: 'Install it right after setup, before you create anything of your own — NEVER on a site where you already have real content, a menu, or a footer, because the demo installs its own menu and footer. Ignore this and you''re on your own (unsupported).'
         install:
             heading: Install demo
-            help: 'Adds example pages, blog posts, a 2-level menu, demo forms (including a page-as-product), and sample images. Safe to run repeatedly — existing demo items are skipped, never duplicated.'
+            summary: 'Seeds ~16 pages, 15 posts, a menu, demo forms and images. Everything is marked as demo.'
             button: Install demo
         delete:
             heading: Delete demo
-            help: 'Removes the demo set by its fixed handles — the demo pages, blog posts, categories, forms, sample images, the demo author, and the main menu the demo builds. Any other pages or posts you created are left untouched.'
-            warning: 'This also deletes the home page and the main menu — including any changes you''ve made to them. If you built your real site on the home page or main menu, those edits are lost (you can re-add a home page with Install demo). Use this on a preview install.'
+            summary: 'Removes EVERYTHING marked as demo — pages, posts, the menu, forms, images, and orders placed through demo forms. Content whose demo flag you removed stays.'
             button: Delete demo
-            confirm: Delete all demo content? This also deletes the home page and main menu, including any changes you made to them.
+            confirm: 'Delete all demo content? This removes everything still marked as demo.'
         unflag:
             heading: Make demo permanent
-            help: 'Removes the demo mark from all demo content, turning it into permanent, real content you can keep editing and building on.'
-            warning: 'In return you lose the ability to remove the demo content with Delete demo — from now on you remove it manually, like any other content. A conscious, one-way trade-off.'
+            summary: 'Turns the demo into permanent content. You lose the ability to remove it with the uninstaller.'
             button: Remove demo flag
             confirm: 'Make all demo content permanent? You will no longer be able to remove it with Delete demo.'
         flash:
