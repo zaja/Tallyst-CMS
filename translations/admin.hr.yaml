@@ -41,9 +41,16 @@ admin:
             warning: 'Ovo također briše početnu stranicu i glavni izbornik — uključujući sve izmjene koje si na njima napravio. Ako si izgradio pravi sajt na početnoj stranici ili glavnom izborniku, te izmjene se gube (početnu stranicu možeš ponovno dodati s Instaliraj demo). Koristi na preview instalaciji.'
             button: Obriši demo
             confirm: Obrisati sav demo sadržaj? Ovo također briše početnu stranicu i glavni izbornik, uključujući izmjene koje si na njima napravio.
+        unflag:
+            heading: Učini demo trajnim
+            help: 'Uklanja demo oznaku sa sveg demo sadržaja i pretvara ga u trajan, stvaran sadržaj koji možeš dalje uređivati i nadograđivati.'
+            warning: 'No time gubiš mogućnost uklanjanja demo sadržaja preko Obriši demo — od sad ga brišeš ručno, kao i svaki drugi sadržaj. Svjesna, jednosmjerna razmjena.'
+            button: Makni demo oznaku
+            confirm: 'Učiniti sav demo sadržaj trajnim? Više ga nećeš moći ukloniti preko Obriši demo.'
         flash:
             installed: Demo sadržaj je instaliran.
             deleted: Demo sadržaj je obrisan.
+            unflagged: Demo sadržaj je sada trajan. Uninstaler ga više neće ukloniti.
             failed: Demo naredba nije uspjela — provjeri logove servera.
             csrf: 'Nevažeći sigurnosni token, pokušaj ponovno.'
     page:

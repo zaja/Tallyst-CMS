@@ -41,9 +41,16 @@ admin:
             warning: 'This also deletes the home page and the main menu — including any changes you''ve made to them. If you built your real site on the home page or main menu, those edits are lost (you can re-add a home page with Install demo). Use this on a preview install.'
             button: Delete demo
             confirm: Delete all demo content? This also deletes the home page and main menu, including any changes you made to them.
+        unflag:
+            heading: Make demo permanent
+            help: 'Removes the demo mark from all demo content, turning it into permanent, real content you can keep editing and building on.'
+            warning: 'In return you lose the ability to remove the demo content with Delete demo — from now on you remove it manually, like any other content. A conscious, one-way trade-off.'
+            button: Remove demo flag
+            confirm: 'Make all demo content permanent? You will no longer be able to remove it with Delete demo.'
         flash:
             installed: Demo content installed.
             deleted: Demo content deleted.
+            unflagged: Demo content is now permanent. The uninstaller will no longer remove it.
             failed: The demo command failed — check the server logs.
             csrf: 'Invalid security token, please try again.'
     page:

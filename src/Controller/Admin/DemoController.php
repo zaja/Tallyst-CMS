@@ -81,6 +81,26 @@ class DemoController extends AbstractController
         return $this->redirectToRoute('admin_demo');
     }
 
+    #[Route('/unflag', name: 'admin_demo_unflag', methods: ['POST'])]
+    public function unflag(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('demo-unflag', (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', $this->translator->trans('admin.demo.flash.csrf', [], 'admin'));
+
+            return $this->redirectToRoute('admin_demo');
+        }
+
+        // Make the demo content permanent (clear is_demo everywhere). One-way: the uninstaller can no
+        // longer remove it — the admin accepts that trade-off (stated in the UI + the confirm dialog).
+        if ($this->runDemo(['app:demo:seed', '--unflag'])) {
+            $this->addFlash('success', $this->translator->trans('admin.demo.flash.unflagged', [], 'admin'));
+        } else {
+            $this->addFlash('danger', $this->translator->trans('admin.demo.flash.failed', [], 'admin'));
+        }
+
+        return $this->redirectToRoute('admin_demo');
+    }
+
     private function isInstalled(): bool
     {
         return null !== $this->pages->findOneBy(['slug' => self::DEMO_MARKER_SLUG]);

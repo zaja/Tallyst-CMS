@@ -25,6 +25,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
+use Tallyst\FormBuilder\Entity\FormSubmission;
+use Tallyst\FormBuilder\Entity\Order;
 use Tallyst\FormBuilder\Repository\FormSubmissionRepository;
 use Tallyst\FormBuilder\Repository\OrderRepository;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
@@ -85,11 +87,22 @@ class DemoSeedCommand extends Command
     {
         $this->addOption('fresh', null, InputOption::VALUE_NONE, 'Delete the existing demo set first, then recreate it (full reset).');
         $this->addOption('clear', null, InputOption::VALUE_NONE, 'Delete the demo set and stop (do NOT recreate it). The uninstall path.');
+        $this->addOption('unflag', null, InputOption::VALUE_NONE, 'Clear the is_demo flag from all demo content (make it permanent); the uninstaller no longer touches it.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+
+        // --unflag = make demo permanent: clear is_demo everywhere, then stop. The uninstaller can no
+        // longer remove this content (it deletes by the flag). A one-way, conscious trade-off.
+        if ($input->getOption('unflag')) {
+            $io->section('Uklanjam demo oznaku (sadržaj postaje trajan)');
+            $n = $this->unflagDemo();
+            $io->success(sprintf('Demo oznaka uklonjena s %d zapisa. Sadržaj je sada trajan.', $n));
+
+            return Command::SUCCESS;
+        }
 
         // --clear = uninstall: delete the demo set by its fixed handles, then stop (no reseed).
         if ($input->getOption('clear')) {
@@ -150,21 +163,39 @@ class DemoSeedCommand extends Command
         // Order = children before parents so the Doctrine UnitOfWork stays consistent and never
         // relies on a DB-level cascade firing mid-flush. (Every demo FK is CASCADE or SET NULL —
         // nothing is RESTRICT — so deletion can't fail; the explicit order just keeps the UoW clean.)
-        $io->writeln(sprintf('• Obrisano narudžbi: %d.', $this->removeAll($this->orders->findBy(['isDemo' => true]))));
-        $io->writeln(sprintf('• Obrisano prijava obrazaca: %d.', $this->removeAll($this->submissions->findBy(['isDemo' => true]))));
+        $removed = 0;
+        $removed += $n = $this->removeAll($this->orders->findBy(['isDemo' => true]));
+        $io->writeln(sprintf('• Obrisano narudžbi: %d.', $n));
+        $removed += $n = $this->removeAll($this->submissions->findBy(['isDemo' => true]));
+        $io->writeln(sprintf('• Obrisano prijava obrazaca: %d.', $n));
         // Menus cascade their MenuItems (ORM cascade + orphanRemoval).
-        $io->writeln(sprintf('• Obrisano izbornika: %d.', $this->removeAll($this->menus->findBy(['isDemo' => true]))));
+        $removed += $n = $this->removeAll($this->menus->findBy(['isDemo' => true]));
+        $io->writeln(sprintf('• Obrisano izbornika: %d.', $n));
         // Pages: any remaining MenuItem pointing at them cascades (DB onDelete); menus already gone.
-        $io->writeln(sprintf('• Obrisano stranica: %d.', $this->removeAll($this->pages->findBy(['isDemo' => true]))));
+        $removed += $n = $this->removeAll($this->pages->findBy(['isDemo' => true]));
+        $io->writeln(sprintf('• Obrisano stranica: %d.', $n));
         // Posts reference Category via SET NULL — order-independent, but kept before categories.
-        $io->writeln(sprintf('• Obrisano objava: %d.', $this->removeAll($this->posts->findBy(['isDemo' => true]))));
-        $io->writeln(sprintf('• Obrisano kategorija: %d.', $this->removeAll($this->categories->findBy(['isDemo' => true]))));
+        $removed += $n = $this->removeAll($this->posts->findBy(['isDemo' => true]));
+        $io->writeln(sprintf('• Obrisano objava: %d.', $n));
+        $removed += $n = $this->removeAll($this->categories->findBy(['isDemo' => true]));
+        $io->writeln(sprintf('• Obrisano kategorija: %d.', $n));
         // Forms: their orders/submissions/fields are already cleared above; cascade is the safety-net.
-        $io->writeln(sprintf('• Obrisano formi: %d.', $this->removeAll($this->forms->findBy(['isDemo' => true]))));
+        $removed += $n = $this->removeAll($this->forms->findBy(['isDemo' => true]));
+        $io->writeln(sprintf('• Obrisano formi: %d.', $n));
         // Media last: every reference to it is SET NULL (real content survives); Vich deletes the files.
-        $io->writeln(sprintf('• Obrisano slika: %d.', $this->removeAll($this->mediaRepo->findBy(['isDemo' => true]))));
+        $removed += $n = $this->removeAll($this->mediaRepo->findBy(['isDemo' => true]));
+        $io->writeln(sprintf('• Obrisano slika: %d.', $n));
 
         $this->em->flush();
+
+        // Only touch the demo author + settings when we ACTUALLY removed flagged content. After --unflag
+        // (nothing is flagged → $removed === 0) a --clear must be a true no-op: the now-permanent content,
+        // its byline author, and the footer/favicon settings the admin chose to keep are all left alone.
+        if (0 === $removed) {
+            $io->writeln('• Nema demo sadržaja za brisanje (ništa nije označeno kao demo).');
+
+            return;
+        }
 
         // The demo author is identified by its FIXED e-mail, never a flag (User is auth-sensitive).
         if (null !== $author = $this->users->findOneBy(['email' => self::AUTHOR_EMAIL])) {
@@ -206,6 +237,25 @@ class DemoSeedCommand extends Command
             'favicon_media_id' => '',
         ]);
         $io->writeln('• Resetirane footer + favicon postavke na zadano.');
+    }
+
+    /**
+     * Clear is_demo on EVERY demo row across all 8 entities, making the content permanent. Because the
+     * whole set flips at once, a demo form and its demo orders/submissions become real TOGETHER — no
+     * selective cascade is needed. After this, clearDemo (the uninstaller) finds nothing to delete, so
+     * the (now permanent) content survives an uninstall. One-way; the trade-off is communicated in the UI.
+     *
+     * DQL bulk UPDATE (not ORM find+set): no events are needed for a flag flip, and it touches the DB
+     * directly in one statement per table — efficient for "all at once". Returns the total rows flipped.
+     */
+    private function unflagDemo(): int
+    {
+        $total = 0;
+        foreach ([Page::class, Post::class, Category::class, Menu::class, Media::class, FormDefinition::class, Order::class, FormSubmission::class] as $class) {
+            $total += (int) $this->em->createQuery(sprintf('UPDATE %s e SET e.isDemo = false WHERE e.isDemo = true', $class))->execute();
+        }
+
+        return $total;
     }
 
     // ------------------------------------------------------------------- theme ---

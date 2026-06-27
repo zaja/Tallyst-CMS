@@ -53,4 +53,21 @@
             </div>
         </div>
     </div>
+
+    {# Make permanent — clear the demo flag (one-way; the uninstaller can no longer remove it). #}
+    <div class="card mt-3">
+        <div class="card-header">{{ 'admin.demo.unflag.heading'|trans({}, 'admin') }}</div>
+        <div class="card-body">
+            <p class="small mb-2">{{ 'admin.demo.unflag.help'|trans({}, 'admin') }}</p>
+            <p class="small text-warning mb-3">⚠ {{ 'admin.demo.unflag.warning'|trans({}, 'admin') }}</p>
+            <form method="post" action="{{ path('admin_demo_unflag') }}"
+                  onsubmit="return confirm('{{ 'admin.demo.unflag.confirm'|trans({}, 'admin')|e('js') }}');">
+                <input type="hidden" name="_token" value="{{ csrf_token('demo-unflag') }}">
+                <button type="submit" class="btn btn-outline-secondary">
+                    {{ 'admin.demo.unflag.button'|trans({}, 'admin') }}
+                </button>
+                <span class="small text-muted ms-2">{{ 'admin.demo.takes_a_moment'|trans({}, 'admin') }}</span>
+            </form>
+        </div>
+    </div>
 {% endblock %}
