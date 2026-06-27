@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-06-27
+
 ### Added
 
 - **Supported upgrade path.** A new `app:upgrade:finalize` command runs every
@@ -28,15 +30,22 @@ core-API change is a MAJOR (flagged ⚠).
 - **Readiness: worker-startup example.** When the background worker isn't confirmed
   running, the readiness panel now shows an example command to start it (with an honest
   "depends on your server" note).
-- **Install/remove demo content from the admin.** A new System → Demo content screen
-  installs the demo set (pages, posts, menu, forms, sample images) to preview the
-  front-end, or removes it — with a clear note about exactly what delete removes.
+- **Install, remove, or keep demo content from the admin.** A System → Demo content
+  screen seeds a full demo (pages, posts, a menu, forms, and sample images) to preview
+  the front-end. Every demo item is marked as demo, so removing it deletes exactly the
+  demo set — including orders placed through demo forms — while sparing anything you
+  created. You can also "make the demo permanent" to keep it as the starting point for
+  your real site (after which the uninstaller leaves it alone). The screen leads with a
+  clear "use on a clean site only" boundary.
 
 ### Fixed
 
 - **English admin no longer shows a Croatian placeholder** on encrypted settings
   fields (Stripe/PayPal secrets). The "leave blank to keep" placeholder is now
   localized.
+- **Dark-mode display fixes.** Several back-office boxes that stayed light in dark mode
+  now render correctly — the readiness panel's header, section dividers, and intro box,
+  the themes screen's intro box, and the remaining light alert boxes across the admin.
 
 ## [1.1.0] — 2026-06-25
 
@@ -99,5 +108,6 @@ Initial public release.
 - **Modular architecture** and distribution via **Packagist**, under the **MIT**
   license.
 
+[1.2.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.2.0
 [1.1.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.1.0
 [1.0.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.0.0
