@@ -25,6 +25,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
+use Tallyst\FormBuilder\Repository\FormSubmissionRepository;
+use Tallyst\FormBuilder\Repository\OrderRepository;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 use App\Settings\SettingsManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -41,12 +43,14 @@ use Tallyst\Media\Service\MediaUploader;
  * SEPARATE from app:install (which seeds the minimal baseline). Re-runnable:
  *  - default: additive — creates anything missing by its fixed slug, skips what exists,
  *    and ALWAYS (re)builds the `main` menu (the demo owns it). No duplication on re-run.
- *  - --fresh: deletes the whole demo set first (by the fixed slugs / menu location /
- *    media originalName prefix), then recreates it. The supported full-reset path —
- *    e.g. the only way to reset the home page, which app:install also creates.
+ *  - --fresh: deletes the whole demo set first, then recreates it. The supported full-reset
+ *    path — e.g. the only way to reset the home page, which app:install also creates.
+ *  - --clear: deletes the demo set and stops (the uninstall path).
  *
- * Cleanup is deterministic: it only touches the fixed demo slugs and media whose
- * originalName starts with the demo prefix, so real content is never harmed.
+ * Cleanup is FLAG-based (clearDemo): it removes exactly the rows carrying is_demo=true (incl.
+ * runtime orders/submissions placed through demo forms) and resets the footer/favicon settings
+ * the seed wrote, so real content — and any demo content whose flag was removed — is never
+ * harmed. The demo author is the one exception, identified by its fixed e-mail.
  */
 #[AsCommand(name: 'app:demo:seed', description: 'Seed clearly-demo content (pages, posts, 2-level menu, forms, images) to preview the front-end.')]
 class DemoSeedCommand extends Command
@@ -54,17 +58,6 @@ class DemoSeedCommand extends Command
     private const MEDIA_PREFIX = 'tallyst-demo-';
     private const MEDIA_COUNT = 6;
     private const MENU_LOCATION = 'main';
-
-    /** Fixed demo page slugs — also the cleanup target for --fresh. */
-    private const PAGE_SLUGS = [
-        'home', 'o-nama', 'tim', 'kontakt', 'usluge', 'web-razvoj', 'konzalting',
-        'dizajn', 'proizvodi', 'pro-licenca', 'cjenik', 'faq', 'galerija',
-        'znacajke', 'privatnost', 'uvjeti',
-    ];
-
-    private const CATEGORY_SLUGS = ['novosti', 'vodici', 'razvoj'];
-
-    private const FORM_SLUGS = ['demo-kontakt', 'demo-pro-licenca'];
 
     /** Dedicated demo author (so the real admin's nickname is never touched). */
     private const AUTHOR_EMAIL = 'demo-author@tallyst.local';
@@ -78,6 +71,8 @@ class DemoSeedCommand extends Command
         private readonly MenuRepository $menus,
         private readonly MediaRepository $mediaRepo,
         private readonly FormDefinitionRepository $forms,
+        private readonly OrderRepository $orders,
+        private readonly FormSubmissionRepository $submissions,
         private readonly MediaUploader $uploader,
         private readonly SettingsManager $settings,
         private readonly UserRepository $users,
@@ -147,66 +142,70 @@ class DemoSeedCommand extends Command
 
     private function clearDemo(SymfonyStyle $io): void
     {
-        // Menu first (cascades its items), then content, then media (featured FKs are
-        // SET NULL so media removal is always safe). Posts before categories (FK).
-        if (null !== $menu = $this->menus->findOneByLocation(self::MENU_LOCATION)) {
-            $this->em->remove($menu);
-            $io->writeln('• Obrisan glavni izbornik.');
-        }
+        // FLAG-based: remove EXACTLY the rows carrying is_demo=true — this also catches runtime
+        // orders/submissions placed through demo forms and demo content the admin renamed, while
+        // SPARING any content whose demo flag was removed (made permanent → is_demo=false). That's
+        // the whole point of the flag over the old slug match.
+        //
+        // Order = children before parents so the Doctrine UnitOfWork stays consistent and never
+        // relies on a DB-level cascade firing mid-flush. (Every demo FK is CASCADE or SET NULL —
+        // nothing is RESTRICT — so deletion can't fail; the explicit order just keeps the UoW clean.)
+        $io->writeln(sprintf('• Obrisano narudžbi: %d.', $this->removeAll($this->orders->findBy(['isDemo' => true]))));
+        $io->writeln(sprintf('• Obrisano prijava obrazaca: %d.', $this->removeAll($this->submissions->findBy(['isDemo' => true]))));
+        // Menus cascade their MenuItems (ORM cascade + orphanRemoval).
+        $io->writeln(sprintf('• Obrisano izbornika: %d.', $this->removeAll($this->menus->findBy(['isDemo' => true]))));
+        // Pages: any remaining MenuItem pointing at them cascades (DB onDelete); menus already gone.
+        $io->writeln(sprintf('• Obrisano stranica: %d.', $this->removeAll($this->pages->findBy(['isDemo' => true]))));
+        // Posts reference Category via SET NULL — order-independent, but kept before categories.
+        $io->writeln(sprintf('• Obrisano objava: %d.', $this->removeAll($this->posts->findBy(['isDemo' => true]))));
+        $io->writeln(sprintf('• Obrisano kategorija: %d.', $this->removeAll($this->categories->findBy(['isDemo' => true]))));
+        // Forms: their orders/submissions/fields are already cleared above; cascade is the safety-net.
+        $io->writeln(sprintf('• Obrisano formi: %d.', $this->removeAll($this->forms->findBy(['isDemo' => true]))));
+        // Media last: every reference to it is SET NULL (real content survives); Vich deletes the files.
+        $io->writeln(sprintf('• Obrisano slika: %d.', $this->removeAll($this->mediaRepo->findBy(['isDemo' => true]))));
 
-        $n = 0;
-        foreach ($this->posts->findBy([]) as $post) {
-            if (str_starts_with($post->getSlug(), 'demo-')) {
-                $this->em->remove($post);
-                ++$n;
-            }
-        }
-        $io->writeln(sprintf('• Obrisano objava: %d.', $n));
+        $this->em->flush();
 
-        $n = 0;
-        foreach (self::PAGE_SLUGS as $slug) {
-            if (null !== $page = $this->pages->findOneBy(['slug' => $slug])) {
-                $this->em->remove($page);
-                ++$n;
-            }
-        }
-        $io->writeln(sprintf('• Obrisano stranica: %d.', $n));
-
-        $n = 0;
-        foreach (self::CATEGORY_SLUGS as $slug) {
-            if (null !== $cat = $this->categories->findOneBy(['slug' => $slug])) {
-                $this->em->remove($cat);
-                ++$n;
-            }
-        }
-        $io->writeln(sprintf('• Obrisano kategorija: %d.', $n));
-
-        $n = 0;
-        foreach (self::FORM_SLUGS as $slug) {
-            if (null !== $form = $this->forms->findOneBy(['slug' => $slug])) {
-                $this->em->remove($form);
-                ++$n;
-            }
-        }
-        $io->writeln(sprintf('• Obrisano formi: %d.', $n));
-
-        // Demo media (originalName starts with the prefix); Vich deletes the files.
-        $n = 0;
-        foreach ($this->mediaRepo->findBy([]) as $m) {
-            if (null !== $m->getOriginalName() && str_starts_with($m->getOriginalName(), self::MEDIA_PREFIX)) {
-                $this->em->remove($m);
-                ++$n;
-            }
-        }
-        $io->writeln(sprintf('• Obrisano slika: %d.', $n));
-
-        // Demo author (posts are already gone above; SET NULL would protect anyway).
+        // The demo author is identified by its FIXED e-mail, never a flag (User is auth-sensitive).
         if (null !== $author = $this->users->findOneBy(['email' => self::AUTHOR_EMAIL])) {
             $this->em->remove($author);
+            $this->em->flush();
             $io->writeln('• Obrisan demo autor.');
         }
 
-        $this->em->flush();
+        // Reset the footer/favicon settings the seed wrote back to their schema defaults. The active
+        // THEME is deliberately NOT touched — the site always needs a working theme.
+        $this->resetDemoSettings($io);
+    }
+
+    /**
+     * @param object[] $entities
+     */
+    private function removeAll(array $entities): int
+    {
+        foreach ($entities as $entity) {
+            $this->em->remove($entity);
+        }
+
+        return count($entities);
+    }
+
+    /**
+     * Restore the exact footer/favicon keys the seed wrote to their schema defaults (footer_columns
+     * '2', footer_show_powered_by true, the rest empty). Only these fixed keys — no other settings,
+     * never the theme.
+     */
+    private function resetDemoSettings(SymfonyStyle $io): void
+    {
+        $this->settings->setMany([
+            'footer_columns' => '2',
+            'footer_text' => '',
+            'footer_menu' => '',
+            'footer_copyright' => '',
+            'footer_show_powered_by' => true,
+            'favicon_media_id' => '',
+        ]);
+        $io->writeln('• Resetirane footer + favicon postavke na zadano.');
     }
 
     // ------------------------------------------------------------------- theme ---
