@@ -257,7 +257,7 @@ class DemoSeedCommand extends Command
                     @unlink($path);
                 }
             }
-            $m->setTitle('Demo slika '.$i)->setAlt($alts[$i]);
+            $m->setTitle('Demo slika '.$i)->setAlt($alts[$i])->setIsDemo(true);
             $media[$i] = $m;
             $io->writeln('• Generirana + učitana '.$name);
         }
@@ -323,7 +323,8 @@ class DemoSeedCommand extends Command
                 ->setName('Kontakt')
                 ->setSlug('demo-kontakt')
                 ->setStatus(FormDefinition::STATUS_PUBLISHED)
-                ->setDescription('Javite nam se — odgovaramo u roku jednog radnog dana.');
+                ->setDescription('Javite nam se — odgovaramo u roku jednog radnog dana.')
+                ->setIsDemo(true);
             $this->addField($kontakt, FormField::TYPE_TEXT, 'ime', 'Ime i prezime', true, 0);
             $this->addField($kontakt, FormField::TYPE_EMAIL, 'email', 'E-mail', true, 1);
             $this->addField($kontakt, FormField::TYPE_TEXTAREA, 'poruka', 'Poruka', true, 2);
@@ -341,7 +342,8 @@ class DemoSeedCommand extends Command
                 ->setStatus(FormDefinition::STATUS_PUBLISHED)
                 ->setPriceMinor(4900)
                 ->setCurrency('EUR')
-                ->setDescription('Jednokratna doživotna licenca za Pro izdanje.');
+                ->setDescription('Jednokratna doživotna licenca za Pro izdanje.')
+                ->setIsDemo(true);
             $this->addField($pro, FormField::TYPE_TEXT, 'ime', 'Ime i prezime', true, 0);
             $this->addField($pro, FormField::TYPE_EMAIL, 'email', 'E-mail za dostavu licence', true, 1);
             $this->addField($pro, FormField::TYPE_TEXT, 'tvrtka', 'Tvrtka (opcionalno)', false, 2);
@@ -388,7 +390,8 @@ class DemoSeedCommand extends Command
             if (null === $cat) {
                 $cat = (new Category($name, $slug))
                     ->setDescription($desc)
-                    ->setFeaturedImage($media[$mi] ?? null);
+                    ->setFeaturedImage($media[$mi] ?? null)
+                    ->setIsDemo(true);
                 $this->em->persist($cat);
                 $io->writeln('• Kreirana kategorija "'.$name.'".');
             }
@@ -476,7 +479,8 @@ class DemoSeedCommand extends Command
                     ->setStatus(Page::STATUS_PUBLISHED)
                     ->setContent($content)
                     ->setMetaDescription($meta)
-                    ->setFeaturedImage(null === $mi ? null : ($media[$mi] ?? null));
+                    ->setFeaturedImage(null === $mi ? null : ($media[$mi] ?? null))
+                    ->setIsDemo(true);
 
                 if (isset($heroes[$slug])) {
                     [$hi, $ht, $htext, $hcl, $hcu] = $heroes[$slug];
@@ -542,7 +546,8 @@ class DemoSeedCommand extends Command
                 ->setCategory($cat)
                 ->setAuthor($author)
                 ->setFeaturedImage($mediaForPost)
-                ->setContent($rich ? $this->contentRichPost($title) : $this->contentSimplePost($title));
+                ->setContent($rich ? $this->contentRichPost($title) : $this->contentSimplePost($title))
+                ->setIsDemo(true);
             $this->em->persist($post);
             ++$created;
         }
@@ -563,6 +568,7 @@ class DemoSeedCommand extends Command
         }
 
         $menu = new Menu('Glavni izbornik', self::MENU_LOCATION);
+        $menu->setIsDemo(true);
 
         // top-level item linked to a page
         $top = function (string $slug, int $pos) use ($menu, $pages): MenuItem {

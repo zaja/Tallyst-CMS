@@ -99,7 +99,10 @@ class FormSubmitController extends AbstractController
             ->setForm($form)
             ->setData($data)
             ->setIpAddress($request->getClientIp())
-            ->setUserAgent(mb_substr((string) $request->headers->get('User-Agent', ''), 0, 1000));
+            ->setUserAgent(mb_substr((string) $request->headers->get('User-Agent', ''), 0, 1000))
+            // A submission through a demo form inherits the demo flag (so the uninstaller removes it too);
+            // through a real form it stays false — derived, never hardcoded.
+            ->setIsDemo($form->isDemo());
         $this->submissions->save($submission);
 
         // Free form: done. Priced form: go to payment.
@@ -190,6 +193,9 @@ class FormSubmitController extends AbstractController
             ->setProvider($chosen)
             ->setPaymentMode($this->payments->get($chosen)->getMode())
             ->setVariantLabel($variantLabel)
+            // An order through a demo form inherits the demo flag (so the uninstaller removes it too);
+            // through a real form it stays false — derived from the form, never hardcoded.
+            ->setIsDemo($form->isDemo())
             // Unguessable token for the thank-you URL (?t=) — anti-enumeration.
             ->setThankYouToken(bin2hex(random_bytes(16)));
 
