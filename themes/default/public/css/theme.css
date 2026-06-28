@@ -337,11 +337,14 @@ th { font-weight: 650; }
      light  — LIGHT image → DARK text (var(--ink)) straight on the image, no panel/scrim/shadow;
      dark   — DARK image → WHITE text straight on the image, no panel/scrim/shadow.
    light/dark are clean text on the image (no shadow) — pick the one matching the image's tone.
-   ONE TUNABLE (edit on .page-hero):
-     --hero-photo-fade : where the photo scrim stays opaque before melting into the clean image
-                         half (raise = wider/darker scrim; lower = image shows sooner). */
+   TWO TUNABLES (edit on .page-hero):
+     --hero-photo-fade  : where the photo scrim stays opaque before melting into the clean image
+                          half (raise = wider scrim; lower = image shows sooner).
+     --hero-photo-shade : the photo scrim's max darkness/opacity (0 = none, 1 = solid). Lower it
+                          to let more of the image show through behind the text. */
 .page-hero {
     --hero-photo-fade: 55%;
+    --hero-photo-shade: 0.6;
     position: relative;
     display: flex;
     align-items: center;                /* vertical centre */
@@ -379,11 +382,11 @@ th { font-weight: 650; }
     inset: 0;
     z-index: 1;
     background: linear-gradient(to right,
-        rgba(15, 18, 20, .82) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
+        rgba(15, 18, 20, var(--hero-photo-shade)) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
 }
 .page-hero--photo.page-hero--right::before {
     background: linear-gradient(to left,
-        rgba(15, 18, 20, .82) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
+        rgba(15, 18, 20, var(--hero-photo-shade)) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
 }
 .page-hero--photo .page-hero-inner,
 .page-hero--photo .page-hero-inner h1,
