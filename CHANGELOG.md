@@ -20,6 +20,9 @@ core-API change is a MAJOR (flagged ⚠).
   use a consistent, modern icon set throughout. The link button opens a picker where
   you paste a URL or search and link to one of your published pages/posts, with an
   "open in new tab" option.
+- **Hide page title (per page).** A new page option hides the standard title heading
+  on the front so you can build your own heading in the content — for landing pages.
+  The title is still used for the browser tab and search engines.
 
 ## [1.2.0] — 2026-06-27
 

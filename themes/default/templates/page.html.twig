@@ -28,12 +28,17 @@
         {# no separate page-header: the overlay carries the title #}
     {% elseif hero_image_only %}
         {# Hero with ONLY an image: show the image bare (no overlay text), and render the
-           page title below in the normal header position. #}
+           page title below in the normal header position — unless the title is hidden. #}
         <div class="page-hero-image">{{ media_img(page.heroImage, 'hero', null, '') }}</div>
-        <header class="page-header">
-            <h1>{{ page.title }}</h1>
-        </header>
-    {% else %}
+        {% if not page.hideTitle %}
+            <header class="page-header">
+                <h1>{{ page.title }}</h1>
+            </header>
+        {% endif %}
+    {% elseif not page.hideTitle %}
+        {# Standard auto page title — suppressed when hideTitle is set, so a landing page can
+           build its own heading (an H1) inside the content. The title is still used for
+           <title>/meta/sitemap/admin; only this visual page-header <h1> is skipped. #}
         <header class="page-header">
             <h1>{{ page.title }}</h1>
         </header>

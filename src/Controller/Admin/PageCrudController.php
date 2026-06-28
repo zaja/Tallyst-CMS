@@ -72,6 +72,8 @@ class PageCrudController extends AbstractCrudController
         yield TextField::new('metaTitle', 'admin.page.field.meta_title')->hideOnIndex();
         yield TextareaField::new('metaDescription', 'admin.page.field.meta_description')->hideOnIndex();
         yield IntegerField::new('position', 'admin.page.field.position')->hideOnIndex();
+        yield BooleanField::new('hideTitle', 'admin.page.field.hide_title')->hideOnIndex()
+            ->setHelp('admin.page.help.hide_title');
 
         yield FormField::addFieldset('admin.page.fieldset.hero')->setIcon('panorama')->collapsible()
             ->setHelp('admin.page.help.hero');

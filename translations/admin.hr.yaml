@@ -64,6 +64,7 @@ admin:
             meta_title: Meta naslov
             meta_description: Meta opis
             position: Pozicija
+            hide_title: Sakrij naslov stranice
             hero_enabled: Hero uključen
             hero_image: Hero slika
             hero_title: Hero naslov
@@ -74,6 +75,7 @@ admin:
         fieldset: { hero: Hero sekcija (opcionalno) }
         help:
             template: 'Naziv theme predloška, npr. page.html.twig. Prazno = zadani.'
+            hide_title: 'Za landing stranice — sakrij standardni naslov i dodaj vlastiti u sadržaju. Naslov se i dalje koristi za karticu preglednika i tražilice.'
             hero: 'Hero s tekstom preko slike, na vrhu stranice. Prikazuje se samo kad je uključen i postavljena je slika ili naslov.'
             hero_title: 'Prazno = koristi se naslov stranice.'
             hero_cta_url: 'Npr. /kontakt ili https://… Gumb se prikazuje samo kad su labela I poveznica postavljene.'

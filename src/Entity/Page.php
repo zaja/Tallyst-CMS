@@ -33,6 +33,14 @@ class Page
     #[ORM\Column(options: ['default' => false])]
     private bool $isDemo = false;
 
+    /**
+     * Hide the standard auto <h1> page title on the front, so the admin can build their own
+     * heading inside the content (an H1 in the editor) — for landing/custom pages. The title is
+     * still used for <title>/meta/sitemap/admin (only the visual page-header <h1> is suppressed).
+     */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $hideTitle = false;
+
     #[ORM\Column(length: 191)]
     private string $title;
 
@@ -101,6 +109,18 @@ class Page
     public function setFeaturedImage(?Media $featuredImage): static
     {
         $this->featuredImage = $featuredImage;
+
+        return $this;
+    }
+
+    public function isHideTitle(): bool
+    {
+        return $this->hideTitle;
+    }
+
+    public function setHideTitle(bool $hideTitle): static
+    {
+        $this->hideTitle = $hideTitle;
 
         return $this;
     }

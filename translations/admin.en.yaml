@@ -64,6 +64,7 @@ admin:
             meta_title: Meta title
             meta_description: Meta description
             position: Position
+            hide_title: Hide page title
             hero_enabled: Hero enabled
             hero_image: Hero image
             hero_title: Hero title
@@ -74,6 +75,7 @@ admin:
         fieldset: { hero: Hero section (optional) }
         help:
             template: 'Theme template name, e.g. page.html.twig. Empty = default.'
+            hide_title: 'For landing pages — hide the standard title and add your own heading in the content. The title is still used for the browser tab and search engines.'
             hero: 'A hero with text over an image, at the top of the page. Shown only when enabled and an image or title is set.'
             hero_title: 'Empty = the page title is used.'
             hero_cta_url: 'E.g. /contact or https://… The button shows only when both the label AND the link are set.'
