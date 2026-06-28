@@ -30,6 +30,18 @@
     border-color: var(--bs-border-color, #ccc);
 }
 
+/* Disabled (e.g. "IMG format" with no image selected): clearly inactive but still legible in
+   dark mode — dim the text/icon via opacity rather than a fixed light grey that vanishes on dark. */
+.tiptap__btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tiptap__btn:disabled:hover {
+    background: transparent;
+    border-color: transparent;
+}
+
 .tiptap__sep {
     width: 1px;
     align-self: stretch;

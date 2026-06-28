@@ -17,7 +17,7 @@ import '../styles/tiptap.css';
  * library instance, so the two never cross.
  */
 export default class extends Controller {
-    static targets = ['editor', 'input', 'library', 'toolbar'];
+    static targets = ['editor', 'input', 'library', 'toolbar', 'imageFormat'];
     static values = { modules: String, linkPrompt: String };
 
     connect() {
@@ -26,10 +26,14 @@ export default class extends Controller {
             extensions: buildExtensions(),
             content: this.inputTarget.value,
             onUpdate: () => this.sync(),
+            // The "IMG format" controls only apply to a selected image — keep the trigger
+            // enabled/disabled in step with the selection so it's never a confusing no-op.
+            onSelectionUpdate: () => this.refreshImageFormat(),
         });
         this.renderExtensionButtons();
         // Sync once so an unedited save still stores the normalised HTML (Trix div->p).
         this.sync();
+        this.refreshImageFormat();
 
         // Close any open toolbar dropdown on an outside click or Escape. Bound once on
         // document (survives Turbo body swaps cleanly via disconnect), never caches nodes.
@@ -191,6 +195,24 @@ export default class extends Controller {
 
     insertImage() {
         this.libraryTarget.dispatchEvent(new CustomEvent('media-library:open'));
+    }
+
+    /**
+     * Enable the "IMG format" trigger only when an image is selected (its controls are no-ops
+     * otherwise). Reactive via onSelectionUpdate. When it becomes disabled, close its menu so an
+     * open dropdown can't linger after the selection moves off the image.
+     */
+    refreshImageFormat() {
+        if (!this.hasImageFormatTarget) {
+            return;
+        }
+        const enabled = this.editor.isActive('image');
+        this.imageFormatTarget.disabled = !enabled;
+        this.imageFormatTarget.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+        if (!enabled) {
+            this.imageFormatTarget.nextElementSibling?.classList.remove('is-open');
+            this.imageFormatTarget.setAttribute('aria-expanded', 'false');
+        }
     }
 
     /**

@@ -62,7 +62,7 @@
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.unlink'|trans({}, 'admin') }}" data-action="media--tiptap#unlink">&#128279;&times;</button>
             <span class="tiptap__sep"></span>
 
-            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.insert_image'|trans({}, 'admin') }}" data-action="media--tiptap#insertImage">&#128247; {{ 'admin.media.tiptap.image_btn'|trans({}, 'admin') }}</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.insert_image'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.insert_image'|trans({}, 'admin') }}" data-action="media--tiptap#insertImage">&#128444;&#65039;</button>
 
             {# ONE consolidated "IMG format" dropdown for a SELECTED image — alignment + a single
                size scale (Small/Medium/Large/Full). No-op without a selected image. Pure UI: it sets
@@ -72,6 +72,7 @@
                which the front already treats as the top of the scale, overriding size). #}
             <div class="tiptap__dropdown">
                 <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.img_format'|trans({}, 'admin') }}"
+                        data-media--tiptap-target="imageFormat"
                         aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown">&#128443; {{ 'admin.media.tiptap.img_format'|trans({}, 'admin') }}<span class="tiptap__caret">&#9662;</span></button>
                 <div class="tiptap__menu" role="menu">
                     <span class="tiptap__menu-header">{{ 'admin.media.tiptap.img_group_align'|trans({}, 'admin') }}</span>

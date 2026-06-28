@@ -53,7 +53,6 @@ admin:
             link: Link
             unlink: Remove link
             insert_image: Insert image
-            image_btn: Image
             img_format: 'IMG format'
             img_group_align: Alignment
             img_group_size: Size

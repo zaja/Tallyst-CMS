@@ -53,7 +53,6 @@ admin:
             link: Poveznica
             unlink: Ukloni poveznicu
             insert_image: Ubaci sliku
-            image_btn: Slika
             img_format: 'IMG format'
             img_group_align: Poravnanje
             img_group_size: Veličina
