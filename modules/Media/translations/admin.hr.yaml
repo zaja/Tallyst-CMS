@@ -54,15 +54,16 @@ admin:
             unlink: Ukloni poveznicu
             insert_image: Ubaci sliku
             image_btn: Slika
-            full_width: 'Slika: puna širina (odaberi sliku)'
-            full_width_btn: Puna širina
-            image_opts: 'Slika: poravnanje i veličina (odaberi sliku)'
+            img_format: 'IMG format'
+            img_group_align: Poravnanje
+            img_group_size: Veličina
             img_align_left: Lijevo
             img_align_center: Sredina
             img_align_right: Desno
             img_size_small: Mala
             img_size_medium: Srednja
             img_size_large: Velika
+            img_size_full: Puna širina
             columns: Stupci
             columns2: Dva stupca
             columns3: Tri stupca

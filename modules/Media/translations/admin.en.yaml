@@ -54,15 +54,16 @@ admin:
             unlink: Remove link
             insert_image: Insert image
             image_btn: Image
-            full_width: 'Image: full width (select an image)'
-            full_width_btn: Full width
-            image_opts: 'Image: align & size (select an image)'
+            img_format: 'IMG format'
+            img_group_align: Alignment
+            img_group_size: Size
             img_align_left: Left
             img_align_center: Center
             img_align_right: Right
             img_size_small: Small
             img_size_medium: Medium
             img_size_large: Large
+            img_size_full: Full width
             columns: Columns
             columns2: Two columns
             columns3: Three columns

@@ -130,13 +130,21 @@ export default class extends Controller {
             const node = 'ordered' === el.dataset.list ? 'orderedList' : 'bulletList';
             el.classList.toggle('is-active', this.editor.isActive(node));
         });
-        // Image align/size — active only when an image is selected (medium is the size default).
+        // Image align/size — active only when an image is selected. The size scale folds
+        // width=full in as its top step: when width=full only "Full" is active; otherwise the
+        // current size (medium default) is — mirroring the front, where width=full overrides size.
         const img = this.editor.isActive('image') ? this.editor.getAttributes('image') : null;
         menu.querySelectorAll('[data-img-align]').forEach((el) => {
             el.classList.toggle('is-active', null !== img && img.align === el.dataset.imgAlign);
         });
-        menu.querySelectorAll('[data-size]').forEach((el) => {
-            el.classList.toggle('is-active', null !== img && (img.size || 'medium') === el.dataset.size);
+        menu.querySelectorAll('[data-img-size]').forEach((el) => {
+            let active = false;
+            if (null !== img) {
+                active = 'full' === el.dataset.imgSize
+                    ? 'full' === img.width
+                    : 'full' !== img.width && (img.size || 'medium') === el.dataset.imgSize;
+            }
+            el.classList.toggle('is-active', active);
         });
     }
 
@@ -186,23 +194,10 @@ export default class extends Controller {
     }
 
     /**
-     * Toggle the SELECTED image between normal and full-container width (per-image). No-op when
-     * no image is selected. Feedback is immediate via the editor preview (data-width="full" CSS);
-     * the PHP converter stores it as [image … width=full].
-     */
-    toggleImageWidth() {
-        if (!this.editor.isActive('image')) {
-            return;
-        }
-        const current = this.editor.getAttributes('image').width;
-        this.editor.chain().focus().updateAttributes('image', { width: 'full' === current ? null : 'full' }).run();
-    }
-
-    /**
-     * Image alignment (data-img-align 'left'|'center'|'right') and size (data-size
-     * 'thumb'|'medium'|'hero'). Pure UI: they only set the image node's existing align/size
-     * attributes — the same data-* the converter already round-trips into [image align/size]
-     * and the front renders. No-op when no image is selected (mirrors toggleImageWidth).
+     * Image alignment (data-img-align 'left'|'center'|'right') and the unified size scale
+     * (data-img-size 'thumb'|'medium'|'hero'|'full'). Pure UI: they only set the image node's
+     * existing align/size/width attributes — the same data-* the converter already round-trips
+     * into [image align/size/width] and the front renders. No-op when no image is selected.
      */
     setImageAlign(event) {
         if (this.editor.isActive('image')) {
@@ -211,9 +206,17 @@ export default class extends Controller {
         this.closeDropdowns();
     }
 
+    /**
+     * Single size scale: thumb/medium/hero set `size` (and clear `width`); 'full' sets
+     * `width=full` (and clears `size`). They're mutually exclusive in the UI — the front already
+     * treats width=full as the top of the scale (forcing the hero source, overriding size), so
+     * this keeps stored content clean while rendering exactly as before.
+     */
     setImageSize(event) {
         if (this.editor.isActive('image')) {
-            this.editor.chain().focus().updateAttributes('image', { size: event.currentTarget.dataset.size }).run();
+            const value = event.currentTarget.dataset.imgSize;
+            const attrs = 'full' === value ? { width: 'full', size: null } : { size: value, width: null };
+            this.editor.chain().focus().updateAttributes('image', attrs).run();
         }
         this.closeDropdowns();
     }

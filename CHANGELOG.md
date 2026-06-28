@@ -10,6 +10,14 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Added
+
+- **Editor toolbar v2.** The content editor's toolbar is reorganised and rounded
+  out: Heading (Paragraph/H1–H4), List, Alignment, and Columns (2/3/4) are now
+  tidy dropdowns, text alignment and an "insert line" rule were added, and all
+  image formatting (alignment + a single Small/Medium/Large/Full size scale) lives
+  under one "IMG format" dropdown.
+
 ## [1.2.0] — 2026-06-27
 
 ### Added
