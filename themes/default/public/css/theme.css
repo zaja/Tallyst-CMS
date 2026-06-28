@@ -344,7 +344,7 @@ th { font-weight: 650; }
                           to let more of the image show through behind the text. */
 .page-hero {
     --hero-photo-fade: 55%;
-    --hero-photo-shade: 0.6;
+    --hero-photo-shade: 0.65;
     position: relative;
     display: flex;
     align-items: center;                /* vertical centre */
