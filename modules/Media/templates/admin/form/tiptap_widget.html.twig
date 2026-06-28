@@ -64,6 +64,23 @@
 
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.insert_image'|trans({}, 'admin') }}" data-action="media--tiptap#insertImage">&#128247; {{ 'admin.media.tiptap.image_btn'|trans({}, 'admin') }}</button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.full_width'|trans({}, 'admin') }}" data-action="media--tiptap#toggleImageWidth">&#8596; {{ 'admin.media.tiptap.full_width_btn'|trans({}, 'admin') }}</button>
+
+            {# Selected-image options: alignment (left/center/right) + size (small/medium/large).
+               No-op without a selected image. Sets the image node's align/size attributes — the
+               same data-* the converter already round-trips into [image align/size] for the front. #}
+            <div class="tiptap__dropdown">
+                <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.image_opts'|trans({}, 'admin') }}"
+                        aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown">&#128443;<span class="tiptap__caret">&#9662;</span></button>
+                <div class="tiptap__menu" role="menu">
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-img-align="left" data-action="media--tiptap#setImageAlign">{{ 'admin.media.tiptap.img_align_left'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-img-align="center" data-action="media--tiptap#setImageAlign">{{ 'admin.media.tiptap.img_align_center'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-img-align="right" data-action="media--tiptap#setImageAlign">{{ 'admin.media.tiptap.img_align_right'|trans({}, 'admin') }}</button>
+                    <span class="tiptap__menu-sep"></span>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-size="thumb" data-action="media--tiptap#setImageSize">{{ 'admin.media.tiptap.img_size_small'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-size="medium" data-action="media--tiptap#setImageSize">{{ 'admin.media.tiptap.img_size_medium'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-size="hero" data-action="media--tiptap#setImageSize">{{ 'admin.media.tiptap.img_size_large'|trans({}, 'admin') }}</button>
+                </div>
+            </div>
             <span class="tiptap__sep"></span>
 
             {# Multi-column layout (Prolaz C) — core editor feature, always present (not

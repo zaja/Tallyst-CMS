@@ -56,6 +56,13 @@ admin:
             image_btn: Slika
             full_width: 'Slika: puna širina (odaberi sliku)'
             full_width_btn: Puna širina
+            image_opts: 'Slika: poravnanje i veličina (odaberi sliku)'
+            img_align_left: Lijevo
+            img_align_center: Sredina
+            img_align_right: Desno
+            img_size_small: Mala
+            img_size_medium: Srednja
+            img_size_large: Velika
             columns: Stupci
             columns2: Dva stupca
             columns3: Tri stupca

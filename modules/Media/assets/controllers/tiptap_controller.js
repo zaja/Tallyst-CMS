@@ -130,6 +130,14 @@ export default class extends Controller {
             const node = 'ordered' === el.dataset.list ? 'orderedList' : 'bulletList';
             el.classList.toggle('is-active', this.editor.isActive(node));
         });
+        // Image align/size — active only when an image is selected (medium is the size default).
+        const img = this.editor.isActive('image') ? this.editor.getAttributes('image') : null;
+        menu.querySelectorAll('[data-img-align]').forEach((el) => {
+            el.classList.toggle('is-active', null !== img && img.align === el.dataset.imgAlign);
+        });
+        menu.querySelectorAll('[data-size]').forEach((el) => {
+            el.classList.toggle('is-active', null !== img && (img.size || 'medium') === el.dataset.size);
+        });
     }
 
     /** Heading dropdown: data-level 0 = Paragraph, 1..4 = H1..H4 (set, not toggle). */
@@ -188,6 +196,26 @@ export default class extends Controller {
         }
         const current = this.editor.getAttributes('image').width;
         this.editor.chain().focus().updateAttributes('image', { width: 'full' === current ? null : 'full' }).run();
+    }
+
+    /**
+     * Image alignment (data-img-align 'left'|'center'|'right') and size (data-size
+     * 'thumb'|'medium'|'hero'). Pure UI: they only set the image node's existing align/size
+     * attributes — the same data-* the converter already round-trips into [image align/size]
+     * and the front renders. No-op when no image is selected (mirrors toggleImageWidth).
+     */
+    setImageAlign(event) {
+        if (this.editor.isActive('image')) {
+            this.editor.chain().focus().updateAttributes('image', { align: event.currentTarget.dataset.imgAlign }).run();
+        }
+        this.closeDropdowns();
+    }
+
+    setImageSize(event) {
+        if (this.editor.isActive('image')) {
+            this.editor.chain().focus().updateAttributes('image', { size: event.currentTarget.dataset.size }).run();
+        }
+        this.closeDropdowns();
     }
 
     /** Columns dropdown: data-count 2 | 3 | 4. */

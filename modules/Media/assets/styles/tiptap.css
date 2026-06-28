@@ -98,6 +98,13 @@
     color: #fff;
 }
 
+.tiptap__menu-sep {
+    display: block;
+    height: 1px;
+    margin: 0.25rem 0.3rem;
+    background: var(--bs-border-color, #ccc);
+}
+
 .tiptap__editor {
     border: 1px solid var(--bs-border-color, #ccc);
     border-radius: 0 0 6px 6px;
@@ -108,6 +115,9 @@
     min-height: 16rem;
     padding: 0.75rem 1rem;
     outline: none;
+    /* Same float clearfix as the theme front (.page-content/.prose): a floated image stays
+       contained in the editor, so the WYSIWYG preview matches the rendered page. */
+    display: flow-root;
 }
 
 .tiptap__editor .ProseMirror > * + * {
@@ -120,9 +130,24 @@
     border-radius: 4px;
 }
 
-/* Full-width image: preview reflects the front render so the toggle gives instant feedback. */
+/* Image alignment preview — the editor img carries data-align (the node attr); mirrors the
+   front .media-align-* classes so align is WYSIWYG. center/full don't float. */
+.tiptap__editor .ProseMirror img[data-align="left"]  { float: left;  max-width: 50%; margin: 0.1rem 1rem 0.5rem 0; }
+.tiptap__editor .ProseMirror img[data-align="right"] { float: right; max-width: 50%; margin: 0.1rem 0 0.5rem 1rem; }
+.tiptap__editor .ProseMirror img[data-align="center"] { display: block; margin: 0.6rem auto; }
+
+/* Image size preview — approximates the front (which serves the actual Liip-sized file). Only
+   the small (thumb) cap is visibly distinct in the editor; medium/large reuse the inserted src,
+   so they look the same here while the front differs in the served file. Declared after align so
+   a small image stays small even when floated. */
+.tiptap__editor .ProseMirror img[data-size="thumb"] { max-width: 180px; }
+
+/* Full-width image: preview reflects the front render so the toggle gives instant feedback.
+   Full takes precedence over align (the front helper emits full OR align, never both). */
 .tiptap__editor .ProseMirror img[data-width="full"] {
     display: block;
+    float: none;
+    max-width: 100%;
     width: 100%;
 }
 

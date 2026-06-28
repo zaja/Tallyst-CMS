@@ -475,6 +475,16 @@ th { font-weight: 650; }
 /* Per-image full width: spans the full content container (rendered from the larger 'hero' source). */
 .media-img-full { display: block; width: 100%; height: auto; margin: var(--s-6) 0; }
 
+/* Float clearfix for left/right-aligned images. flow-root makes the content box a block
+   formatting context so a floated image stays CONTAINED — text still wraps around it (the
+   point of align), but the float can't leak past the content into the footer / back-to-blog.
+   clear on section headings makes a heading after a floated image start cleanly below it,
+   not pinned beside a tall image. (center / full don't float, so they're unaffected.) */
+.page-content,
+.prose { display: flow-root; }
+.page-content h2, .page-content h3, .page-content h4,
+.prose h2, .prose h3, .prose h4 { clear: both; }
+
 /* ---- Search (header field + results) ---- */
 .site-search { position: relative; display: flex; align-items: center; gap: var(--s-1); }
 .site-search input[type="search"] {
