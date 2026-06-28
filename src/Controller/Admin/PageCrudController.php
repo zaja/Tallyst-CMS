@@ -79,6 +79,16 @@ class PageCrudController extends AbstractCrudController
             ->setHelp('admin.page.help.hero');
         yield BooleanField::new('heroEnabled', 'admin.page.field.hero_enabled')->hideOnIndex();
         yield MediaPickerField::new('heroImage', 'admin.page.field.hero_image')->hideOnIndex();
+        yield ChoiceField::new('heroPosition', 'admin.page.field.hero_position')->hideOnIndex()
+            ->setChoices(['admin.page.hero_position.left' => 'left', 'admin.page.hero_position.right' => 'right'])
+            ->setHelp('admin.page.help.hero_position');
+        yield ChoiceField::new('heroStyle', 'admin.page.field.hero_style')->hideOnIndex()
+            ->setChoices([
+                'admin.page.hero_style.photo' => 'photo',
+                'admin.page.hero_style.light' => 'light',
+                'admin.page.hero_style.dark' => 'dark',
+            ])
+            ->setHelp('admin.page.help.hero_style');
         yield TextField::new('heroTitle', 'admin.page.field.hero_title')->hideOnIndex()
             ->setHelp('admin.page.help.hero_title');
         yield TextareaField::new('heroText', 'admin.page.field.hero_text')->hideOnIndex();

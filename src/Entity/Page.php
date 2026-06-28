@@ -95,6 +95,22 @@ class Page
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $heroCtaUrl = null;
 
+    /**
+     * Hero overlay layout: which half the text panel sits on (desktop 50/50; full-width on mobile).
+     * Enum 'left'|'right', default 'left' = the existing bottom-left behaviour for current pages.
+     */
+    #[ORM\Column(length: 8, options: ['default' => 'left'])]
+    private string $heroPosition = 'left';
+
+    /**
+     * Hero overlay readability style (legible by construction): 'photo' = image full-bleed + dark
+     * scrim over the text half + white text (today's family); 'light'/'dark' = the text half is a
+     * flat theme-toned panel (no scrim) with dark/light text, image clean on its half. Default
+     * 'photo' keeps current pages unchanged.
+     */
+    #[ORM\Column(length: 8, options: ['default' => 'photo'])]
+    private string $heroStyle = 'photo';
+
     public function __construct(string $title = '', string $slug = '')
     {
         $this->title = $title;
@@ -193,6 +209,30 @@ class Page
     public function setHeroCtaUrl(?string $heroCtaUrl): static
     {
         $this->heroCtaUrl = $heroCtaUrl;
+
+        return $this;
+    }
+
+    public function getHeroPosition(): string
+    {
+        return $this->heroPosition;
+    }
+
+    public function setHeroPosition(string $heroPosition): static
+    {
+        $this->heroPosition = $heroPosition;
+
+        return $this;
+    }
+
+    public function getHeroStyle(): string
+    {
+        return $this->heroStyle;
+    }
+
+    public function setHeroStyle(string $heroStyle): static
+    {
+        $this->heroStyle = $heroStyle;
 
         return $this;
     }

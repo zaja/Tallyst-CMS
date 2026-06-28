@@ -71,7 +71,11 @@ admin:
             hero_text: Hero text
             hero_cta_label: CTA label
             hero_cta_url: CTA link
+            hero_position: Text position
+            hero_style: Hero style
         status: { draft: Draft, published: Published }
+        hero_position: { left: Left, right: Right }
+        hero_style: { photo: Photo, light: Light image, dark: Dark image }
         fieldset: { hero: Hero section (optional) }
         help:
             template: 'Theme template name, e.g. page.html.twig. Empty = default.'
@@ -79,6 +83,8 @@ admin:
             hero: 'A hero with text over an image, at the top of the page. Shown only when enabled and an image or title is set.'
             hero_title: 'Empty = the page title is used.'
             hero_cta_url: 'E.g. /contact or https://… The button shows only when both the label AND the link are set.'
+            hero_position: 'Which half the text sits on (desktop). On narrow screens the text is full-width.'
+            hero_style: 'How the text stays readable: Photo = image with a dark shade behind the text; Light/Dark = a flat panel behind the text, image on its own half.'
     post:
         entity: { singular: Post, plural: Posts }
         field:

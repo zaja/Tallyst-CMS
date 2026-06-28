@@ -71,7 +71,11 @@ admin:
             hero_text: Hero tekst
             hero_cta_label: CTA labela
             hero_cta_url: CTA poveznica
+            hero_position: Pozicija teksta
+            hero_style: Stil hero slike
         status: { draft: Skica, published: Objavljeno }
+        hero_position: { left: Lijevo, right: Desno }
+        hero_style: { photo: Foto, light: Svijetla slika, dark: Tamna slika }
         fieldset: { hero: Hero sekcija (opcionalno) }
         help:
             template: 'Naziv theme predloška, npr. page.html.twig. Prazno = zadani.'
@@ -79,6 +83,8 @@ admin:
             hero: 'Hero s tekstom preko slike, na vrhu stranice. Prikazuje se samo kad je uključen i postavljena je slika ili naslov.'
             hero_title: 'Prazno = koristi se naslov stranice.'
             hero_cta_url: 'Npr. /kontakt ili https://… Gumb se prikazuje samo kad su labela I poveznica postavljene.'
+            hero_position: 'Na kojoj polovici sjedi tekst (desktop). Na uskim ekranima tekst je pune širine.'
+            hero_style: 'Kako tekst ostaje čitljiv: Foto = slika s tamnim zatamnjenjem iza teksta; Svijetla/Tamna = ravna podloga iza teksta, slika na svojoj polovici.'
     post:
         entity: { singular: Objava, plural: Objave }
         field:
