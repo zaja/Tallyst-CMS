@@ -69,7 +69,10 @@ ok(!/<div(?![^>]*data-tallyst-form)/.test(out), 'plain Trix <div>s normalised to
 // --- SILENT DROPS (documented + asserted) ---
 ok(!out.includes('<table'), 'table dropped (outside schema)');
 ok(!out.includes('<iframe'), 'iframe dropped (outside schema)');
-ok(!/style=/.test(out), 'inline style attribute dropped');
+// Non-text-align inline styles are still dropped (the `color:red` div above carries no
+// text-align, so the whole style attribute is gone). text-align is the ONE style now
+// preserved (TextAlign extension) — asserted in its own block below.
+ok(!/style=/.test(out), 'non-text-align inline style (color) dropped');
 
 // --- Image node survives its OWN round-trip (so PHP can convert it back) ---
 const imgOnly = roundTrip('<img data-tallyst-image data-id="7" data-size="medium" src="/y.jpg" alt="A">');
@@ -79,6 +82,16 @@ ok(!imgOnly.includes('data-width'), 'an image without a width attribute stays wi
 // --- Per-image full width survives the round-trip ---
 const fullImg = roundTrip('<img data-tallyst-image data-id="8" data-width="full" src="/z.jpg" alt="B">');
 ok(fullImg.includes('data-width="full"') && fullImg.includes('data-id="8"'), 'full-width image round-trips (data-width preserved)');
+
+// --- Text alignment (TextAlign extension) survives on paragraphs + headings ---
+// Group 1 adds text-align; the schema now PRESERVES the text-align inline style (other
+// styles like color stay dropped). Default 'left' renders no style; center/right/justify do.
+const aligned = roundTrip('<p style="text-align: center">Sredina</p><h2 style="text-align: right">Desno</h2>');
+ok(/<p[^>]*text-align:\s*center/.test(aligned), 'paragraph text-align:center survives');
+ok(/<h2[^>]*text-align:\s*right/.test(aligned), 'heading text-align:right survives');
+// A block with NO alignment attribute stays clean (no style) — only an explicit choice carries one.
+const plainPara = roundTrip('<p>Obicni odlomak</p>');
+ok(!/style=/.test(plainPara), 'a paragraph with no alignment renders no style (clean content)');
 
 // --- Toolbar gating: the form button shows only when FormBuilder is enabled ---
 ok(editorToolbarExtensions(['media', 'form_builder']).some((t) => t.label.includes('Forma')),

@@ -1,4 +1,5 @@
 import StarterKit from '@tiptap/starter-kit';
+import TextAlign from '@tiptap/extension-text-align';
 import { TallystImage } from './tiptap_image_node.js';
 import { TallystDocument, Columns, Column } from './tiptap_columns_node.js';
 
@@ -40,11 +41,15 @@ export function buildExtensions() {
             // Replace StarterKit's Document with ours so the top level also accepts the
             // columns layout node (TallystDocument content = '(block | columns)+').
             document: false,
-            heading: { levels: [1, 2, 3] },
+            heading: { levels: [1, 2, 3, 4] },
             // Keep content stable on load: don't auto-link typed URLs, don't navigate on
             // click, don't force target=_blank/rel onto existing links.
             link: { openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } },
         }),
+        // Text alignment on paragraphs + headings. Stored as an inline `text-align` style on
+        // the block (the front renders it natively; the schema now PRESERVES that one style —
+        // other inline styles are still dropped). Default 'left' renders no style (clean content).
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
         TallystDocument,
         TallystImage,
         Columns,

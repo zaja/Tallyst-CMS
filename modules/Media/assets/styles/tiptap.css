@@ -37,6 +37,67 @@
     background: var(--bs-border-color, #ccc);
 }
 
+/* Toolbar dropdowns (heading / list / align / columns) — one reusable primitive. The menu
+   is absolutely positioned under its trigger; toggled open by the controller. Dark-mode-safe
+   via Bootstrap/EA theme variables (the admin sets data-bs-theme). */
+.tiptap__dropdown {
+    position: relative;
+    display: inline-flex;
+}
+
+.tiptap__btn--dd {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.tiptap__caret {
+    font-size: 0.7em;
+    line-height: 1;
+    opacity: 0.7;
+}
+
+.tiptap__menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.2rem);
+    left: 0;
+    z-index: 20;
+    min-width: 9rem;
+    padding: 0.25rem;
+    border: 1px solid var(--bs-border-color, #ccc);
+    border-radius: 6px;
+    background: var(--bs-body-bg, #fff);
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
+}
+
+.tiptap__menu.is-open {
+    display: block;
+}
+
+.tiptap__menu-item {
+    display: block;
+    width: 100%;
+    padding: 0.3rem 0.6rem;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--bs-body-color, #212529);
+    font-size: 0.85rem;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.tiptap__menu-item:hover {
+    background: var(--bs-secondary-bg, #e9ecef);
+}
+
+.tiptap__menu-item.is-active {
+    background: var(--bs-primary, #0d6efd);
+    color: #fff;
+}
+
 .tiptap__editor {
     border: 1px solid var(--bs-border-color, #ccc);
     border-radius: 0 0 6px 6px;

@@ -15,26 +15,68 @@
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.italic'|trans({}, 'admin') }}" data-action="media--tiptap#italic"><i>I</i></button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.strike'|trans({}, 'admin') }}" data-action="media--tiptap#strike"><s>S</s></button>
             <span class="tiptap__sep"></span>
-            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.paragraph'|trans({}, 'admin') }}" data-action="media--tiptap#paragraph">&para;</button>
-            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.h2'|trans({}, 'admin') }}" data-action="media--tiptap#h2">H2</button>
-            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.h3'|trans({}, 'admin') }}" data-action="media--tiptap#h3">H3</button>
+
+            {# Heading dropdown: Paragraph / H1–H4 (sets the block, doesn't toggle). #}
+            <div class="tiptap__dropdown">
+                <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.heading'|trans({}, 'admin') }}"
+                        aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown">H<span class="tiptap__caret">&#9662;</span></button>
+                <div class="tiptap__menu" role="menu">
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-level="0" data-action="media--tiptap#setHeading">{{ 'admin.media.tiptap.paragraph'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-level="1" data-action="media--tiptap#setHeading"><b>{{ 'admin.media.tiptap.h1'|trans({}, 'admin') }}</b></button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-level="2" data-action="media--tiptap#setHeading">{{ 'admin.media.tiptap.h2'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-level="3" data-action="media--tiptap#setHeading">{{ 'admin.media.tiptap.h3'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-level="4" data-action="media--tiptap#setHeading">{{ 'admin.media.tiptap.h4'|trans({}, 'admin') }}</button>
+                </div>
+            </div>
+
+            {# List dropdown: bullet / numbered. #}
+            <div class="tiptap__dropdown">
+                <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.list'|trans({}, 'admin') }}"
+                        aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown">&#9776;<span class="tiptap__caret">&#9662;</span></button>
+                <div class="tiptap__menu" role="menu">
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-list="bullet" data-action="media--tiptap#setList">&bull; {{ 'admin.media.tiptap.bullet_list'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-list="ordered" data-action="media--tiptap#setList">1. {{ 'admin.media.tiptap.ordered_list'|trans({}, 'admin') }}</button>
+                </div>
+            </div>
+
+            {# Text-align dropdown: left / center / right / justify (paragraphs + headings). #}
+            <div class="tiptap__dropdown">
+                <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.align'|trans({}, 'admin') }}"
+                        aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown">&#8801;<span class="tiptap__caret">&#9662;</span></button>
+                <div class="tiptap__menu" role="menu">
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-align="left" data-action="media--tiptap#setAlign">{{ 'admin.media.tiptap.align_left'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-align="center" data-action="media--tiptap#setAlign">{{ 'admin.media.tiptap.align_center'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-align="right" data-action="media--tiptap#setAlign">{{ 'admin.media.tiptap.align_right'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-align="justify" data-action="media--tiptap#setAlign">{{ 'admin.media.tiptap.align_justify'|trans({}, 'admin') }}</button>
+                </div>
+            </div>
+            <span class="tiptap__sep"></span>
+
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.blockquote'|trans({}, 'admin') }}" data-action="media--tiptap#blockquote">&rdquo;</button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.code'|trans({}, 'admin') }}" data-action="media--tiptap#code">&lt;/&gt;</button>
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.hr'|trans({}, 'admin') }}" data-action="media--tiptap#insertHr">&#8213;</button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.clear'|trans({}, 'admin') }}" data-action="media--tiptap#clearFormatting">&#10006; format</button>
             <span class="tiptap__sep"></span>
-            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.list'|trans({}, 'admin') }}" data-action="media--tiptap#bulletList">&bull; {{ 'admin.media.tiptap.list_btn'|trans({}, 'admin') }}</button>
-            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.ordered_list'|trans({}, 'admin') }}" data-action="media--tiptap#orderedList">1. {{ 'admin.media.tiptap.list_btn'|trans({}, 'admin') }}</button>
-            <span class="tiptap__sep"></span>
+
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.link'|trans({}, 'admin') }}" data-action="media--tiptap#link">&#128279;</button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.unlink'|trans({}, 'admin') }}" data-action="media--tiptap#unlink">&#128279;&times;</button>
             <span class="tiptap__sep"></span>
+
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.insert_image'|trans({}, 'admin') }}" data-action="media--tiptap#insertImage">&#128247; {{ 'admin.media.tiptap.image_btn'|trans({}, 'admin') }}</button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.full_width'|trans({}, 'admin') }}" data-action="media--tiptap#toggleImageWidth">&#8596; {{ 'admin.media.tiptap.full_width_btn'|trans({}, 'admin') }}</button>
             <span class="tiptap__sep"></span>
+
             {# Multi-column layout (Prolaz C) — core editor feature, always present (not
-               module-gated): insert a fixed 2- or 3-column block at the cursor. #}
-            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.columns2'|trans({}, 'admin') }}" data-action="media--tiptap#columns2">&#9707; 2</button>
-            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.columns3'|trans({}, 'admin') }}" data-action="media--tiptap#columns3">&#9707; 3</button>
+               module-gated): insert a fixed 2/3/4-column block at the cursor. #}
+            <div class="tiptap__dropdown">
+                <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.columns'|trans({}, 'admin') }}"
+                        aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown">&#9707;<span class="tiptap__caret">&#9662;</span></button>
+                <div class="tiptap__menu" role="menu">
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-count="2" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns2'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-count="3" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns3'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-count="4" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns4'|trans({}, 'admin') }}</button>
+                </div>
+            </div>
             {# Module-contributed insert buttons (e.g. FormBuilder "Insert form") are
                appended here by the controller — the editor stays module-agnostic. The label of
                that button + the form-picker modal are wired at bootstrap (NOT on a Twig element),

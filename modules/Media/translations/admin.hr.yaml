@@ -32,23 +32,34 @@ admin:
             bold: Podebljano
             italic: Kurziv
             strike: Precrtano
+            heading: Naslov
             paragraph: Paragraf
+            h1: Naslov 1
             h2: Naslov 2
             h3: Naslov 3
+            h4: Naslov 4
             blockquote: Citat
             code: Kod
+            hr: Ubaci crtu
             clear: Očisti formatiranje
             list: Lista
+            bullet_list: Lista s točkama
             ordered_list: Numerirana lista
+            align: Poravnanje
+            align_left: Lijevo
+            align_center: Sredina
+            align_right: Desno
+            align_justify: Obostrano
             link: Poveznica
             unlink: Ukloni poveznicu
             insert_image: Ubaci sliku
             image_btn: Slika
             full_width: 'Slika: puna širina (odaberi sliku)'
             full_width_btn: Puna širina
+            columns: Stupci
             columns2: Dva stupca
             columns3: Tri stupca
+            columns4: Četiri stupca
             undo: Poništi
             redo: Ponovi
-            list_btn: lista
             link_prompt: 'URL poveznice:'

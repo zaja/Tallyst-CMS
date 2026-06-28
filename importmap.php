@@ -83,4 +83,5 @@ return [
     'sortablejs' => ['version' => '1.15.7'],
     'chart.js' => ['version' => '4.5.1'],
     '@kurkle/color' => ['version' => '0.3.4'],
+    '@tiptap/extension-text-align' => ['version' => '3.27.1'],
 ];

@@ -30,6 +30,21 @@ export default class extends Controller {
         this.renderExtensionButtons();
         // Sync once so an unedited save still stores the normalised HTML (Trix div->p).
         this.sync();
+
+        // Close any open toolbar dropdown on an outside click or Escape. Bound once on
+        // document (survives Turbo body swaps cleanly via disconnect), never caches nodes.
+        this.boundOutsideClick = (e) => {
+            if (!e.target.closest('.tiptap__dropdown')) {
+                this.closeDropdowns();
+            }
+        };
+        this.boundEscape = (e) => {
+            if ('Escape' === e.key) {
+                this.closeDropdowns();
+            }
+        };
+        document.addEventListener('click', this.boundOutsideClick);
+        document.addEventListener('keydown', this.boundEscape);
     }
 
     /**
@@ -54,6 +69,8 @@ export default class extends Controller {
     }
 
     disconnect() {
+        document.removeEventListener('click', this.boundOutsideClick);
+        document.removeEventListener('keydown', this.boundEscape);
         if (this.editor) {
             this.editor.destroy();
             this.editor = null;
@@ -67,18 +84,77 @@ export default class extends Controller {
     bold() { this.editor.chain().focus().toggleBold().run(); }
     italic() { this.editor.chain().focus().toggleItalic().run(); }
     strike() { this.editor.chain().focus().toggleStrike().run(); }
-    paragraph() { this.editor.chain().focus().setParagraph().run(); }
     // Clear formatting: drop inline marks + reset the selected block(s) to paragraph. Operates
     // only on the selection, so [image]/[form]/columns elsewhere in the doc are untouched.
     clearFormatting() { this.editor.chain().focus().unsetAllMarks().clearNodes().run(); }
-    h2() { this.editor.chain().focus().toggleHeading({ level: 2 }).run(); }
-    h3() { this.editor.chain().focus().toggleHeading({ level: 3 }).run(); }
     blockquote() { this.editor.chain().focus().toggleBlockquote().run(); }
     code() { this.editor.chain().focus().toggleCode().run(); }
-    bulletList() { this.editor.chain().focus().toggleBulletList().run(); }
-    orderedList() { this.editor.chain().focus().toggleOrderedList().run(); }
     undo() { this.editor.chain().focus().undo().run(); }
     redo() { this.editor.chain().focus().redo().run(); }
+
+    // --- Toolbar dropdowns (heading / list / align / columns) -----------------------------
+    // Each menu item carries plain data-* (data-level / data-list / data-align / data-count)
+    // read from event.currentTarget; the command runs, then the menu closes.
+
+    /** Open the dropdown whose trigger was clicked; close any other. Mark the active option. */
+    toggleDropdown(event) {
+        event.stopPropagation();
+        const menu = event.currentTarget.nextElementSibling;
+        const wasOpen = menu.classList.contains('is-open');
+        this.closeDropdowns();
+        if (!wasOpen) {
+            menu.classList.add('is-open');
+            event.currentTarget.setAttribute('aria-expanded', 'true');
+            this.markActive(menu);
+        }
+    }
+
+    closeDropdowns() {
+        this.element.querySelectorAll('.tiptap__menu.is-open').forEach((menu) => {
+            menu.classList.remove('is-open');
+            menu.previousElementSibling?.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    /** Reflect the editor's current block/alignment as an .is-active class on menu items. */
+    markActive(menu) {
+        menu.querySelectorAll('[data-level]').forEach((el) => {
+            const level = Number(el.dataset.level);
+            const active = 0 === level ? this.editor.isActive('paragraph') : this.editor.isActive('heading', { level });
+            el.classList.toggle('is-active', active);
+        });
+        menu.querySelectorAll('[data-align]').forEach((el) => {
+            el.classList.toggle('is-active', this.editor.isActive({ textAlign: el.dataset.align }));
+        });
+        menu.querySelectorAll('[data-list]').forEach((el) => {
+            const node = 'ordered' === el.dataset.list ? 'orderedList' : 'bulletList';
+            el.classList.toggle('is-active', this.editor.isActive(node));
+        });
+    }
+
+    /** Heading dropdown: data-level 0 = Paragraph, 1..4 = H1..H4 (set, not toggle). */
+    setHeading(event) {
+        const level = Number(event.currentTarget.dataset.level);
+        const chain = this.editor.chain().focus();
+        (0 === level ? chain.setParagraph() : chain.setHeading({ level })).run();
+        this.closeDropdowns();
+    }
+
+    /** List dropdown: data-list 'bullet' | 'ordered'. */
+    setList(event) {
+        const chain = this.editor.chain().focus();
+        ('ordered' === event.currentTarget.dataset.list ? chain.toggleOrderedList() : chain.toggleBulletList()).run();
+        this.closeDropdowns();
+    }
+
+    /** Align dropdown: data-align 'left' | 'center' | 'right' | 'justify' (heading + paragraph). */
+    setAlign(event) {
+        this.editor.chain().focus().setTextAlign(event.currentTarget.dataset.align).run();
+        this.closeDropdowns();
+    }
+
+    /** Insert a horizontal rule (StarterKit's HorizontalRule). */
+    insertHr() { this.editor.chain().focus().setHorizontalRule().run(); }
 
     link() {
         const previous = this.editor.getAttributes('link').href || '';
@@ -114,13 +190,17 @@ export default class extends Controller {
         this.editor.chain().focus().updateAttributes('image', { width: 'full' === current ? null : 'full' }).run();
     }
 
-    columns2() { this.insertColumns(2); }
-    columns3() { this.insertColumns(3); }
+    /** Columns dropdown: data-count 2 | 3 | 4. */
+    addColumns(event) {
+        this.insertColumns(Number(event.currentTarget.dataset.count));
+        this.closeDropdowns();
+    }
 
     /**
      * Insert a fixed N-column layout (N empty columns, each seeded with an empty paragraph
      * so `block+` is satisfied). Guarded against nesting: no insert when the cursor is
-     * already inside a columns layout (v1 has no nested columns).
+     * already inside a columns layout (v1 has no nested columns). Count-agnostic node + CSS
+     * grid, so 2/3/4 all lay out automatically.
      */
     insertColumns(count) {
         if (this.editor.isActive('columns') || this.editor.isActive('column')) {
