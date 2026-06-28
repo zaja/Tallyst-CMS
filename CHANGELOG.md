@@ -17,7 +17,8 @@ core-API change is a MAJOR (flagged ⚠).
   tidy dropdowns, text alignment and an "insert line" rule were added, and all
   image formatting (alignment + a single Small/Medium/Large/Full size scale) lives
   under one "IMG format" dropdown. The toolbar buttons (and the email editor's) now
-  use a consistent, modern icon set throughout.
+  use a consistent, modern icon set throughout. The link button opens a picker where
+  you paste a URL or search and link to one of your published pages/posts.
 
 ## [1.2.0] — 2026-06-27
 

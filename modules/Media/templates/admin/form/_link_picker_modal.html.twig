@@ -1,0 +1,44 @@
+{# Link picker modal for the Tiptap toolbar's link button — driven by the media--tiptap
+   controller (it sits inside the .tiptap element, so the targets resolve to that controller).
+   Two tabs: paste a URL (parity with the old window.prompt) OR pick a published Page/Post (the
+   internal link). The chosen target is set as a PLAIN <a href="…"> — the internal URL is a
+   relative path resolved server-side (admin_link_targets), never a live reference. Hidden until
+   the controller adds .is-open. Own .tiptap-linkpicker__* classes (Media owns its styles; the
+   look mirrors the form picker without depending on FormBuilder's CSS). #}
+<div class="tiptap-linkpicker" data-media--tiptap-target="linkModal"
+     data-action="click->media--tiptap#onLinkBackdrop keydown->media--tiptap#onLinkKeydown">
+    <div class="tiptap-linkpicker__dialog" role="dialog" aria-modal="true"
+         aria-label="{{ 'admin.media.tiptap.link_modal_title'|trans({}, 'admin') }}">
+        <div class="tiptap-linkpicker__header">
+            <strong>{{ 'admin.media.tiptap.link_modal_title'|trans({}, 'admin') }}</strong>
+            <button type="button" class="btn-close" aria-label="{{ 'admin.media.tiptap.link_close'|trans({}, 'admin') }}"
+                    data-action="media--tiptap#closeLinkModal"></button>
+        </div>
+
+        <div class="tiptap-linkpicker__tabs" role="tablist">
+            <button type="button" class="tiptap-linkpicker__tab is-active" role="tab" data-link-tab="url"
+                    data-media--tiptap-target="linkTabUrl" data-action="media--tiptap#switchTab">{{ 'admin.media.tiptap.link_tab_url'|trans({}, 'admin') }}</button>
+            <button type="button" class="tiptap-linkpicker__tab" role="tab" data-link-tab="internal"
+                    data-media--tiptap-target="linkTabInternal" data-action="media--tiptap#switchTab">{{ 'admin.media.tiptap.link_tab_internal'|trans({}, 'admin') }}</button>
+        </div>
+
+        {# URL tab — paste/edit a URL (prefilled with the existing link href when editing). #}
+        <div class="tiptap-linkpicker__panel" data-link-panel="url">
+            <div class="tiptap-linkpicker__url-row">
+                <input type="text" class="form-control" data-media--tiptap-target="linkUrlInput"
+                       placeholder="{{ 'admin.media.tiptap.link_url_placeholder'|trans({}, 'admin') }}"
+                       data-action="keydown->media--tiptap#onLinkUrlKeydown">
+                <button type="button" class="btn btn-primary" data-action="media--tiptap#setLinkUrl">{{ 'admin.media.tiptap.link_set'|trans({}, 'admin') }}</button>
+            </div>
+        </div>
+
+        {# Internal tab — search + click a published Page/Post (list fetched lazily). #}
+        <div class="tiptap-linkpicker__panel" data-link-panel="internal" hidden>
+            <input type="search" class="form-control" data-media--tiptap-target="linkSearch"
+                   placeholder="{{ 'admin.media.tiptap.link_search_placeholder'|trans({}, 'admin') }}"
+                   data-action="input->media--tiptap#filterLinkList">
+            <p class="tiptap-linkpicker__status text-muted" data-media--tiptap-target="linkStatus" hidden></p>
+            <ul class="tiptap-linkpicker__list" data-media--tiptap-target="linkList"></ul>
+        </div>
+    </div>
+</div>

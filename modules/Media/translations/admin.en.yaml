@@ -69,4 +69,15 @@ admin:
             columns4: Four columns
             undo: Undo
             redo: Redo
-            link_prompt: 'Link URL:'
+            link_modal_title: Link
+            link_close: Close
+            link_tab_url: URL
+            link_tab_internal: Page / post
+            link_url_placeholder: 'https://…'
+            link_search_placeholder: Search a page or post…
+            link_set: Set
+            link_type_page: Page
+            link_type_post: Post
+            link_none: No results
+            link_loading: Loading…
+            link_load_error: Couldn't load.

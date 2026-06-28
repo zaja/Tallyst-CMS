@@ -7,7 +7,12 @@
     <div class="tiptap"
          data-controller="media--tiptap"
          data-media--tiptap-modules-value="{{ enabled_modules() }}"
-         data-media--tiptap-link-prompt-value="{{ 'admin.media.tiptap.link_prompt'|trans({}, 'admin') }}"
+         data-media--tiptap-link-targets-url-value="{{ path('admin_link_targets') }}"
+         data-media--tiptap-link-type-page-value="{{ 'admin.media.tiptap.link_type_page'|trans({}, 'admin') }}"
+         data-media--tiptap-link-type-post-value="{{ 'admin.media.tiptap.link_type_post'|trans({}, 'admin') }}"
+         data-media--tiptap-link-loading-value="{{ 'admin.media.tiptap.link_loading'|trans({}, 'admin') }}"
+         data-media--tiptap-link-none-value="{{ 'admin.media.tiptap.link_none'|trans({}, 'admin') }}"
+         data-media--tiptap-link-load-error-value="{{ 'admin.media.tiptap.link_load_error'|trans({}, 'admin') }}"
          data-action="media-library:select->media--tiptap#onMediaSelect">
 
         <div class="tiptap__toolbar" role="toolbar">
@@ -117,5 +122,6 @@
                   hidden>{{ value }}</textarea>
 
         {{ include('@Media/admin/_media_library_modal.html.twig', { tiptap_target: true }) }}
+        {{ include('@Media/admin/form/_link_picker_modal.html.twig') }}
     </div>
 {% endblock %}

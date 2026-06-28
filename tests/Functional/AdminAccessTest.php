@@ -20,7 +20,7 @@ class AdminAccessTest extends WebTestCase
     /** Reachable by ROLE_EDITOR (content + the editor's media/forms JSON endpoints). */
     private const EDITOR_OK = [
         '/admin', '/admin/page', '/admin/post', '/admin/category',
-        '/admin/media', '/admin/media-library', '/admin/forms-list',
+        '/admin/media', '/admin/media-library', '/admin/forms-list', '/admin/link-targets',
     ];
 
     /** Admin-only — an editor must get 403 on each (complete set of ROLE_ADMIN routes). */

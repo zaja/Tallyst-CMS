@@ -17,8 +17,19 @@ import '../styles/tiptap.css';
  * library instance, so the two never cross.
  */
 export default class extends Controller {
-    static targets = ['editor', 'input', 'library', 'toolbar', 'imageFormat'];
-    static values = { modules: String, linkPrompt: String };
+    static targets = [
+        'editor', 'input', 'library', 'toolbar', 'imageFormat',
+        'linkModal', 'linkTabUrl', 'linkTabInternal', 'linkUrlInput', 'linkSearch', 'linkList', 'linkStatus',
+    ];
+    static values = {
+        modules: String,
+        linkTargetsUrl: String,
+        linkTypePage: String,
+        linkTypePost: String,
+        linkLoading: String,
+        linkNone: String,
+        linkLoadError: String,
+    };
 
     connect() {
         this.editor = new Editor({
@@ -189,19 +200,149 @@ export default class extends Controller {
     /** Insert a horizontal rule (StarterKit's HorizontalRule). */
     insertHr() { this.editor.chain().focus().setHorizontalRule().run(); }
 
+    // --- Link picker (modal: URL tab + internal Page/Post tab) ----------------------------
+
+    /** Open the link modal: prefill the URL tab with the current link href, reset to the URL tab. */
     link() {
-        const previous = this.editor.getAttributes('link').href || '';
-        const url = window.prompt(this.linkPromptValue, previous);
-        if (url === null) {
-            return; // cancelled
-        }
-        if (url === '') {
-            this.editor.chain().focus().extendMarkRange('link').unsetLink().run();
+        if (!this.hasLinkModalTarget) {
             return;
         }
-        this.editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+        this.linkUrlInputTarget.value = this.editor.getAttributes('link').href || '';
+        this.switchToTab('url');
+        this.linkModalTarget.classList.add('is-open');
+        this.linkUrlInputTarget.focus();
+        this.linkUrlInputTarget.select();
     }
 
+    closeLinkModal() {
+        if (this.hasLinkModalTarget) {
+            this.linkModalTarget.classList.remove('is-open');
+        }
+    }
+
+    /** Backdrop click (outside the dialog) closes; clicks inside the dialog do not. */
+    onLinkBackdrop(event) {
+        if (event.target === this.linkModalTarget) {
+            this.closeLinkModal();
+        }
+    }
+
+    onLinkKeydown(event) {
+        if ('Escape' === event.key) {
+            this.closeLinkModal();
+        }
+    }
+
+    onLinkUrlKeydown(event) {
+        if ('Enter' === event.key) {
+            event.preventDefault();
+            this.setLinkUrl();
+        }
+    }
+
+    /** Tab toggle: data-link-tab 'url' | 'internal'. Lazy-fetch the list when Internal opens. */
+    switchTab(event) {
+        this.switchToTab(event.currentTarget.dataset.linkTab);
+    }
+
+    switchToTab(tab) {
+        for (const t of [this.linkTabUrlTarget, this.linkTabInternalTarget]) {
+            t.classList.toggle('is-active', t.dataset.linkTab === tab);
+        }
+        this.element.querySelectorAll('[data-link-panel]').forEach((panel) => {
+            panel.hidden = panel.dataset.linkPanel !== tab;
+        });
+        if ('internal' === tab) {
+            this.loadLinkTargets();
+            this.linkSearchTarget.focus();
+        }
+    }
+
+    /** Set the link from the URL tab; empty value removes the link (parity with the old prompt). */
+    setLinkUrl() {
+        const url = this.linkUrlInputTarget.value.trim();
+        this.applyLink(url);
+    }
+
+    /**
+     * Apply (or, for an empty href, clear) the link over the editor's current selection, then
+     * close. chain().focus() restores the selection the editor kept while the modal input had
+     * DOM focus (same as the old prompt flow); extendMarkRange edits a whole existing link.
+     */
+    applyLink(href) {
+        const chain = this.editor.chain().focus().extendMarkRange('link');
+        ('' === href ? chain.unsetLink() : chain.setLink({ href })).run();
+        this.closeLinkModal();
+    }
+
+    /** Fetch published Pages/Posts once per open editor; render the list (then client-filter). */
+    async loadLinkTargets() {
+        if (this.linkTargets) {
+            return; // already loaded this session
+        }
+        this.setLinkStatus(this.linkLoadingValue);
+        try {
+            const res = await fetch(this.linkTargetsUrlValue, { headers: { Accept: 'application/json' } });
+            if (!res.ok) {
+                throw new Error('HTTP ' + res.status);
+            }
+            this.linkTargets = (await res.json()).items || [];
+        } catch (e) {
+            this.setLinkStatus(this.linkLoadErrorValue);
+            return;
+        }
+        this.renderLinkList(this.linkTargets);
+    }
+
+    /** Filter the loaded list by the typed query (case-insensitive title match). */
+    filterLinkList() {
+        if (!this.linkTargets) {
+            return;
+        }
+        const q = this.linkSearchTarget.value.trim().toLowerCase();
+        const filtered = q ? this.linkTargets.filter((i) => i.title.toLowerCase().includes(q)) : this.linkTargets;
+        this.renderLinkList(filtered);
+    }
+
+    renderLinkList(items) {
+        this.linkListTarget.replaceChildren();
+        if (0 === items.length) {
+            this.setLinkStatus(this.linkNoneValue);
+            return;
+        }
+        this.setLinkStatus('');
+        for (const item of items) {
+            const li = document.createElement('li');
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'tiptap-linkpicker__item';
+            const typeLabel = 'post' === item.type ? this.linkTypePostValue : this.linkTypePageValue;
+            // XSS-safe: textContent only, never innerHTML (titles/URLs are user content).
+            const title = document.createElement('span');
+            title.className = 'tiptap-linkpicker__item-title';
+            title.textContent = item.title;
+            const badge = document.createElement('span');
+            badge.className = 'badge badge-secondary tiptap-linkpicker__item-type';
+            badge.textContent = typeLabel;
+            const url = document.createElement('span');
+            url.className = 'tiptap-linkpicker__item-url text-muted';
+            url.textContent = item.url;
+            btn.append(title, badge, url);
+            btn.addEventListener('click', () => this.applyLink(item.url));
+            li.appendChild(btn);
+            this.linkListTarget.appendChild(li);
+        }
+    }
+
+    setLinkStatus(text) {
+        if (!this.hasLinkStatusTarget) {
+            return;
+        }
+        this.linkStatusTarget.textContent = text;
+        this.linkStatusTarget.hidden = '' === text;
+    }
+
+    /** Quick remove-link toolbar button (stays separate from the modal's set/replace flow). */
     unlink() {
         this.editor.chain().focus().unsetLink().run();
     }

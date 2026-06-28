@@ -69,4 +69,15 @@ admin:
             columns4: Četiri stupca
             undo: Poništi
             redo: Ponovi
-            link_prompt: 'URL poveznice:'
+            link_modal_title: Poveznica
+            link_close: Zatvori
+            link_tab_url: URL
+            link_tab_internal: Stranica / objava
+            link_url_placeholder: 'https://…'
+            link_search_placeholder: Traži stranicu ili objavu…
+            link_set: Postavi
+            link_type_page: Stranica
+            link_type_post: Objava
+            link_none: Nema rezultata
+            link_loading: Učitavanje…
+            link_load_error: Greška pri učitavanju.

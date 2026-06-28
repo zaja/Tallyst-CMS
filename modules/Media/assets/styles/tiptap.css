@@ -219,3 +219,112 @@
 .tiptap__editor .ProseMirror .tallyst-column > * + * {
     margin-top: 0.6rem;
 }
+
+/* ---- Link picker modal (toolbar link button) -----------------------------------------------
+   Own .tiptap-linkpicker__* classes (Media owns its styles); the look mirrors the FormBuilder
+   form picker without depending on its CSS. Dark-mode-safe via --bs-* (EA sets data-bs-theme).
+   Hidden until the controller adds .is-open. */
+.tiptap-linkpicker {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1090;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4rem 1rem;
+    background: rgba(0, 0, 0, 0.5);
+}
+.tiptap-linkpicker.is-open {
+    display: flex;
+}
+.tiptap-linkpicker__dialog {
+    width: 100%;
+    max-width: 480px;
+    background: var(--bs-body-bg, #fff);
+    color: var(--bs-body-color, #212529);
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    padding: 1rem 1.25rem 1.25rem;
+}
+.tiptap-linkpicker__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+.tiptap-linkpicker__tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+.tiptap-linkpicker__tab {
+    appearance: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: inherit;
+    padding: 0.35rem 0.75rem;
+    margin-bottom: -1px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.tiptap-linkpicker__tab.is-active {
+    border-bottom-color: var(--bs-primary, #0d6efd);
+    font-weight: 600;
+}
+.tiptap-linkpicker__url-row {
+    display: flex;
+    gap: 0.5rem;
+}
+.tiptap-linkpicker__url-row .form-control {
+    flex: 1;
+}
+.tiptap-linkpicker__status {
+    margin: 0.5rem 0 0;
+    font-size: 0.85rem;
+}
+.tiptap-linkpicker__list {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    max-height: 18rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.tiptap-linkpicker__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--bs-border-color, #ccc);
+    border-radius: 6px;
+    background: var(--bs-tertiary-bg, #f6f6f6);
+    color: inherit;
+    cursor: pointer;
+}
+.tiptap-linkpicker__item:hover {
+    border-color: var(--bs-primary, #0d6efd);
+}
+.tiptap-linkpicker__item-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.tiptap-linkpicker__item-type {
+    flex: none;
+}
+.tiptap-linkpicker__item-url {
+    flex: none;
+    max-width: 40%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8rem;
+}
