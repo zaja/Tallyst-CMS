@@ -76,6 +76,7 @@ admin:
             link_url_placeholder: 'https://…'
             link_search_placeholder: Traži stranicu ili objavu…
             link_set: Postavi
+            link_new_tab: Otvori u novom tabu
             link_type_page: Stranica
             link_type_post: Objava
             link_none: Nema rezultata

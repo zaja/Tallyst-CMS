@@ -40,5 +40,13 @@
             <p class="tiptap-linkpicker__status text-muted" data-media--tiptap-target="linkStatus" hidden></p>
             <ul class="tiptap-linkpicker__list" data-media--tiptap-target="linkList"></ul>
         </div>
+
+        {# Shared option (applies to BOTH tabs): open the link in a new tab. When checked the link
+           gets target="_blank" rel="noopener noreferrer" — rel is added automatically with target
+           (tabnabbing/referrer safety), the admin never chooses it separately. #}
+        <label class="tiptap-linkpicker__newtab">
+            <input type="checkbox" data-media--tiptap-target="linkNewTab">
+            {{ 'admin.media.tiptap.link_new_tab'|trans({}, 'admin') }}
+        </label>
     </div>
 </div>

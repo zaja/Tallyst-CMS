@@ -83,6 +83,15 @@ ok(!imgOnly.includes('data-width'), 'an image without a width attribute stays wi
 const fullImg = roundTrip('<img data-tallyst-image data-id="8" data-width="full" src="/z.jpg" alt="B">');
 ok(fullImg.includes('data-width="full"') && fullImg.includes('data-id="8"'), 'full-width image round-trips (data-width preserved)');
 
+// --- Link target/rel survive the round-trip (Group 3 "open in new tab") ---
+// A link with target="_blank" keeps target + rel; a plain link stays clean (no forced _blank),
+// so existing links aren't rewritten and the new-tab toggle can be turned off.
+const newTabLink = roundTrip('<p><a href="/o-nama" target="_blank" rel="noopener noreferrer">novi</a></p>');
+ok(/target="_blank"/.test(newTabLink), 'link target=_blank survives the round-trip');
+ok(/rel="noopener noreferrer"/.test(newTabLink), 'link rel=noopener survives alongside target');
+const plainLink = roundTrip('<p><a href="/x">isti</a></p>');
+ok(!/target=/.test(plainLink), 'a link without target stays clean (no forced _blank)');
+
 // --- Text alignment (TextAlign extension) survives on paragraphs + headings ---
 // Group 1 adds text-align; the schema now PRESERVES the text-align inline style (other
 // styles like color stay dropped). Default 'left' renders no style; center/right/justify do.

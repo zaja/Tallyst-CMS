@@ -76,6 +76,7 @@ admin:
             link_url_placeholder: 'https://…'
             link_search_placeholder: Search a page or post…
             link_set: Set
+            link_new_tab: Open in new tab
             link_type_page: Page
             link_type_post: Post
             link_none: No results

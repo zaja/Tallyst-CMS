@@ -20,6 +20,7 @@ export default class extends Controller {
     static targets = [
         'editor', 'input', 'library', 'toolbar', 'imageFormat',
         'linkModal', 'linkTabUrl', 'linkTabInternal', 'linkUrlInput', 'linkSearch', 'linkList', 'linkStatus',
+        'linkNewTab',
     ];
     static values = {
         modules: String,
@@ -207,7 +208,10 @@ export default class extends Controller {
         if (!this.hasLinkModalTarget) {
             return;
         }
-        this.linkUrlInputTarget.value = this.editor.getAttributes('link').href || '';
+        const current = this.editor.getAttributes('link');
+        this.linkUrlInputTarget.value = current.href || '';
+        // Reflect the existing link's target so the admin can toggle it on an existing link.
+        this.linkNewTabTarget.checked = '_blank' === current.target;
         this.switchToTab('url');
         this.linkModalTarget.classList.add('is-open');
         this.linkUrlInputTarget.focus();
@@ -268,10 +272,22 @@ export default class extends Controller {
      * Apply (or, for an empty href, clear) the link over the editor's current selection, then
      * close. chain().focus() restores the selection the editor kept while the modal input had
      * DOM focus (same as the old prompt flow); extendMarkRange edits a whole existing link.
+     * "Open in new tab" → target="_blank" rel="noopener noreferrer" (rel always paired with
+     * target for tabnabbing/referrer safety); unchecked → no target (setLink's null default
+     * clears it, so toggling off an existing link removes target+rel).
      */
     applyLink(href) {
         const chain = this.editor.chain().focus().extendMarkRange('link');
-        ('' === href ? chain.unsetLink() : chain.setLink({ href })).run();
+        if ('' === href) {
+            chain.unsetLink().run();
+        } else {
+            const attrs = { href };
+            if (this.hasLinkNewTabTarget && this.linkNewTabTarget.checked) {
+                attrs.target = '_blank';
+                attrs.rel = 'noopener noreferrer';
+            }
+            chain.setLink(attrs).run();
+        }
         this.closeLinkModal();
     }
 

@@ -18,7 +18,8 @@ core-API change is a MAJOR (flagged ⚠).
   image formatting (alignment + a single Small/Medium/Large/Full size scale) lives
   under one "IMG format" dropdown. The toolbar buttons (and the email editor's) now
   use a consistent, modern icon set throughout. The link button opens a picker where
-  you paste a URL or search and link to one of your published pages/posts.
+  you paste a URL or search and link to one of your published pages/posts, with an
+  "open in new tab" option.
 
 ## [1.2.0] — 2026-06-27
 

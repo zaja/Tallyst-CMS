@@ -328,3 +328,14 @@
     white-space: nowrap;
     font-size: 0.8rem;
 }
+.tiptap-linkpicker__newtab {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.85rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.tiptap-linkpicker__newtab input {
+    margin: 0;
+}
