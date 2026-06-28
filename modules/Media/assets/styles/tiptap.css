@@ -30,6 +30,13 @@
     border-color: var(--bs-border-color, #ccc);
 }
 
+/* FontAwesome toolbar icons (FA6 Free, already loaded by the EA shell). A touch larger than the
+   0.85rem button text so the line/solid glyphs read clearly; colour is inherited from the button
+   (dark-mode-safe via --bs-body-color). The dropdown caret keeps its own smaller, dimmer size. */
+.tiptap__btn > i:not(.tiptap__caret) {
+    font-size: 0.95rem;
+}
+
 /* Disabled (e.g. "IMG format" with no image selected): clearly inactive but still legible in
    dark mode — dim the text/icon via opacity rather than a fixed light grey that vanishes on dark. */
 .tiptap__btn:disabled {

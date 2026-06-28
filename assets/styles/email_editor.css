@@ -13,6 +13,10 @@
 }
 .email-editor__btn {
     appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.9rem;
     border: 1px solid transparent;
     background: transparent;
     border-radius: 0.25rem;
@@ -23,6 +27,8 @@
     color: inherit;
 }
 .email-editor__btn:hover { background: var(--bs-secondary-bg, #e9ecef); }
+/* FA6 icons (loaded by the EA shell) — slightly larger than the button text, colour inherited. */
+.email-editor__btn > i { font-size: 0.95rem; }
 .email-editor__btn--tag { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; }
 .email-editor__sep { width: 1px; align-self: stretch; margin: 0.1rem 0.3rem; background: var(--bs-border-color, #dee2e6); }
 

@@ -65,8 +65,21 @@ export default class extends Controller {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'tiptap__btn';
-            btn.title = ext.title || ext.label;
-            btn.textContent = ext.label;
+            const name = ext.title || ext.label || '';
+            btn.title = name;
+            // FA icon when the module supplies one (consistent with the built-in toolbar);
+            // text label fallback keeps older module contracts working.
+            if (ext.icon) {
+                const i = document.createElement('i');
+                i.className = ext.icon;
+                i.setAttribute('aria-hidden', 'true');
+                btn.appendChild(i);
+                if (name) {
+                    btn.setAttribute('aria-label', name);
+                }
+            } else {
+                btn.textContent = ext.label;
+            }
             btn.addEventListener('click', () => ext.action(this.editor));
             this.toolbarTarget.appendChild(btn);
         }

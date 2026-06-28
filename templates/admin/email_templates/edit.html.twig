@@ -16,15 +16,15 @@
                 <div class="mb-3" data-controller="email-editor">
                     {{ form_label(form.body) }}
                     <div class="email-editor__toolbar">
-                        <button type="button" class="email-editor__btn" data-action="email-editor#bold" title="{{ 'admin.email.edit.toolbar.bold'|trans({}, 'admin') }}"><strong>B</strong></button>
-                        <button type="button" class="email-editor__btn" data-action="email-editor#italic" title="{{ 'admin.email.edit.toolbar.italic'|trans({}, 'admin') }}"><em>I</em></button>
-                        <button type="button" class="email-editor__btn" data-action="email-editor#link" title="{{ 'admin.email.edit.toolbar.link'|trans({}, 'admin') }}">🔗</button>
-                        <button type="button" class="email-editor__btn" data-action="email-editor#bulletList" title="{{ 'admin.email.edit.toolbar.bullet_list'|trans({}, 'admin') }}">• {{ 'admin.email.edit.toolbar.bullet_list'|trans({}, 'admin') }}</button>
-                        <button type="button" class="email-editor__btn" data-action="email-editor#orderedList" title="{{ 'admin.email.edit.toolbar.ordered_list'|trans({}, 'admin') }}">1. {{ 'admin.email.edit.toolbar.bullet_list'|trans({}, 'admin') }}</button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#bold" title="{{ 'admin.email.edit.toolbar.bold'|trans({}, 'admin') }}" aria-label="{{ 'admin.email.edit.toolbar.bold'|trans({}, 'admin') }}"><i class="fa-solid fa-bold" aria-hidden="true"></i></button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#italic" title="{{ 'admin.email.edit.toolbar.italic'|trans({}, 'admin') }}" aria-label="{{ 'admin.email.edit.toolbar.italic'|trans({}, 'admin') }}"><i class="fa-solid fa-italic" aria-hidden="true"></i></button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#link" title="{{ 'admin.email.edit.toolbar.link'|trans({}, 'admin') }}" aria-label="{{ 'admin.email.edit.toolbar.link'|trans({}, 'admin') }}"><i class="fa-solid fa-link" aria-hidden="true"></i></button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#bulletList" title="{{ 'admin.email.edit.toolbar.bullet_list'|trans({}, 'admin') }}" aria-label="{{ 'admin.email.edit.toolbar.bullet_list'|trans({}, 'admin') }}"><i class="fa-solid fa-list-ul" aria-hidden="true"></i></button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#orderedList" title="{{ 'admin.email.edit.toolbar.ordered_list'|trans({}, 'admin') }}" aria-label="{{ 'admin.email.edit.toolbar.ordered_list'|trans({}, 'admin') }}"><i class="fa-solid fa-list-ol" aria-hidden="true"></i></button>
                         <button type="button" class="email-editor__btn" data-action="email-editor#h2" title="{{ 'admin.email.edit.toolbar.h2'|trans({}, 'admin') }}">H2</button>
                         <button type="button" class="email-editor__btn" data-action="email-editor#h3" title="{{ 'admin.email.edit.toolbar.h3'|trans({}, 'admin') }}">H3</button>
-                        <button type="button" class="email-editor__btn" data-action="email-editor#paragraph" title="{{ 'admin.email.edit.toolbar.paragraph'|trans({}, 'admin') }}">¶</button>
-                        <button type="button" class="email-editor__btn" data-action="email-editor#clearFormatting" title="{{ 'admin.email.edit.toolbar.clear'|trans({}, 'admin') }}">✖ format</button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#paragraph" title="{{ 'admin.email.edit.toolbar.paragraph'|trans({}, 'admin') }}" aria-label="{{ 'admin.email.edit.toolbar.paragraph'|trans({}, 'admin') }}"><i class="fa-solid fa-paragraph" aria-hidden="true"></i></button>
+                        <button type="button" class="email-editor__btn" data-action="email-editor#clearFormatting" title="{{ 'admin.email.edit.toolbar.clear'|trans({}, 'admin') }}" aria-label="{{ 'admin.email.edit.toolbar.clear'|trans({}, 'admin') }}"><i class="fa-solid fa-eraser" aria-hidden="true"></i></button>
                         <span class="email-editor__sep" aria-hidden="true"></span>
                         {% for tag, desc in type.tags %}
                             <button type="button" class="email-editor__btn email-editor__btn--tag"

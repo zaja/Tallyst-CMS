@@ -28,7 +28,9 @@ const editorExtensions = [];
  * @param {object} ext
  * @param {string} [ext.key]     owning module name (for toolbar gating); omit = always on
  * @param {object} [ext.node]    a Tiptap node added to the schema
- * @param {{label: string, title?: string, action: (editor: object) => void}} [ext.toolbar]
+ * @param {{label: string, title?: string, icon?: string, action: (editor: object) => void}} [ext.toolbar]
+ *   icon = a FontAwesome class string (e.g. 'fa-solid fa-table-list'); when set the button
+ *   renders that icon (label/title become the accessible name), else it falls back to a text label.
  */
 export function registerEditorExtension(ext) {
     editorExtensions.push(ext);

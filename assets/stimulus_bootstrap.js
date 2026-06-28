@@ -31,7 +31,7 @@ registerEditorExtension({
     // key MUST match FormBuilderModule::getName() so enabled_modules() gating works.
     key: 'form_builder',
     node: FormEmbed,
-    toolbar: { label: '📋 ' + (fpI18n.insert || 'Insert form'), title: fpI18n.insert || 'Insert form', action: (editor) => openFormPicker(editor) },
+    toolbar: { icon: 'fa-solid fa-table-list', label: fpI18n.insert || 'Insert form', title: fpI18n.insert || 'Insert form', action: (editor) => openFormPicker(editor) },
 });
 
 // FormBuilder module controllers (one of the 5 per-module app-side touch points; see CLAUDE.md).

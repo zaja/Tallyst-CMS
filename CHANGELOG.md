@@ -16,7 +16,8 @@ core-API change is a MAJOR (flagged ⚠).
   out: Heading (Paragraph/H1–H4), List, Alignment, and Columns (2/3/4) are now
   tidy dropdowns, text alignment and an "insert line" rule were added, and all
   image formatting (alignment + a single Small/Medium/Large/Full size scale) lives
-  under one "IMG format" dropdown.
+  under one "IMG format" dropdown. The toolbar buttons (and the email editor's) now
+  use a consistent, modern icon set throughout.
 
 ## [1.2.0] — 2026-06-27
 
