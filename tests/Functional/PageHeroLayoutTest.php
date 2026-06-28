@@ -52,6 +52,33 @@ class PageHeroLayoutTest extends WebTestCase
         self::assertSame('dark', $reloaded->getHeroStyle());
     }
 
+    public function testOverlayHeroEmitsPositionAndStyleClasses(): void
+    {
+        $client = static::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $slug = 'hero-overlay-'.bin2hex(random_bytes(4));
+        $page = (new Page('Hero overlay', $slug))
+            ->setStatus(Page::STATUS_PUBLISHED)
+            ->setHeroEnabled(true)
+            ->setHeroTitle('Naslov u herou')
+            ->setHeroPosition('right')
+            ->setHeroStyle('light');
+        // No heroImage → overlay still renders (text present); page-hero--no-image.
+        $em->persist($page);
+        $em->flush();
+
+        $client->request('GET', '/'.$slug);
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+
+        self::assertStringContainsString('page-hero--right', $html, 'position class emitted');
+        self::assertStringContainsString('page-hero--light', $html, 'style class emitted');
+        self::assertStringContainsString('page-hero-panel', $html, 'new panel wrapper emitted');
+        self::assertStringContainsString('page-hero--no-image', $html, 'no-image modifier when image absent');
+        self::assertStringNotContainsString('has-image', $html, 'dead has-image class removed');
+    }
+
     public function testCrudFormExposesHeroLayoutChoices(): void
     {
         $client = static::createClient();

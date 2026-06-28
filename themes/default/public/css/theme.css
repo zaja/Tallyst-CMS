@@ -328,61 +328,78 @@ th { font-weight: 650; }
 .page-header .page-meta { color: var(--muted); font-size: var(--fs-sm); margin-top: var(--s-2); }
 
 /* --------------------------------------------------------------- Hero --- */
-/* Per-page hero (opt-in, overlay). Full width of the shell. A background <img>
-   (object-fit:cover) sits behind a dark gradient scrim (::after) so overlaid
-   title/text/CTA stay legible over ANY image — incl. light photos. With no image the
-   solid --ink background keeps white text readable. */
+/* Overlay hero (text present): a 50/50 split on desktop (text panel + image), full-width text
+   on mobile (image as a band above). Per-page classes drive it: page-hero--{left,right} = which
+   half the text panel sits on; page-hero--{photo,light,dark} = readability style, legible by
+   construction. TWO TUNABLES (edit on .page-hero):
+     --hero-photo-fade : where the photo scrim stays opaque before melting into the clean image
+                         half (raise = more cover/darker seam; lower = image shows sooner).
+     --hero-light-bg   : the LIGHT style's panel tone (start --bg; switch to --surface for more
+                         separation from the page). */
 .page-hero {
+    --hero-photo-fade: 55%;
+    --hero-light-bg: var(--bg);
+    --hero-media-fit: cover;            /* light/dark switch to contain so clipart isn't cropped */
     position: relative;
-    display: flex;
-    align-items: flex-end;
+    display: grid;
+    grid-template-columns: 1fr;         /* mobile: single column (image band + text panel) */
     min-height: 320px;
     margin-bottom: var(--s-6);
-    padding: var(--s-6);
     overflow: hidden;
+    background: var(--ink);             /* fallback behind everything (no image / photo edges) */
+}
+.page-hero--no-image { grid-template-columns: 1fr; }
+
+/* Image half — a band on mobile, one column on desktop. object-fit defaults to cover (photos);
+   light/dark use contain (below) so an illustration/clipart is shown whole, not edge-cropped,
+   and the gaps are filled by the style's matching tone (set on .page-hero-media per style). */
+.page-hero-media {
+    position: relative;
+    min-height: 220px;
     background: var(--ink);
 }
-.page-hero > .media-img {
+.page-hero-media .media-img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: var(--hero-media-fit);
 }
 
-/* Bare-image hero: image only (no overlay text); the page title renders below it. */
-.page-hero-image { margin-bottom: var(--s-6); }
-.page-hero-image .media-img {
-    display: block;
-    width: 100%;
-    max-height: 440px;
-    object-fit: cover;
-}
-.page-hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    /* Weighted toward the bottom where the text sits; still darkens the whole frame so a
-       light image can't wash out the overlay. */
-    background: linear-gradient(to top, rgba(15, 18, 20, .82), rgba(15, 18, 20, .45) 50%, rgba(15, 18, 20, .25));
-}
-.page-hero-inner {
+/* Text half. */
+.page-hero-panel {
     position: relative;
     z-index: 1;
-    max-width: var(--measure);
-    color: #fff;
+    display: flex;
+    align-items: center;                /* vertical centre */
+    padding: var(--s-6);
 }
-.page-hero-inner h1 {
-    color: #fff;
-    margin: 0 0 var(--s-3);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
-}
-.page-hero-text {
-    margin: 0 0 var(--s-4);
-    font-size: var(--fs-lg);
-    color: rgba(255, 255, 255, .94);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
-}
+.page-hero-inner { max-width: var(--measure); }
+.page-hero-inner h1 { margin: 0 0 var(--s-3); }
+.page-hero-text { margin: 0 0 var(--s-4); font-size: var(--fs-lg); }
+
+/* --- photo: white text; on mobile a SOLID dark panel (no half to scrim against). The desktop
+   gradient is in the media query below. --- */
+.page-hero--photo { color: #fff; }
+.page-hero--photo .page-hero-panel { background: rgba(15, 18, 20, .82); }
+.page-hero--photo .page-hero-inner h1,
+.page-hero--photo .page-hero-text { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+
+/* --- light: flat light panel, dark text, image contained (clipart-safe) with matching tone. --- */
+.page-hero--light { --hero-media-fit: contain; }
+.page-hero--light .page-hero-panel { background: var(--hero-light-bg); }
+.page-hero--light .page-hero-media { background: var(--hero-light-bg); }
+.page-hero--light .page-hero-inner,
+.page-hero--light .page-hero-inner h1,
+.page-hero--light .page-hero-text { color: var(--ink); }
+
+/* --- dark: flat dark panel, white text, image contained (clipart-safe), --ink fills gaps. --- */
+.page-hero--dark { --hero-media-fit: contain; }
+.page-hero--dark .page-hero-panel { background: var(--ink); }
+.page-hero--dark .page-hero-inner,
+.page-hero--dark .page-hero-inner h1,
+.page-hero--dark .page-hero-text { color: #fff; }
+
 .page-hero-cta {
     display: inline-block;
     background: var(--brand);
@@ -392,8 +409,40 @@ th { font-weight: 650; }
     font-weight: 600;
 }
 .page-hero-cta:hover { background: var(--brand-strong); color: #fff; text-decoration: none; }
+
+/* Bare-image hero: image only (no overlay text); the page title renders below it. UNCHANGED. */
+.page-hero-image { margin-bottom: var(--s-6); }
+.page-hero-image .media-img {
+    display: block;
+    width: 100%;
+    max-height: 440px;
+    object-fit: cover;
+}
+
+/* Desktop: 50/50 split + position (which half) + photo full-bleed image with a half-width scrim. */
 @media (min-width: 52rem) {
-    .page-hero { min-height: 440px; padding: var(--s-7); }
+    .page-hero { grid-template-columns: 1fr 1fr; min-height: 440px; }
+    .page-hero--no-image,
+    .page-hero--no-image .page-hero-panel { grid-template-columns: 1fr; grid-column: 1; }
+    .page-hero-media { min-height: 0; }
+
+    /* Position: left = panel col1 / image col2; right = swapped. */
+    .page-hero-panel { grid-column: 1; }
+    .page-hero-media { grid-column: 2; }
+    .page-hero--right .page-hero-panel { grid-column: 2; }
+    .page-hero--right .page-hero-media { grid-column: 1; }
+
+    /* photo desktop: image full-bleed across BOTH halves; the panel carries the scrim, opaque to
+       --hero-photo-fade then melting toward the clean image half (direction follows position). */
+    .page-hero--photo .page-hero-media { position: absolute; inset: 0; }
+    .page-hero--photo .page-hero-panel {
+        background: linear-gradient(to right,
+            rgba(15, 18, 20, .82) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
+    }
+    .page-hero--photo.page-hero--right .page-hero-panel {
+        background: linear-gradient(to left,
+            rgba(15, 18, 20, .82) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
+    }
 }
 
 /* ----------------------------------------------------------- Blog list --- */

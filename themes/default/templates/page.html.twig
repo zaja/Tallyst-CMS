@@ -11,18 +11,22 @@
     {% set hero_image_only = page.heroEnabled and page.heroImage and not (page.heroTitle or page.heroText) %}
 
     {% if hero_overlay %}
-        {# Hero WITH text: overlay h1/text/CTA on the image, kept legible by the CSS scrim
-           (::after). Image is decorative (the <h1> carries meaning) → alt="". Null-safe:
-           a deleted heroImage renders nothing and the scrim over the dark fallback keeps
-           the overlay text legible. #}
-        <header class="page-hero{{ page.heroImage ? ' has-image' : '' }}">
-            {% if page.heroImage %}{{ media_img(page.heroImage, 'hero', null, '') }}{% endif %}
-            <div class="page-hero-inner">
-                <h1>{{ page.heroTitle ?: page.title }}</h1>
-                {% if page.heroText %}<p class="page-hero-text">{{ page.heroText }}</p>{% endif %}
-                {% if page.heroCtaLabel and page.heroCtaUrl %}
-                    <a class="page-hero-cta" href="{{ page.heroCtaUrl }}">{{ page.heroCtaLabel }}</a>
-                {% endif %}
+        {# Hero WITH text: a 50/50 split on desktop (text panel + image), full-width text on
+           mobile (image band above). heroPosition = which half the panel sits on; heroStyle =
+           readability (photo = scrim over the text half + white text; light/dark = flat toned
+           panel, image clean on its half). Image is decorative (the <h1> carries meaning).
+           Null-safe: no heroImage → page-hero--no-image (panel only, styled tone keeps text
+           legible). #}
+        <header class="page-hero page-hero--{{ page.heroPosition }} page-hero--{{ page.heroStyle }}{{ page.heroImage ? '' : ' page-hero--no-image' }}">
+            {% if page.heroImage %}<div class="page-hero-media">{{ media_img(page.heroImage, 'hero', null, '') }}</div>{% endif %}
+            <div class="page-hero-panel">
+                <div class="page-hero-inner">
+                    <h1>{{ page.heroTitle ?: page.title }}</h1>
+                    {% if page.heroText %}<p class="page-hero-text">{{ page.heroText }}</p>{% endif %}
+                    {% if page.heroCtaLabel and page.heroCtaUrl %}
+                        <a class="page-hero-cta" href="{{ page.heroCtaUrl }}">{{ page.heroCtaLabel }}</a>
+                    {% endif %}
+                </div>
             </div>
         </header>
         {# no separate page-header: the overlay carries the title #}
