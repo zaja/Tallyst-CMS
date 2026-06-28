@@ -331,18 +331,17 @@ th { font-weight: 650; }
 /* Overlay hero (text present): the image is FULL-BLEED across the whole hero; the text sits OVER
    it on one 50% half (desktop), full-width on mobile, vertically centred. Per-page classes drive
    it: page-hero--{left,right} = which half the text is on; page-hero--{photo,light,dark} = the
-   TEXT treatment (the image is always full-bleed):
+   TEXT treatment (the image is always full-bleed). The style name describes the IMAGE; the text
+   colour is the readable contrast for it:
      photo  — a scrim over the text half (for busy/uneven images) + white text;
-     light  — white text straight on the image (for DARK images), no panel/scrim;
-     dark   — dark text straight on the image (for LIGHT images), no panel/scrim.
-   light/dark carry only a subtle text-shadow for edge contrast (the lone protection without a
-   panel). TWO TUNABLES (edit on .page-hero):
+     light  — LIGHT image → DARK text (var(--ink)) straight on the image, no panel/scrim/shadow;
+     dark   — DARK image → WHITE text straight on the image, no panel/scrim/shadow.
+   light/dark are clean text on the image (no shadow) — pick the one matching the image's tone.
+   ONE TUNABLE (edit on .page-hero):
      --hero-photo-fade : where the photo scrim stays opaque before melting into the clean image
-                         half (raise = wider/darker scrim; lower = image shows sooner).
-     --hero-text-shadow: the light/dark edge-contrast shadow (set to `none` to remove it). */
+                         half (raise = wider/darker scrim; lower = image shows sooner). */
 .page-hero {
     --hero-photo-fade: 55%;
-    --hero-text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
     position: relative;
     display: flex;
     align-items: center;                /* vertical centre */
@@ -390,15 +389,15 @@ th { font-weight: 650; }
 .page-hero--photo .page-hero-inner h1,
 .page-hero--photo .page-hero-text { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 
-/* --- light: white text straight on the image (dark images), only a subtle shadow for edges. --- */
+/* --- light: LIGHT image → DARK text, clean on the image (no shadow). --- */
 .page-hero--light .page-hero-inner,
 .page-hero--light .page-hero-inner h1,
-.page-hero--light .page-hero-text { color: #fff; text-shadow: var(--hero-text-shadow); }
+.page-hero--light .page-hero-text { color: var(--ink); }
 
-/* --- dark: dark text straight on the image (light images); inverse (light) shadow for edges. --- */
+/* --- dark: DARK image → WHITE text, clean on the image (no shadow). --- */
 .page-hero--dark .page-hero-inner,
 .page-hero--dark .page-hero-inner h1,
-.page-hero--dark .page-hero-text { color: var(--ink); text-shadow: 0 1px 3px rgba(255, 255, 255, .5); }
+.page-hero--dark .page-hero-text { color: #fff; }
 
 /* --- no image (null-safe): always white text on the --ink fallback, regardless of style. --- */
 .page-hero--no-image .page-hero-inner,
