@@ -74,7 +74,7 @@ class PageHeroLayoutTest extends WebTestCase
 
         self::assertStringContainsString('page-hero--right', $html, 'position class emitted');
         self::assertStringContainsString('page-hero--light', $html, 'style class emitted');
-        self::assertStringContainsString('page-hero-panel', $html, 'new panel wrapper emitted');
+        self::assertStringContainsString('page-hero-inner', $html, 'text-inner wrapper emitted');
         self::assertStringContainsString('page-hero--no-image', $html, 'no-image modifier when image absent');
         self::assertStringNotContainsString('has-image', $html, 'dead has-image class removed');
     }

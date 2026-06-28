@@ -328,77 +328,82 @@ th { font-weight: 650; }
 .page-header .page-meta { color: var(--muted); font-size: var(--fs-sm); margin-top: var(--s-2); }
 
 /* --------------------------------------------------------------- Hero --- */
-/* Overlay hero (text present): a 50/50 split on desktop (text panel + image), full-width text
-   on mobile (image as a band above). Per-page classes drive it: page-hero--{left,right} = which
-   half the text panel sits on; page-hero--{photo,light,dark} = readability style, legible by
-   construction. TWO TUNABLES (edit on .page-hero):
+/* Overlay hero (text present): the image is FULL-BLEED across the whole hero; the text sits OVER
+   it on one 50% half (desktop), full-width on mobile, vertically centred. Per-page classes drive
+   it: page-hero--{left,right} = which half the text is on; page-hero--{photo,light,dark} = the
+   TEXT treatment (the image is always full-bleed):
+     photo  — a scrim over the text half (for busy/uneven images) + white text;
+     light  — white text straight on the image (for DARK images), no panel/scrim;
+     dark   — dark text straight on the image (for LIGHT images), no panel/scrim.
+   light/dark carry only a subtle text-shadow for edge contrast (the lone protection without a
+   panel). TWO TUNABLES (edit on .page-hero):
      --hero-photo-fade : where the photo scrim stays opaque before melting into the clean image
-                         half (raise = more cover/darker seam; lower = image shows sooner).
-     --hero-light-bg   : the LIGHT style's panel tone (start --bg; switch to --surface for more
-                         separation from the page). */
+                         half (raise = wider/darker scrim; lower = image shows sooner).
+     --hero-text-shadow: the light/dark edge-contrast shadow (set to `none` to remove it). */
 .page-hero {
     --hero-photo-fade: 55%;
-    --hero-light-bg: var(--bg);
-    --hero-media-fit: cover;            /* light/dark switch to contain so clipart isn't cropped */
+    --hero-text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
     position: relative;
-    display: grid;
-    grid-template-columns: 1fr;         /* mobile: single column (image band + text panel) */
+    display: flex;
+    align-items: center;                /* vertical centre */
     min-height: 320px;
     margin-bottom: var(--s-6);
     overflow: hidden;
-    background: var(--ink);             /* fallback behind everything (no image / photo edges) */
+    background: var(--ink);             /* fallback when there's no image */
 }
-.page-hero--no-image { grid-template-columns: 1fr; }
-
-/* Image half — a band on mobile, one column on desktop. object-fit defaults to cover (photos);
-   light/dark use contain (below) so an illustration/clipart is shown whole, not edge-cropped,
-   and the gaps are filled by the style's matching tone (set on .page-hero-media per style). */
-.page-hero-media {
-    position: relative;
-    min-height: 220px;
-    background: var(--ink);
-}
-.page-hero-media .media-img {
+/* Full-bleed image — covers the whole hero, no border-radius. */
+.page-hero > .media-img {
     position: absolute;
     inset: 0;
+    z-index: 0;
     width: 100%;
     height: 100%;
-    object-fit: var(--hero-media-fit);
+    object-fit: cover;
+    border-radius: 0;
 }
-
-/* Text half. */
-.page-hero-panel {
+/* Text block — over the image; full-width on mobile, 50% on desktop (positioned by --left/--right). */
+.page-hero-inner {
     position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;                /* vertical centre */
+    z-index: 2;
+    width: 100%;
     padding: var(--s-6);
 }
-.page-hero-inner { max-width: var(--measure); }
 .page-hero-inner h1 { margin: 0 0 var(--s-3); }
 .page-hero-text { margin: 0 0 var(--s-4); font-size: var(--fs-lg); }
 
-/* --- photo: white text; on mobile a SOLID dark panel (no half to scrim against). The desktop
-   gradient is in the media query below. --- */
-.page-hero--photo { color: #fff; }
-.page-hero--photo .page-hero-panel { background: rgba(15, 18, 20, .82); }
+/* --- photo: scrim over the text half + white text. The scrim is a ::before, opaque to
+   --hero-photo-fade then fading toward the clean image half (direction follows position).
+   On mobile it spans the full width (no half). --- */
+.page-hero--photo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to right,
+        rgba(15, 18, 20, .82) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
+}
+.page-hero--photo.page-hero--right::before {
+    background: linear-gradient(to left,
+        rgba(15, 18, 20, .82) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
+}
+.page-hero--photo .page-hero-inner,
 .page-hero--photo .page-hero-inner h1,
 .page-hero--photo .page-hero-text { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 
-/* --- light: flat light panel, dark text, image contained (clipart-safe) with matching tone. --- */
-.page-hero--light { --hero-media-fit: contain; }
-.page-hero--light .page-hero-panel { background: var(--hero-light-bg); }
-.page-hero--light .page-hero-media { background: var(--hero-light-bg); }
+/* --- light: white text straight on the image (dark images), only a subtle shadow for edges. --- */
 .page-hero--light .page-hero-inner,
 .page-hero--light .page-hero-inner h1,
-.page-hero--light .page-hero-text { color: var(--ink); }
+.page-hero--light .page-hero-text { color: #fff; text-shadow: var(--hero-text-shadow); }
 
-/* --- dark: flat dark panel, white text, image contained (clipart-safe), --ink fills gaps. --- */
-.page-hero--dark { --hero-media-fit: contain; }
-.page-hero--dark .page-hero-panel { background: var(--ink); }
+/* --- dark: dark text straight on the image (light images); inverse (light) shadow for edges. --- */
 .page-hero--dark .page-hero-inner,
 .page-hero--dark .page-hero-inner h1,
-.page-hero--dark .page-hero-text { color: #fff; }
+.page-hero--dark .page-hero-text { color: var(--ink); text-shadow: 0 1px 3px rgba(255, 255, 255, .5); }
+
+/* --- no image (null-safe): always white text on the --ink fallback, regardless of style. --- */
+.page-hero--no-image .page-hero-inner,
+.page-hero--no-image .page-hero-inner h1,
+.page-hero--no-image .page-hero-text { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 
 .page-hero-cta {
     display: inline-block;
@@ -419,30 +424,11 @@ th { font-weight: 650; }
     object-fit: cover;
 }
 
-/* Desktop: 50/50 split + position (which half) + photo full-bleed image with a half-width scrim. */
+/* Desktop: the text takes one 50% half (position chooses which); image stays full-bleed. */
 @media (min-width: 52rem) {
-    .page-hero { grid-template-columns: 1fr 1fr; min-height: 440px; }
-    .page-hero--no-image,
-    .page-hero--no-image .page-hero-panel { grid-template-columns: 1fr; grid-column: 1; }
-    .page-hero-media { min-height: 0; }
-
-    /* Position: left = panel col1 / image col2; right = swapped. */
-    .page-hero-panel { grid-column: 1; }
-    .page-hero-media { grid-column: 2; }
-    .page-hero--right .page-hero-panel { grid-column: 2; }
-    .page-hero--right .page-hero-media { grid-column: 1; }
-
-    /* photo desktop: image full-bleed across BOTH halves; the panel carries the scrim, opaque to
-       --hero-photo-fade then melting toward the clean image half (direction follows position). */
-    .page-hero--photo .page-hero-media { position: absolute; inset: 0; }
-    .page-hero--photo .page-hero-panel {
-        background: linear-gradient(to right,
-            rgba(15, 18, 20, .82) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
-    }
-    .page-hero--photo.page-hero--right .page-hero-panel {
-        background: linear-gradient(to left,
-            rgba(15, 18, 20, .82) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
-    }
+    .page-hero { min-height: 440px; }
+    .page-hero-inner { width: 50%; max-width: var(--measure); }
+    .page-hero--right { justify-content: flex-end; }
 }
 
 /* ----------------------------------------------------------- Blog list --- */
