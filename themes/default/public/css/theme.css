@@ -442,7 +442,7 @@ th { font-weight: 650; }
    data-hero-mobile="a|b" on .page-hero (page.html.twig). photo style is not affected (it has its
    own scrim). TUNABLE: --hero-mobile-overlay-alpha (overlay opacity, 0..1).
    ============================================================================================ */
-.page-hero { --hero-mobile-overlay-alpha: 0.85; }
+.page-hero { --hero-mobile-overlay-alpha: 0.85; --hero-mobile-overlay-alpha-dark: 0.6; }
 @media (max-width: 51.999rem) {
     /* Variant A — overlay over the WHOLE hero, under the text (::after, z-index between image+text). */
     .page-hero--light[data-hero-mobile="a"]::after,
@@ -453,7 +453,7 @@ th { font-weight: 650; }
         z-index: 1;
     }
     .page-hero--light[data-hero-mobile="a"]::after { background: rgba(255, 255, 255, var(--hero-mobile-overlay-alpha)); }
-    .page-hero--dark[data-hero-mobile="a"]::after  { background: rgba(15, 18, 20, var(--hero-mobile-overlay-alpha)); }
+    .page-hero--dark[data-hero-mobile="a"]::after  { background: rgba(15, 18, 20, var(--hero-mobile-overlay-alpha-dark)); }
 
     /* Variant B — a band behind the text block only, with a soft gradient top/bottom edge so it
        melts into the image above/below (left/right span the full width, as the text does). */
@@ -467,8 +467,8 @@ th { font-weight: 650; }
     .page-hero--dark[data-hero-mobile="b"] .page-hero-inner {
         background: linear-gradient(to bottom,
             rgba(15, 18, 20, 0),
-            rgba(15, 18, 20, var(--hero-mobile-overlay-alpha)) 1.5rem,
-            rgba(15, 18, 20, var(--hero-mobile-overlay-alpha)) calc(100% - 1.5rem),
+            rgba(15, 18, 20, var(--hero-mobile-overlay-alpha-dark)) 1.5rem,
+            rgba(15, 18, 20, var(--hero-mobile-overlay-alpha-dark)) calc(100% - 1.5rem),
             rgba(15, 18, 20, 0));
     }
 }
