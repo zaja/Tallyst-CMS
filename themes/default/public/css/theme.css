@@ -442,7 +442,7 @@ th { font-weight: 650; }
    data-hero-mobile="a|b" on .page-hero (page.html.twig). photo style is not affected (it has its
    own scrim). TUNABLE: --hero-mobile-overlay-alpha (overlay opacity, 0..1).
    ============================================================================================ */
-.page-hero { --hero-mobile-overlay-alpha: 0.55; }
+.page-hero { --hero-mobile-overlay-alpha: 0.72; }
 @media (max-width: 51.999rem) {
     /* Variant A — overlay over the WHOLE hero, under the text (::after, z-index between image+text). */
     .page-hero--light[data-hero-mobile="a"]::after,
