@@ -441,46 +441,24 @@ th { font-weight: 650; }
     .page-hero--right { justify-content: flex-end; }
 }
 
-/* ============================================================================================
-   TEMP — hero mobile light/dark readability overlay A/B (SMOKE ONLY, remove after the winner is
-   picked, together with the data-hero-mobile attribute in page.html.twig). On mobile the text
-   goes full-width over the image and can land on a busy area; this adds a translucent overlay
-   UNDER the text (light style → light overlay, dark style → dark overlay). Desktop (>=52rem) is
-   untouched — everything here is inside the max-width:51.999rem media query. Switch variants via
-   data-hero-mobile="a|b" on .page-hero (page.html.twig). photo style is not affected (it has its
-   own scrim). TUNABLE: --hero-mobile-overlay-alpha (overlay opacity, 0..1).
-   ============================================================================================ */
+/* Mobile light/dark readability: on mobile the text goes full-width over the image (it can land on
+   a busy area), so add a translucent overlay UNDER the text across the whole hero — light style →
+   light overlay, dark style → dark overlay. Desktop (>=52rem) keeps clean text on its readable image
+   half. photo has its own (solid-on-mobile) scrim; no-image is excluded (it already has the solid
+   --ink fallback + white text). TUNABLES: --hero-mobile-overlay-alpha (light) /
+   --hero-mobile-overlay-alpha-dark (dark). */
 .page-hero { --hero-mobile-overlay-alpha: 0.85; --hero-mobile-overlay-alpha-dark: 0.6; }
 @media (max-width: 51.999rem) {
-    /* Variant A — overlay over the WHOLE hero, under the text (::after, z-index between image+text). */
-    .page-hero--light[data-hero-mobile="a"]::after,
-    .page-hero--dark[data-hero-mobile="a"]::after {
+    .page-hero--light:not(.page-hero--no-image)::after,
+    .page-hero--dark:not(.page-hero--no-image)::after {
         content: "";
         position: absolute;
         inset: 0;
-        z-index: 1;
+        z-index: 1;            /* between the image (0) and the text (2) */
     }
-    .page-hero--light[data-hero-mobile="a"]::after { background: rgba(255, 255, 255, var(--hero-mobile-overlay-alpha)); }
-    .page-hero--dark[data-hero-mobile="a"]::after  { background: rgba(15, 18, 20, var(--hero-mobile-overlay-alpha-dark)); }
-
-    /* Variant B — a band behind the text block only, with a soft gradient top/bottom edge so it
-       melts into the image above/below (left/right span the full width, as the text does). */
-    .page-hero--light[data-hero-mobile="b"] .page-hero-inner {
-        background: linear-gradient(to bottom,
-            rgba(255, 255, 255, 0),
-            rgba(255, 255, 255, var(--hero-mobile-overlay-alpha)) 1.5rem,
-            rgba(255, 255, 255, var(--hero-mobile-overlay-alpha)) calc(100% - 1.5rem),
-            rgba(255, 255, 255, 0));
-    }
-    .page-hero--dark[data-hero-mobile="b"] .page-hero-inner {
-        background: linear-gradient(to bottom,
-            rgba(15, 18, 20, 0),
-            rgba(15, 18, 20, var(--hero-mobile-overlay-alpha-dark)) 1.5rem,
-            rgba(15, 18, 20, var(--hero-mobile-overlay-alpha-dark)) calc(100% - 1.5rem),
-            rgba(15, 18, 20, 0));
-    }
+    .page-hero--light:not(.page-hero--no-image)::after { background: rgba(255, 255, 255, var(--hero-mobile-overlay-alpha)); }
+    .page-hero--dark:not(.page-hero--no-image)::after  { background: rgba(15, 18, 20, var(--hero-mobile-overlay-alpha-dark)); }
 }
-/* ===================================== /TEMP A/B ========================================== */
 
 /* ----------------------------------------------------------- Blog list --- */
 .post-list {
