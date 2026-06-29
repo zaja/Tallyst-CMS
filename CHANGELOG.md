@@ -23,9 +23,10 @@ core-API change is a MAJOR (flagged ⚠).
 - **Hide page title (per page).** A new page option hides the standard title heading
   on the front so you can build your own heading in the content — for landing pages.
   The title is still used for the browser tab and search engines.
-- **Hero overlay: text position and readability style (per page).** The hero text can
-  sit on the left or right half, with a readability style — photo (image with a dark
-  shade behind the text), light, or dark panel — and a fixed 50/50 layout on desktop.
+- **Hero overlay: text position and readability style (per page).** Over a full-bleed
+  image, the hero text sits on the left or right half (desktop), with a readability
+  style — photo (a dark shade behind the text), light image (dark text), or dark image
+  (light text).
 - **Two-column page editor.** The page edit screen now puts the content in a wide main
   column with the lightweight settings (status, position, hide title, template, meta) in
   a narrow column on the right, instead of one long scroll.
