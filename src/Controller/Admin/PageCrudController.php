@@ -59,22 +59,17 @@ class PageCrudController extends AbstractCrudController
 
     public function configureFields(string $pageName): iterable
     {
+        // Two-column form layout (new/edit only — the addColumn markers auto-hide on the index
+        // list): a wide MAIN column for the content + hero, a narrow RIGHT column for the
+        // lightweight settings, so the edit screen isn't one long scroll.
+        yield FormField::addColumn(8);
         yield TextField::new('title', 'admin.page.field.title');
         yield SlugField::new('slug')->setTargetFieldName('title');
-        yield ChoiceField::new('status', 'admin.page.field.status')
-            ->setChoices(['admin.page.status.draft' => Page::STATUS_DRAFT, 'admin.page.status.published' => Page::STATUS_PUBLISHED])
-            ->renderAsBadges([Page::STATUS_DRAFT => 'secondary', Page::STATUS_PUBLISHED => 'success']);
         // No featured image on Pages — the hero is a Page's image. The field stays on the entity
         // (dormant) + renders null-safe in page.html.twig, so existing pages aren't affected.
         yield TiptapField::new('content', 'admin.page.field.content')->hideOnIndex();
-        yield TextField::new('template', 'admin.page.field.template')->hideOnIndex()
-            ->setHelp('admin.page.help.template');
-        yield TextField::new('metaTitle', 'admin.page.field.meta_title')->hideOnIndex();
-        yield TextareaField::new('metaDescription', 'admin.page.field.meta_description')->hideOnIndex();
-        yield IntegerField::new('position', 'admin.page.field.position')->hideOnIndex();
-        yield BooleanField::new('hideTitle', 'admin.page.field.hide_title')->hideOnIndex()
-            ->setHelp('admin.page.help.hide_title');
 
+        // Hero stays in the MAIN column — its image picker + rich-text fields need the width.
         yield FormField::addFieldset('admin.page.fieldset.hero')->setIcon('panorama')->collapsible()
             ->setHelp('admin.page.help.hero');
         yield BooleanField::new('heroEnabled', 'admin.page.field.hero_enabled')->hideOnIndex();
@@ -95,5 +90,18 @@ class PageCrudController extends AbstractCrudController
         yield TextField::new('heroCtaLabel', 'admin.page.field.hero_cta_label')->hideOnIndex();
         yield TextField::new('heroCtaUrl', 'admin.page.field.hero_cta_url')->hideOnIndex()
             ->setHelp('admin.page.help.hero_cta_url');
+
+        // Narrow right column — lightweight settings (status badge shows on the index list).
+        yield FormField::addColumn(4);
+        yield ChoiceField::new('status', 'admin.page.field.status')
+            ->setChoices(['admin.page.status.draft' => Page::STATUS_DRAFT, 'admin.page.status.published' => Page::STATUS_PUBLISHED])
+            ->renderAsBadges([Page::STATUS_DRAFT => 'secondary', Page::STATUS_PUBLISHED => 'success']);
+        yield IntegerField::new('position', 'admin.page.field.position')->hideOnIndex();
+        yield BooleanField::new('hideTitle', 'admin.page.field.hide_title')->hideOnIndex()
+            ->setHelp('admin.page.help.hide_title');
+        yield TextField::new('template', 'admin.page.field.template')->hideOnIndex()
+            ->setHelp('admin.page.help.template');
+        yield TextField::new('metaTitle', 'admin.page.field.meta_title')->hideOnIndex();
+        yield TextareaField::new('metaDescription', 'admin.page.field.meta_description')->hideOnIndex();
     }
 }

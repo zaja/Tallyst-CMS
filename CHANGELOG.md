@@ -26,6 +26,9 @@ core-API change is a MAJOR (flagged ⚠).
 - **Hero overlay: text position and readability style (per page).** The hero text can
   sit on the left or right half, with a readability style — photo (image with a dark
   shade behind the text), light, or dark panel — and a fixed 50/50 layout on desktop.
+- **Two-column page editor.** The page edit screen now puts the content in a wide main
+  column with the lightweight settings (status, position, hide title, template, meta) in
+  a narrow column on the right, instead of one long scroll.
 
 ## [1.2.0] — 2026-06-27
 
