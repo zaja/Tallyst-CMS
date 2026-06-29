@@ -38,6 +38,8 @@ admin:
             h2: Naslov 2
             h3: Naslov 3
             h4: Naslov 4
+            display1: Display 1
+            display2: Display 2
             blockquote: Citat
             code: Kod
             hr: Ubaci crtu

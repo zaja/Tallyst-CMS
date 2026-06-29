@@ -154,6 +154,11 @@
     margin-top: 0.6rem;
 }
 
+/* Display heading preview. ⚠ TEMPORARY PLACEHOLDER (real scale = Tema v2) — mirrors the front
+   ordering (Display 1 > Display 2 > h1) so the WYSIWYG smoke matches the rendered page. */
+.tiptap__editor .ProseMirror h1.display-1 { font-size: 2.4rem; }
+.tiptap__editor .ProseMirror h1.display-2 { font-size: 2rem; }
+
 .tiptap__editor .ProseMirror img {
     max-width: 100%;
     height: auto;

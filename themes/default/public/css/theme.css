@@ -110,6 +110,12 @@ h4 { font-size: 1.15rem; }
 h5 { font-size: 1rem; }
 h6 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 
+/* Display headings (landing typography). ⚠ TEMPORARY PLACEHOLDER — editor mechanics only.
+   The real scale/weight/letter-spacing/dramatika is designed with Tema v2; this is just enough
+   that Display 1 > Display 2 > h1 so the editor round-trip can be smoke-tested visually. */
+.display-1 { font-size: clamp(2.6rem, 1.8rem + 3vw, 4rem); }
+.display-2 { font-size: clamp(2.2rem, 1.6rem + 2.2vw, 3.2rem); }
+
 p { margin: 0 0 1.15em; }
 
 a { color: var(--brand); text-decoration: none; }

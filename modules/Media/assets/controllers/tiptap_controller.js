@@ -149,7 +149,18 @@ export default class extends Controller {
     markActive(menu) {
         menu.querySelectorAll('[data-level]').forEach((el) => {
             const level = Number(el.dataset.level);
-            const active = 0 === level ? this.editor.isActive('paragraph') : this.editor.isActive('heading', { level });
+            const display = el.dataset.display ? Number(el.dataset.display) : null;
+            let active;
+            if (0 === level) {
+                active = this.editor.isActive('paragraph');
+            } else if (null !== display) {
+                // Display N: a level-1 heading carrying the matching display attribute.
+                active = this.editor.isActive('heading', { level, display });
+            } else {
+                // Plain H1–H4: the level matches AND no display is set, so a Display 1 heading
+                // doesn't also light up the plain "Heading 1" item (both are level 1).
+                active = this.editor.isActive('heading', { level }) && !this.editor.getAttributes('heading').display;
+            }
             el.classList.toggle('is-active', active);
         });
         menu.querySelectorAll('[data-align]').forEach((el) => {
@@ -177,11 +188,17 @@ export default class extends Controller {
         });
     }
 
-    /** Heading dropdown: data-level 0 = Paragraph, 1..4 = H1..H4 (set, not toggle). */
+    /**
+     * Heading dropdown: data-level 0 = Paragraph, 1..4 = H1..H4 (set, not toggle). An optional
+     * data-display (1|2) makes a level-1 heading a "Display" heading — setHeading carries the
+     * attribute through, so the node renders `<h1 class="display-N">`. Plain H1–H4 carry no
+     * data-display -> display=null -> identical to before (no class).
+     */
     setHeading(event) {
         const level = Number(event.currentTarget.dataset.level);
+        const display = event.currentTarget.dataset.display ? Number(event.currentTarget.dataset.display) : null;
         const chain = this.editor.chain().focus();
-        (0 === level ? chain.setParagraph() : chain.setHeading({ level })).run();
+        (0 === level ? chain.setParagraph() : chain.setHeading({ level, display })).run();
         this.closeDropdowns();
     }
 

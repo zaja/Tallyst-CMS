@@ -31,6 +31,11 @@
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-level="2" data-action="media--tiptap#setHeading">{{ 'admin.media.tiptap.h2'|trans({}, 'admin') }}</button>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-level="3" data-action="media--tiptap#setHeading">{{ 'admin.media.tiptap.h3'|trans({}, 'admin') }}</button>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-level="4" data-action="media--tiptap#setHeading">{{ 'admin.media.tiptap.h4'|trans({}, 'admin') }}</button>
+                    {# Display headings: a level-1 heading carrying a fixed display-1/display-2 class
+                       (landing typography). Same setHeading action; data-display drives the attribute. #}
+                    <span class="tiptap__menu-sep"></span>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-level="1" data-display="1" data-action="media--tiptap#setHeading">{{ 'admin.media.tiptap.display1'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-level="1" data-display="2" data-action="media--tiptap#setHeading">{{ 'admin.media.tiptap.display2'|trans({}, 'admin') }}</button>
                 </div>
             </div>
 

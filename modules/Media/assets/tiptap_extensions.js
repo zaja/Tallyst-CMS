@@ -1,7 +1,35 @@
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
+import Heading from '@tiptap/extension-heading';
 import { TallystImage } from './tiptap_image_node.js';
 import { TallystDocument, Columns, Column } from './tiptap_columns_node.js';
+
+/*
+ * Display headings (landing typography): the StarterKit Heading extended with ONE optional
+ * `display` attribute, serialised ONLY as a fixed class `display-1` / `display-2`. It stays a
+ * real <h1> (semantic + SEO clean, important for hide-title landing pages) — display is just a
+ * visual treatment chosen in the heading dropdown. Same fixed-allowlist pattern as the image
+ * node's size/align/width and columns.count: parseHTML reads ONLY display-1/display-2 -> 1/2,
+ * renderHTML emits ONLY `class="display-N"` when set (nothing otherwise) — so an arbitrary class
+ * can never be authored or persisted (ProseMirror drops anything the schema doesn't capture).
+ * The VISUAL scale lives in the theme CSS (.display-1/.display-2) — currently a TEMPORARY
+ * placeholder; the real scale/weight/spacing is designed with Tema v2.
+ */
+const TallystHeading = Heading.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(), // keep `level`
+            display: {
+                default: null,
+                parseHTML: (el) => {
+                    const m = el.className.match(/\bdisplay-([12])\b/);
+                    return m ? Number(m[1]) : null;
+                },
+                renderHTML: (attrs) => (attrs.display ? { class: `display-${attrs.display}` } : {}),
+            },
+        };
+    },
+});
 
 /*
  * The Tiptap schema for Tallyst content + an extension point so OTHER modules can plug in
@@ -43,7 +71,9 @@ export function buildExtensions() {
             // Replace StarterKit's Document with ours so the top level also accepts the
             // columns layout node (TallystDocument content = '(block | columns)+').
             document: false,
-            heading: { levels: [1, 2, 3, 4] },
+            // Replace StarterKit's Heading with TallystHeading (adds the optional display attr);
+            // levels are configured on it below.
+            heading: false,
             // Keep content stable on load: don't auto-link typed URLs, don't navigate on
             // click, don't force target=_blank/rel onto existing links.
             link: { openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } },
@@ -52,6 +82,9 @@ export function buildExtensions() {
         // the block (the front renders it natively; the schema now PRESERVES that one style —
         // other inline styles are still dropped). Default 'left' renders no style (clean content).
         TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        // Our heading keeps the StarterKit name ('heading'), so TextAlign's types + isActive
+        // checks are unchanged; just carries the extra display attribute.
+        TallystHeading.configure({ levels: [1, 2, 3, 4] }),
         TallystDocument,
         TallystImage,
         Columns,

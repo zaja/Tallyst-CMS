@@ -102,6 +102,24 @@ ok(/<h2[^>]*text-align:\s*right/.test(aligned), 'heading text-align:right surviv
 const plainPara = roundTrip('<p>Obicni odlomak</p>');
 ok(!/style=/.test(plainPara), 'a paragraph with no alignment renders no style (clean content)');
 
+// --- Display headings (landing typography): the optional display attribute round-trips as a
+// FIXED class display-1/display-2 on an <h1>; a plain heading stays clean; an out-of-allowlist
+// class is dropped (the schema's fixed display-1/2 allowlist — same injection-safe guarantee as
+// the image size/align/width attributes). #5 in the implementation plan: the main schema-drop lock.
+const display1 = roundTrip('<h1 class="display-1">Veliki naslov</h1>');
+ok(/<h1[^>]*class="[^"]*\bdisplay-1\b/.test(display1), 'Display 1 (h1.display-1) survives save->load');
+const display2 = roundTrip('<h1 class="display-2">Drugi</h1>');
+ok(/<h1[^>]*class="[^"]*\bdisplay-2\b/.test(display2), 'Display 2 (h1.display-2) survives save->load');
+const plainH1 = roundTrip('<h1>Obican naslov</h1>');
+ok(/<h1[ >]/.test(plainH1) && !/class=/.test(plainH1), 'a plain h1 stays clean (no display class)');
+// A centered Display 1: text-align (TextAlign) AND the display class survive together.
+const display1Centered = roundTrip('<h1 class="display-1" style="text-align: center">Sredina</h1>');
+ok(/class="[^"]*\bdisplay-1\b/.test(display1Centered) && /text-align:\s*center/.test(display1Centered),
+    'a centered Display 1 round-trips (text-align + display class together)');
+// Out-of-allowlist classes (display-9, arbitrary) are NOT preserved — only display-1/2 round-trip.
+const badClass = roundTrip('<h1 class="display-9 evil">X</h1>');
+ok(!/class=/.test(badClass), 'an out-of-allowlist heading class (display-9/evil) is dropped (fixed display-1/2 allowlist)');
+
 // --- Toolbar gating: the form button shows only when FormBuilder is enabled ---
 ok(editorToolbarExtensions(['media', 'form_builder']).some((t) => t.label.includes('Forma')),
     'form toolbar button present when form_builder enabled');
