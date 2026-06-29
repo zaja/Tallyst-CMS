@@ -391,6 +391,14 @@ th { font-weight: 650; }
 .page-hero--photo .page-hero-inner,
 .page-hero--photo .page-hero-inner h1,
 .page-hero--photo .page-hero-text { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+/* Photo on mobile: the text goes full-width, so the scrim is a SOLID overlay over the whole hero
+   (no gradient) — the gradient is a desktop thing (fading toward the clean image half). */
+@media (max-width: 51.999rem) {
+    .page-hero--photo::before,
+    .page-hero--photo.page-hero--right::before {
+        background: rgba(15, 18, 20, var(--hero-photo-shade));
+    }
+}
 
 /* --- light: LIGHT image → DARK text, clean on the image (no shadow). --- */
 .page-hero--light .page-hero-inner,
