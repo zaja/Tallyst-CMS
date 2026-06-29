@@ -18,7 +18,11 @@
            light images) — both with NO panel/scrim, only a subtle text-shadow for edge contrast.
            Image is decorative (the <h1> carries meaning). Null-safe: no heroImage → the --ink
            fallback + white text keeps the overlay legible. #}
-        <header class="page-hero page-hero--{{ page.heroPosition }} page-hero--{{ page.heroStyle }}{{ page.heroImage ? '' : ' page-hero--no-image' }}">
+        {# TEMP A/B (smoke only — remove with the matching CSS block once a winner is picked):
+           mobile light/dark readability overlay. Switch by editing the value below: "a" = overlay
+           over the whole hero, "b" = a soft band behind the text only. Desktop is unaffected. #}
+        <header class="page-hero page-hero--{{ page.heroPosition }} page-hero--{{ page.heroStyle }}{{ page.heroImage ? '' : ' page-hero--no-image' }}"
+                data-hero-mobile="a">
             {% if page.heroImage %}{{ media_img(page.heroImage, 'hero', null, '') }}{% endif %}
             <div class="page-hero-inner">
                 <h1>{{ page.heroTitle ?: page.title }}</h1>
