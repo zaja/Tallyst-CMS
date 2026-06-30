@@ -1,18 +1,26 @@
 liip_imagine:
-    driver: gd
+    driver: imagick
     # Use the non-deprecated Twig integration.
     twig:
         mode: lazy
     # Thumbnails are written to public/media/cache/ — kept SEPARATE from the
     # uploads at public/media/uploads/ so clearing/gitignoring one never touches
     # the other (both live under the git-ignored public/media/).
+    # format: webp on thumb/medium/hero → thumbnails are served as WebP regardless of the
+    # uploaded format (smaller, faster). favicon stays in its source format (uneven WebP-favicon
+    # support, negligible gain). The cached file keeps the source name + a .webp SUFFIX
+    # (photo.jpg.webp) — driven by ThumbnailCacheNaming, shared by MediaImageHelper::url() AND
+    # ThumbnailWarmer so the deterministic URL and the warmed file can't diverge. Keep these
+    # webp-format filters in sync with ThumbnailCacheNaming::WEBP_FILTERS.
     filter_sets:
         thumb:
             quality: 80
+            format: webp
             filters:
                 thumbnail: { size: [160, 160], mode: inset }
         medium:
             quality: 85
+            format: webp
             filters:
                 thumbnail: { size: [600, 600], mode: inset }
         # Full-width page hero. inset (never upscales) so large uploads are capped and small
@@ -20,6 +28,7 @@ liip_imagine:
         # MediaImageHelper::FILTERS (both allowlist filters separately).
         hero:
             quality: 82
+            format: webp
             filters:
                 thumbnail: { size: [1600, 1600], mode: inset }
         # Favicon (<link rel="icon">). Small square-ish. Keep in sync with the other two

@@ -42,7 +42,8 @@ class ImageShortcodeHtmlConverterTest extends TestCase
 
         self::assertStringContainsString('data-tallyst-image', $html);
         self::assertStringContainsString('data-id="5"', $html);
-        self::assertStringContainsString('src="/media/cache/medium/media/uploads/photo.jpg"', $html);
+        // WebP serving: medium is a webp-format filter → the cache file carries a .webp suffix.
+        self::assertStringContainsString('src="/media/cache/medium/media/uploads/photo.jpg.webp"', $html);
     }
 
     public function testForwardPreservesSizeAlignAlt(): void
@@ -52,7 +53,7 @@ class ImageShortcodeHtmlConverterTest extends TestCase
         self::assertStringContainsString('data-size="thumb"', $html);
         self::assertStringContainsString('data-align="left"', $html);
         self::assertStringContainsString('alt="Pozdrav"', $html);
-        self::assertStringContainsString('/media/cache/thumb/media/uploads/photo.jpg', $html);
+        self::assertStringContainsString('/media/cache/thumb/media/uploads/photo.jpg.webp', $html);
     }
 
     public function testForwardPreservesFullWidth(): void

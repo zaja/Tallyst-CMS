@@ -27,14 +27,20 @@ class MediaImageHelper
         'center' => 'media-align-center',
     ];
 
-    /** Deterministic RELATIVE URL of the warmed cached file (nginx-served). */
+    /**
+     * Deterministic RELATIVE URL of the warmed cached file (nginx-served). The image-path tail
+     * comes from ThumbnailCacheNaming — the SAME helper ThumbnailWarmer stores at — so the URL
+     * and the warmed file can't diverge (webp filters carry a .webp suffix, favicon doesn't).
+     */
     public function url(?string $imageName, string $filter = self::DEFAULT_FILTER): ?string
     {
         if (null === $imageName || '' === $imageName) {
             return null;
         }
 
-        return '/media/cache/'.$this->filter($filter).'/media/uploads/'.$imageName;
+        $filter = $this->filter($filter);
+
+        return '/media/cache/'.$filter.'/'.ThumbnailCacheNaming::cachePath($imageName, $filter);
     }
 
     /**

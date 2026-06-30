@@ -31,6 +31,12 @@ core-API change is a MAJOR (flagged ⚠).
   column with the lightweight settings (status, position, hide title, template, meta) in
   a narrow column on the right, instead of one long scroll.
 
+### Changed
+
+- **Images are served as WebP** (smaller files, faster loading) regardless of the uploaded
+  format — page, post and content images plus logos and thumbnails. Favicons keep their
+  original format.
+
 ## [1.2.0] — 2026-06-27
 
 ### Added

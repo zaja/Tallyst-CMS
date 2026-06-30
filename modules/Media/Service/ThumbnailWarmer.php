@@ -36,15 +36,19 @@ class ThumbnailWarmer
 
     public function warm(string $imageName): void
     {
-        $path = 'media/uploads/'.$imageName;
+        // The SOURCE is always loaded from the unsuffixed upload path; the CACHE path may carry a
+        // .webp suffix (webp filters) — driven by ThumbnailCacheNaming, the SAME helper
+        // MediaImageHelper::url() uses, so the warmed file matches the served URL exactly.
+        $source = 'media/uploads/'.$imageName;
 
         foreach (self::FILTERS as $filter) {
-            if ($this->cacheManager->isStored($path, $filter)) {
+            $cachePath = ThumbnailCacheNaming::cachePath($imageName, $filter);
+            if ($this->cacheManager->isStored($cachePath, $filter)) {
                 continue;
             }
 
-            $binary = $this->filterManager->applyFilter($this->dataManager->find($filter, $path), $filter);
-            $this->cacheManager->store($binary, $path, $filter);
+            $binary = $this->filterManager->applyFilter($this->dataManager->find($filter, $source), $filter);
+            $this->cacheManager->store($binary, $cachePath, $filter);
         }
     }
 }
