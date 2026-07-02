@@ -2,20 +2,23 @@
 
 namespace App\Settings;
 
+use App\Icon\IconRegistry;
 use App\Repository\MenuRepository;
 
 /**
- * The Core settings sections (v1): General, Branding, Localization, Email, Footer. Modules may
- * add their own sections later via SettingsSectionProviderInterface.
+ * The Core settings sections (v1): General, Branding, Localization, Email, Footer, Top bar. Modules
+ * may add their own sections later via SettingsSectionProviderInterface.
  *
  * `site_name` lives in General (its single editable home). Branding holds the visual identity
  * (logo + favicon, Media references stored as loose ids). Footer holds the configurable site
- * footer. The front reads the same Setting keys regardless.
+ * footer. Top bar holds the optional thin bar above the header. The front reads the same Setting
+ * keys regardless.
  */
 class CoreSettingsProvider implements SettingsSectionProviderInterface
 {
     public function __construct(
         private readonly MenuRepository $menus,
+        private readonly IconRegistry $icons,
     ) {
     }
 
@@ -80,6 +83,38 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
             new SettingDefinition('footer_copyright', SettingType::STRING, 'admin.settings.footer.footer_copyright.label', 'admin.settings.footer.footer_copyright.help', ''),
             new SettingDefinition('footer_show_powered_by', SettingType::BOOL, 'admin.settings.footer.footer_show_powered_by.label', '', true),
         ]);
+
+        // Top bar: an optional thin bar above the header. Left = rich text (links); right = social
+        // icons — one optional URL field PER brand icon (generated from IconRegistry::brandKeys(),
+        // NOT a hardcoded list, so adding a brand icon adds its field automatically). An icon shows
+        // on the front only when its URL is set. Labels are dynamic literals (like timezones/menus).
+        yield new SettingsSection('topbar', 'admin.settings.topbar.title', 'fa-window-maximize', [
+            new SettingDefinition('top_bar_enabled', SettingType::BOOL, 'admin.settings.topbar.top_bar_enabled.label', 'admin.settings.topbar.top_bar_enabled.help', false),
+            new SettingDefinition('top_bar_text', SettingType::RICH_TEXT, 'admin.settings.topbar.top_bar_text.label', 'admin.settings.topbar.top_bar_text.help'),
+            ...$this->socialDefinitions(),
+        ]);
+    }
+
+    /**
+     * One optional URL setting per brand icon (social_{brand}_url), built from brandKeys() so the
+     * list is single-sourced with the icon registry. Label is a dynamic literal ("Github URL").
+     *
+     * @return SettingDefinition[]
+     */
+    private function socialDefinitions(): array
+    {
+        $defs = [];
+        foreach ($this->icons->brandKeys() as $key) {
+            $defs[] = new SettingDefinition(
+                'social_'.$key.'_url',
+                SettingType::STRING,
+                ucfirst($key).' URL',
+                'admin.settings.topbar.social_url.help',
+                '',
+            );
+        }
+
+        return $defs;
     }
 
     /**

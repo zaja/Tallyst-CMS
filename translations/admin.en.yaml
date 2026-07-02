@@ -221,6 +221,11 @@ admin:
             footer_menu: { label: Menu (2nd column), help: 'An existing menu shown in the second column (when there are 2 columns).' }
             footer_copyright: { label: Copyright, help: 'Empty = automatic "© {year} {site name}".' }
             footer_show_powered_by: { label: 'Show "Powered by Tallyst CMS"' }
+        topbar:
+            title: Top bar
+            top_bar_enabled: { label: 'Enable top bar', help: 'A thin bar above the header.' }
+            top_bar_text: { label: Text, help: 'Rich text shown on the left (supports links).' }
+            social_url: { help: 'Full URL (https://…) or a site path (/…). Empty = the icon is hidden.' }
     theme:
         title: Themes
         intro: 'Themes are added by copying a folder into themes/ on the server (FTP / copy default and rename); the CMS detects them automatically. A theme may include a theme.png (~880×660) thumbnail.'

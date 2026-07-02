@@ -220,6 +220,11 @@ admin:
             footer_menu: { label: Izbornik (2. kolona), help: 'Postojeći izbornik prikazan u drugoj koloni (kad su 2 kolone).' }
             footer_copyright: { label: Copyright, help: 'Prazno = automatski "© {godina} {naziv sajta}".' }
             footer_show_powered_by: { label: 'Prikaži "Pokreće Tallyst CMS"' }
+        topbar:
+            title: Gornja traka
+            top_bar_enabled: { label: 'Uključi gornju traku', help: 'Tanka traka iznad headera.' }
+            top_bar_text: { label: Tekst, help: 'Rich tekst lijevo (podržava poveznice).' }
+            social_url: { help: 'Puni URL (https://…) ili putanja na sajtu (/…). Prazno = ikona skrivena.' }
     theme:
         title: Teme
         intro: 'Teme se dodaju kopiranjem mape u themes/ na serveru (FTP / kopiraj default i preimenuj); CMS ih automatski detektira. Svaka tema može imati theme.png (~880×660) kao sličicu.'

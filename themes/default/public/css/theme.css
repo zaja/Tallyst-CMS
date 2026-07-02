@@ -200,6 +200,15 @@ th { font-weight: 650; }
 .page-content > :first-child { margin-top: 0; }
 
 /* ------------------------------------------------------------- Header --- */
+/* Top bar (Postavke → Top bar). ⚠ TEMPORARY PLACEHOLDER — just a two-column thin bar so it reads
+   as a top bar; the real visual (colour/height/spacing/hover) is Tema v2 (step 8). */
+.site-topbar { border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+.site-topbar__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) 0; }
+.site-topbar__social { display: flex; align-items: center; gap: var(--s-3); }
+.site-topbar__social-link { color: var(--muted); display: inline-flex; }
+.site-topbar__text > :first-child { margin-top: 0; }
+.site-topbar__text > :last-child { margin-bottom: 0; }
+
 .site-header {
     border-bottom: 1px solid var(--line);
     background: var(--bg);

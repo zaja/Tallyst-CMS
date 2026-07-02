@@ -14,6 +14,25 @@
 <body>
     <a class="skip-link" href="#main">{{ 'theme.nav.skip_link'|trans }}</a>
 
+    {# Optional thin top bar above the header (Postavke → Top bar). Left = rich text (links);
+       right = social icons (one per brand whose URL is set — social_links() filters + guards the
+       scheme). Placeholder layout; the real visual is Tema v2. #}
+    {% if setting('top_bar_enabled') %}
+        <div class="site-topbar">
+            <div class="container site-topbar__inner">
+                <div class="site-topbar__text">{{ setting('top_bar_text')|render_content }}</div>
+                {% set socials = social_links() %}
+                {% if socials %}
+                    <div class="site-topbar__social">
+                        {% for s in socials %}
+                            <a href="{{ s.url }}" class="site-topbar__social-link">{{ icon(s.key, {label: s.key}) }}</a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
     {# is-nav-open is toggled by nav.js (progressive enhancement); without JS the nav
        falls back to a visible nested list. #}
     <header class="site-header" data-nav>
