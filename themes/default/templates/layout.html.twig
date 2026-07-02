@@ -34,7 +34,7 @@
                            value="{{ app.request.query.get('q') }}"
                            data-search--live-target="input"
                            data-action="input->search--live#onInput">
-                    <button type="submit" aria-label="{{ 'theme.search.submit'|trans }}">🔍</button>
+                    <button type="submit" aria-label="{{ 'theme.search.submit'|trans }}">{{ icon('search') }}</button>
                     <div class="live-search-dropdown" role="listbox" data-search--live-target="dropdown" hidden></div>
                 </form>
             {% endif %}

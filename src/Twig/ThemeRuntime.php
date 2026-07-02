@@ -3,6 +3,7 @@
 namespace App\Twig;
 
 use App\Entity\MenuItem;
+use App\Icon\IconRenderer;
 use App\Repository\MenuRepository;
 use App\Theme\ThemeResolver;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -19,9 +20,19 @@ class ThemeRuntime implements RuntimeExtensionInterface
         private readonly UrlGeneratorInterface $urls,
         private readonly Environment $twig,
         private readonly RequestStack $requestStack,
+        private readonly IconRenderer $icons,
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
     ) {
+    }
+
+    /**
+     * Inline SVG from the curated Core icon set (the `icon()` Twig function). Unknown key → ''.
+     * @param array{label?: string} $options `label` → an accessible name (else decorative).
+     */
+    public function icon(string $key, array $options = []): string
+    {
+        return $this->icons->render($key, $options['label'] ?? null);
     }
 
     /**

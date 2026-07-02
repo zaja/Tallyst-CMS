@@ -87,3 +87,9 @@ Tallyst is open source and actively developed. Bug reports and feature ideas are
 ## License
 
 [MIT](LICENSE) © 2026 Sve je dobro j.d.o.o.
+
+### Third-party assets
+
+- Icons: [Font Awesome Free](https://fontawesome.com) 6.7.2 — icons licensed under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Brand/social marks are trademarks of
+  their respective owners.

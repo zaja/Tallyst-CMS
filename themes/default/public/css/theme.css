@@ -116,6 +116,12 @@ h6 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .05em; 
 .display-1 { font-size: clamp(2.6rem, 1.8rem + 3vw, 4rem); }
 .display-2 { font-size: clamp(2.2rem, 1.6rem + 2.2vw, 3.2rem); }
 
+/* Curated inline-SVG icons (icon() Twig fn + [icon] shortcode + social). ⚠ TEMPORARY PLACEHOLDER —
+   the renderer already emits fill=currentColor + 1em so icons render sanely without this; the real
+   scale/spacing/brand colour is designed with Tema v2 (v1.4.0 step 8). This is just the baseline
+   alignment hook. */
+.tallyst-icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.125em; fill: currentColor; }
+
 p { margin: 0 0 1.15em; }
 
 a { color: var(--brand); text-decoration: none; }
