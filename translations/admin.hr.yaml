@@ -214,10 +214,18 @@ admin:
             title: Footer
             footer_columns:
                 label: Broj kolona
-                help: 'Jedna kolona = samo tekst; dvije = tekst + izbornik.'
-                choice: { '1': 1 kolona, '2': 2 kolone }
-            footer_text: { label: Tekst, help: Prikazuje se u prvoj koloni footera. }
-            footer_menu: { label: Izbornik (2. kolona), help: 'Postojeći izbornik prikazan u drugoj koloni (kad su 2 kolone).' }
+                help: 'Svaka kolona ispod je izbornik ili tekst; prikazuju se samo kolone do ovog broja.'
+                choice: { '1': 1 kolona, '2': 2 kolone, '3': 3 kolone, '4': 4 kolone }
+            col_menu: { help: 'Izbornik za ovu kolonu — njegovo ime postaje naslov. Ima prednost pred tekstom.' }
+            col_text: { help: 'Rich tekst za ovu kolonu (koristi se kad izbornik nije odabran).' }
+            col1_menu: { label: 'Kolona 1 — izbornik' }
+            col1_text: { label: 'Kolona 1 — tekst' }
+            col2_menu: { label: 'Kolona 2 — izbornik' }
+            col2_text: { label: 'Kolona 2 — tekst' }
+            col3_menu: { label: 'Kolona 3 — izbornik' }
+            col3_text: { label: 'Kolona 3 — tekst' }
+            col4_menu: { label: 'Kolona 4 — izbornik' }
+            col4_text: { label: 'Kolona 4 — tekst' }
             footer_copyright: { label: Copyright, help: 'Prazno = automatski "© {godina} {naziv sajta}".' }
             footer_show_powered_by: { label: 'Prikaži "Pokreće Tallyst CMS"' }
         topbar:

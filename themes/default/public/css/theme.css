@@ -672,13 +672,19 @@ th { font-weight: 650; }
 .site-footer a { color: var(--muted); }
 .site-footer a:hover { color: var(--brand); }
 
-/* Columns: 1 = single text column; 2 = text + menu side by side, stacking on mobile. */
+/* Columns: 1–4 equal columns, each a menu or text, stacking on mobile. ⚠ The grid is a symmetric
+   repeat(N,1fr) PLACEHOLDER (columns are no longer type-by-position); the real footer visual
+   (dark background, spacing, heading style) is Tema v2 (step 8). Class names are the STABLE theme
+   contract — kept for child themes; only --3/--4 + .footer-col-heading are added. */
 .footer-cols { display: grid; gap: var(--s-5); margin-bottom: var(--s-5); }
-.footer-cols--2 { grid-template-columns: 3fr 2fr; }
+.footer-cols--2 { grid-template-columns: repeat(2, 1fr); }
+.footer-cols--3 { grid-template-columns: repeat(3, 1fr); }
+.footer-cols--4 { grid-template-columns: repeat(4, 1fr); }
+.footer-col-heading { font-weight: 650; margin: 0 0 var(--s-2); color: var(--ink); }
 .footer-col--text > :first-child { margin-top: 0; }
 .footer-col--text > :last-child { margin-bottom: 0; }
 @media (max-width: 40rem) {
-    .footer-cols--2 { grid-template-columns: 1fr; }
+    .footer-cols--2, .footer-cols--3, .footer-cols--4 { grid-template-columns: 1fr; }
 }
 
 /* Footer menu (footer_menu.html.twig) — plain link list, no header nav styling. */

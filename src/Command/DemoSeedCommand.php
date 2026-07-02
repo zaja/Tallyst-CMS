@@ -230,8 +230,8 @@ class DemoSeedCommand extends Command
     {
         $this->settings->setMany([
             'footer_columns' => '2',
-            'footer_text' => '',
-            'footer_menu' => '',
+            'footer_col1_text' => '',
+            'footer_col2_menu' => '',
             'footer_copyright' => '',
             'footer_show_powered_by' => true,
             'favicon_media_id' => '',
@@ -681,10 +681,12 @@ class DemoSeedCommand extends Command
      */
     private function ensureSiteSettings(SymfonyStyle $io, array $media): void
     {
+        // 2-column footer: column 1 = text, column 2 = the demo menu (the new per-column model —
+        // equivalent to the old footer_text + footer_menu; richer demo footer content is step 9).
         $this->settings->setMany([
             'footer_columns' => '2',
-            'footer_text' => '<p><strong>Tallyst</strong> — jednostavan, self-hosted CMS za samostalne autore aplikacija i usluga. Predstavi i prodaj na vlastitoj domeni.</p>',
-            'footer_menu' => self::MENU_LOCATION,
+            'footer_col1_text' => '<p><strong>Tallyst</strong> — jednostavan, self-hosted CMS za samostalne autore aplikacija i usluga. Predstavi i prodaj na vlastitoj domeni.</p>',
+            'footer_col2_menu' => self::MENU_LOCATION,
             'footer_copyright' => '',
             'footer_show_powered_by' => true,
             'favicon_media_id' => null !== ($media[2] ?? null) ? (string) $media[2]->getId() : '',

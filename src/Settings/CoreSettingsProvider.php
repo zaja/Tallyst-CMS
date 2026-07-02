@@ -73,13 +73,17 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
             ]),
         ]);
 
+        // Footer: 1–4 columns, each a menu (its name is the heading) OR rich text — the type is
+        // IMPLICIT (menu wins when both are set, text otherwise), so no conditional field is needed
+        // (the schema-driven form can't hide fields). copyright + powered-by are the branding line.
         yield new SettingsSection('footer', 'admin.settings.footer.title', 'fa-window-minimize', [
             new SettingDefinition('footer_columns', SettingType::CHOICE, 'admin.settings.footer.footer_columns.label', 'admin.settings.footer.footer_columns.help', '2', [
                 'admin.settings.footer.footer_columns.choice.1' => '1',
                 'admin.settings.footer.footer_columns.choice.2' => '2',
+                'admin.settings.footer.footer_columns.choice.3' => '3',
+                'admin.settings.footer.footer_columns.choice.4' => '4',
             ]),
-            new SettingDefinition('footer_text', SettingType::RICH_TEXT, 'admin.settings.footer.footer_text.label', 'admin.settings.footer.footer_text.help'),
-            new SettingDefinition('footer_menu', SettingType::CHOICE, 'admin.settings.footer.footer_menu.label', 'admin.settings.footer.footer_menu.help', '', $this->menuChoices()),
+            ...$this->footerColumnDefinitions(),
             new SettingDefinition('footer_copyright', SettingType::STRING, 'admin.settings.footer.footer_copyright.label', 'admin.settings.footer.footer_copyright.help', ''),
             new SettingDefinition('footer_show_powered_by', SettingType::BOOL, 'admin.settings.footer.footer_show_powered_by.label', '', true),
         ]);
@@ -111,6 +115,36 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
                 ucfirst($key).' URL',
                 'admin.settings.topbar.social_url.help',
                 '',
+            );
+        }
+
+        return $defs;
+    }
+
+    /**
+     * Per-column footer fields (col 1–4): an optional menu choice + optional rich text each. The
+     * type is implicit — the layout renders the menu when set, else the text. Only columns up to
+     * `footer_columns` are shown on the front.
+     *
+     * @return SettingDefinition[]
+     */
+    private function footerColumnDefinitions(): array
+    {
+        $defs = [];
+        for ($n = 1; $n <= 4; ++$n) {
+            $defs[] = new SettingDefinition(
+                'footer_col'.$n.'_menu',
+                SettingType::CHOICE,
+                'admin.settings.footer.col'.$n.'_menu.label',
+                'admin.settings.footer.col_menu.help',
+                '',
+                $this->menuChoices(),
+            );
+            $defs[] = new SettingDefinition(
+                'footer_col'.$n.'_text',
+                SettingType::RICH_TEXT,
+                'admin.settings.footer.col'.$n.'_text.label',
+                'admin.settings.footer.col_text.help',
             );
         }
 

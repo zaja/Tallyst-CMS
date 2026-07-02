@@ -82,6 +82,9 @@ class ThemeRuntime implements RuntimeExtensionInterface
         return $this->twig->render($template, array_merge([
             'items' => $items,
             'location' => $location,
+            // The menu NAME, for templates that show it as a heading (footer columns). Additive:
+            // templates that don't reference it (e.g. the header's menu.html.twig) just ignore it.
+            'name' => $menu->getName(),
         ], $options));
     }
 

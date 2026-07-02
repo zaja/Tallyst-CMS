@@ -215,10 +215,18 @@ admin:
             title: Footer
             footer_columns:
                 label: Number of columns
-                help: 'One column = text only; two = text + menu.'
-                choice: { '1': 1 column, '2': 2 columns }
-            footer_text: { label: Text, help: Shown in the first footer column. }
-            footer_menu: { label: Menu (2nd column), help: 'An existing menu shown in the second column (when there are 2 columns).' }
+                help: 'Each column below is a menu or text; only columns up to this number are shown.'
+                choice: { '1': 1 column, '2': 2 columns, '3': 3 columns, '4': 4 columns }
+            col_menu: { help: 'A menu for this column — its name becomes the heading. Takes precedence over text.' }
+            col_text: { help: 'Rich text for this column (used when no menu is chosen).' }
+            col1_menu: { label: 'Column 1 — menu' }
+            col1_text: { label: 'Column 1 — text' }
+            col2_menu: { label: 'Column 2 — menu' }
+            col2_text: { label: 'Column 2 — text' }
+            col3_menu: { label: 'Column 3 — menu' }
+            col3_text: { label: 'Column 3 — text' }
+            col4_menu: { label: 'Column 4 — menu' }
+            col4_text: { label: 'Column 4 — text' }
             footer_copyright: { label: Copyright, help: 'Empty = automatic "© {year} {site name}".' }
             footer_show_powered_by: { label: 'Show "Powered by Tallyst CMS"' }
         topbar:

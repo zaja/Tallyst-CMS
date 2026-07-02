@@ -1,6 +1,8 @@
 {# Footer menu (render_menu(location, {template: 'footer_menu.html.twig'})). A simple link
    list — NO site-nav id, NO hamburger/accordion toggles (that's the header's job). Renders
-   the top level + one nested level as plain links. items: [{label, url, active, children}]. #}
+   the top level + one nested level as plain links. items: [{label, url, active, children}].
+   `name` (the menu name, passed by render_menu) is shown as the column heading. #}
+{% if name is defined and name %}<p class="footer-col-heading">{{ name }}</p>{% endif %}
 <nav class="footer-nav" aria-label="{{ location }}">
     <ul class="footer-menu">
         {% for item in items %}

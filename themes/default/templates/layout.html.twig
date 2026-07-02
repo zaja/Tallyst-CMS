@@ -66,23 +66,28 @@
         </div>
     </main>
 
-    {# Configurable footer (Postavke → Footer). 1 col = text only; 2 cols = text + menu.
-       Below: branding line = copyright (or auto) + optional "Pokreće Tallyst CMS". #}
+    {# Configurable footer (Postavke → Footer): 1–4 columns, each a menu (its name is the heading)
+       OR rich text — the type is implicit (menu wins when both are set). Only columns up to
+       footer_columns are rendered; empty columns are skipped. Branding line below. #}
     {% set footer_cols = setting('footer_columns')|default('2') %}
-    {% set footer_text = setting('footer_text') %}
-    {% set footer_menu = setting('footer_menu') %}
     {% set footer_copyright = setting('footer_copyright') %}
     <footer class="site-footer">
         <div class="container">
-            {% if footer_text or (footer_cols == '2' and footer_menu) %}
-                <div class="footer-cols footer-cols--{{ footer_cols }}">
-                    {% if footer_text %}
-                        <div class="footer-col footer-col--text">{{ footer_text|render_content }}</div>
+            {% set footer_cols_html %}
+                {% for n in 1..4 %}
+                    {% if n <= footer_cols %}
+                        {% set col_menu = setting('footer_col' ~ n ~ '_menu') %}
+                        {% set col_text = setting('footer_col' ~ n ~ '_text') %}
+                        {% if col_menu %}
+                            <div class="footer-col footer-col--menu">{{ render_menu(col_menu, {template: 'footer_menu.html.twig'}) }}</div>
+                        {% elseif col_text %}
+                            <div class="footer-col footer-col--text">{{ col_text|render_content }}</div>
+                        {% endif %}
                     {% endif %}
-                    {% if footer_cols == '2' and footer_menu %}
-                        <div class="footer-col footer-col--menu">{{ render_menu(footer_menu, {template: 'footer_menu.html.twig'}) }}</div>
-                    {% endif %}
-                </div>
+                {% endfor %}
+            {% endset %}
+            {% if footer_cols_html|trim %}
+                <div class="footer-cols footer-cols--{{ footer_cols }}">{{ footer_cols_html }}</div>
             {% endif %}
             <div class="footer-branding">
                 <span>{{ footer_copyright ?: '© ' ~ 'now'|date('Y') ~ ' ' ~ (setting('site_name')|default('Tallyst')) }}</span>
