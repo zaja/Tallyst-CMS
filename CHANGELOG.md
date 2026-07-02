@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-07-02
+
 ### Added
 
 - **Editor toolbar v2.** The content editor's toolbar is reorganised and rounded
@@ -135,6 +137,7 @@ Initial public release.
 - **Modular architecture** and distribution via **Packagist**, under the **MIT**
   license.
 
+[1.3.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.3.0
 [1.2.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.2.0
 [1.1.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.1.0
 [1.0.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.0.0
