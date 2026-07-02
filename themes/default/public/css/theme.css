@@ -122,6 +122,15 @@ h6 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .05em; 
    alignment hook. */
 .tallyst-icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.125em; fill: currentColor; }
 
+/* Curated content buttons (CTA). ⚠ TEMPORARY PLACEHOLDER — just enough that a button reads as a
+   button (inline-block + padding + border); the real colour/padding/shape/hover per style is
+   designed with Tema v2 (step 8). tallyst-btn--{primary,secondary,ghost} are the curated styles. */
+.tallyst-btn { display: inline-block; padding: 0.5em 1em; border: 1px solid currentColor; border-radius: 4px; text-decoration: none; line-height: 1.2; }
+.tallyst-btn + .tallyst-btn { margin-left: 0.5em; }
+.tallyst-btn--primary { background: var(--brand, #2b6cb0); border-color: var(--brand, #2b6cb0); color: var(--brand-ink, #fff); }
+.tallyst-btn--secondary { background: var(--surface, #f0f0f0); color: var(--ink, #222); }
+.tallyst-btn--ghost { background: transparent; }
+
 p { margin: 0 0 1.15em; }
 
 a { color: var(--brand); text-decoration: none; }

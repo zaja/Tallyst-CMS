@@ -80,6 +80,13 @@ admin:
             link_search_placeholder: Search a page or post…
             link_set: Set
             link_new_tab: Open in new tab
+            button: Insert button
+            button_modal_title: Insert button
+            button_label_placeholder: Button text
+            button_style_none: 'No style (plain link)'
+            button_style_primary: Primary
+            button_style_secondary: Secondary
+            button_style_ghost: Ghost
             link_type_page: Page
             link_type_post: Post
             link_none: No results

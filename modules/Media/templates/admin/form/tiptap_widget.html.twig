@@ -71,6 +71,9 @@
 
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.link'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.link'|trans({}, 'admin') }}" data-action="media--tiptap#link"><i class="fa-solid fa-link" aria-hidden="true"></i></button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.unlink'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.unlink'|trans({}, 'admin') }}" data-action="media--tiptap#unlink"><i class="fa-solid fa-link-slash" aria-hidden="true"></i></button>
+            {# Insert a CTA button — a styled link. Opens the link picker in "button" mode (reuses
+               URL/internal/new-tab + adds Label + Style). #}
+            <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.button'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.button'|trans({}, 'admin') }}" data-action="media--tiptap#insertButton"><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i></button>
             <span class="tiptap__sep"></span>
 
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.insert_image'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.insert_image'|trans({}, 'admin') }}" data-action="media--tiptap#insertImage"><i class="fa-solid fa-image" aria-hidden="true"></i></button>

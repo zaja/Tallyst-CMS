@@ -1,6 +1,7 @@
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Heading from '@tiptap/extension-heading';
+import Link from '@tiptap/extension-link';
 import { TallystImage } from './tiptap_image_node.js';
 import { TallystIcon } from './tiptap_icon_node.js';
 import { TallystDocument, Columns, Column } from './tiptap_columns_node.js';
@@ -27,6 +28,44 @@ const TallystHeading = Heading.extend({
                     return m ? Number(m[1]) : null;
                 },
                 renderHTML: (attrs) => (attrs.display ? { class: `display-${attrs.display}` } : {}),
+            },
+        };
+    },
+});
+
+/*
+ * Curated content buttons (landing CTAs). A button IS a styled LINK — the StarterKit Link mark
+ * extended with ONE optional `buttonStyle` attribute, serialised ONLY as a fixed class
+ * `tallyst-btn tallyst-btn--{style}` on the <a>. Same fixed-allowlist pattern as the display
+ * heading + the image size/align: parseHTML reads ONLY tallyst-btn--{primary|secondary|ghost} ->
+ * the style, renderHTML emits ONLY the known class (else a clean <a>) — an arbitrary class can never
+ * be authored or persisted. Label = the linked text (inline editing); the full link picker (URL /
+ * internal Page-Post / new-tab) is reused for the destination. Free colour/size is intentionally
+ * NOT offered (consistency > power). The VISUAL (`.tallyst-btn`) is a Tema-v2 placeholder for now.
+ */
+export const BUTTON_STYLES = ['primary', 'secondary', 'ghost'];
+
+const TallystLink = Link.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(), // keep href/target/rel
+            // Neutralise the base <a> class so ONLY buttonStyle emits one — otherwise the mark
+            // preserves any authored class verbatim (an injection hole; proven: tallyst-btn--evil
+            // survived without this). parseHTML drops the raw class; renderHTML adds nothing here.
+            class: {
+                default: null,
+                parseHTML: () => null,
+                renderHTML: () => ({}),
+            },
+            buttonStyle: {
+                default: null,
+                parseHTML: (el) => {
+                    const m = (el.getAttribute('class') || '').match(/\btallyst-btn--([a-z]+)\b/);
+                    return m && BUTTON_STYLES.includes(m[1]) ? m[1] : null;
+                },
+                renderHTML: (attrs) => (attrs.buttonStyle && BUTTON_STYLES.includes(attrs.buttonStyle)
+                    ? { class: `tallyst-btn tallyst-btn--${attrs.buttonStyle}` }
+                    : {}),
             },
         };
     },
@@ -79,9 +118,9 @@ export function buildExtensions(iconSet = {}) {
             // Replace StarterKit's Heading with TallystHeading (adds the optional display attr);
             // levels are configured on it below.
             heading: false,
-            // Keep content stable on load: don't auto-link typed URLs, don't navigate on
-            // click, don't force target=_blank/rel onto existing links.
-            link: { openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } },
+            // Replace StarterKit's Link with TallystLink (adds the optional buttonStyle attr);
+            // link options are configured on it below.
+            link: false,
         }),
         // Text alignment on paragraphs + headings. Stored as an inline `text-align` style on
         // the block (the front renders it natively; the schema now PRESERVES that one style —
@@ -90,6 +129,9 @@ export function buildExtensions(iconSet = {}) {
         // Our heading keeps the StarterKit name ('heading'), so TextAlign's types + isActive
         // checks are unchanged; just carries the extra display attribute.
         TallystHeading.configure({ levels: [1, 2, 3, 4] }),
+        // Our link keeps the name 'link' (so the link picker + isActive are unchanged) — same
+        // stable-on-load config as before, plus the buttonStyle attribute for CTA buttons.
+        TallystLink.configure({ openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } }),
         TallystDocument,
         TallystImage,
         // Inline icon node (core content, like image/columns). iconSet feeds the display NodeView.

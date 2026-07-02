@@ -375,3 +375,22 @@
 .tiptap-linkpicker__newtab input {
     margin: 0;
 }
+
+/* Button-mode fields (Label + Style) — functional dialog layout, not the button visual. */
+.tiptap-linkpicker__button-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+}
+
+/* Editor preview of a CTA button (a styled link). ⚠ TEMPORARY PLACEHOLDER mirroring the front so
+   the button reads as a button in the editor; the real visual is Tema v2 (step 8). */
+.tiptap__editor .ProseMirror a.tallyst-btn {
+    display: inline-block;
+    padding: 0.4em 0.9em;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    text-decoration: none;
+    line-height: 1.2;
+}

@@ -189,5 +189,21 @@ ok(/data-name="github"/.test(inlineIcon) && inlineIcon.includes('Prati nas') && 
 const unknownIcon = roundTrip('<p>x <span data-tallyst-icon data-name="nepostoji"></span> y</p>');
 ok(/data-name="nepostoji"/.test(unknownIcon), 'an unknown icon name round-trips (preserved, graceful)');
 
+// --- CTA buttons (styled link mark): buttonStyle serialises as a fixed tallyst-btn--{style} class ---
+// A button IS a styled link — the TallystLink mark carries an optional buttonStyle, rendered ONLY as
+// a curated allowlisted class (same injection-safe pattern as display headings).
+const btn = roundTrip('<p><a class="tallyst-btn tallyst-btn--primary" href="/kupi">Kupi</a></p>');
+ok(/class="[^"]*tallyst-btn--primary/.test(btn) && /href="\/kupi"/.test(btn), 'button style class + href survive save->load');
+// A plain link stays clean — no button class (buttonStyle null renders nothing, like a plain heading).
+const plainA = roundTrip('<p><a href="/x">obicni</a></p>');
+ok(/<a[^>]*href="\/x"/.test(plainA) && !/tallyst-btn/.test(plainA), 'a plain link stays clean (no button class)');
+// Injection: an out-of-allowlist button class is NOT preserved (only primary/secondary/ghost map).
+const evilBtn = roundTrip('<p><a class="tallyst-btn--evil" href="/x">z</a></p>');
+ok(!/tallyst-btn/.test(evilBtn), 'an out-of-allowlist button style (evil) is dropped (curated allowlist)');
+// Two buttons side by side in ONE paragraph survive inline (hero: two CTAs in a row).
+const twoBtns = roundTrip('<p><a class="tallyst-btn tallyst-btn--primary" href="/a">A</a> <a class="tallyst-btn tallyst-btn--ghost" href="/b">B</a></p>');
+ok((twoBtns.match(/<p>/g) || []).length === 1 && /tallyst-btn--primary/.test(twoBtns) && /tallyst-btn--ghost/.test(twoBtns),
+    'two buttons survive side by side in one paragraph');
+
 console.log(`tiptap_roundtrip: ${passed} assertions passed`);
 console.log('--- round-tripped HTML ---\n' + out);

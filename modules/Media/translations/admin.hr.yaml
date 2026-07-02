@@ -80,6 +80,13 @@ admin:
             link_search_placeholder: Traži stranicu ili objavu…
             link_set: Postavi
             link_new_tab: Otvori u novom tabu
+            button: Umetni gumb
+            button_modal_title: Umetni gumb
+            button_label_placeholder: Tekst gumba
+            button_style_none: 'Bez stila (obična poveznica)'
+            button_style_primary: Primarni
+            button_style_secondary: Sekundarni
+            button_style_ghost: Ghost
             link_type_page: Stranica
             link_type_post: Objava
             link_none: Nema rezultata

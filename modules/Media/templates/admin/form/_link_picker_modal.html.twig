@@ -10,9 +10,24 @@
     <div class="tiptap-linkpicker__dialog" role="dialog" aria-modal="true"
          aria-label="{{ 'admin.media.tiptap.link_modal_title'|trans({}, 'admin') }}">
         <div class="tiptap-linkpicker__header">
-            <strong>{{ 'admin.media.tiptap.link_modal_title'|trans({}, 'admin') }}</strong>
+            {# Title swaps with the mode (link vs button) — the controller toggles which is shown. #}
+            <strong data-media--tiptap-target="linkTitleLink">{{ 'admin.media.tiptap.link_modal_title'|trans({}, 'admin') }}</strong>
+            <strong data-media--tiptap-target="linkTitleButton" hidden>{{ 'admin.media.tiptap.button_modal_title'|trans({}, 'admin') }}</strong>
             <button type="button" class="btn-close" aria-label="{{ 'admin.media.tiptap.link_close'|trans({}, 'admin') }}"
                     data-action="media--tiptap#closeLinkModal"></button>
+        </div>
+
+        {# Button-only fields (shown in "button" mode): the button TEXT + curated STYLE. The
+           destination (URL / internal Page-Post) + new-tab are the shared link fields below. #}
+        <div class="tiptap-linkpicker__button-fields" data-media--tiptap-target="buttonFields" hidden>
+            <input type="text" class="form-control" data-media--tiptap-target="buttonLabel"
+                   placeholder="{{ 'admin.media.tiptap.button_label_placeholder'|trans({}, 'admin') }}">
+            <select class="form-select" data-media--tiptap-target="buttonStyle">
+                <option value="">{{ 'admin.media.tiptap.button_style_none'|trans({}, 'admin') }}</option>
+                <option value="primary">{{ 'admin.media.tiptap.button_style_primary'|trans({}, 'admin') }}</option>
+                <option value="secondary">{{ 'admin.media.tiptap.button_style_secondary'|trans({}, 'admin') }}</option>
+                <option value="ghost">{{ 'admin.media.tiptap.button_style_ghost'|trans({}, 'admin') }}</option>
+            </select>
         </div>
 
         <div class="tiptap-linkpicker__tabs" role="tablist">

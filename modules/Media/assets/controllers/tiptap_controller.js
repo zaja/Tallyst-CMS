@@ -20,7 +20,7 @@ export default class extends Controller {
     static targets = [
         'editor', 'input', 'library', 'toolbar', 'imageFormat', 'iconGrid',
         'linkModal', 'linkTabUrl', 'linkTabInternal', 'linkUrlInput', 'linkSearch', 'linkList', 'linkStatus',
-        'linkNewTab',
+        'linkNewTab', 'linkTitleLink', 'linkTitleButton', 'buttonFields', 'buttonLabel', 'buttonStyle',
     ];
     static values = {
         modules: String,
@@ -257,6 +257,8 @@ export default class extends Controller {
         if (!this.hasLinkModalTarget) {
             return;
         }
+        this.linkMode = 'link';
+        this.showButtonFields(false);
         const current = this.editor.getAttributes('link');
         this.linkUrlInputTarget.value = current.href || '';
         // Reflect the existing link's target so the admin can toggle it on an existing link.
@@ -265,6 +267,47 @@ export default class extends Controller {
         this.linkModalTarget.classList.add('is-open');
         this.linkUrlInputTarget.focus();
         this.linkUrlInputTarget.select();
+    }
+
+    /**
+     * Open the SAME modal in "button" mode: a CTA is a styled link, so this reuses the whole link
+     * picker (URL / internal Page-Post / new-tab) and just adds a Label + Style. On confirm it
+     * inserts the label text carrying a link mark with the chosen buttonStyle (fresh insert), or —
+     * when the cursor is in a link / text is selected — applies the style to that link (edit).
+     */
+    insertButton() {
+        if (!this.hasLinkModalTarget) {
+            return;
+        }
+        this.linkMode = 'button';
+        this.showButtonFields(true);
+        const current = this.editor.getAttributes('link');
+        this.linkUrlInputTarget.value = current.href || '';
+        this.linkNewTabTarget.checked = '_blank' === current.target;
+        if (this.hasButtonStyleTarget) {
+            this.buttonStyleTarget.value = current.buttonStyle || '';
+        }
+        if (this.hasButtonLabelTarget) {
+            this.buttonLabelTarget.value = '';
+        }
+        this.switchToTab('url');
+        this.linkModalTarget.classList.add('is-open');
+        if (this.hasButtonLabelTarget) {
+            this.buttonLabelTarget.focus();
+        }
+    }
+
+    /** Show/hide the button-only fields (Label + Style) + swap the modal title. */
+    showButtonFields(show) {
+        if (this.hasButtonFieldsTarget) {
+            this.buttonFieldsTarget.hidden = !show;
+        }
+        if (this.hasLinkTitleLinkTarget) {
+            this.linkTitleLinkTarget.hidden = show;
+        }
+        if (this.hasLinkTitleButtonTarget) {
+            this.linkTitleButtonTarget.hidden = !show;
+        }
     }
 
     closeLinkModal() {
@@ -326,6 +369,11 @@ export default class extends Controller {
      * clears it, so toggling off an existing link removes target+rel).
      */
     applyLink(href) {
+        // Button mode reuses the URL/internal href-gathering but inserts/edits a styled button.
+        if ('button' === this.linkMode) {
+            this.applyButton(href);
+            return;
+        }
         const chain = this.editor.chain().focus().extendMarkRange('link');
         if ('' === href) {
             chain.unsetLink().run();
@@ -336,6 +384,41 @@ export default class extends Controller {
                 attrs.rel = 'noopener noreferrer';
             }
             chain.setLink(attrs).run();
+        }
+        this.closeLinkModal();
+    }
+
+    /**
+     * Confirm the button dialog. buttonStyle '' = "no style" → a plain link. With a selection (or
+     * the cursor in a link) it EDITS that link (apply/remove style + href); otherwise it INSERTS the
+     * Label text as a fresh button-link. tallyst-btn--{style} is rendered by TallystLink's allowlist.
+     */
+    applyButton(href) {
+        const style = this.hasButtonStyleTarget ? this.buttonStyleTarget.value : '';
+        const attrs = { href, buttonStyle: style || null };
+        if (this.hasLinkNewTabTarget && this.linkNewTabTarget.checked) {
+            attrs.target = '_blank';
+            attrs.rel = 'noopener noreferrer';
+        } else {
+            attrs.target = null;
+            attrs.rel = null;
+        }
+
+        const chain = this.editor.chain().focus();
+        const editing = this.editor.isActive('link') || !this.editor.state.selection.empty;
+        if (editing) {
+            // Apply style/href to the existing link or selected text (or remove it when href empty).
+            ('' === href ? chain.extendMarkRange('link').unsetLink() : chain.extendMarkRange('link').setLink(attrs)).run();
+        } else {
+            const label = (this.hasButtonLabelTarget ? this.buttonLabelTarget.value.trim() : '') || href;
+            if ('' === label) {
+                this.closeLinkModal();
+                return;
+            }
+            // A button needs a destination — with no href, fall back to inserting plain label text.
+            ('' === href
+                ? chain.insertContent(label)
+                : chain.insertContent({ type: 'text', text: label, marks: [{ type: 'link', attrs }] })).run();
         }
         this.closeLinkModal();
     }
