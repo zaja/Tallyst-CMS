@@ -201,9 +201,15 @@ th { font-weight: 650; }
 
 /* ------------------------------------------------------------- Header --- */
 /* Top bar (Postavke → Top bar). ⚠ TEMPORARY PLACEHOLDER — just a two-column thin bar so it reads
-   as a top bar; the real visual (colour/height/spacing/hover) is Tema v2 (step 8). */
-.site-topbar { border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
-.site-topbar__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) 0; }
+   as a top bar; the real visual (colour/height/spacing/hover) is Tema v2 (step 8). The TRACK is
+   full-width (so a Tema-v2 background can span the whole width, like the header); the CONTENT is
+   inset via the shared .container on __inner. Hidden on mobile (below --nav-bp), mobile-first like
+   the header nav. */
+.site-topbar { display: none; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+@media (min-width: 52rem) { .site-topbar { display: block; } }
+/* padding-block only — keep .container's horizontal inset (padding-inline) so the content aligns
+   with the header/hero, not the window edge. */
+.site-topbar__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding-block: var(--s-2); }
 .site-topbar__social { display: flex; align-items: center; gap: var(--s-3); }
 .site-topbar__social-link { color: var(--muted); display: inline-flex; }
 .site-topbar__text > :first-child { margin-top: 0; }
