@@ -171,5 +171,23 @@ const nested = roundTrip(
 ok(!/tallyst-column"[^>]*>\s*<div class="tallyst-columns"/.test(nested), 'no columns nested inside a column (inner lifted out)');
 ok(nested.includes('X') && nested.includes('Y') && nested.includes('B'), 'content from a malformed nested layout is kept (not dropped)');
 
+// --- Inline icon node (WYSIWYG [icon]): the marker round-trips, stays INLINE, name preserved ---
+// buildExtensions() runs with no iconSet here → the NodeView degrades but renderHTML (the marker)
+// is unaffected, so serialization is deterministic and testable. renderHTML emits ONLY the marker
+// (name), never the SVG — the WYSIWYG display is a NodeView concern, not serialized.
+const icon = roundTrip('<span data-tallyst-icon data-name="github"></span>');
+ok(/data-name="github"/.test(icon) && /data-tallyst-icon/.test(icon), 'inline icon marker + name round-trip');
+ok(!icon.includes('<svg'), 'serialized icon is the clean marker, not the SVG (NodeView is display-only)');
+
+// INLINE position mid-sentence: the node must stay INSIDE the paragraph (inline:true), not split it.
+const inlineIcon = roundTrip('<p>Prati nas <span data-tallyst-icon data-name="github"></span> danas</p>');
+ok((inlineIcon.match(/<p>/g) || []).length === 1, 'inline icon stays in ONE paragraph (not split into blocks)');
+ok(/data-name="github"/.test(inlineIcon) && inlineIcon.includes('Prati nas') && inlineIcon.includes('danas'),
+    'inline icon + both surrounding text runs preserved in place');
+
+// Unknown name survives gracefully (name preserved, no throw) — the front/NodeView degrade to empty.
+const unknownIcon = roundTrip('<p>x <span data-tallyst-icon data-name="nepostoji"></span> y</p>');
+ok(/data-name="nepostoji"/.test(unknownIcon), 'an unknown icon name round-trips (preserved, graceful)');
+
 console.log(`tiptap_roundtrip: ${passed} assertions passed`);
 console.log('--- round-tripped HTML ---\n' + out);

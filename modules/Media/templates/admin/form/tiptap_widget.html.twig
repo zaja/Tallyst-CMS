@@ -7,6 +7,7 @@
     <div class="tiptap"
          data-controller="media--tiptap"
          data-media--tiptap-modules-value="{{ enabled_modules() }}"
+         data-media--tiptap-icon-set-value="{{ icon_set_json('ui') }}"
          data-media--tiptap-link-targets-url-value="{{ path('admin_link_targets') }}"
          data-media--tiptap-link-type-page-value="{{ 'admin.media.tiptap.link_type_page'|trans({}, 'admin') }}"
          data-media--tiptap-link-type-post-value="{{ 'admin.media.tiptap.link_type_post'|trans({}, 'admin') }}"
@@ -109,6 +110,16 @@
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-count="3" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns3'|trans({}, 'admin') }}</button>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-count="4" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns4'|trans({}, 'admin') }}</button>
                 </div>
+            </div>
+
+            {# Icon picker — core editor feature, always present. The grid is filled by the
+               controller from the icon-set projection (Core IconRegistry UI group); a click
+               inserts an inline [icon] node at the cursor. Content icons are decorative → no
+               label field (label is a social/top-bar concern, step 4). #}
+            <div class="tiptap__dropdown">
+                <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.icon'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.icon'|trans({}, 'admin') }}"
+                        aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown"><i class="fa-solid fa-icons" aria-hidden="true"></i><i class="fa-solid fa-caret-down tiptap__caret" aria-hidden="true"></i></button>
+                <div class="tiptap__menu tiptap__icon-grid" role="menu" data-media--tiptap-target="iconGrid"></div>
             </div>
             {# Module-contributed insert buttons (e.g. FormBuilder "Insert form") are
                appended here by the controller — the editor stays module-agnostic. The label of

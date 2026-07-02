@@ -69,6 +69,7 @@ admin:
             columns2: Dva stupca
             columns3: Tri stupca
             columns4: Četiri stupca
+            icon: Ikona
             undo: Poništi
             redo: Ponovi
             link_modal_title: Poveznica

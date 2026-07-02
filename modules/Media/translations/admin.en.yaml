@@ -69,6 +69,7 @@ admin:
             columns2: Two columns
             columns3: Three columns
             columns4: Four columns
+            icon: Icon
             undo: Undo
             redo: Redo
             link_modal_title: Link

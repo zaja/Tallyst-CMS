@@ -2,6 +2,7 @@ import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Heading from '@tiptap/extension-heading';
 import { TallystImage } from './tiptap_image_node.js';
+import { TallystIcon } from './tiptap_icon_node.js';
 import { TallystDocument, Columns, Column } from './tiptap_columns_node.js';
 
 /*
@@ -64,7 +65,11 @@ export function registerEditorExtension(ext) {
     editorExtensions.push(ext);
 }
 
-export function buildExtensions() {
+/**
+ * @param {object} [iconSet] name -> {viewBox, body} projection of the Core IconRegistry UI group
+ *   (from icon_set_json), used by the tallystIcon NodeView + picker. Empty in the Node test.
+ */
+export function buildExtensions(iconSet = {}) {
     const nodes = editorExtensions.map((e) => e.node).filter(Boolean);
     return [
         StarterKit.configure({
@@ -87,6 +92,8 @@ export function buildExtensions() {
         TallystHeading.configure({ levels: [1, 2, 3, 4] }),
         TallystDocument,
         TallystImage,
+        // Inline icon node (core content, like image/columns). iconSet feeds the display NodeView.
+        TallystIcon.configure({ iconSet }),
         Columns,
         Column,
         ...nodes,

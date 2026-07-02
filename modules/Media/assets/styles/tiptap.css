@@ -135,6 +135,37 @@
     letter-spacing: 0.03em;
 }
 
+/* Icon picker grid — the controller fills it with one button per curated icon. ⚠ Functional
+   placeholder; the real visual (sizing/columns) is designed with Tema v2 (step 8). */
+.tiptap__icon-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.15rem;
+    padding: 0.35rem;
+    max-height: 14rem;
+    overflow-y: auto;
+}
+/* Bind the grid `display` to the OPEN state so a closed picker stays hidden by the base
+   `.tiptap__menu { display:none }`, exactly like every other dropdown. The icon-grid class sits ON
+   the menu element, so this is a COMPOUND selector (no space), not a descendant. Visibility ONLY —
+   the layout above (columns/gap/overflow) is the Tema v2 placeholder, untouched. */
+.tiptap__menu.is-open.tiptap__icon-grid { display: grid; }
+.tiptap__icon-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem;
+    font-size: 1.05rem;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    color: inherit;
+}
+.tiptap__icon-item:hover {
+    background: var(--bs-tertiary-bg, #f0f0f0);
+    border-color: var(--bs-border-color, #ccc);
+}
+
 .tiptap__editor {
     border: 1px solid var(--bs-border-color, #ccc);
     border-radius: 0 0 6px 6px;

@@ -18,12 +18,14 @@ import '../styles/tiptap.css';
  */
 export default class extends Controller {
     static targets = [
-        'editor', 'input', 'library', 'toolbar', 'imageFormat',
+        'editor', 'input', 'library', 'toolbar', 'imageFormat', 'iconGrid',
         'linkModal', 'linkTabUrl', 'linkTabInternal', 'linkUrlInput', 'linkSearch', 'linkList', 'linkStatus',
         'linkNewTab',
     ];
     static values = {
         modules: String,
+        // name -> {viewBox, body} projection of the Core IconRegistry UI group (icon_set_json).
+        iconSet: Object,
         linkTargetsUrl: String,
         linkTypePage: String,
         linkTypePost: String,
@@ -35,7 +37,8 @@ export default class extends Controller {
     connect() {
         this.editor = new Editor({
             element: this.editorTarget,
-            extensions: buildExtensions(),
+            // Pass the icon-set projection so the inline icon NodeView can render the real SVG.
+            extensions: buildExtensions(this.hasIconSetValue ? this.iconSetValue : {}),
             content: this.inputTarget.value,
             onUpdate: () => this.sync(),
             // The "IMG format" controls only apply to a selected image — keep the trigger
@@ -43,6 +46,7 @@ export default class extends Controller {
             onSelectionUpdate: () => this.refreshImageFormat(),
         });
         this.renderExtensionButtons();
+        this.renderIconPicker();
         // Sync once so an unedited save still stores the normalised HTML (Trix div->p).
         this.sync();
         this.refreshImageFormat();
@@ -95,6 +99,34 @@ export default class extends Controller {
             btn.addEventListener('click', () => ext.action(this.editor));
             this.toolbarTarget.appendChild(btn);
         }
+    }
+
+    /**
+     * Build the icon picker grid from the icon-set projection (Core IconRegistry UI group). Each
+     * cell shows the real SVG and inserts an inline tallystIcon node at the cursor on click.
+     * Registry-driven: add an icon to IconRegistry → it appears here, no double maintenance.
+     */
+    renderIconPicker() {
+        if (!this.hasIconGridTarget) {
+            return;
+        }
+        const set = this.hasIconSetValue ? this.iconSetValue : {};
+        for (const [name, icon] of Object.entries(set)) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'tiptap__icon-item';
+            btn.title = name;
+            // Trusted registry projection (viewBox/body) — safe to inline; name is decorative here.
+            btn.innerHTML = `<svg class="tallyst-icon" viewBox="${icon.viewBox}" width="1em" height="1em" fill="currentColor" aria-hidden="true">${icon.body}</svg>`;
+            btn.addEventListener('click', () => this.insertIcon(name));
+            this.iconGridTarget.appendChild(btn);
+        }
+    }
+
+    /** Insert an inline icon node (content decorative → no label; label is a step-4/social concern). */
+    insertIcon(name) {
+        this.editor.chain().focus().insertContent({ type: 'tallystIcon', attrs: { name } }).run();
+        this.closeDropdowns();
     }
 
     disconnect() {
