@@ -70,6 +70,8 @@ admin:
             columns_style: Stil
             columns_style_default: Zadano
             columns_style_cards: Kartice
+            columns_column: Kolona
+            columns_column_highlight: Istakni kolonu
             columns2: Dva stupca
             columns3: Tri stupca
             columns4: Četiri stupca

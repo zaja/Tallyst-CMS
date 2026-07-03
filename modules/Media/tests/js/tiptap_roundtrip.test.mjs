@@ -203,6 +203,35 @@ ok(/class="[^"]*\btallyst-columns--cards\b[^"]*"/.test(cardsEmbeds)
     && cardsEmbeds.includes('data-tallyst-image') && cardsEmbeds.includes('data-tallyst-form'),
     'cards style + nested [image]/[form] markers survive together');
 
+// --- Column highlight (curated COLUMN_STYLES): per-column modifier tallyst-column--highlight.
+// Loose regexes again (mergeAttributes concat); the exact-count asserts above (class="tallyst-column")
+// keep locking the byte-clean default — highlight fixtures count with the loose \btallyst-column\b.
+const highlightCol = roundTrip(
+    '<div class="tallyst-columns tallyst-columns--cards" data-columns="2">'
+    + '<div class="tallyst-column"><p>Basic</p></div>'
+    + '<div class="tallyst-column tallyst-column--highlight"><p>Pro</p></div></div>'
+);
+ok(/class="[^"]*\btallyst-columns--cards\b[^"]*"/.test(highlightCol)
+    && /class="[^"]*\btallyst-column--highlight\b[^"]*"/.test(highlightCol),
+    'column highlight + cards wrapper survive together');
+ok((highlightCol.match(/\btallyst-column\b/g) || []).length >= 2 && highlightCol.includes('Basic') && highlightCol.includes('Pro'),
+    'both columns (one highlighted) preserved');
+const evilColumn = roundTrip(
+    '<div class="tallyst-columns" data-columns="2">'
+    + '<div class="tallyst-column tallyst-column--evil"><p>A</p></div>'
+    + '<div class="tallyst-column"><p>B</p></div></div>'
+);
+ok(!/tallyst-column--/.test(evilColumn), 'out-of-allowlist column modifier (--evil) is dropped');
+// Context-free schema: a highlight WITHOUT a cards wrapper still round-trips (the theme CSS just
+// scopes the visual to cards — the data is never lost by toggling cards off).
+const highlightNoCards = roundTrip(
+    '<div class="tallyst-columns" data-columns="2">'
+    + '<div class="tallyst-column tallyst-column--highlight"><p>X</p></div>'
+    + '<div class="tallyst-column"><p>Y</p></div></div>'
+);
+ok(/class="[^"]*\btallyst-column--highlight\b[^"]*"/.test(highlightNoCards),
+    'column highlight survives without a cards wrapper (context-free schema)');
+
 // --- Inline icon node (WYSIWYG [icon]): the marker round-trips, stays INLINE, name preserved ---
 // buildExtensions() runs with no iconSet here → the NodeView degrades but renderHTML (the marker)
 // is unaffected, so serialization is deterministic and testable. renderHTML emits ONLY the marker

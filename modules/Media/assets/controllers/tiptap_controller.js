@@ -224,6 +224,13 @@ export default class extends Controller {
         menu.querySelectorAll('[data-col-style]').forEach((el) => {
             el.classList.toggle('is-active', null !== cols && (cols.style || '') === el.dataset.colStyle);
         });
+        // Column highlight — a cards concept: enabled only inside a column of a cards-styled
+        // block (honest UI, no dead toggle); flagged when that column carries the highlight.
+        const inCards = null !== cols && 'cards' === cols.style && this.editor.isActive('column');
+        menu.querySelectorAll('[data-col-highlight]').forEach((el) => {
+            el.disabled = !inCards;
+            el.classList.toggle('is-active', inCards && 'highlight' === this.editor.getAttributes('column').style);
+        });
     }
 
     /**
@@ -591,6 +598,22 @@ export default class extends Controller {
             return;
         }
         this.editor.chain().focus().updateAttributes('columns', { style }).run();
+    }
+
+    /**
+     * Toggle the highlight style on the COLUMN under the cursor (updateAttributes targets the
+     * ancestor column via nodesBetween; a range spanning several columns updates them all —
+     * standard Tiptap behaviour). Cards-guard: only inside a cards-styled block (the menu item
+     * is also disabled otherwise — markActive), since highlight is a cards concept; the stored
+     * attribute itself is context-free, so cards off → highlight kept but invisible.
+     */
+    toggleColumnHighlight() {
+        this.closeDropdowns();
+        if (!this.editor.isActive('column') || 'cards' !== this.editor.getAttributes('columns').style) {
+            return;
+        }
+        const style = 'highlight' === this.editor.getAttributes('column').style ? null : 'highlight';
+        this.editor.chain().focus().updateAttributes('column', { style }).run();
     }
 
     onMediaSelect(event) {

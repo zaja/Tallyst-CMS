@@ -120,6 +120,12 @@
                     <span class="tiptap__menu-header">{{ 'admin.media.tiptap.columns_style'|trans({}, 'admin') }}</span>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-col-style="" data-action="media--tiptap#setColumnsStyle">{{ 'admin.media.tiptap.columns_style_default'|trans({}, 'admin') }}</button>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-col-style="cards" data-action="media--tiptap#setColumnsStyle">{{ 'admin.media.tiptap.columns_style_cards'|trans({}, 'admin') }}</button>
+                    <span class="tiptap__menu-sep"></span>
+                    {# Per-column highlight — a cards concept, so the item is DISABLED unless the
+                       cursor is in a column of a cards-styled block (no dead toggle; the
+                       IMG-format disable precedent). markActive drives disabled + is-active. #}
+                    <span class="tiptap__menu-header">{{ 'admin.media.tiptap.columns_column'|trans({}, 'admin') }}</span>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-col-highlight data-action="media--tiptap#toggleColumnHighlight">{{ 'admin.media.tiptap.columns_column_highlight'|trans({}, 'admin') }}</button>
                 </div>
             </div>
 

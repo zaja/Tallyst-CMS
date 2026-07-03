@@ -70,6 +70,8 @@ admin:
             columns_style: Style
             columns_style_default: Default
             columns_style_cards: Cards
+            columns_column: Column
+            columns_column_highlight: Highlight column
             columns2: Two columns
             columns3: Three columns
             columns4: Four columns

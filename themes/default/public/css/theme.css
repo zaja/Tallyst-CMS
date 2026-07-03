@@ -685,6 +685,13 @@ th { font-weight: 650; }
     border-radius: var(--radius);
     padding: var(--s-5);
 }
+/* Highlighted column (.tallyst-column--highlight, curated COLUMN_STYLES) — the featured card
+   (e.g. the "Pro" price). A CARDS concept: styled ONLY inside a cards wrapper (outside cards the
+   class round-trips in content but has no visual — cards off hides it, cards on shows it again).
+   ⚠ TEMPORARY PLACEHOLDER — just a brand border; the real visual is Tema v2 (step 8). */
+.tallyst-columns--cards > .tallyst-column--highlight {
+    border: 2px solid var(--brand);
+}
 @media (max-width: 40rem) {
     .tallyst-columns { grid-auto-flow: row; grid-auto-columns: auto; gap: var(--s-4); }
 }

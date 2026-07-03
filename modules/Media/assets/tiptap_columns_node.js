@@ -30,10 +30,38 @@ import Document from '@tiptap/extension-document';
  * means a column always carries at least one block; an emptied column keeps an empty
  * paragraph. `isolating` keeps editing/selection from leaking across column boundaries.
  */
+/*
+ * Curated per-COLUMN styles (the columns wrapper has its own COLUMNS_STYLES below). `highlight`
+ * marks one column as the featured card (e.g. the "Pro" price). Serialised ONLY as the fixed
+ * modifier class `tallyst-column--{style}`; null default emits nothing (existing content stays
+ * byte-identical). The schema is CONTEXT-FREE (a highlight outside a cards wrapper round-trips
+ * fine) — only the THEME CSS scopes the visual to `.tallyst-columns--cards`, so toggling cards
+ * off hides the highlight without losing it (cards back on → visible again).
+ */
+export const COLUMN_STYLES = ['highlight'];
+
 export const Column = Node.create({
     name: 'column',
     content: 'block+',
     isolating: true,
+
+    addAttributes() {
+        return {
+            // NOTE: /\btallyst-column--/ can NOT match the wrapper's tallyst-columns--… classes
+            // (the trailing "s" breaks the match), and the div.tallyst-column tag matcher below
+            // matches class TOKENS, so a wrapper never parses as a column.
+            style: {
+                default: null,
+                parseHTML: (el) => {
+                    const m = el.className.match(new RegExp(`\\btallyst-column--(${COLUMN_STYLES.join('|')})\\b`));
+                    return m ? m[1] : null;
+                },
+                renderHTML: (attrs) => (attrs.style && COLUMN_STYLES.includes(attrs.style)
+                    ? { class: `tallyst-column--${attrs.style}` }
+                    : {}),
+            },
+        };
+    },
 
     parseHTML() {
         return [{ tag: 'div.tallyst-column' }];
