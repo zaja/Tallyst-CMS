@@ -234,6 +234,10 @@ admin:
             top_bar_enabled: { label: 'Enable top bar', help: 'A thin bar above the header.' }
             top_bar_text: { label: Text, help: 'Rich text shown on the left (supports links).' }
             social_url: { help: 'Full URL (https://…) or a site path (/…). Empty = the icon is hidden.' }
+        typography:
+            title: Typography
+            display_font: { label: 'Heading font', help: 'Used for headings and display text. System = the OS default.' }
+            body_font: { label: 'Body font', help: 'Used for body text. System = the OS default.' }
     theme:
         title: Themes
         intro: 'Themes are added by copying a folder into themes/ on the server (FTP / copy default and rename); the CMS detects them automatically. A theme may include a theme.png (~880×660) thumbnail.'

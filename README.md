@@ -93,3 +93,6 @@ Tallyst is open source and actively developed. Bug reports and feature ideas are
 - Icons: [Font Awesome Free](https://fontawesome.com) 6.7.2 — icons licensed under
   [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Brand/social marks are trademarks of
   their respective owners.
+- Fonts (curated in `public/fonts/`, licences in `public/fonts/LICENSES/`):
+  Inter, Manrope, Space Grotesk, IBM Plex Sans, Lora, Libre Baskerville — [SIL Open Font License 1.1](https://scripts.sil.org/OFL);
+  Roboto — [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). Reserved Font Names respected.

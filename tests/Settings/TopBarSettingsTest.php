@@ -21,7 +21,7 @@ class TopBarSettingsTest extends TestCase
     {
         $menus = $this->createStub(MenuRepository::class);
         $menus->method('findAll')->willReturn([]);
-        $provider = new CoreSettingsProvider($menus, new IconRegistry());
+        $provider = new CoreSettingsProvider($menus, new IconRegistry(), new \App\Font\FontRegistry());
 
         foreach ($provider->getSettingsSections() as $section) {
             if ('topbar' === $section->key) {

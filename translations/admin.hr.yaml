@@ -233,6 +233,10 @@ admin:
             top_bar_enabled: { label: 'Uključi gornju traku', help: 'Tanka traka iznad headera.' }
             top_bar_text: { label: Tekst, help: 'Rich tekst lijevo (podržava poveznice).' }
             social_url: { help: 'Puni URL (https://…) ili putanja na sajtu (/…). Prazno = ikona skrivena.' }
+        typography:
+            title: Tipografija
+            display_font: { label: 'Font naslova', help: 'Za naslove i display tekst. Sistemski = zadani font OS-a.' }
+            body_font: { label: 'Font teksta', help: 'Za tekst. Sistemski = zadani font OS-a.' }
     theme:
         title: Teme
         intro: 'Teme se dodaju kopiranjem mape u themes/ na serveru (FTP / kopiraj default i preimenuj); CMS ih automatski detektira. Svaka tema može imati theme.png (~880×660) kao sličicu.'

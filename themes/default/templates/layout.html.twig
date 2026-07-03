@@ -8,6 +8,10 @@
     {% if favicon_url() %}<link rel="icon" href="{{ favicon_url() }}">{% endif %}
     {% block meta %}{% endblock %}
     <link rel="stylesheet" href="{{ theme_asset('css/theme.css') }}">
+    {# THEME CONTRACT: font_styles() emits the admin's chosen system fonts (@font-face + :root
+       --font/--font-display override) — AFTER theme.css so it overrides the defaults. A theme that
+       wants the font choice to apply must include this in its head. #}
+    {{ font_styles() }}
     {% block stylesheets %}{% endblock %}
     {% block javascripts %}{{ importmap('app') }}{% endblock %}
 </head>

@@ -31,6 +31,9 @@
 
     /* Type — system stack, fluid-ish scale. */
     --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    /* Heading/display font — defaults to the body font, so headings match unless a display font is
+       chosen (Postavke → Tipografija). font_styles() overrides --font/--font-display at runtime. */
+    --font-display: var(--font);
     --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
     --fs-base: 1.0625rem;      /* 17px body                    */
     --fs-sm:   0.875rem;
@@ -97,6 +100,7 @@ img { max-width: 100%; height: auto; }
 
 /* ------------------------------------------------------------- Typography --- */
 h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
     line-height: var(--lh-tight);
     font-weight: 680;
     letter-spacing: -0.01em;
@@ -113,6 +117,7 @@ h6 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .05em; 
 /* Display headings (landing typography). ⚠ TEMPORARY PLACEHOLDER — editor mechanics only.
    The real scale/weight/letter-spacing/dramatika is designed with Tema v2; this is just enough
    that Display 1 > Display 2 > h1 so the editor round-trip can be smoke-tested visually. */
+.display-1, .display-2 { font-family: var(--font-display); }
 .display-1 { font-size: clamp(2.6rem, 1.8rem + 3vw, 4rem); }
 .display-2 { font-size: clamp(2.2rem, 1.6rem + 2.2vw, 3.2rem); }
 

@@ -66,6 +66,8 @@ Point your web server's document root at **`my-site/public/`** — **not** the p
 - **nginx** — `root /path/to/my-site/public;` with the standard Symfony front-controller config (`try_files $uri /index.php$is_args$args;`). See the [Symfony nginx guide](https://symfony.com/doc/current/setup/web_server_configuration.html#nginx).
 - **Apache** — set `DocumentRoot` to `.../public`; `composer require symfony/apache-pack` adds a suitable `.htaccess`.
 
+> **Web fonts (optional, cosmetic).** The bundled fonts in `public/fonts/` load correctly out-of-the-box — browsers accept `.woff2` from `@font-face` regardless of `Content-Type`, so nothing is needed. If your nginx has an old `mime.types` that serves `.woff2` as `application/octet-stream` and you want the pedantically-correct header, add `font/woff2 woff2;` to nginx's `mime.types` (nginx 1.21.1+ already ships it). Purely cosmetic — fonts work either way.
+
 ---
 
 ## 4. Post-installation

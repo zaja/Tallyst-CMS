@@ -19,6 +19,7 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
     public function __construct(
         private readonly MenuRepository $menus,
         private readonly IconRegistry $icons,
+        private readonly \App\Font\FontRegistry $fonts,
     ) {
     }
 
@@ -96,6 +97,13 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
             new SettingDefinition('top_bar_enabled', SettingType::BOOL, 'admin.settings.topbar.top_bar_enabled.label', 'admin.settings.topbar.top_bar_enabled.help', false),
             new SettingDefinition('top_bar_text', SettingType::RICH_TEXT, 'admin.settings.topbar.top_bar_text.label', 'admin.settings.topbar.top_bar_text.help'),
             ...$this->socialDefinitions(),
+        ]);
+
+        // Typography: pick a system font for headings/display and one for body text. Choices come
+        // from the curated Core FontRegistry; 'system' (default) = the OS stack (site unchanged).
+        yield new SettingsSection('typography', 'admin.settings.typography.title', 'fa-font', [
+            new SettingDefinition('display_font', SettingType::CHOICE, 'admin.settings.typography.display_font.label', 'admin.settings.typography.display_font.help', 'system', $this->fonts->choices()),
+            new SettingDefinition('body_font', SettingType::CHOICE, 'admin.settings.typography.body_font.label', 'admin.settings.typography.body_font.help', 'system', $this->fonts->choices()),
         ]);
     }
 
