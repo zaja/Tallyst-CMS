@@ -12,12 +12,13 @@ theme:
         too_short: Upiši barem 3 znaka za pretragu.
         prompt: Upiši pojam za pretragu.
         no_results: 'Nema rezultata za „%query%”.'
+        no_results_short: Nema rezultata
         results_for: 'Rezultati za „%query%” (%count%):'
-        show_all: Prikaži sve rezultate →
+        show_all: Prikaži sve rezultate
     pagination:
         label: Stranice
-        previous: ‹ Prethodna
-        next: Sljedeća ›
+        previous: Prethodna
+        next: Sljedeća
     post:
         byline: 'Autor: %author%'
         back_to_blog: Natrag na blog

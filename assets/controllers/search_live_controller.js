@@ -19,7 +19,7 @@ import { Controller } from '@hotwired/stimulus';
  */
 export default class extends Controller {
     static targets = ['input', 'dropdown', 'toggleButton'];
-    static values = { url: String, showAll: String };
+    static values = { url: String, showAll: String, empty: String };
 
     connect() {
         this.seq = 0;
@@ -111,7 +111,7 @@ export default class extends Controller {
         if (0 === results.length) {
             const empty = document.createElement('div');
             empty.className = 'live-search-empty';
-            empty.textContent = 'Nema rezultata';
+            empty.textContent = this.emptyValue || 'No results'; // translated via the Twig data-value
             this.dropdownTarget.appendChild(empty);
         } else {
             results.forEach((r) => {
@@ -142,7 +142,7 @@ export default class extends Controller {
         const all = document.createElement('a');
         all.className = 'live-search-all';
         all.href = `${this.element.getAttribute('action')}?q=${encodeURIComponent(q)}`;
-        all.textContent = this.showAllValue || 'Show all results →';
+        all.textContent = this.showAllValue || 'Show all results';
         this.dropdownTarget.appendChild(all);
         this.items.push(all);
 

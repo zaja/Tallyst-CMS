@@ -5,9 +5,9 @@
     {% set window = 2 %}
     <nav class="pagination" aria-label="{{ 'theme.pagination.label'|trans }}">
         {% if page > 1 %}
-            <a class="pagination-step" rel="prev" href="{{ path(route, routeParams|merge({page: page - 1})) }}">{{ 'theme.pagination.previous'|trans }}</a>
+            <a class="pagination-step" rel="prev" href="{{ path(route, routeParams|merge({page: page - 1})) }}">{{ icon('chevron-left') }} {{ 'theme.pagination.previous'|trans }}</a>
         {% else %}
-            <span class="pagination-step is-disabled" aria-disabled="true">{{ 'theme.pagination.previous'|trans }}</span>
+            <span class="pagination-step is-disabled" aria-disabled="true">{{ icon('chevron-left') }} {{ 'theme.pagination.previous'|trans }}</span>
         {% endif %}
 
         {% set shown = [] %}
@@ -29,9 +29,9 @@
         {% endfor %}
 
         {% if page < lastPage %}
-            <a class="pagination-step" rel="next" href="{{ path(route, routeParams|merge({page: page + 1})) }}">{{ 'theme.pagination.next'|trans }}</a>
+            <a class="pagination-step" rel="next" href="{{ path(route, routeParams|merge({page: page + 1})) }}">{{ 'theme.pagination.next'|trans }} {{ icon('chevron-right') }}</a>
         {% else %}
-            <span class="pagination-step is-disabled" aria-disabled="true">{{ 'theme.pagination.next'|trans }}</span>
+            <span class="pagination-step is-disabled" aria-disabled="true">{{ 'theme.pagination.next'|trans }} {{ icon('chevron-right') }}</span>
         {% endif %}
     </nav>
 {% endif %}

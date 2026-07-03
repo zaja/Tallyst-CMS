@@ -12,12 +12,13 @@ theme:
         too_short: Type at least 3 characters to search.
         prompt: Enter a search term.
         no_results: 'No results for “%query%”.'
+        no_results_short: No results
         results_for: 'Results for “%query%” (%count%):'
-        show_all: Show all results →
+        show_all: Show all results
     pagination:
         label: Pagination
-        previous: ‹ Previous
-        next: Next ›
+        previous: Previous
+        next: Next
     post:
         byline: By %author%
         back_to_blog: Back to blog

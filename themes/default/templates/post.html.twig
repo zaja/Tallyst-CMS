@@ -19,5 +19,5 @@
         {{ post.content|render_content }}
     </article>
 
-    <p class="prose"><a href="{{ path('blog_index') }}">&larr; {{ 'theme.post.back_to_blog'|trans }}</a></p>
+    <p class="prose"><a href="{{ path('blog_index') }}">{{ icon('arrow-left') }} {{ 'theme.post.back_to_blog'|trans }}</a></p>
 {% endblock %}

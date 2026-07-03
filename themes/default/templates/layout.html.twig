@@ -55,6 +55,7 @@
                       data-controller="search--live"
                       data-search--live-url-value="{{ path('search_live') }}"
                       data-search--live-show-all-value="{{ 'theme.search.show_all'|trans }}"
+                      data-search--live-empty-value="{{ 'theme.search.no_results_short'|trans }}"
                       data-action="keydown->search--live#keydown">
                     <input type="search" name="q" placeholder="{{ 'theme.search.placeholder'|trans }}" aria-label="{{ 'theme.search.label'|trans }}" autocomplete="off"
                            value="{{ app.request.query.get('q') }}"

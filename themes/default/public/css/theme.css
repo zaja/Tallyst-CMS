@@ -279,12 +279,11 @@ th { font-weight: 650; }
     padding: var(--s-1);
     line-height: 0;
 }
+/* The caret glyph is the registry chevron (icon('chevron-down') inside the .caret span);
+   .caret stays the ROTATION HOOK — the [aria-expanded] selector below is the nav.js contract. */
 .submenu-toggle .caret {
-    display: inline-block;
-    width: 0; height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid currentColor;
+    display: inline-flex;
+    font-size: 0.7em;
     transition: transform .2s ease;
 }
 .submenu-toggle[aria-expanded="true"] .caret { transform: rotate(180deg); }

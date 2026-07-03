@@ -15,5 +15,5 @@
     {{ include('_posts_list.html.twig', {posts: page.items}) }}
     {{ include('_pagination.html.twig', {page: page.page, lastPage: page.lastPage, route: 'category_show', routeParams: {slug: category.slug}}) }}
 
-    <p class="prose"><a href="{{ path('blog_index') }}">&larr; {{ 'theme.category.all_posts'|trans }}</a></p>
+    <p class="prose"><a href="{{ path('blog_index') }}">{{ icon('arrow-left') }} {{ 'theme.category.all_posts'|trans }}</a></p>
 {% endblock %}

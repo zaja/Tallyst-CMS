@@ -9,7 +9,9 @@
             {% if has_children %}
                 <button class="submenu-toggle" type="button" aria-expanded="false"
                         aria-label="{{ 'theme.nav.submenu_toggle'|trans }}: {{ item.label }}">
-                    <span class="caret" aria-hidden="true"></span>
+                    {# .caret stays as the rotation hook ([aria-expanded="true"] .caret in theme.css);
+                       the glyph is the registry chevron now, not a CSS border triangle. #}
+                    <span class="caret" aria-hidden="true">{{ icon('chevron-down') }}</span>
                 </button>
                 {{ include('menu_items.html.twig', {items: item.children, depth: depth + 1}) }}
             {% endif %}

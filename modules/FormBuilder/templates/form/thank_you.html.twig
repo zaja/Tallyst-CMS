@@ -21,6 +21,6 @@
             <strong>{{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}</strong>
         </p>
 
-        <p><a href="{{ path('home') }}">&larr; {{ 'form.thankyou.back_home'|trans }}</a></p>
+        <p><a href="{{ path('home') }}">{{ icon('arrow-left') }} {{ 'form.thankyou.back_home'|trans }}</a></p>
     </article>
 {% endblock %}
