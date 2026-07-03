@@ -23,6 +23,9 @@ final class TiptapField implements FieldInterface
             ->setLabel($label)
             ->setTemplatePath('@Media/admin/field/tiptap.html.twig')
             ->setFormType(TiptapType::class)
+            // TiptapField is the MAIN content editor (Page/Post content) — pin its toolbar while
+            // scrolling long content. Bare TiptapType (settings RICH_TEXT) stays non-sticky.
+            ->setFormTypeOption('sticky', true)
             ->addCssClass('field-tiptap');
     }
 }

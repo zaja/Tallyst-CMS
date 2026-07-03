@@ -13,6 +13,23 @@
     background: var(--bs-tertiary-bg, #f6f6f6);
 }
 
+/* Sticky toolbar — pin it while scrolling long content (opt-in via .tiptap--sticky, set by
+   TiptapField = the main Page/Post content editor; settings RICH_TEXT editors stay non-sticky).
+   The background above is SOLID (--bs-tertiary-bg), so scrolling text is hidden behind it. z-30
+   sits above the editor content but BELOW EA's own sticky save-bar (.content-header, z-999).
+   Mobile (<992px): the EA save-bar isn't sticky there → top:0. Desktop (≥992px): sit exactly
+   below the save-bar via --ea-header-h (measured live by the controller; 72px fallback). */
+.tiptap--sticky .tiptap__toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+@media (min-width: 992px) {
+    .tiptap--sticky .tiptap__toolbar {
+        top: var(--ea-header-h, 72px);
+    }
+}
+
 .tiptap__btn {
     min-width: 2rem;
     padding: 0.2rem 0.5rem;

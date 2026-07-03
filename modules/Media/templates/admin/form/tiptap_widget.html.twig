@@ -4,8 +4,9 @@
    syncs the editor HTML into the textarea, and listens for media-library:select scoped to
    THIS subtree (so it never crosses with the featured-image picker on the same form). #}
 {% block tiptap_widget %}
-    <div class="tiptap"
+    <div class="tiptap{{ sticky|default(false) ? ' tiptap--sticky' : '' }}"
          data-controller="media--tiptap"
+         data-media--tiptap-sticky-value="{{ sticky|default(false) ? '1' : '0' }}"
          data-media--tiptap-modules-value="{{ enabled_modules() }}"
          data-media--tiptap-icon-set-value="{{ icon_set_json('ui') }}"
          data-media--tiptap-link-targets-url-value="{{ path('admin_link_targets') }}"

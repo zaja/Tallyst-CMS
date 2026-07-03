@@ -40,6 +40,9 @@ core-API change is a MAJOR (flagged ⚠).
   remaining front-end glyphs (submenu carets, pagination arrows, back links) use
   the same icon set.
 
+- **Editor toolbar stays pinned while scrolling long content** (page and post
+  content), so the formatting controls are always reachable.
+
 ### Fixed
 
 - **Demo install/delete/make-permanent from the admin failed under php-fpm**

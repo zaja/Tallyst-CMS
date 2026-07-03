@@ -24,6 +24,8 @@ export default class extends Controller {
     ];
     static values = {
         modules: String,
+        // sticky = pin the toolbar; drives the ResizeObserver that measures the EA save-bar height.
+        sticky: Boolean,
         // name -> {viewBox, body} projection of the Core IconRegistry UI group (icon_set_json).
         iconSet: Object,
         linkTargetsUrl: String,
@@ -65,6 +67,34 @@ export default class extends Controller {
         };
         document.addEventListener('click', this.boundOutsideClick);
         document.addEventListener('keydown', this.boundEscape);
+
+        this.observeEaHeader();
+    }
+
+    /**
+     * Sticky toolbar offset: EA's own save-bar (.content-header) is sticky (z-999) on the edit
+     * screen ≥992px, with a CONTENT-dependent height (a long page title / wrapped action buttons
+     * make it two rows). Measure it live and publish `--ea-header-h` on :root so the CSS can pin
+     * the toolbar exactly below it (top: var(--ea-header-h, 72px)). The header pins at
+     * inset-block-start:-20px, so its pinned bottom edge = offsetHeight - 20. Only for the sticky
+     * (main content) editor; a no-op when the header isn't present. Turbo-safe (observer torn down
+     * in disconnect).
+     */
+    observeEaHeader() {
+        if (!this.stickyValue || typeof ResizeObserver === 'undefined') {
+            return;
+        }
+        const header = document.querySelector('.content-header');
+        if (!header) {
+            return;
+        }
+        const publish = () => {
+            const h = Math.max(0, header.offsetHeight - 20); // -20 = EA's inset-block-start overlap
+            document.documentElement.style.setProperty('--ea-header-h', `${h}px`);
+        };
+        publish();
+        this.eaHeaderObserver = new ResizeObserver(publish);
+        this.eaHeaderObserver.observe(header);
     }
 
     /**
@@ -132,6 +162,10 @@ export default class extends Controller {
     disconnect() {
         document.removeEventListener('click', this.boundOutsideClick);
         document.removeEventListener('keydown', this.boundEscape);
+        if (this.eaHeaderObserver) {
+            this.eaHeaderObserver.disconnect();
+            this.eaHeaderObserver = null;
+        }
         if (this.editor) {
             this.editor.destroy();
             this.editor = null;
