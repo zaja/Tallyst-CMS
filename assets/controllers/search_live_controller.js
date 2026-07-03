@@ -26,8 +26,10 @@ export default class extends Controller {
         this.active = -1;
         this.items = [];
         this.expanded = false;
-        // Keep an existing query visible on the results page (input pre-filled → start expanded).
-        if (this.inputTarget.value.trim() !== '') {
+        // Keep an existing query visible on the results page (input pre-filled → start expanded) —
+        // DESKTOP ONLY. On mobile the expanded field is an absolute full-width bar that would float
+        // over the page content (e.g. the results title), so there it stays collapsed until tapped.
+        if (this.inputTarget.value.trim() !== '' && window.matchMedia('(min-width: 52rem)').matches) {
             this.setExpanded(true);
         }
         this.onDocClick = (e) => { if (!this.element.contains(e.target)) { this.close(); this.collapse(); } };
