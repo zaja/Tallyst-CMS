@@ -62,6 +62,9 @@ class IconRendererTest extends TestCase
         $registry = new IconRegistry();
 
         self::assertContains('search', $registry->uiKeys());
+        // 'menu' (hamburger) + 'close' back the header nav-toggle icon swap.
+        self::assertContains('menu', $registry->uiKeys());
+        self::assertContains('close', $registry->uiKeys());
         self::assertContains('github', $registry->brandKeys());
         self::assertTrue($registry->has('linkedin'));
         self::assertFalse($registry->has('nope'));

@@ -11,16 +11,26 @@ import { Controller } from '@hotwired/stimulus';
  *    response that isn't the latest (so "lic" can't overwrite "licen"),
  *  - XSS-safe render: textContent + el.href only, never innerHTML,
  *  - close on Escape / click-outside (listener bound in connect, removed in disconnect → Turbo-safe).
+ *
+ * The field is COLLAPSED by default (only the search icon shows); clicking the icon expands the input
+ * (inline) and focuses it. Escape / click-outside collapse it again; an empty submit keeps it open
+ * (never navigates to blank results). Collapse also closes the live dropdown. State is Turbo-safe:
+ * the .is-expanded class is reset on disconnect, listeners bound in connect / removed in disconnect.
  */
 export default class extends Controller {
-    static targets = ['input', 'dropdown'];
+    static targets = ['input', 'dropdown', 'toggleButton'];
     static values = { url: String, showAll: String };
 
     connect() {
         this.seq = 0;
         this.active = -1;
         this.items = [];
-        this.onDocClick = (e) => { if (!this.element.contains(e.target)) { this.close(); } };
+        this.expanded = false;
+        // Keep an existing query visible on the results page (input pre-filled → start expanded).
+        if (this.inputTarget.value.trim() !== '') {
+            this.setExpanded(true);
+        }
+        this.onDocClick = (e) => { if (!this.element.contains(e.target)) { this.close(); this.collapse(); } };
         document.addEventListener('click', this.onDocClick);
     }
 
@@ -28,6 +38,39 @@ export default class extends Controller {
         document.removeEventListener('click', this.onDocClick);
         clearTimeout(this.timer);
         this.controllerAbort?.abort();
+        this.element.classList.remove('is-expanded'); // no zombie state across a Turbo swap
+    }
+
+    /**
+     * The search icon's dual role: collapsed → expand + focus (don't submit); expanded → submit,
+     * EXCEPT an empty query keeps it open (never navigate to blank results).
+     */
+    toggle(event) {
+        if (!this.expanded) {
+            event.preventDefault();
+            this.setExpanded(true);
+            this.inputTarget.focus();
+            return;
+        }
+        if ('' === this.inputTarget.value.trim()) {
+            event.preventDefault();
+            this.inputTarget.focus();
+        }
+        // else: a real query → let the form submit (type=submit) to /pretraga.
+    }
+
+    setExpanded(on) {
+        this.expanded = on;
+        this.element.classList.toggle('is-expanded', on);
+        if (this.hasToggleButtonTarget) {
+            this.toggleButtonTarget.setAttribute('aria-expanded', on ? 'true' : 'false');
+        }
+    }
+
+    collapse() {
+        if (this.expanded) {
+            this.setExpanded(false);
+        }
     }
 
     onInput() {
@@ -105,6 +148,15 @@ export default class extends Controller {
     }
 
     keydown(event) {
+        // Escape works even when the dropdown is closed: first close the dropdown, else collapse.
+        if ('Escape' === event.key) {
+            if (this.isOpen()) {
+                this.close();
+            } else {
+                this.collapse();
+            }
+            return;
+        }
         if (!this.isOpen() || 0 === this.items.length) {
             return;
         }
@@ -117,8 +169,6 @@ export default class extends Controller {
         } else if ('Enter' === event.key && this.active >= 0) {
             event.preventDefault();
             this.items[this.active].click();
-        } else if ('Escape' === event.key) {
-            this.close();
         }
     }
 

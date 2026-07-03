@@ -42,8 +42,11 @@
     <header class="site-header" data-nav>
         <div class="container">
             {{ render_branding() }}
+            {# Hamburger ↔ close: both icons rendered; CSS shows one based on .is-nav-open (toggled by
+               nav.js — untouched). Replaces the old CSS-drawn .bars. Visual/animation = Tema v2. #}
             <button class="nav-toggle" type="button" aria-expanded="false" aria-label="{{ 'theme.nav.menu_toggle'|trans }}" aria-controls="site-nav">
-                <span class="bars" aria-hidden="true"></span>
+                <span class="nav-toggle__open" aria-hidden="true">{{ icon('menu') }}</span>
+                <span class="nav-toggle__close" aria-hidden="true">{{ icon('close') }}</span>
             </button>
             {{ render_menu('main') }}
             {% if setting('search_enabled') %}
@@ -57,7 +60,10 @@
                            value="{{ app.request.query.get('q') }}"
                            data-search--live-target="input"
                            data-action="input->search--live#onInput">
-                    <button type="submit" aria-label="{{ 'theme.search.submit'|trans }}">{{ icon('search') }}</button>
+                    {# Dual role: collapsed → toggle opens + focuses the input (JS preventDefault);
+                       expanded → submit (Enter/click) to /pretraga. Empty query keeps it open. #}
+                    <button type="submit" aria-label="{{ 'theme.search.submit'|trans }}" aria-expanded="false"
+                            data-search--live-target="toggleButton" data-action="search--live#toggle">{{ icon('search') }}</button>
                     <div class="live-search-dropdown" role="listbox" data-search--live-target="dropdown" hidden></div>
                 </form>
             {% endif %}

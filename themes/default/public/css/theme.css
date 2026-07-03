@@ -252,17 +252,13 @@ th { font-weight: 650; }
     align-items: center;
     justify-content: center;
 }
-.nav-toggle .bars, .nav-toggle .bars::before, .nav-toggle .bars::after {
-    content: "";
-    display: block;
-    width: 20px; height: 2px;
-    background: currentColor;
-    border-radius: 2px;
-    transition: transform .2s ease, opacity .2s ease;
-}
-.nav-toggle .bars { position: relative; }
-.nav-toggle .bars::before { position: absolute; top: -6px; }
-.nav-toggle .bars::after  { position: absolute; top:  6px; }
+/* Hamburger ↔ close icon swap on .is-nav-open (nav.js toggles it). ⚠ TEMPORARY PLACEHOLDER —
+   size/animation (bars→X morph) is Tema v2; here just the state swap. */
+.nav-toggle { font-size: 1.2rem; }
+.nav-toggle__open, .nav-toggle__close { display: inline-flex; }
+.nav-toggle__close { display: none; }
+.site-header.is-nav-open .nav-toggle__open { display: none; }
+.site-header.is-nav-open .nav-toggle__close { display: inline-flex; }
 
 /* --------------------------------------------------------- Navigation --- */
 /* 2-level menu. Desktop: inline row + dropdown on hover/focus. Mobile: stacked
@@ -592,10 +588,34 @@ th { font-weight: 650; }
 
 /* ---- Search (header field + results) ---- */
 .site-search { position: relative; display: flex; align-items: center; gap: var(--s-1); }
+/* Collapsed by default — only the icon shows; .is-expanded (search--live#toggle) reveals the input
+   inline + focuses it. ⚠ TEMPORARY PLACEHOLDER — the exact width/animation + mobile placement (e.g.
+   inside the hamburger menu) is Tema v2. width:0 keeps it in-flow so focus() works after expand. */
 .site-search input[type="search"] {
     font: inherit; color: var(--ink); background: var(--surface);
     border: 1px solid var(--line); border-radius: var(--radius);
-    padding: var(--s-1) var(--s-2); max-width: 14rem;
+    width: 0; padding: 0; border-width: 0; opacity: 0;
+    transition: width .15s ease, opacity .15s ease, padding .15s ease;
+}
+.site-search.is-expanded input[type="search"] {
+    width: 12rem; padding: var(--s-1) var(--s-2); border-width: 1px; opacity: 1;
+}
+/* Mobile (< --nav-bp): the expanded search is a FULL-WIDTH BAR below the header (mirrors the mobile
+   nav panel), so it doesn't push the logo/hamburger. The whole form drops out of the header row; the
+   input fills the bar, the dropdown spans below it. ⚠ Placeholder — animation/exact layout = Tema v2. */
+@media (max-width: 51.999rem) {
+    .site-search.is-expanded {
+        position: absolute;
+        left: 0; right: 0;
+        top: 100%;
+        background: var(--bg);
+        border-bottom: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        padding: var(--s-3) var(--s-4);
+        z-index: 55;
+    }
+    .site-search.is-expanded input[type="search"] { flex: 1; width: auto; min-width: 0; }
+    .site-search.is-expanded .live-search-dropdown { left: 0; right: 0; width: auto; min-width: 0; max-width: none; }
 }
 .site-search input[type="search"]:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
 .site-search button {
