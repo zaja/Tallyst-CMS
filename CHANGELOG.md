@@ -45,6 +45,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ### Fixed
 
+- **Icon picker grid opened outside the editor** into the sidebar column — it now
+  stays within the editor and scrolls when the icon set is large.
 - **Demo install/delete/make-permanent from the admin failed under php-fpm**
   (wrong PHP binary resolution) — the buttons now run the site's CLI PHP.
 
