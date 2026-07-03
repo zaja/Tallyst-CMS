@@ -40,6 +40,11 @@ core-API change is a MAJOR (flagged ⚠).
   remaining front-end glyphs (submenu carets, pagination arrows, back links) use
   the same icon set.
 
+### Fixed
+
+- **Demo install/delete/make-permanent from the admin failed under php-fpm**
+  (wrong PHP binary resolution) — the buttons now run the site's CLI PHP.
+
 ## [1.3.0] — 2026-07-02
 
 ### Added

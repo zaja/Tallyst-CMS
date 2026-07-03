@@ -4,6 +4,8 @@ namespace App\Console;
 
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
 /**
@@ -58,7 +60,15 @@ final class ConsoleStepRunner
     {
         $io->writeln('<info>→ php bin/console '.implode(' ', $args).'</info>');
 
-        $process = new Process(array_merge([\PHP_BINARY, 'bin/console'], $args), $this->projectDir, $env);
+        $php = self::resolvePhpBinary(
+            \PHP_SAPI,
+            'php'.\PHP_MAJOR_VERSION.'.'.\PHP_MINOR_VERSION,
+            static fn (string $name): ?string => (new ExecutableFinder())->find($name),
+            static fn (): string|false => (new PhpExecutableFinder())->find(false),
+            \PHP_BINARY,
+        );
+
+        $process = new Process(array_merge([$php, 'bin/console'], $args), $this->projectDir, $env);
         $process->setTimeout(600);
         $process->run(static function (string $type, string $buffer) use ($io): void {
             $io->write($buffer);
@@ -73,5 +83,46 @@ final class ConsoleStepRunner
         }
 
         return false;
+    }
+
+    /**
+     * Pick the CLI php binary to run `bin/console` with — SAPI-aware.
+     *
+     * Under a CLI SAPI (install/upgrade, run from a terminal) `\PHP_BINARY` IS the CLI binary, so
+     * use it and keep that path byte-identical. Under a NON-CLI SAPI (php-fpm — the demo admin
+     * buttons) `\PHP_BINARY` is the SAPI executable (e.g. `/usr/sbin/php-fpm8.5`) which can't run a
+     * script — it just prints its usage and exits 64, so the subprocess "fails". There we resolve
+     * the VERSION-MATCHED CLI binary (`php{MAJOR}.{MINOR}`, e.g. `php8.5`) — never a bare `php`,
+     * which on this host is a DIFFERENT version (the CLAUDE.md "wrong PHP version" gotcha). The
+     * fpm worker already runs the site's PHP version, so the versioned name matches by definition.
+     *
+     * Pure + injected finders so it's unit-testable without a real fpm process.
+     *
+     * @param callable(string): ?string       $findVersioned locate a named executable (ExecutableFinder)
+     * @param callable(): (string|false)       $findPhp       PhpExecutableFinder fallback
+     */
+    public static function resolvePhpBinary(
+        string $sapi,
+        string $versionedName,
+        callable $findVersioned,
+        callable $findPhp,
+        string $phpBinary,
+    ): string {
+        // 1) CLI: PHP_BINARY is the CLI binary — unchanged for install/upgrade.
+        if (\in_array($sapi, ['cli', 'cli-server', 'phpdbg'], true)) {
+            return $phpBinary;
+        }
+
+        // 2) Non-CLI (fpm/web): the version-matched CLI binary is primary.
+        if (($found = $findVersioned($versionedName)) !== null && '' !== $found) {
+            return $found;
+        }
+
+        // 3) Fallback chain: PhpExecutableFinder → PHP_BINARY (last resort).
+        if (($found = $findPhp()) !== false && '' !== $found) {
+            return $found;
+        }
+
+        return $phpBinary;
     }
 }
