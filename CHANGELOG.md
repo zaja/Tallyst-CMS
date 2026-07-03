@@ -45,8 +45,9 @@ core-API change is a MAJOR (flagged ⚠).
 
 ### Fixed
 
-- **Icon picker grid opened outside the editor** into the sidebar column — it now
-  stays within the editor and scrolls when the icon set is large.
+- **Editor toolbar dropdowns near the right edge** (columns, icon picker) opened
+  outside the editor into the sidebar column — they now stay within the editor
+  (the icon grid also scrolls when the set is large).
 - **Demo install/delete/make-permanent from the admin failed under php-fpm**
   (wrong PHP binary resolution) — the buttons now run the site's CLI PHP.
 

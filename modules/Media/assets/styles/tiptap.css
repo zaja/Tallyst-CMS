@@ -111,6 +111,15 @@
     display: block;
 }
 
+/* Right-align a dropdown whose trigger sits near the RIGHT end of the toolbar (columns,
+   icon picker), so the menu grows LEFTWARD from the trigger's right edge and stays inside the
+   editor instead of spilling into the EA sidebar column (Status/Position) on the two-column page
+   edit. Left-side dropdowns (heading/list/align) keep the default left:0. */
+.tiptap__menu--right {
+    left: auto;
+    right: 0;
+}
+
 .tiptap__menu-item {
     display: block;
     width: 100%;
@@ -163,19 +172,15 @@
 }
 
 /* Icon picker grid — the controller fills it with one button per curated icon. Compact grid:
-   fixed columns + vertical scroll + RIGHT-aligned so it stays inside the editor. The trigger sits
-   at the right end of the toolbar, so a left-aligned menu (the .tiptap__menu default) would grow
-   the ~13rem grid rightward past the editor into the EA sidebar column (Status/Position) on the
-   two-column page edit. right:0 grows it LEFTWARD instead; the fixed 6 columns + max-height/scroll
-   keep it compact for ANY icon-set size (more icons = more rows + scroll, width unchanged). */
+   fixed columns + vertical scroll, so it stays compact for ANY icon-set size (more icons = more
+   rows + scroll, width unchanged). Right-alignment (so it doesn't spill past the editor) comes
+   from the shared .tiptap__menu--right modifier on the menu element. */
 .tiptap__icon-grid {
     grid-template-columns: repeat(6, 1fr);
     gap: 0.15rem;
     padding: 0.35rem;
     max-height: 14rem;
     overflow-y: auto;
-    left: auto;
-    right: 0;
 }
 /* Bind the grid `display` to the OPEN state so a closed picker stays hidden by the base
    `.tiptap__menu { display:none }`, exactly like every other dropdown. The icon-grid class sits ON
