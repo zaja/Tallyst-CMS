@@ -195,10 +195,14 @@
     margin-top: 0.6rem;
 }
 
-/* Display heading preview. ⚠ TEMPORARY PLACEHOLDER (real scale = Tema v2) — mirrors the front
-   ordering (Display 1 > Display 2 > h1) so the WYSIWYG smoke matches the rendered page. */
-.tiptap__editor .ProseMirror h1.display-1 { font-size: 2.4rem; }
-.tiptap__editor .ProseMirror h1.display-2 { font-size: 2rem; }
+/* Display heading preview — mirrors the theme's Tema v2 scale (theme.css .display-1/.display-2)
+   so the WYSIWYG matches the rendered page. */
+.tiptap__editor .ProseMirror h1.display-1 { font-size: clamp(2.2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.028em; line-height: 1.1; }
+.tiptap__editor .ProseMirror h1.display-2 { font-size: clamp(1.65rem, 2.6vw, 2.1rem); font-weight: 700; letter-spacing: -0.022em; line-height: 1.15; }
+
+/* h6 eyebrow preview (legacy/manual content only — the heading dropdown authors h1–h4) mirrors
+   the theme's brand-coloured uppercase kicker. */
+.tiptap__editor .ProseMirror h6 { text-transform: uppercase; letter-spacing: .09em; font-size: 0.875rem; color: #ea580c; }
 
 .tiptap__editor .ProseMirror img {
     max-width: 100%;
@@ -266,20 +270,58 @@
     margin-top: 0.6rem;
 }
 
-/* Cards style (.tallyst-columns--cards, curated COLUMNS_STYLES): SOLID card look so the admin
-   instantly sees the difference from the dashed default outline. Mirrors the theme placeholder
-   (.tallyst-columns--cards in theme.css); the real card visual is Tema v2 — keep the two in sync. */
+/* Card styles (curated COLUMNS_STYLES) — mirror the theme's Tema v2 card language
+   (theme.css .tallyst-columns--cards/--cards-tint): white bordered cards vs tinted rotation.
+   Concrete tint values (the front tokens don't exist in the admin); keep the two in sync. */
 .tiptap__editor .ProseMirror .tallyst-columns--cards > .tallyst-column {
-    background: var(--bs-tertiary-bg, #f6f7f9);
-    border: 1px solid var(--bs-border-color, #e4e7ec);
-    border-radius: 8px;
-    padding: 1rem;
+    background: var(--bs-body-bg, #fff);
+    border: 1px solid var(--bs-border-color, #e6e9ee);
+    border-radius: 12px;
+    padding: 1.25rem;
 }
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column {
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+1) { background: #fdeee3; }
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+2) { background: #edf2fc; }
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+3) { background: #e8f5ee; }
+/* ⚠ tinted cards force a light background regardless of admin dark mode — the tint IS the preview. */
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column { color: #1c2430; }
 
-/* Highlighted column (cards concept, scoped to the cards wrapper like the theme CSS) — brand
-   border so the admin sees WHICH column is featured. Placeholder; real visual = Tema v2. */
-.tiptap__editor .ProseMirror .tallyst-columns--cards > .tallyst-column--highlight {
-    border: 2px solid var(--bs-primary, #2563eb);
+/* ICON-CHIP preview — a lone [icon] in the card's first paragraph reads as the feature chip
+   (mirrors the theme rule; the icon NodeView renders a span[data-tallyst-icon] wrapping the svg,
+   so the chip targets the SPAN here, not the svg like the front). */
+.tiptap__editor .ProseMirror .tallyst-columns--cards > .tallyst-column > p:first-child > span[data-tallyst-icon]:only-child,
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column > p:first-child > span[data-tallyst-icon]:only-child {
+    width: 44px;
+    height: 44px;
+    padding: 11px;
+    border-radius: 12px;
+    box-sizing: border-box;
+    display: inline-block;
+    background: rgba(255, 255, 255, .8);
+}
+/* The NodeView svg is 1em — make it fill the chip box (the front chip styles the svg directly). */
+.tiptap__editor .ProseMirror .tallyst-columns--cards > .tallyst-column > p:first-child > span[data-tallyst-icon]:only-child > svg,
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column > p:first-child > span[data-tallyst-icon]:only-child > svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.tiptap__editor .ProseMirror .tallyst-columns--cards > .tallyst-column > p:first-child > span[data-tallyst-icon]:only-child {
+    background: #fdeee3;
+    color: #ea580c;
+}
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+1) > p:first-child > span[data-tallyst-icon]:only-child { color: #c2410c; }
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+2) > p:first-child > span[data-tallyst-icon]:only-child { color: #2453c4; }
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+3) > p:first-child > span[data-tallyst-icon]:only-child { color: #177a4c; }
+
+/* Highlighted column (cards concept, both card looks, scoped like the theme CSS) — brand border
+   so the admin sees WHICH column is featured. */
+.tiptap__editor .ProseMirror .tallyst-columns--cards > .tallyst-column--highlight,
+.tiptap__editor .ProseMirror .tallyst-columns--cards-tint > .tallyst-column--highlight {
+    border: 2px solid #ea580c;
 }
 
 /* ---- Link picker modal (toolbar link button) -----------------------------------------------
@@ -410,13 +452,18 @@
     margin-bottom: 0.85rem;
 }
 
-/* Editor preview of a CTA button (a styled link). ⚠ TEMPORARY PLACEHOLDER mirroring the front so
-   the button reads as a button in the editor; the real visual is Tema v2 (step 8). */
+/* Editor preview of a CTA button (a styled link) — mirrors the theme's Tema v2 PILLS
+   (theme.css .tallyst-btn--*), concrete values (the front tokens don't exist in the admin). */
 .tiptap__editor .ProseMirror a.tallyst-btn {
     display: inline-block;
-    padding: 0.4em 0.9em;
-    border: 1px solid currentColor;
-    border-radius: 4px;
+    padding: 0.75em 1.6em;
+    border: 1.5px solid transparent;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.95em;
     text-decoration: none;
     line-height: 1.2;
 }
+.tiptap__editor .ProseMirror a.tallyst-btn--primary { background: #ea580c; border-color: #ea580c; color: #fff; }
+.tiptap__editor .ProseMirror a.tallyst-btn--secondary { background: #fff; border-color: #e6e9ee; color: #1c2430; }
+.tiptap__editor .ProseMirror a.tallyst-btn--ghost { background: transparent; border-color: transparent; color: #ea580c; }

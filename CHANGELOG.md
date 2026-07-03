@@ -12,10 +12,33 @@ core-API change is a MAJOR (flagged ⚠).
 
 ### Added
 
-- **Columns can render as cards.** The editor's Columns dropdown gained a curated
-  Style group (Default/Cards): with Cards, every column in the block is framed as a
-  card on the front. Existing columns are untouched (Default); the final card visual
-  arrives with the theme redesign.
+- **Icons in content.** A curated icon set (Font Awesome Free, inline SVG) with an
+  `[icon]` shortcode and a WYSIWYG picker in the editor toolbar — icons sit inline
+  in text and inherit its colour and size.
+- **Content buttons.** Turn any link into a call-to-action button with a curated
+  style (primary, secondary or ghost) straight from the link picker.
+- **Top bar.** An optional thin bar above the header: rich text with links on the
+  left, social icons (GitHub, X, LinkedIn, YouTube) on the right — configured in
+  Settings.
+- **Configurable footer.** One to four footer columns, each showing a menu (with
+  its name as the heading) or rich text.
+- **Typography settings.** Pick a display and a body font from a curated set of
+  self-hosted fonts (no CDN calls) in Settings → Typography.
+- **Columns card styles.** The editor's Columns dropdown gained a curated Style
+  group: white bordered cards or tinted cards in rotation, plus a per-column
+  highlight for the featured card (e.g. the "Pro" price). Existing columns are
+  untouched (Default).
+- **Header search toggle.** The search field is collapsed to an icon; it expands
+  inline on desktop and as a full-width bar under the header on mobile.
+
+### Changed
+
+- **Theme v2 redesign.** The default theme got a full visual pass: a warm orange
+  accent, a card-based layout language with soft tints, pill buttons, a dark top
+  bar and footer, larger radii, and Space Grotesk/Inter as the default typography.
+  The hamburger toggle now swaps to a close icon while the menu is open, and the
+  remaining front-end glyphs (submenu carets, pagination arrows, back links) use
+  the same icon set.
 
 ## [1.3.0] — 2026-07-02
 

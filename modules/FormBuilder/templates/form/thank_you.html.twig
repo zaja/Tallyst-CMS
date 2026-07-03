@@ -23,4 +23,11 @@
 
         <p><a href="{{ path('home') }}">{{ icon('arrow-left') }} {{ 'form.thankyou.back_home'|trans }}</a></p>
     </article>
+
+    {# Minimal decent styling (was unstyled) — theme tokens with neutral fallbacks. #}
+    <style>
+        .fb-thankyou { max-width: 40rem; margin-inline: auto; padding: var(--s-7, 3rem) 0; text-align: center; }
+        .fb-thankyou-message { font-size: var(--fs-lg, 1.1875rem); color: var(--muted, #5f6b78); margin-bottom: 1.5rem; }
+        .fb-thankyou-message > :first-child { margin-top: 0; }
+    </style>
 {% endblock %}

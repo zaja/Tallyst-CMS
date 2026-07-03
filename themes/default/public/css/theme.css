@@ -16,18 +16,26 @@
 
 /* ---------------------------------------------------------------- Tokens --- */
 :root {
-    /* Colour — neutral, professional; works for a service seller AND an app seller.
+    /* Colour — Tema v2: warm orange accent on a cool ink, tinted card language.
        Re-brand by changing --brand (+ --brand-strong for hover). */
-    --ink:          #1f2328;   /* primary text                 */
-    --muted:        #5c6570;   /* secondary text / meta        */
+    --ink:          #1c2430;   /* primary text                 */
+    --muted:        #5f6b78;   /* secondary text / meta        */
     --bg:           #ffffff;   /* page background              */
     --surface:      #f6f7f9;   /* cards / raised panels        */
-    --surface-2:    #eef0f3;   /* subtler fill (code, hover)   */
-    --line:         #e4e7ec;   /* hairlines / borders          */
-    --brand:        #2563eb;   /* links, primary actions       */
-    --brand-strong: #1d4ed8;   /* brand hover/active           */
+    --surface-2:    #eceff3;   /* subtler fill (code, hover)   */
+    --line:         #e6e9ee;   /* hairlines / borders          */
+    --brand:        #ea580c;   /* links, primary actions       */
+    --brand-strong: #c2410c;   /* brand hover/active           */
     --brand-ink:    #ffffff;   /* text on a brand surface      */
-    --brand-tint:   #eff4ff;   /* brand-tinted background      */
+    --brand-tint:   #fdeee3;   /* brand-tinted background      */
+
+    /* Dark surfaces (top bar / footer) + their text/links, and the card tint palette. */
+    --ink-2:          #141b26; /* dark chrome surface          */
+    --muted-inverse:  #a8b3c0; /* secondary text on dark       */
+    --brand-inverse:  #fb923c; /* links on dark                */
+    --tint-warm:      #fdeee3; /* card tint rotation 1         */
+    --tint-cool:      #edf2fc; /* card tint rotation 2         */
+    --tint-mint:      #e8f5ee; /* card tint rotation 3         */
 
     /* Type — system stack, fluid-ish scale. */
     --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -52,8 +60,8 @@
     --s-8: 4.5rem;
 
     /* Shape & depth. */
-    --radius:    12px;
-    --radius-sm: 8px;
+    --radius:    16px;
+    --radius-sm: 10px;
     --shadow:    0 1px 2px rgba(16, 24, 40, .04), 0 6px 20px rgba(16, 24, 40, .07);
     --shadow-sm: 0 1px 2px rgba(16, 24, 40, .06);
 
@@ -102,8 +110,8 @@ img { max-width: 100%; height: auto; }
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     line-height: var(--lh-tight);
-    font-weight: 680;
-    letter-spacing: -0.01em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     margin: 1.6em 0 0.55em;
     color: var(--ink);
 }
@@ -112,29 +120,49 @@ h2 { font-size: clamp(1.45rem, 1.2rem + 1vw, 1.85rem); }
 h3 { font-size: 1.35rem; }
 h4 { font-size: 1.15rem; }
 h5 { font-size: 1rem; }
-h6 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+/* h6 = EYEBROW: the small brand-coloured section opener (uppercase kicker above a Display title). */
+h6 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .09em; color: var(--brand); margin-top: var(--s-8); }
 
-/* Display headings (landing typography). ⚠ TEMPORARY PLACEHOLDER — editor mechanics only.
-   The real scale/weight/letter-spacing/dramatika is designed with Tema v2; this is just enough
-   that Display 1 > Display 2 > h1 so the editor round-trip can be smoke-tested visually. */
-.display-1, .display-2 { font-family: var(--font-display); }
-.display-1 { font-size: clamp(2.6rem, 1.8rem + 3vw, 4rem); }
-.display-2 { font-size: clamp(2.2rem, 1.6rem + 2.2vw, 3.2rem); }
+/* Display headings (landing typography) — the Tema v2 scale. Semantically still a real h1/h2;
+   the class is only the visual treatment. */
+.display-1, .display-2 { font-family: var(--font-display); font-weight: 700; }
+.display-1 { font-size: clamp(2.5rem, 5vw, 3.6rem); letter-spacing: -0.028em; line-height: 1.1; margin: 0.4em 0 0.35em; }
+.display-2 { font-size: clamp(1.75rem, 3vw, 2.35rem); letter-spacing: -0.022em; line-height: 1.15; margin: 0.5em 0 0.4em; }
 
-/* Curated inline-SVG icons (icon() Twig fn + [icon] shortcode + social). ⚠ TEMPORARY PLACEHOLDER —
-   the renderer already emits fill=currentColor + 1em so icons render sanely without this; the real
-   scale/spacing/brand colour is designed with Tema v2 (v1.4.0 step 8). This is just the baseline
-   alignment hook. */
+/* LEDE: the paragraph immediately after a Display title reads as the intro line — larger, muted,
+   capped to a readable width (alignment still comes from the editor). Real content markup, additive. */
+.display-1 + p, .display-2 + p {
+    font-size: var(--fs-lg);
+    color: var(--muted);
+    max-width: 60ch;
+    margin-inline: auto;
+}
+
+/* Curated inline-SVG icons (icon() Twig fn + [icon] shortcode + social) — the baseline: an icon
+   inherits the surrounding text's colour and size (the renderer emits fill=currentColor + 1em).
+   Card icon-chips build on this below (Multi-column section). */
 .tallyst-icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.125em; fill: currentColor; }
 
-/* Curated content buttons (CTA). ⚠ TEMPORARY PLACEHOLDER — just enough that a button reads as a
-   button (inline-block + padding + border); the real colour/padding/shape/hover per style is
-   designed with Tema v2 (step 8). tallyst-btn--{primary,secondary,ghost} are the curated styles. */
-.tallyst-btn { display: inline-block; padding: 0.5em 1em; border: 1px solid currentColor; border-radius: 4px; text-decoration: none; line-height: 1.2; }
+/* Curated content buttons (CTA) — Tema v2 PILLS. tallyst-btn--{primary,secondary,ghost} are the
+   curated styles (schema allowlist); the hero CTA (.page-hero-cta) matches the primary pill. */
+.tallyst-btn {
+    display: inline-block;
+    padding: 0.75em 1.6em;
+    border: 1.5px solid transparent;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    text-decoration: none;
+    transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+}
 .tallyst-btn + .tallyst-btn { margin-left: 0.5em; }
-.tallyst-btn--primary { background: var(--brand, #2b6cb0); border-color: var(--brand, #2b6cb0); color: var(--brand-ink, #fff); }
-.tallyst-btn--secondary { background: var(--surface, #f0f0f0); color: var(--ink, #222); }
-.tallyst-btn--ghost { background: transparent; }
+.tallyst-btn--primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.tallyst-btn--primary:hover { background: var(--brand-strong); border-color: var(--brand-strong); color: var(--brand-ink); text-decoration: none; transform: translateY(-1px); }
+.tallyst-btn--secondary { background: var(--bg); border-color: var(--line); color: var(--ink); }
+.tallyst-btn--secondary:hover { border-color: var(--ink); color: var(--ink); text-decoration: none; }
+.tallyst-btn--ghost { background: transparent; color: var(--brand); }
+.tallyst-btn--ghost:hover { background: var(--brand-tint); color: var(--brand-strong); text-decoration: none; }
 
 p { margin: 0 0 1.15em; }
 
@@ -168,7 +196,7 @@ code {
 pre {
     margin: 1.5em 0;
     padding: var(--s-4) var(--s-5);
-    background: #0f172a;
+    background: var(--ink-2);
     color: #e2e8f0;
     border-radius: var(--radius);
     overflow-x: auto;
@@ -205,18 +233,20 @@ th { font-weight: 650; }
 .page-content > :first-child { margin-top: 0; }
 
 /* ------------------------------------------------------------- Header --- */
-/* Top bar (Postavke → Top bar). ⚠ TEMPORARY PLACEHOLDER — just a two-column thin bar so it reads
-   as a top bar; the real visual (colour/height/spacing/hover) is Tema v2 (step 8). The TRACK is
-   full-width (so a Tema-v2 background can span the whole width, like the header); the CONTENT is
-   inset via the shared .container on __inner. Hidden on mobile (below --nav-bp), mobile-first like
-   the header nav. */
-.site-topbar { display: none; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+/* Top bar (Postavke → Top bar) — a thin DARK strip above the header. The TRACK is full-width
+   (the dark background spans the whole width, like the header); the CONTENT is inset via the
+   shared .container on __inner. Hidden on mobile (below --nav-bp), mobile-first like the header
+   nav. */
+.site-topbar { display: none; background: var(--ink-2); color: var(--muted-inverse); font-size: var(--fs-sm); }
 @media (min-width: 52rem) { .site-topbar { display: block; } }
 /* padding-block only — keep .container's horizontal inset (padding-inline) so the content aligns
    with the header/hero, not the window edge. */
 .site-topbar__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding-block: var(--s-2); }
+.site-topbar__text a { color: var(--brand-inverse); }
+.site-topbar__text a:hover { color: #ffb27a; }
 .site-topbar__social { display: flex; align-items: center; gap: var(--s-3); }
-.site-topbar__social-link { color: var(--muted); display: inline-flex; }
+.site-topbar__social-link { color: var(--muted-inverse); display: inline-flex; }
+.site-topbar__social-link:hover { color: #fff; }
 .site-topbar__text > :first-child { margin-top: 0; }
 .site-topbar__text > :last-child { margin-bottom: 0; }
 
@@ -232,10 +262,10 @@ th { font-weight: 650; }
     align-items: center;
     justify-content: space-between;
     gap: var(--s-4);
-    padding-block: var(--s-4);
+    padding-block: 1.0625rem;
 }
 
-.site-brand { display: inline-flex; align-items: center; gap: var(--s-2); font-weight: 700; font-size: 1.15rem; color: var(--ink); }
+.site-brand { display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; letter-spacing: -0.02em; color: var(--ink); }
 .site-brand:hover { text-decoration: none; color: var(--ink); }
 .site-logo { max-height: 56px; width: auto; display: block; }
 
@@ -252,8 +282,7 @@ th { font-weight: 650; }
     align-items: center;
     justify-content: center;
 }
-/* Hamburger ↔ close icon swap on .is-nav-open (nav.js toggles it). ⚠ TEMPORARY PLACEHOLDER —
-   size/animation (bars→X morph) is Tema v2; here just the state swap. */
+/* Hamburger ↔ close icon swap on .is-nav-open (nav.js toggles it). */
 .nav-toggle { font-size: 1.2rem; }
 .nav-toggle__open, .nav-toggle__close { display: inline-flex; }
 .nav-toggle__close { display: none; }
@@ -266,7 +295,7 @@ th { font-weight: 650; }
    with no JS (progressive enhancement). */
 .site-nav .menu { list-style: none; margin: 0; padding: 0; }
 .site-nav .menu-item { position: relative; }
-.site-nav a { color: var(--ink); font-weight: 550; display: inline-block; }
+.site-nav a { color: var(--ink); font-weight: 600; display: inline-block; }
 .site-nav a:hover { color: var(--brand); text-decoration: none; }
 .site-nav .menu-item.is-active > a { color: var(--brand); }
 
@@ -451,15 +480,19 @@ th { font-weight: 650; }
 .page-hero--no-image .page-hero-inner h1,
 .page-hero--no-image .page-hero-text { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 
+/* Hero CTA — visually the primary PILL (.tallyst-btn--primary); its own class stays (theme contract). */
 .page-hero-cta {
     display: inline-block;
     background: var(--brand);
     color: var(--brand-ink);
-    padding: var(--s-3) var(--s-5);
-    border-radius: var(--radius-sm);
+    padding: 0.75em 1.6em;
+    border-radius: 999px;
     font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    transition: background .15s ease, transform .15s ease;
 }
-.page-hero-cta:hover { background: var(--brand-strong); color: #fff; text-decoration: none; }
+.page-hero-cta:hover { background: var(--brand-strong); color: #fff; text-decoration: none; transform: translateY(-1px); }
 
 /* Bare-image hero: image only (no overlay text); the page title renders below it. UNCHANGED. */
 .page-hero-image { margin-bottom: var(--s-6); }
@@ -587,21 +620,20 @@ th { font-weight: 650; }
 
 /* ---- Search (header field + results) ---- */
 .site-search { position: relative; display: flex; align-items: center; gap: var(--s-1); }
-/* Collapsed by default — only the icon shows; .is-expanded (search--live#toggle) reveals the input
-   inline + focuses it. ⚠ TEMPORARY PLACEHOLDER — the exact width/animation + mobile placement (e.g.
-   inside the hamburger menu) is Tema v2. width:0 keeps it in-flow so focus() works after expand. */
+/* Collapsed by default — only the icon shows; .is-expanded (search--live#toggle) reveals the PILL
+   input inline + focuses it. width:0 keeps it in-flow so focus() works after expand. */
 .site-search input[type="search"] {
     font: inherit; color: var(--ink); background: var(--surface);
-    border: 1px solid var(--line); border-radius: var(--radius);
+    border: 1px solid var(--line); border-radius: 999px;
     width: 0; padding: 0; border-width: 0; opacity: 0;
     transition: width .15s ease, opacity .15s ease, padding .15s ease;
 }
 .site-search.is-expanded input[type="search"] {
-    width: 12rem; padding: var(--s-1) var(--s-2); border-width: 1px; opacity: 1;
+    width: 12rem; padding: var(--s-1) var(--s-3); border-width: 1px; opacity: 1;
 }
 /* Mobile (< --nav-bp): the expanded search is a FULL-WIDTH BAR below the header (mirrors the mobile
    nav panel), so it doesn't push the logo/hamburger. The whole form drops out of the header row; the
-   input fills the bar, the dropdown spans below it. ⚠ Placeholder — animation/exact layout = Tema v2. */
+   input fills the bar, the dropdown spans below it. */
 @media (max-width: 51.999rem) {
     .site-search.is-expanded {
         position: absolute;
@@ -621,6 +653,7 @@ th { font-weight: 650; }
     font: inherit; cursor: pointer; background: none; border: none;
     padding: var(--s-1); color: var(--muted); line-height: 1;
 }
+.site-search button:hover { color: var(--brand); }
 .search-note { color: var(--muted); }
 .search-results { list-style: none; padding: 0; margin: var(--s-4) 0 0; }
 .search-result { padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
@@ -674,22 +707,56 @@ th { font-weight: 650; }
 .tallyst-column { min-width: 0; }
 .tallyst-column > :first-child { margin-top: 0; }
 
-/* Cards style (curated columns style, .tallyst-columns--cards on the wrapper — ADDITIVE contract,
-   default columns are untouched). ⚠ TEMPORARY PLACEHOLDER — just enough that a card reads as a
-   card (surface + border + radius + padding); the real visual (podloga/tinte/hover/sjena) is
-   designed with Tema v2 (step 8). Editor preview mirrors this in modules/Media/assets/styles/
-   tiptap.css — keep the two visually in sync. */
+/* Card styles (curated columns styles, ADDITIVE contract — default columns untouched). Two looks:
+   --cards = white cards with a border (pricing), --cards-tint = tinted cards in rotation
+   (features). Editor preview mirrors this in modules/Media/assets/styles/tiptap.css — keep in sync. */
 .tallyst-columns--cards > .tallyst-column {
-    background: var(--surface);
+    background: var(--bg);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    padding: var(--s-5);
+    padding: var(--s-6);
 }
+.tallyst-columns--cards-tint > .tallyst-column {
+    border-radius: var(--radius);
+    padding: var(--s-6);
+}
+/* Tint rotation: warm / cool / mint, repeating per column position. */
+.tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+1) { background: var(--tint-warm); }
+.tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+2) { background: var(--tint-cool); }
+.tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+3) { background: var(--tint-mint); }
+
+/* Card typography: compact heading + muted small copy. */
+.tallyst-columns--cards > .tallyst-column h3,
+.tallyst-columns--cards-tint > .tallyst-column h3 { font-size: 1.0625rem; margin-top: var(--s-2); }
+.tallyst-columns--cards > .tallyst-column p,
+.tallyst-columns--cards-tint > .tallyst-column p { font-size: var(--fs-sm); color: var(--muted); }
+
+/* ICON-CHIP: a lone [icon] in the card's FIRST paragraph reads as the feature chip (real content
+   markup — the icon node alone in the opening paragraph). */
+.tallyst-columns--cards > .tallyst-column > p:first-child > .tallyst-icon:only-child,
+.tallyst-columns--cards-tint > .tallyst-column > p:first-child > .tallyst-icon:only-child {
+    width: 44px;
+    height: 44px;
+    padding: 11px;
+    border-radius: 12px;
+    box-sizing: border-box;
+    display: inline-block;
+    background: rgba(255, 255, 255, .8);
+}
+/* Chip colour: brand-on-tint in white cards; per-tint accents in the rotation. */
+.tallyst-columns--cards > .tallyst-column > p:first-child > .tallyst-icon:only-child {
+    background: var(--brand-tint);
+    color: var(--brand);
+}
+.tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+1) > p:first-child > .tallyst-icon:only-child { color: #c2410c; }
+.tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+2) > p:first-child > .tallyst-icon:only-child { color: #2453c4; }
+.tallyst-columns--cards-tint > .tallyst-column:nth-child(3n+3) > p:first-child > .tallyst-icon:only-child { color: #177a4c; }
+
 /* Highlighted column (.tallyst-column--highlight, curated COLUMN_STYLES) — the featured card
    (e.g. the "Pro" price). A CARDS concept: styled ONLY inside a cards wrapper (outside cards the
-   class round-trips in content but has no visual — cards off hides it, cards on shows it again).
-   ⚠ TEMPORARY PLACEHOLDER — just a brand border; the real visual is Tema v2 (step 8). */
-.tallyst-columns--cards > .tallyst-column--highlight {
+   class round-trips in content but has no visual — cards off hides it, cards on shows it again). */
+.tallyst-columns--cards > .tallyst-column--highlight,
+.tallyst-columns--cards-tint > .tallyst-column--highlight {
     border: 2px solid var(--brand);
 }
 @media (max-width: 40rem) {
@@ -711,25 +778,24 @@ th { font-weight: 650; }
 /* Configurable footer (Postavke → Footer): optional columns (text + menu) above a
    branding line (copyright + optional powered-by). */
 .site-footer {
-    border-top: 1px solid var(--line);
-    background: var(--surface);
-    color: var(--muted);
+    background: var(--ink-2);
+    color: var(--muted-inverse);
     font-size: var(--fs-sm);
     margin-top: var(--s-8);
 }
-.site-footer .container { padding-block: var(--s-6); }
-.site-footer a { color: var(--muted); }
-.site-footer a:hover { color: var(--brand); }
+.site-footer .container { padding-block: 3.25rem 2.375rem; }
+.site-footer a { color: var(--muted-inverse); }
+.site-footer a:hover { color: #fff; }
 
-/* Columns: 1–4 equal columns, each a menu or text, stacking on mobile. ⚠ The grid is a symmetric
-   repeat(N,1fr) PLACEHOLDER (columns are no longer type-by-position); the real footer visual
-   (dark background, spacing, heading style) is Tema v2 (step 8). Class names are the STABLE theme
-   contract — kept for child themes; only --3/--4 + .footer-col-heading are added. */
+/* Columns: 1–4 equal columns, each a menu or text, stacking on mobile. The grid is a symmetric
+   repeat(N,1fr) (columns are not type-by-position). Class names are the STABLE theme contract —
+   kept for child themes. */
 .footer-cols { display: grid; gap: var(--s-5); margin-bottom: var(--s-5); }
 .footer-cols--2 { grid-template-columns: repeat(2, 1fr); }
 .footer-cols--3 { grid-template-columns: repeat(3, 1fr); }
 .footer-cols--4 { grid-template-columns: repeat(4, 1fr); }
-.footer-col-heading { font-weight: 650; margin: 0 0 var(--s-2); color: var(--ink); }
+.footer-col-heading { font-family: var(--font-display); font-weight: 700; margin: 0 0 var(--s-2); color: #fff; }
+.footer-col--text strong { font-family: var(--font-display); color: #fff; }
 .footer-col--text > :first-child { margin-top: 0; }
 .footer-col--text > :last-child { margin-bottom: 0; }
 @media (max-width: 40rem) {
@@ -739,9 +805,10 @@ th { font-weight: 650; }
 /* Footer menu (footer_menu.html.twig) — plain link list, no header nav styling. */
 .footer-nav ul { list-style: none; margin: 0; padding: 0; }
 .footer-menu > .footer-menu-item { margin-bottom: var(--s-2); }
-.footer-menu > .footer-menu-item > a { color: var(--ink); font-weight: 550; }
+.footer-menu > .footer-menu-item > a { color: var(--muted-inverse); font-weight: 550; }
+.footer-menu > .footer-menu-item > a:hover { color: #fff; }
 .footer-submenu { margin-top: var(--s-1) !important; padding-left: var(--s-3) !important; }
-.footer-menu-item.is-active > a { color: var(--brand); }
+.footer-menu-item.is-active > a { color: var(--brand-inverse); }
 
 /* Branding line: copyright + optional powered-by. */
 .footer-branding {
@@ -751,7 +818,8 @@ th { font-weight: 650; }
     align-items: center;
     justify-content: space-between;
     padding-top: var(--s-4);
-    border-top: 1px solid var(--line);
+    border-top: 1px solid rgba(255, 255, 255, .07);
+    color: #7e8a99;
 }
 /* When there are no columns above, drop the divider/extra space. */
 .footer-cols + .footer-branding { margin-top: 0; }
