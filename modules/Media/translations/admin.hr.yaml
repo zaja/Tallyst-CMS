@@ -70,6 +70,7 @@ admin:
             columns_style: Stil
             columns_style_default: Zadano
             columns_style_cards: Kartice
+            columns_style_cards_tint: Kartice u boji
             columns_column: Kolona
             columns_column_highlight: Istakni kolonu
             columns2: Dva stupca

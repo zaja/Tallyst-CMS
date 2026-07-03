@@ -76,10 +76,11 @@ export const Column = Node.create({
  * Curated columns styles. `default` is NOT stored (attribute null → nothing emitted, so
  * existing content stays byte-identical); only allowlisted keys serialise, as a FIXED
  * modifier class `tallyst-columns--{style}` — same injection-safe schema-allowlist pattern
- * as the display heading and the buttonStyle link mark. The VISUAL lives in the theme CSS
- * (.tallyst-columns--cards) — a Tema v2 placeholder for now.
+ * as the display heading and the buttonStyle link mark. Two card looks (the approved design):
+ * `cards` = white cards with a border (pricing), `cards-tint` = tinted cards in rotation
+ * (features). The VISUAL lives in the theme CSS.
  */
-export const COLUMNS_STYLES = ['cards'];
+export const COLUMNS_STYLES = ['cards', 'cards-tint'];
 
 /*
  * The columns container: holds `column+`. `count` (2|3) is stored as data-columns on the
@@ -104,10 +105,13 @@ export const Columns = Node.create({
             // Curated style (allowlist above). null = default → no class emitted. mergeAttributes
             // CONCATENATES this class with the static 'tallyst-columns' below (order irrelevant
             // for CSS and for the div.tallyst-columns parse matcher).
+            // ⚠ Alternation is LONGEST-FIRST: 'cards' would otherwise match inside 'cards-tint'
+            // (the '-' is a \b boundary), truncating the parsed style.
             style: {
                 default: null,
                 parseHTML: (el) => {
-                    const m = el.className.match(new RegExp(`\\btallyst-columns--(${COLUMNS_STYLES.join('|')})\\b`));
+                    const keys = [...COLUMNS_STYLES].sort((a, b) => b.length - a.length).join('|');
+                    const m = el.className.match(new RegExp(`\\btallyst-columns--(${keys})\\b`));
                     return m ? m[1] : null;
                 },
                 renderHTML: (attrs) => (attrs.style && COLUMNS_STYLES.includes(attrs.style)

@@ -70,6 +70,7 @@ admin:
             columns_style: Style
             columns_style_default: Default
             columns_style_cards: Cards
+            columns_style_cards_tint: Tinted cards
             columns_column: Column
             columns_column_highlight: Highlight column
             columns2: Two columns

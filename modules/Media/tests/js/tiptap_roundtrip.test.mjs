@@ -192,6 +192,16 @@ const evilCol = roundTrip(
     + '<div class="tallyst-column"><p>B</p></div></div>'
 );
 ok(!/tallyst-columns--/.test(evilCol), 'out-of-allowlist columns modifiers (--evil/--cardsX) are dropped');
+// cards-tint (second curated look) survives — and parses as cards-tint, NOT truncated to 'cards'
+// (the longest-first alternation guard: '-' is a \b boundary, so a naive order would mis-match).
+const tintCol = roundTrip(
+    '<div class="tallyst-columns tallyst-columns--cards-tint" data-columns="3">'
+    + '<div class="tallyst-column"><p>A</p></div>'
+    + '<div class="tallyst-column"><p>B</p></div>'
+    + '<div class="tallyst-column"><p>C</p></div></div>'
+);
+ok(/class="[^"]*\btallyst-columns--cards-tint\b[^"]*"/.test(tintCol) && /data-columns="3"/.test(tintCol),
+    'cards-tint style survives save->load (not truncated to cards)');
 // Cards + nested embeds: the style modifier does not disturb the disjoint embed markers.
 const cardsEmbeds = roundTrip(
     '<div class="tallyst-columns tallyst-columns--cards" data-columns="2">'

@@ -225,8 +225,8 @@ export default class extends Controller {
             el.classList.toggle('is-active', null !== cols && (cols.style || '') === el.dataset.colStyle);
         });
         // Column highlight — a cards concept: enabled only inside a column of a cards-styled
-        // block (honest UI, no dead toggle); flagged when that column carries the highlight.
-        const inCards = null !== cols && 'cards' === cols.style && this.editor.isActive('column');
+        // block (either card look; honest UI, no dead toggle); flagged when highlighted.
+        const inCards = null !== cols && ['cards', 'cards-tint'].includes(cols.style) && this.editor.isActive('column');
         menu.querySelectorAll('[data-col-highlight]').forEach((el) => {
             el.disabled = !inCards;
             el.classList.toggle('is-active', inCards && 'highlight' === this.editor.getAttributes('column').style);
@@ -609,7 +609,7 @@ export default class extends Controller {
      */
     toggleColumnHighlight() {
         this.closeDropdowns();
-        if (!this.editor.isActive('column') || 'cards' !== this.editor.getAttributes('columns').style) {
+        if (!this.editor.isActive('column') || !['cards', 'cards-tint'].includes(this.editor.getAttributes('columns').style)) {
             return;
         }
         const style = 'highlight' === this.editor.getAttributes('column').style ? null : 'highlight';

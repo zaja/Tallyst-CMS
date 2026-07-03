@@ -100,10 +100,12 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
         ]);
 
         // Typography: pick a system font for headings/display and one for body text. Choices come
-        // from the curated Core FontRegistry; 'system' (default) = the OS stack (site unchanged).
+        // from the curated Core FontRegistry. Defaults = the Tema v2 design typography
+        // (Space Grotesk display / Inter body) so a fresh install looks like the approved design
+        // out of the box; 'system' (the OS stack) stays a choice.
         yield new SettingsSection('typography', 'admin.settings.typography.title', 'fa-font', [
-            new SettingDefinition('display_font', SettingType::CHOICE, 'admin.settings.typography.display_font.label', 'admin.settings.typography.display_font.help', 'system', $this->fonts->choices()),
-            new SettingDefinition('body_font', SettingType::CHOICE, 'admin.settings.typography.body_font.label', 'admin.settings.typography.body_font.help', 'system', $this->fonts->choices()),
+            new SettingDefinition('display_font', SettingType::CHOICE, 'admin.settings.typography.display_font.label', 'admin.settings.typography.display_font.help', 'space-grotesk', $this->fonts->choices()),
+            new SettingDefinition('body_font', SettingType::CHOICE, 'admin.settings.typography.body_font.label', 'admin.settings.typography.body_font.help', 'inter', $this->fonts->choices()),
         ]);
     }
 
