@@ -66,6 +66,10 @@ admin:
             img_size_large: Velika
             img_size_full: Puna širina
             columns: Stupci
+            columns_insert: Umetni
+            columns_style: Stil
+            columns_style_default: Zadano
+            columns_style_cards: Kartice
             columns2: Dva stupca
             columns3: Tri stupca
             columns4: Četiri stupca

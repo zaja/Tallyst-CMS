@@ -66,6 +66,10 @@ admin:
             img_size_large: Large
             img_size_full: Full width
             columns: Columns
+            columns_insert: Insert
+            columns_style: Style
+            columns_style_default: Default
+            columns_style_cards: Cards
             columns2: Two columns
             columns3: Three columns
             columns4: Four columns

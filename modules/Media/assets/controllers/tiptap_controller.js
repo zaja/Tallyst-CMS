@@ -218,6 +218,12 @@ export default class extends Controller {
             }
             el.classList.toggle('is-active', active);
         });
+        // Columns style — active only when the cursor is inside a columns block; '' = default
+        // (style attr null). Outside a columns block no style item is flagged.
+        const cols = this.editor.isActive('columns') ? this.editor.getAttributes('columns') : null;
+        menu.querySelectorAll('[data-col-style]').forEach((el) => {
+            el.classList.toggle('is-active', null !== cols && (cols.style || '') === el.dataset.colStyle);
+        });
     }
 
     /**
@@ -570,6 +576,21 @@ export default class extends Controller {
             attrs: { count },
             content: columns,
         }).run();
+    }
+
+    /**
+     * Columns style dropdown: data-col-style '' (default) | 'cards'. Applies the curated style
+     * to the columns block the cursor is IN (updateAttributes — the node serialises it as the
+     * .tallyst-columns--{style} modifier class); a no-op outside a columns block, like the
+     * image actions without a selected image.
+     */
+    setColumnsStyle(event) {
+        const style = event.currentTarget.dataset.colStyle || null;
+        this.closeDropdowns();
+        if (!this.editor.isActive('columns')) {
+            return;
+        }
+        this.editor.chain().focus().updateAttributes('columns', { style }).run();
     }
 
     onMediaSelect(event) {

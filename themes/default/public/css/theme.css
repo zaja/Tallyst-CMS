@@ -674,6 +674,18 @@ th { font-weight: 650; }
 .tallyst-columns { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s-5); margin: var(--s-5) 0; }
 .tallyst-column { min-width: 0; }
 .tallyst-column > :first-child { margin-top: 0; }
+
+/* Cards style (curated columns style, .tallyst-columns--cards on the wrapper — ADDITIVE contract,
+   default columns are untouched). ⚠ TEMPORARY PLACEHOLDER — just enough that a card reads as a
+   card (surface + border + radius + padding); the real visual (podloga/tinte/hover/sjena) is
+   designed with Tema v2 (step 8). Editor preview mirrors this in modules/Media/assets/styles/
+   tiptap.css — keep the two visually in sync. */
+.tallyst-columns--cards > .tallyst-column {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: var(--s-5);
+}
 @media (max-width: 40rem) {
     .tallyst-columns { grid-auto-flow: row; grid-auto-columns: auto; gap: var(--s-4); }
 }

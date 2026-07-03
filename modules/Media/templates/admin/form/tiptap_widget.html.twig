@@ -104,14 +104,22 @@
             <span class="tiptap__sep"></span>
 
             {# Multi-column layout (Prolaz C) — core editor feature, always present (not
-               module-gated): insert a fixed 2/3/4-column block at the cursor. #}
+               module-gated). Two groups (the IMG-format precedent): "Insert" drops a fixed
+               2/3/4-column block at the cursor; "Style" applies a curated style (COLUMNS_STYLES
+               allowlist, serialised as .tallyst-columns--{style}) to the columns block the
+               cursor is IN — a no-op outside a columns block. #}
             <div class="tiptap__dropdown">
                 <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.columns'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.columns'|trans({}, 'admin') }}"
                         aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><i class="fa-solid fa-caret-down tiptap__caret" aria-hidden="true"></i></button>
                 <div class="tiptap__menu" role="menu">
+                    <span class="tiptap__menu-header">{{ 'admin.media.tiptap.columns_insert'|trans({}, 'admin') }}</span>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-count="2" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns2'|trans({}, 'admin') }}</button>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-count="3" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns3'|trans({}, 'admin') }}</button>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-count="4" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns4'|trans({}, 'admin') }}</button>
+                    <span class="tiptap__menu-sep"></span>
+                    <span class="tiptap__menu-header">{{ 'admin.media.tiptap.columns_style'|trans({}, 'admin') }}</span>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-col-style="" data-action="media--tiptap#setColumnsStyle">{{ 'admin.media.tiptap.columns_style_default'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-col-style="cards" data-action="media--tiptap#setColumnsStyle">{{ 'admin.media.tiptap.columns_style_cards'|trans({}, 'admin') }}</button>
                 </div>
             </div>
 

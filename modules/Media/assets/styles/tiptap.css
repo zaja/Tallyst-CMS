@@ -256,6 +256,16 @@
     margin-top: 0.6rem;
 }
 
+/* Cards style (.tallyst-columns--cards, curated COLUMNS_STYLES): SOLID card look so the admin
+   instantly sees the difference from the dashed default outline. Mirrors the theme placeholder
+   (.tallyst-columns--cards in theme.css); the real card visual is Tema v2 — keep the two in sync. */
+.tiptap__editor .ProseMirror .tallyst-columns--cards > .tallyst-column {
+    background: var(--bs-tertiary-bg, #f6f7f9);
+    border: 1px solid var(--bs-border-color, #e4e7ec);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
 /* ---- Link picker modal (toolbar link button) -----------------------------------------------
    Own .tiptap-linkpicker__* classes (Media owns its styles); the look mirrors the FormBuilder
    form picker without depending on its CSS. Dark-mode-safe via --bs-* (EA sets data-bs-theme).

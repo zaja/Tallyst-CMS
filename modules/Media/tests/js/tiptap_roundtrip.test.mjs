@@ -171,6 +171,38 @@ const nested = roundTrip(
 ok(!/tallyst-column"[^>]*>\s*<div class="tallyst-columns"/.test(nested), 'no columns nested inside a column (inner lifted out)');
 ok(nested.includes('X') && nested.includes('Y') && nested.includes('B'), 'content from a malformed nested layout is kept (not dropped)');
 
+// --- Columns style (curated COLUMNS_STYLES allowlist): serialised as the FIXED modifier class
+// tallyst-columns--cards on the wrapper; default (no style) stays byte-clean; out-of-allowlist
+// modifiers are dropped — same injection-safe schema-allowlist as display/buttonStyle.
+// NOTE: mergeAttributes CONCATENATES the modifier with the static class ("tallyst-columns--cards
+// tallyst-columns"), so these asserts use a LOOSE class regex, never an exact match.
+const cardsCol = roundTrip(
+    '<div class="tallyst-columns tallyst-columns--cards" data-columns="2">'
+    + '<div class="tallyst-column"><p>Lijevo</p></div>'
+    + '<div class="tallyst-column"><p>Desno</p></div></div>'
+);
+ok(/class="[^"]*\btallyst-columns--cards\b[^"]*"/.test(cardsCol) && /data-columns="2"/.test(cardsCol),
+    'cards style class + count survive save->load');
+ok((cardsCol.match(/class="tallyst-column"/g) || []).length === 2, 'cards columns keep exactly two columns');
+// The default (no modifier) assert above (:136, exact class="tallyst-columns") already locks the
+// byte-clean case; here the allowlist drop:
+const evilCol = roundTrip(
+    '<div class="tallyst-columns tallyst-columns--evil tallyst-columns--cardsX" data-columns="2">'
+    + '<div class="tallyst-column"><p>A</p></div>'
+    + '<div class="tallyst-column"><p>B</p></div></div>'
+);
+ok(!/tallyst-columns--/.test(evilCol), 'out-of-allowlist columns modifiers (--evil/--cardsX) are dropped');
+// Cards + nested embeds: the style modifier does not disturb the disjoint embed markers.
+const cardsEmbeds = roundTrip(
+    '<div class="tallyst-columns tallyst-columns--cards" data-columns="2">'
+    + '<div class="tallyst-column"><img data-tallyst-image data-id="5" data-size="medium" src="/x.jpg" alt="S"></div>'
+    + '<div class="tallyst-column"><div data-tallyst-form data-id="2" data-label="Kontakt">📋 Forma: Kontakt</div></div>'
+    + '</div>'
+);
+ok(/class="[^"]*\btallyst-columns--cards\b[^"]*"/.test(cardsEmbeds)
+    && cardsEmbeds.includes('data-tallyst-image') && cardsEmbeds.includes('data-tallyst-form'),
+    'cards style + nested [image]/[form] markers survive together');
+
 // --- Inline icon node (WYSIWYG [icon]): the marker round-trips, stays INLINE, name preserved ---
 // buildExtensions() runs with no iconSet here → the NodeView degrades but renderHTML (the marker)
 // is unaffected, so serialization is deterministic and testable. renderHTML emits ONLY the marker

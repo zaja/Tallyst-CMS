@@ -10,6 +10,13 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Added
+
+- **Columns can render as cards.** The editor's Columns dropdown gained a curated
+  Style group (Default/Cards): with Cards, every column in the block is framed as a
+  card on the front. Existing columns are untouched (Default); the final card visual
+  arrives with the theme redesign.
+
 ## [1.3.0] — 2026-07-02
 
 ### Added
