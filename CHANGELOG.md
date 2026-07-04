@@ -10,20 +10,29 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
-### Added
+## [1.4.0] — 2026-07-04
 
-- **One-column layout option.** The editor's Columns dropdown can now insert a
-  single full-width column — handy for an image-left, text-right card.
-- **Vertical spacer block.** Insert blank vertical space between blocks in three
-  curated sizes (small, medium, large).
-- **Curated text color palette.** Color selected text from an eight-color palette
-  (a swatch picker in the toolbar) — the theme owns the actual colors.
+### Added
 
 - **Icons in content.** A curated icon set (Font Awesome Free, inline SVG) with an
   `[icon]` shortcode and a WYSIWYG picker in the editor toolbar — icons sit inline
   in text and inherit its colour and size.
 - **Content buttons.** Turn any link into a call-to-action button with a curated
   style (primary, secondary or ghost) straight from the link picker.
+- **Vertical spacer block.** Insert blank vertical space between blocks in three
+  curated sizes (small, medium, large).
+- **Curated text color palette.** Color selected text from an eight-color palette
+  (a swatch picker in the toolbar) — the theme owns the actual colors.
+- **One-column layout option.** The editor's Columns dropdown can now insert a
+  single full-width column — handy for an image-left, text-right card.
+- **Columns card styles.** The editor's Columns dropdown gained a curated Style
+  group: white bordered cards or tinted cards in rotation, plus a per-column
+  highlight for the featured card (e.g. the "Pro" price). Existing columns are
+  untouched (Default).
+- **Eyebrow option in the heading menu.** A small brand-coloured kicker (h6) above
+  a title, straight from the editor's Heading dropdown.
+- **Editor toolbar stays pinned while scrolling long content** (page and post
+  content), so the formatting controls are always reachable.
 - **Top bar.** An optional thin bar above the header: rich text with links on the
   left, social icons (GitHub, X, LinkedIn, YouTube) on the right — configured in
   Settings.
@@ -31,43 +40,34 @@ core-API change is a MAJOR (flagged ⚠).
   its name as the heading) or rich text.
 - **Typography settings.** Pick a display and a body font from a curated set of
   self-hosted fonts (no CDN calls) in Settings → Typography.
-- **Columns card styles.** The editor's Columns dropdown gained a curated Style
-  group: white bordered cards or tinted cards in rotation, plus a per-column
-  highlight for the featured card (e.g. the "Pro" price). Existing columns are
-  untouched (Default).
 - **Header search toggle.** The search field is collapsed to an icon; it expands
   inline on desktop and as a full-width bar under the header on mobile.
-- **Eyebrow option in the heading menu.** A small brand-coloured kicker (h6) above
-  a title, straight from the editor's Heading dropdown.
 
 ### Changed
 
-- **Photo hero overlay is now a solid footer-colour panel** instead of a gradient
-  — cleaner behind the text, with the image half left clear.
 - **Theme v2 redesign.** The default theme got a full visual pass: a warm orange
   accent, a card-based layout language with soft tints, pill buttons, a dark top
   bar and footer, larger radii, and Space Grotesk/Inter as the default typography.
   The hamburger toggle now swaps to a close icon while the menu is open, and the
   remaining front-end glyphs (submenu carets, pagination arrows, back links) use
   the same icon set.
-
-- **Editor toolbar stays pinned while scrolling long content** (page and post
-  content), so the formatting controls are always reachable.
+- **Photo hero overlay is now a solid footer-colour panel** instead of a gradient
+  — cleaner behind the text, with the image half left clear.
 
 ### Fixed
 
+- **Demo install/delete/make-permanent from the admin failed under php-fpm**
+  (wrong PHP binary resolution) — the buttons now run the site's CLI PHP.
+- **Toolbar dropdowns could open outside the editor** (into the sidebar or the
+  settings column) — they are now positioned dynamically so they always stay inside
+  the editor, whatever the trigger's position or the window width. The icon picker
+  grid also scrolls when the set is large.
 - **Left-aligned images inside cards, and h6 eyebrows lost when editing.** A
   left-floated image in a card now keeps the text beside it, and small "eyebrow"
   headings (h6) survive editing instead of turning into plain paragraphs.
 - **Top bar social icons were too small, and intro paragraphs under left-aligned
   headings looked shifted right** — the social icons are now larger and a lede
   paragraph only centers when its heading is centered.
-- **Toolbar dropdowns could open outside the editor** (into the sidebar or the
-  settings column) — they are now positioned dynamically so they always stay inside
-  the editor, whatever the trigger's position or the window width. The icon picker
-  grid also scrolls when the set is large.
-- **Demo install/delete/make-permanent from the admin failed under php-fpm**
-  (wrong PHP binary resolution) — the buttons now run the site's CLI PHP.
 
 ## [1.3.0] — 2026-07-02
 
