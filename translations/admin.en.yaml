@@ -36,7 +36,7 @@ admin:
             body: 'Install it right after setup, before you create anything of your own — NEVER on a site where you already have real content, a menu, or a footer, because the demo installs its own menu and footer. Ignore this and you''re on your own (unsupported).'
         install:
             heading: Install demo
-            summary: 'Seeds ~16 pages, 15 posts, a menu, demo forms and images. Everything is marked as demo.'
+            summary: 'Installs a complete demo site for Arca — a fictional backup app — so you can see how a finished Tallyst site looks. It seeds 8 pages, 9 blog posts in 4 categories, a two-level menu, a three-column footer, 2 forms, and 19 images. Everything is marked as demo, so you can remove it in one click.'
             button: Install demo
         delete:
             heading: Delete demo

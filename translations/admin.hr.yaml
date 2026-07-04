@@ -36,7 +36,7 @@ admin:
             body: 'Instaliraj ga odmah nakon postavljanja, prije nego išta sam napraviš — NIKAD na sajtu gdje već imaš stvarni sadržaj, izbornik ili footer, jer demo postavlja svoj izbornik i footer. Ako ovo ignoriraš, radiš nepodržano i na vlastitu odgovornost.'
         install:
             heading: Instaliraj demo
-            summary: 'Posija ~16 stranica, 15 objava, izbornik, demo forme i slike. Sve je označeno kao demo.'
+            summary: 'Instalira potpun demo site za Arcu — izmišljenu backup aplikaciju — da vidite kako izgleda gotov Tallyst site. Sadrži 8 stranica, 9 blog objava u 4 kategorije, dvorazinski izbornik, trokolonski footer, 2 forme i 19 slika. Sve je označeno kao demo pa ga možete ukloniti jednim klikom.'
             button: Instaliraj demo
         delete:
             heading: Obriši demo
