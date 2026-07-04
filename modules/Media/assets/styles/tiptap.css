@@ -297,6 +297,31 @@
     margin-top: 0.6rem;
 }
 
+/* Spacer preview — an atom with no NodeView renders as an empty div; give it a dashed marker +
+   the reserved height + a "space" label so it stays visible + selectable while editing. On the
+   front (theme.css) it's just blank vertical space. */
+.tiptap__editor .ProseMirror .tallyst-spacer {
+    position: relative;
+    border: 1px dashed var(--bs-border-color, #ccc);
+    border-radius: 4px;
+    background: var(--bs-tertiary-bg, #f6f6f6);
+    box-sizing: border-box;
+}
+.tiptap__editor .ProseMirror .tallyst-spacer::after {
+    content: "↕ space";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: var(--bs-secondary-color, #6c757d);
+    pointer-events: none;
+}
+.tiptap__editor .ProseMirror .tallyst-spacer.ProseMirror-selectednode {
+    outline: 2px solid var(--bs-primary, #0d6efd);
+}
+
 /* Card styles (curated COLUMNS_STYLES) — mirror the theme's Tema v2 card language
    (theme.css .tallyst-columns--cards/--cards-tint): white bordered cards vs tinted rotation.
    Concrete tint values (the front tokens don't exist in the admin); keep the two in sync. */

@@ -5,6 +5,7 @@ import Link from '@tiptap/extension-link';
 import { TallystImage } from './tiptap_image_node.js';
 import { TallystIcon } from './tiptap_icon_node.js';
 import { TallystDocument, Columns, Column } from './tiptap_columns_node.js';
+import { TallystSpacer } from './tiptap_spacer_node.js';
 
 /*
  * Display headings (landing typography): the StarterKit Heading extended with ONE optional
@@ -138,6 +139,7 @@ export function buildExtensions(iconSet = {}) {
         TallystIcon.configure({ iconSet }),
         Columns,
         Column,
+        TallystSpacer,
         ...nodes,
     ];
 }

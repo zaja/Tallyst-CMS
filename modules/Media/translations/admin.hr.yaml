@@ -73,9 +73,14 @@ admin:
             columns_style_cards_tint: Kartice u boji
             columns_column: Kolona
             columns_column_highlight: Istakni kolonu
+            columns1: Jedan stupac
             columns2: Dva stupca
             columns3: Tri stupca
             columns4: Četiri stupca
+            spacer: Razmak
+            spacer_sm: Mali razmak
+            spacer_md: Srednji razmak
+            spacer_lg: Veliki razmak
             icon: Ikona
             undo: Poništi
             redo: Ponovi

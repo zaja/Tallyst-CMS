@@ -242,6 +242,27 @@ const highlightNoCards = roundTrip(
 ok(/class="[^"]*\btallyst-column--highlight\b[^"]*"/.test(highlightNoCards),
     'column highlight survives without a cards wrapper (context-free schema)');
 
+// --- One-column layout: the count is agnostic (Number||2), so data-columns="1" round-trips like
+// 2/3/4; a highlight works on the single column too.
+const oneCol = roundTrip(
+    '<div class="tallyst-columns tallyst-columns--cards" data-columns="1">'
+    + '<div class="tallyst-column tallyst-column--highlight"><p>Solo</p></div></div>'
+);
+ok(/data-columns="1"/.test(oneCol) && /class="[^"]*\btallyst-column--highlight\b[^"]*"/.test(oneCol),
+    'one-column layout + highlight round-trips (count-agnostic)');
+ok((oneCol.match(/class="tallyst-column"|tallyst-column--highlight/g) || []).length === 1, 'exactly one column preserved');
+
+// --- Vertical spacer (curated SPACER_SIZES atom): serialised as an EMPTY div carrying the size
+// class; unknown size → md (cosmetic, not dropped); it never collides with the columns divs.
+const spacerMd = roundTrip('<div class="tallyst-spacer tallyst-spacer--md"></div>');
+ok(/class="[^"]*\btallyst-spacer--md\b[^"]*"/.test(spacerMd), 'spacer (md) round-trips as a class');
+const spacerLg = roundTrip('<p>A</p><div class="tallyst-spacer tallyst-spacer--lg"></div><p>B</p>');
+ok(/tallyst-spacer--lg/.test(spacerLg) && spacerLg.includes('A') && spacerLg.includes('B'),
+    'spacer (lg) survives between blocks, keeping the surrounding content');
+const spacerBad = roundTrip('<div class="tallyst-spacer tallyst-spacer--evil"></div>');
+ok(/tallyst-spacer--md/.test(spacerBad) && !/tallyst-spacer--evil/.test(spacerBad),
+    'an unknown spacer size falls back to md (cosmetic default, node kept)');
+
 // --- Inline icon node (WYSIWYG [icon]): the marker round-trips, stays INLINE, name preserved ---
 // buildExtensions() runs with no iconSet here → the NodeView degrades but renderHTML (the marker)
 // is unaffected, so serialization is deterministic and testable. renderHTML emits ONLY the marker

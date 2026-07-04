@@ -12,6 +12,11 @@ core-API change is a MAJOR (flagged ⚠).
 
 ### Added
 
+- **One-column layout option.** The editor's Columns dropdown can now insert a
+  single full-width column — handy for an image-left, text-right card.
+- **Vertical spacer block.** Insert blank vertical space between blocks in three
+  curated sizes (small, medium, large).
+
 - **Icons in content.** A curated icon set (Font Awesome Free, inline SVG) with an
   `[icon]` shortcode and a WYSIWYG picker in the editor toolbar — icons sit inline
   in text and inherit its colour and size.

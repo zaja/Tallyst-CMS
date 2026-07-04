@@ -704,8 +704,19 @@ th { font-weight: 650; }
    Count-agnostic (grid-auto-flow:column + grid-auto-columns:1fr), stacks on narrow
    viewports. A theme without this CSS degrades columns to stacked blocks. */
 .tallyst-columns { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s-5); margin: var(--s-5) 0; }
-.tallyst-column { min-width: 0; }
+/* min-width:0 lets a column shrink; flow-root makes a column contain a floated [image align=left]
+   inside it (grid items already establish a formatting context — this is a belt-and-suspenders so
+   a left/right image never leaks out of a card). A 1-column layout is just data-columns="1" → one
+   full-width column (the grid is count-agnostic). */
+.tallyst-column { min-width: 0; display: flow-root; }
 .tallyst-column > :first-child { margin-top: 0; }
+
+/* Vertical spacer (curated SPACER_SIZES atom) — blank vertical space between blocks. Values are
+   the theme's; the editor authors only the curated size. */
+.tallyst-spacer { display: block; width: 100%; }
+.tallyst-spacer--sm { height: 1rem; }
+.tallyst-spacer--md { height: 2rem; }
+.tallyst-spacer--lg { height: 4rem; }
 
 /* Card styles (curated columns styles, ADDITIVE contract — default columns untouched). Two looks:
    --cards = white cards with a border (pricing), --cards-tint = tinted cards in rotation

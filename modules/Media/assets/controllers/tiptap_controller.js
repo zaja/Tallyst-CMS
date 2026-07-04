@@ -592,17 +592,24 @@ export default class extends Controller {
         this.closeDropdowns();
     }
 
-    /** Columns dropdown: data-count 2 | 3 | 4. */
+    /** Columns dropdown: data-count 1 | 2 | 3 | 4. */
     addColumns(event) {
         this.insertColumns(Number(event.currentTarget.dataset.count));
         this.closeDropdowns();
+    }
+
+    /** Spacer dropdown: data-spacer-size sm | md | lg → insert a TallystSpacer atom block. */
+    insertSpacer(event) {
+        const size = event.currentTarget.dataset.spacerSize || 'md';
+        this.closeDropdowns();
+        this.editor.chain().focus().insertContent({ type: 'tallystSpacer', attrs: { size } }).run();
     }
 
     /**
      * Insert a fixed N-column layout (N empty columns, each seeded with an empty paragraph
      * so `block+` is satisfied). Guarded against nesting: no insert when the cursor is
      * already inside a columns layout (v1 has no nested columns). Count-agnostic node + CSS
-     * grid, so 2/3/4 all lay out automatically.
+     * grid, so 1/2/3/4 all lay out automatically.
      */
     insertColumns(count) {
         if (this.editor.isActive('columns') || this.editor.isActive('column')) {

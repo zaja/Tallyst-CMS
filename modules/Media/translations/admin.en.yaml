@@ -73,9 +73,14 @@ admin:
             columns_style_cards_tint: Tinted cards
             columns_column: Column
             columns_column_highlight: Highlight column
+            columns1: One column
             columns2: Two columns
             columns3: Three columns
             columns4: Four columns
+            spacer: Spacer
+            spacer_sm: Small space
+            spacer_md: Medium space
+            spacer_lg: Large space
             icon: Icon
             undo: Undo
             redo: Redo

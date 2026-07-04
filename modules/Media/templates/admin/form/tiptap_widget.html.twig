@@ -67,6 +67,17 @@
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.blockquote'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.blockquote'|trans({}, 'admin') }}" data-action="media--tiptap#blockquote"><i class="fa-solid fa-quote-right" aria-hidden="true"></i></button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.code'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.code'|trans({}, 'admin') }}" data-action="media--tiptap#code"><i class="fa-solid fa-code" aria-hidden="true"></i></button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.hr'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.hr'|trans({}, 'admin') }}" data-action="media--tiptap#insertHr"><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
+            {# Vertical spacer — a curated atom block (SPACER_SIZES), inserts blank vertical space
+               between blocks. Insert dropdown of 3 sizes, like the columns "Insert" group. #}
+            <div class="tiptap__dropdown">
+                <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.spacer'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.spacer'|trans({}, 'admin') }}"
+                        aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown"><i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i><i class="fa-solid fa-caret-down tiptap__caret" aria-hidden="true"></i></button>
+                <div class="tiptap__menu" role="menu">
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-spacer-size="sm" data-action="media--tiptap#insertSpacer">{{ 'admin.media.tiptap.spacer_sm'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-spacer-size="md" data-action="media--tiptap#insertSpacer">{{ 'admin.media.tiptap.spacer_md'|trans({}, 'admin') }}</button>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-spacer-size="lg" data-action="media--tiptap#insertSpacer">{{ 'admin.media.tiptap.spacer_lg'|trans({}, 'admin') }}</button>
+                </div>
+            </div>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.clear'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.clear'|trans({}, 'admin') }}" data-action="media--tiptap#clearFormatting"><i class="fa-solid fa-eraser" aria-hidden="true"></i></button>
             <span class="tiptap__sep"></span>
 
@@ -114,6 +125,7 @@
                         aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><i class="fa-solid fa-caret-down tiptap__caret" aria-hidden="true"></i></button>
                 <div class="tiptap__menu tiptap__menu--right" role="menu">
                     <span class="tiptap__menu-header">{{ 'admin.media.tiptap.columns_insert'|trans({}, 'admin') }}</span>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-count="1" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns1'|trans({}, 'admin') }}</button>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-count="2" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns2'|trans({}, 'admin') }}</button>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-count="3" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns3'|trans({}, 'admin') }}</button>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-count="4" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns4'|trans({}, 'admin') }}</button>
