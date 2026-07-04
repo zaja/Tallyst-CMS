@@ -812,16 +812,14 @@ class DemoSeedCommand extends Command
     {
         // Hero page: no leading display-1 (the hero carries "One app. One price. Yours to keep.").
         return <<<HTML
-            <div class="tallyst-columns tallyst-columns--cards" data-columns="2">
-            <div class="tallyst-column"><h3>Trial</h3><p><strong style="font-size:1.8em">€0</strong></p><p>15 days, every feature, no card</p><ul><li>[icon name=check] Full and incremental backups</li><li>[icon name=check] Local and cloud targets</li><li>[icon name=check] Database backups</li><li>[icon name=check] No account required</li></ul><p><a class="tallyst-btn tallyst-btn--secondary" href="#download">Download the trial</a></p></div>
-            <div class="tallyst-column tallyst-column--highlight"><h6>Most popular</h6><h3>Pro</h3><p><strong style="font-size:1.8em">€29</strong> once</p><p>Lifetime license, no subscription</p><ul><li>[icon name=check] Everything in Trial, forever</li><li>[icon name=check] Priority email support</li><li>[icon name=check] Free updates for life</li><li>[icon name=check] Use on all your own machines</li></ul><p><a class="tallyst-btn tallyst-btn--primary" href="#buy-form">Buy Pro — €29</a></p></div>
-            </div>
-
             <h6 id="buy-form">Get your license</h6>
             <h2 class="display-2">Buy Arca Pro</h2>
             <p>Enter your details and we'll email your license key. If you're still evaluating, grab the free trial below — no card needed.</p>
 
-            [form id={$buyForm}]
+            <div class="tallyst-columns tallyst-columns--cards" data-columns="2">
+            <div class="tallyst-column"><h6>What you get</h6><h3>Arca Pro — €29 once</h3><p>A lifetime license, no subscription, and every future update included. One payment and Arca is yours.</p><ul><li>[icon name=check] Full and incremental backups</li><li>[icon name=check] Local and cloud targets (B2, S3, Wasabi, R2)</li><li>[icon name=check] Database backups (MySQL, PostgreSQL)</li><li>[icon name=check] Client-side encryption</li><li>[icon name=check] Priority email support</li><li>[icon name=check] Free updates for life</li><li>[icon name=check] Use on all your own machines</li></ul><p><span class="tallyst-color--muted"><em>Not ready to buy? Grab the free 15-day trial below — no card, no account.</em></span></p></div>
+            <div class="tallyst-column tallyst-column--highlight"><h6>Checkout</h6><h3>Your details</h3>[form id={$buyForm}]</div>
+            </div>
 
             <h6 id="download">Free trial</h6>
             <h2 class="display-2">Prefer to try first?</h2>
