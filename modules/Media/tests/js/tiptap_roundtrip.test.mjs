@@ -120,6 +120,12 @@ ok(/class="[^"]*\bdisplay-1\b/.test(display1Centered) && /text-align:\s*center/.
 const badClass = roundTrip('<h1 class="display-9 evil">X</h1>');
 ok(!/class=/.test(badClass), 'an out-of-allowlist heading class (display-9/evil) is dropped (fixed display-1/2 allowlist)');
 
+// h5/h6 round-trip (levels 1-6): the theme styles h6 as the brand "eyebrow"; the schema must
+// preserve it, not drop it to a paragraph on edit+save (the bug this fixes).
+const eyebrow = roundTrip('<h6>Features</h6><h2>Real</h2>');
+ok(/<h6[ >]/.test(eyebrow) && eyebrow.includes('Features'), 'h6 eyebrow survives round-trip (not dropped to <p>)');
+ok(/<h5[ >]/.test(roundTrip('<h5>Sub</h5>')), 'h5 survives round-trip');
+
 // --- Toolbar gating: the form button shows only when FormBuilder is enabled ---
 ok(editorToolbarExtensions(['media', 'form_builder']).some((t) => t.label.includes('Forma')),
     'form toolbar button present when form_builder enabled');

@@ -181,7 +181,10 @@ export function buildExtensions(iconSet = {}) {
         TextAlign.configure({ types: ['heading', 'paragraph'] }),
         // Our heading keeps the StarterKit name ('heading'), so TextAlign's types + isActive
         // checks are unchanged; just carries the extra display attribute.
-        TallystHeading.configure({ levels: [1, 2, 3, 4] }),
+        // levels 1-6 so h5/h6 ROUND-TRIP (the theme styles h6 as the brand "eyebrow"; without 6 in
+        // the schema ProseMirror would drop an authored/seeded <h6> to a paragraph on edit+save).
+        // The dropdown authors h1-h4 + the Eyebrow (h6) item; display is still level-1 only.
+        TallystHeading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
         // Our link keeps the name 'link' (so the link picker + isActive are unchanged) — same
         // stable-on-load config as before, plus the buttonStyle attribute for CTA buttons.
         TallystLink.configure({ openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } }),

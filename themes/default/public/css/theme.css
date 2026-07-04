@@ -630,6 +630,10 @@ th { font-weight: 650; }
 .prose { display: flow-root; }
 .page-content h2, .page-content h3, .page-content h4,
 .prose h2, .prose h3, .prose h4 { clear: both; }
+/* …EXCEPT inside a card: a card heading (e.g. a team member's name) must sit BESIDE its floated
+   [image align=left] avatar, not clear below it. The clearfix is for section headings in the
+   normal content flow, not card content. */
+.tallyst-column h2, .tallyst-column h3, .tallyst-column h4 { clear: none; }
 
 /* ---- Search (header field + results) ---- */
 .site-search { position: relative; display: flex; align-items: center; gap: var(--s-1); }

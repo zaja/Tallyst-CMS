@@ -37,6 +37,8 @@ core-API change is a MAJOR (flagged ⚠).
   untouched (Default).
 - **Header search toggle.** The search field is collapsed to an icon; it expands
   inline on desktop and as a full-width bar under the header on mobile.
+- **Eyebrow option in the heading menu.** A small brand-coloured kicker (h6) above
+  a title, straight from the editor's Heading dropdown.
 
 ### Changed
 
@@ -54,6 +56,9 @@ core-API change is a MAJOR (flagged ⚠).
 
 ### Fixed
 
+- **Left-aligned images inside cards, and h6 eyebrows lost when editing.** A
+  left-floated image in a card now keeps the text beside it, and small "eyebrow"
+  headings (h6) survive editing instead of turning into plain paragraphs.
 - **Top bar social icons were too small, and intro paragraphs under left-aligned
   headings looked shifted right** — the social icons are now larger and a lede
   paragraph only centers when its heading is centered.

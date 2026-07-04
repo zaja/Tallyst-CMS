@@ -40,6 +40,7 @@ admin:
             h4: Heading 4
             display1: Display 1
             display2: Display 2
+            eyebrow: Eyebrow
             blockquote: Quote
             code: Code
             hr: Insert line
