@@ -143,7 +143,7 @@
             <div class="tiptap__dropdown">
                 <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.columns'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.columns'|trans({}, 'admin') }}"
                         aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><i class="fa-solid fa-caret-down tiptap__caret" aria-hidden="true"></i></button>
-                <div class="tiptap__menu tiptap__menu--right" role="menu">
+                <div class="tiptap__menu" role="menu">
                     <span class="tiptap__menu-header">{{ 'admin.media.tiptap.columns_insert'|trans({}, 'admin') }}</span>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-count="1" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns1'|trans({}, 'admin') }}</button>
                     <button type="button" class="tiptap__menu-item" role="menuitem" data-count="2" data-action="media--tiptap#addColumns">{{ 'admin.media.tiptap.columns2'|trans({}, 'admin') }}</button>
@@ -170,7 +170,7 @@
             <div class="tiptap__dropdown">
                 <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.icon'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.icon'|trans({}, 'admin') }}"
                         aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown"><i class="fa-solid fa-icons" aria-hidden="true"></i><i class="fa-solid fa-caret-down tiptap__caret" aria-hidden="true"></i></button>
-                <div class="tiptap__menu tiptap__icon-grid tiptap__menu--right" role="menu" data-media--tiptap-target="iconGrid"></div>
+                <div class="tiptap__menu tiptap__icon-grid" role="menu" data-media--tiptap-target="iconGrid"></div>
             </div>
             {# Module-contributed insert buttons (e.g. FormBuilder "Insert form") are
                appended here by the controller — the editor stays module-agnostic. The label of

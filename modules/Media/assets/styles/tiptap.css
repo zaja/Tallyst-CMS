@@ -100,6 +100,9 @@
     left: 0;
     z-index: 20;
     min-width: 9rem;
+    /* Safety cap so even a flipped wide grid (icon picker / colour swatch) can never physically
+       exceed the editor width — the controller flips left/right dynamically, this bounds it. */
+    max-width: min(24rem, 92vw);
     padding: 0.25rem;
     border: 1px solid var(--bs-border-color, #ccc);
     border-radius: 6px;
@@ -111,10 +114,12 @@
     display: block;
 }
 
-/* Right-align a dropdown whose trigger sits near the RIGHT end of the toolbar (columns,
-   icon picker), so the menu grows LEFTWARD from the trigger's right edge and stays inside the
-   editor instead of spilling into the EA sidebar column (Status/Position) on the two-column page
-   edit. Left-side dropdowns (heading/list/align) keep the default left:0. */
+/* Right-aligned (leftward-opening) dropdown. ⚠ SET DYNAMICALLY by the controller
+   (media--tiptap#positionDropdown) — NOT hardcoded per dropdown. The toolbar is flex-wrap, so a
+   trigger can land anywhere; on open the controller measures the menu vs the .tiptap editor bounds
+   and adds this class only when a left-aligned menu would overflow the editor's right edge. That
+   keeps every dropdown (narrow text menus AND the wide icon/colour grids) inside the editor
+   regardless of trigger position or viewport width. */
 .tiptap__menu--right {
     left: auto;
     right: 0;
@@ -173,8 +178,8 @@
 
 /* Icon picker grid — the controller fills it with one button per curated icon. Compact grid:
    fixed columns + vertical scroll, so it stays compact for ANY icon-set size (more icons = more
-   rows + scroll, width unchanged). Right-alignment (so it doesn't spill past the editor) comes
-   from the shared .tiptap__menu--right modifier on the menu element. */
+   rows + scroll, width unchanged). Open direction (so it doesn't spill past the editor) is set
+   dynamically by media--tiptap#positionDropdown, like every other dropdown. */
 .tiptap__icon-grid {
     grid-template-columns: repeat(6, 1fr);
     gap: 0.15rem;

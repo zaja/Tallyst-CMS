@@ -213,6 +213,25 @@ export default class extends Controller {
             menu.classList.add('is-open');
             event.currentTarget.setAttribute('aria-expanded', 'true');
             this.markActive(menu);
+            this.positionDropdown(menu);
+        }
+    }
+
+    /**
+     * Keep an open dropdown INSIDE the editor. The toolbar is flex-wrap, so a trigger can land
+     * anywhere; a fixed open direction spills one way or the other. Instead: open left-aligned
+     * (the default), measure the real rect, and flip to right-aligned (.tiptap__menu--right) only
+     * when the menu would overflow the editor's right edge. Measured against .tiptap (this.element,
+     * the whole editor incl. toolbar) so it works in every layout (2-col page edit, post, settings
+     * tabs). The CSS max-width cap is the safety net if even a flipped wide grid can't fully fit.
+     */
+    positionDropdown(menu) {
+        const MARGIN = 8;
+        menu.classList.remove('tiptap__menu--right'); // measure from the default (left-aligned) state
+        const editor = this.element.getBoundingClientRect();
+        const rect = menu.getBoundingClientRect();
+        if (rect.right > editor.right - MARGIN) {
+            menu.classList.add('tiptap__menu--right');
         }
     }
 
