@@ -726,11 +726,9 @@ class DemoSeedCommand extends Command
             <p style="text-align:center"><a class="tallyst-btn tallyst-btn--primary" href="/buy">Download — 15-day free trial</a> <a class="tallyst-btn tallyst-btn--secondary" href="#pricing">See pricing</a></p>
             <p style="text-align:center">Windows 10 &amp; 11 · Backblaze B2 · Amazon S3 · Wasabi · Cloudflare R2 · local disk</p>
 
-            <div class="tallyst-spacer tallyst-spacer--md"></div>
+            <div class="tallyst-spacer tallyst-spacer--sm"></div>
 
-            [image id={$homeHero} size=full align=center alt="The Arca app showing a backup in progress"]
-
-            <div class="tallyst-spacer tallyst-spacer--lg"></div>
+            [image id={$homeHero} width=full alt="The Arca app showing a backup in progress"]
 
             <h6 style="text-align:center">Features</h6>
             <h2 class="display-2" style="text-align:center">Everything a serious backup needs</h2>
@@ -747,14 +745,12 @@ class DemoSeedCommand extends Command
             <div class="tallyst-column"><p>[icon name=euro]</p><h3>No subscription</h3><p>Pay once, use it forever. No monthly bills.</p></div>
             </div>
 
-            <div class="tallyst-spacer tallyst-spacer--lg"></div>
+            <div class="tallyst-spacer tallyst-spacer--sm"></div>
 
             <div class="tallyst-columns" data-columns="2">
             <div class="tallyst-column">[image id={$featuresFlow} size=medium align=center alt="Files split into chunks and sent to the cloud"]</div>
             <div class="tallyst-column"><h3>Why Arca?</h3><p>Most backup tools want a subscription and your data on their servers. Arca is the opposite: the app is yours, the keys are yours, and storage is wherever you decide. The chunk format means an interrupted transfer picks up exactly where it stopped — even on a slow connection.</p><p><a class="tallyst-btn tallyst-btn--ghost" href="/docs">How it works [icon name=arrow-right]</a></p></div>
             </div>
-
-            <div class="tallyst-spacer tallyst-spacer--lg"></div>
 
             <h6 id="pricing" style="text-align:center">Pricing</h6>
             <h2 class="display-2" style="text-align:center">Try everything — pay once</h2>
@@ -765,7 +761,7 @@ class DemoSeedCommand extends Command
             <div class="tallyst-column tallyst-column--highlight"><h6>Most popular</h6><h3>Pro</h3><p><strong style="font-size:1.8em">€29</strong> once</p><p>Lifetime license, no subscription</p><ul><li>[icon name=check] Everything in Trial, forever</li><li>[icon name=check] Database backups (MySQL, PostgreSQL)</li><li>[icon name=check] Free updates</li></ul><p><a class="tallyst-btn tallyst-btn--primary" href="/buy">Buy Pro — €29</a></p></div>
             </div>
 
-            <div class="tallyst-spacer tallyst-spacer--lg"></div>
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
 
             <h2 class="display-2" style="text-align:center">Ready for your first backup?</h2>
             <p style="text-align:center">Download Arca and you'll have your first safe snapshot in three minutes.</p>
@@ -831,6 +827,8 @@ class DemoSeedCommand extends Command
             <h2 class="display-2">Prefer to try first?</h2>
             <p>Download the full app and use every feature for 15 days. Nothing is disabled, and you don't need an account or a card. If it's not for you, just uninstall — no strings.</p>
             <p><a class="tallyst-btn tallyst-btn--primary" href="#">Download Arca for Windows [icon name=arrow-right]</a></p>
+
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
 
             <div class="tallyst-columns" data-columns="3">
             <div class="tallyst-column"><h3>Is this really one-time?</h3><p>Yes. One payment, one license, no recurring charges — ever.</p></div>
@@ -966,13 +964,11 @@ class DemoSeedCommand extends Command
             <div class="tallyst-column"><p>[icon name=boxes]</p><h3>No lock-in</h3><p>Open, documented formats. You can restore without us if you ever need to.</p></div>
             </div>
 
-            <div class="tallyst-spacer tallyst-spacer--lg"></div>
-
             <h6>Our team</h6>
             <h2 class="display-2">Small on purpose</h2>
             <p>Arca is built and supported by four people. That's not a limitation — it's the point. A small team answers its own support email, ships what it believes in, and knows every line of the product.</p>
 
-            <div class="tallyst-spacer tallyst-spacer--md"></div>
+            <div class="tallyst-spacer tallyst-spacer--sm"></div>
 
             <div class="tallyst-columns tallyst-columns--cards" data-columns="1">
             <div class="tallyst-column">[image id={$team1} size=thumb align=left alt="Marko Beker"]<h3>Marko Beker</h3><p><span class="tallyst-color--brand">Founder &amp; Lead Developer</span></p><p>Started Arca after losing a drive full of work to a backup tool that had "quietly" stopped running. Believes software you buy should be yours, keys and all.</p><p><em>"The best backup is the one you never have to think about."</em></p></div>
@@ -990,11 +986,11 @@ class DemoSeedCommand extends Command
             <div class="tallyst-column">[image id={$team4} size=thumb align=left alt="Petra Novak"]<h3>Petra Novak</h3><p><span class="tallyst-color--brand-strong">Design &amp; UX</span></p><p>Shapes how Arca looks and feels — from the first-run setup to the progress bar you glance at once a day. Fights for fewer clicks and clearer words.</p><p><em>"Good backup software gets out of your way."</em></p></div>
             </div>
 
-            <div class="tallyst-spacer tallyst-spacer--lg"></div>
-
             <h6>How we work</h6>
             <h2 class="display-2">A person reads your email</h2>
             <p>We're not chasing scale for its own sake. A small team means we can keep Arca focused, answer support email ourselves, and make decisions based on what's right for the people who use it — not what maximizes a subscription number. When you email us, one of the four people above reads it.</p>
+
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
 
             <h2 class="display-2" style="text-align:center">Come say hello</h2>
             <p style="text-align:center">Questions, feedback, or just curious? We'd love to hear from you.</p>
@@ -1007,6 +1003,8 @@ class DemoSeedCommand extends Command
         return <<<HTML
             <h1 class="display-1">Get in touch</h1>
             <p>Questions about features, licensing, or a backup that's misbehaving? Send us a message and a real person — someone who works on Arca — will get back to you.</p>
+
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
 
             <div class="tallyst-columns" data-columns="2">
             <div class="tallyst-column">
