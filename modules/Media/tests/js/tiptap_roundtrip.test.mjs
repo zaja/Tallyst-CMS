@@ -263,6 +263,17 @@ const spacerBad = roundTrip('<div class="tallyst-spacer tallyst-spacer--evil"></
 ok(/tallyst-spacer--md/.test(spacerBad) && !/tallyst-spacer--evil/.test(spacerBad),
     'an unknown spacer size falls back to md (cosmetic default, node kept)');
 
+// --- Curated text colour (TEXT_COLORS mark): serialised as a fixed class on a span; unknown
+// colour dropped; coexists with bold. It's a CLASS (not inline style) — the existing !/style=/
+// assertion (a non-text-align inline style is dropped) stays valid.
+const colored = roundTrip('<p>A <span class="tallyst-color--brand">warm</span> word</p>');
+ok(/<span class="[^"]*\btallyst-color--brand\b[^"]*">warm<\/span>/.test(colored), 'text colour survives as a class');
+ok(!/style=/.test(colored), 'text colour is a class, never an inline style');
+const colorBad = roundTrip('<p><span class="tallyst-color--evil">x</span></p>');
+ok(!/tallyst-color--/.test(colorBad), 'an out-of-allowlist colour (--evil) is dropped');
+const colorBold = roundTrip('<p><strong><span class="tallyst-color--green">bold green</span></strong></p>');
+ok(/tallyst-color--green/.test(colorBold) && /<strong>|<b>/.test(colorBold), 'text colour coexists with bold');
+
 // --- Inline icon node (WYSIWYG [icon]): the marker round-trips, stays INLINE, name preserved ---
 // buildExtensions() runs with no iconSet here → the NodeView degrades but renderHTML (the marker)
 // is unaffected, so serialization is deterministic and testable. renderHTML emits ONLY the marker

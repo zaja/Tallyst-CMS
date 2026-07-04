@@ -16,6 +16,8 @@ core-API change is a MAJOR (flagged ⚠).
   single full-width column — handy for an image-left, text-right card.
 - **Vertical spacer block.** Insert blank vertical space between blocks in three
   curated sizes (small, medium, large).
+- **Curated text color palette.** Color selected text from an eight-color palette
+  (a swatch picker in the toolbar) — the theme owns the actual colors.
 
 - **Icons in content.** A curated icon set (Font Awesome Free, inline SVG) with an
   `[icon]` shortcode and a WYSIWYG picker in the editor toolbar — icons sit inline

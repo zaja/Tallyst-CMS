@@ -81,6 +81,16 @@ admin:
             spacer_sm: Mali razmak
             spacer_md: Srednji razmak
             spacer_lg: Veliki razmak
+            text_color: Boja teksta
+            color_remove: Ukloni boju
+            color_brand: Narančasta
+            color_brand_strong: Tamno narančasta
+            color_ink: Tinta
+            color_ink_2: Tamna
+            color_blue: Plava
+            color_green: Zelena
+            color_muted: Prigušena
+            color_muted_light: Svijetlo prigušena
             icon: Ikona
             undo: Poništi
             redo: Ponovi

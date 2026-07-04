@@ -176,6 +176,18 @@ export default class extends Controller {
         this.inputTarget.value = this.editor.getHTML();
     }
 
+    /** Text-colour swatch: data-color = a TEXT_COLORS name, or '' to remove the colour. */
+    setTextColor(event) {
+        const color = event.currentTarget.dataset.color || '';
+        this.closeDropdowns();
+        if ('' === color) {
+            this.editor.chain().focus().unsetTextColor().run();
+
+            return;
+        }
+        this.editor.chain().focus().setTextColor(color).run();
+    }
+
     bold() { this.editor.chain().focus().toggleBold().run(); }
     italic() { this.editor.chain().focus().toggleItalic().run(); }
     strike() { this.editor.chain().focus().toggleStrike().run(); }
@@ -264,6 +276,11 @@ export default class extends Controller {
         menu.querySelectorAll('[data-col-highlight]').forEach((el) => {
             el.disabled = !inCards;
             el.classList.toggle('is-active', inCards && 'highlight' === this.editor.getAttributes('column').style);
+        });
+        // Text colour — flag the active swatch (data-color '' = the "remove" item, never active).
+        const activeColor = this.editor.isActive('textColor') ? this.editor.getAttributes('textColor').color : null;
+        menu.querySelectorAll('[data-color]').forEach((el) => {
+            el.classList.toggle('is-active', '' !== el.dataset.color && el.dataset.color === activeColor);
         });
     }
 

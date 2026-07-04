@@ -718,6 +718,17 @@ th { font-weight: 650; }
 .tallyst-spacer--md { height: 2rem; }
 .tallyst-spacer--lg { height: 4rem; }
 
+/* Curated text colour (TEXT_COLORS mark → tallyst-color--{name}). The theme owns the values, so
+   the admin picks a SEMANTIC colour and re-theming updates all coloured content. */
+.tallyst-color--brand { color: var(--brand); }
+.tallyst-color--brand-strong { color: var(--brand-strong); }
+.tallyst-color--ink { color: var(--ink); }
+.tallyst-color--ink-2 { color: var(--ink-2); }
+.tallyst-color--blue { color: #2453c4; }
+.tallyst-color--green { color: #177a4c; }
+.tallyst-color--muted { color: var(--muted); }
+.tallyst-color--muted-light { color: #8994a1; }
+
 /* Card styles (curated columns styles, ADDITIVE contract — default columns untouched). Two looks:
    --cards = white cards with a border (pricing), --cards-tint = tinted cards in rotation
    (features). Editor preview mirrors this in modules/Media/assets/styles/tiptap.css — keep in sync. */

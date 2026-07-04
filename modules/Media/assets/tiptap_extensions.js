@@ -1,3 +1,4 @@
+import { Mark, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Heading from '@tiptap/extension-heading';
@@ -73,6 +74,57 @@ const TallystLink = Link.extend({
 });
 
 /*
+ * Curated text colour — a standalone mark that colours a text selection from a CURATED palette
+ * (NOT a free colour picker; consistency > power). Serialised ONLY as a fixed class
+ * `tallyst-color--{name}` on a <span>, with the same injection-safe allowlist pattern as every
+ * other curated style (parseHTML reads ONLY an allowlisted name, renderHTML emits ONLY the known
+ * class). A CLASS, not an inline `style="color:…"` — the theme owns the actual values (change the
+ * brand orange and all coloured content follows), and it fits the schema's "drop every inline
+ * style except text-align" rule (no @tiptap/extension-color / -text-style dependency needed).
+ */
+export const TEXT_COLORS = ['brand', 'brand-strong', 'ink', 'ink-2', 'blue', 'green', 'muted', 'muted-light'];
+
+const TallystColor = Mark.create({
+    name: 'textColor',
+
+    addAttributes() {
+        return {
+            color: {
+                default: null,
+                parseHTML: (el) => {
+                    const m = (el.getAttribute('class') || '').match(/\btallyst-color--([a-z0-9-]+)\b/);
+                    return m && TEXT_COLORS.includes(m[1]) ? m[1] : null;
+                },
+                renderHTML: (attrs) => (attrs.color && TEXT_COLORS.includes(attrs.color)
+                    ? { class: `tallyst-color--${attrs.color}` }
+                    : {}),
+            },
+        };
+    },
+
+    parseHTML() {
+        // Only a <span> that already carries a tallyst-color-- class (an arbitrary span is ignored).
+        return [{
+            tag: 'span',
+            getAttrs: (el) => (/\btallyst-color--/.test(el.getAttribute('class') || '') ? {} : false),
+        }];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        return ['span', mergeAttributes(HTMLAttributes), 0];
+    },
+
+    addCommands() {
+        return {
+            setTextColor: (color) => ({ commands }) => (TEXT_COLORS.includes(color)
+                ? commands.setMark('textColor', { color })
+                : false),
+            unsetTextColor: () => ({ commands }) => commands.unsetMark('textColor'),
+        };
+    },
+});
+
+/*
  * The Tiptap schema for Tallyst content + an extension point so OTHER modules can plug in
  * their own embed nodes WITHOUT the editor (Media) depending on them. Mirrors the PHP
  * EditorShortcodeConverterInterface IoC on the JS side.
@@ -133,6 +185,7 @@ export function buildExtensions(iconSet = {}) {
         // Our link keeps the name 'link' (so the link picker + isActive are unchanged) — same
         // stable-on-load config as before, plus the buttonStyle attribute for CTA buttons.
         TallystLink.configure({ openOnClick: false, autolink: false, HTMLAttributes: { target: null, rel: null } }),
+        TallystColor,
         TallystDocument,
         TallystImage,
         // Inline icon node (core content, like image/columns). iconSet feeds the display NodeView.

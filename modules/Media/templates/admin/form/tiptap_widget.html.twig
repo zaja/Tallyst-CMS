@@ -21,6 +21,26 @@
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.bold'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.bold'|trans({}, 'admin') }}" data-action="media--tiptap#bold"><i class="fa-solid fa-bold" aria-hidden="true"></i></button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.italic'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.italic'|trans({}, 'admin') }}" data-action="media--tiptap#italic"><i class="fa-solid fa-italic" aria-hidden="true"></i></button>
             <button type="button" class="tiptap__btn" title="{{ 'admin.media.tiptap.strike'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.strike'|trans({}, 'admin') }}" data-action="media--tiptap#strike"><i class="fa-solid fa-strikethrough" aria-hidden="true"></i></button>
+            {# Curated text colour — a swatch dropdown of 8 palette colours (TEXT_COLORS) + "remove".
+               Each swatch's background is the real colour (admin UI, not content); the mark stores
+               a class (tallyst-color--{name}), the theme owns the value. #}
+            <div class="tiptap__dropdown">
+                <button type="button" class="tiptap__btn tiptap__btn--dd" title="{{ 'admin.media.tiptap.text_color'|trans({}, 'admin') }}" aria-label="{{ 'admin.media.tiptap.text_color'|trans({}, 'admin') }}"
+                        aria-haspopup="true" aria-expanded="false" data-action="media--tiptap#toggleDropdown"><i class="fa-solid fa-palette" aria-hidden="true"></i><i class="fa-solid fa-caret-down tiptap__caret" aria-hidden="true"></i></button>
+                <div class="tiptap__menu" role="menu">
+                    <div class="tiptap__color-grid">
+                        {% set swatches = {brand: '#ea580c', 'brand-strong': '#c2410c', ink: '#1c2430', 'ink-2': '#141b26', blue: '#2453c4', green: '#177a4c', muted: '#5f6b78', 'muted-light': '#8994a1'} %}
+                        {% for name, hex in swatches %}
+                            <button type="button" class="tiptap__color-swatch" role="menuitem" data-color="{{ name }}" style="background: {{ hex }}"
+                                    title="{{ ('admin.media.tiptap.color_' ~ (name|replace({'-': '_'})))|trans({}, 'admin') }}"
+                                    aria-label="{{ ('admin.media.tiptap.color_' ~ (name|replace({'-': '_'})))|trans({}, 'admin') }}"
+                                    data-action="media--tiptap#setTextColor"></button>
+                        {% endfor %}
+                    </div>
+                    <span class="tiptap__menu-sep"></span>
+                    <button type="button" class="tiptap__menu-item" role="menuitem" data-color="" data-action="media--tiptap#setTextColor">{{ 'admin.media.tiptap.color_remove'|trans({}, 'admin') }}</button>
+                </div>
+            </div>
             <span class="tiptap__sep"></span>
 
             {# Heading dropdown: Paragraph / H1–H4 (sets the block, doesn't toggle). #}

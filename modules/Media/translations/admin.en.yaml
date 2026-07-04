@@ -81,6 +81,16 @@ admin:
             spacer_sm: Small space
             spacer_md: Medium space
             spacer_lg: Large space
+            text_color: Text color
+            color_remove: Remove color
+            color_brand: Orange
+            color_brand_strong: Dark orange
+            color_ink: Ink
+            color_ink_2: Dark
+            color_blue: Blue
+            color_green: Green
+            color_muted: Muted
+            color_muted_light: Light muted
             icon: Icon
             undo: Undo
             redo: Redo
