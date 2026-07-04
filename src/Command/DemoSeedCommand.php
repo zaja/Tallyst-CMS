@@ -504,8 +504,10 @@ class DemoSeedCommand extends Command
         ];
 
         // Heroes (overlay, text left / image right half) on Features, Buy, About. Their contentHtml
-        // deliberately OMITS the leading display-1 (the hero carries the title). position=left +
-        // style=photo are the entity defaults, so they need no explicit set.
+        // deliberately OMITS the leading display-1 (the hero carries the title). heroStyle=light
+        // (dark text, no scrim) — our hero illustrations are LIGHT with the subject on the right and
+        // a clear left side, so dark text sits cleanly on the light left half. position=left (the
+        // entity default) puts the text on that clear left side.
         // [slug => [mediaName, title, text, ctaLabel|null, ctaUrl|null]]
         $heroes = [
             'features' => ['features-hero', 'Everything Arca does', 'A backup tool should be boring in the best way — set it up once, and it quietly does its job.', 'Try free', '/buy'],
@@ -527,6 +529,7 @@ class DemoSeedCommand extends Command
                     [$hName, $ht, $htext, $hcl, $hcu] = $heroes[$slug];
                     $page->setHeroEnabled(true)
                         ->setHeroImage($media[$hName] ?? null)
+                        ->setHeroStyle('light') // light illustrations → dark text, no scrim
                         ->setHeroTitle($ht)
                         ->setHeroText($htext)
                         ->setHeroCtaLabel($hcl)
