@@ -4,11 +4,15 @@ namespace App\Tests\Console;
 
 use App\Console\ConsoleStepRunner;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Locks the child-env contract: the .env-managed keys MUST be stripped (false) so a fresh-kernel
  * subprocess re-reads them from .env.local instead of inheriting the parent's frozen values.
- * run() itself spawns a real subprocess, so it's covered by the install/upgrade smoke, not here.
+ * run()'s happy path spawns a real subprocess (covered by the install/upgrade smoke); here we lock
+ * the child-env contract, the SAPI binary resolution, and the test-env spawn guard.
  */
 class ConsoleStepRunnerTest extends TestCase
 {
@@ -50,6 +54,23 @@ class ConsoleStepRunnerTest extends TestCase
         $env = (new ConsoleStepRunner('/tmp/project'))->childEnv(['APP_ENV' => 'test']);
 
         self::assertSame('test', $env['APP_ENV']);
+    }
+
+    /**
+     * Defense-in-depth: run() must REFUSE to spawn a subprocess when the injected kernel env is
+     * 'test' — the child re-reads .env.local (DEV DB) and would mutate dev, not the isolated test DB.
+     * (The DI-autowired instance gets the real 'test' env in functional tests; a manual
+     * `new ConsoleStepRunner($dir)` defaults to 'prod', so the upgrade test's tmpDir spawn is
+     * unaffected.)
+     */
+    public function testRunRefusesToSpawnInTestEnv(): void
+    {
+        $runner = new ConsoleStepRunner('/tmp/project', 'test');
+        $io = new SymfonyStyle(new ArrayInput([]), new BufferedOutput());
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('must not spawn subprocesses in the test environment');
+        $runner->run($io, ['cache:clear'], $runner->childEnv());
     }
 
     /**

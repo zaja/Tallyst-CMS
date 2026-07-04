@@ -10,6 +10,12 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Fixed
+
+- **ConsoleStepRunner refuses to spawn subprocesses in the test environment**,
+  preventing a functional test that drives the install/upgrade/demo flow from
+  accidentally mutating the development database instead of the isolated test one.
+
 ## [1.4.0] — 2026-07-04
 
 ### Added

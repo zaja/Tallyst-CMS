@@ -23,6 +23,12 @@ final class ConsoleStepRunner
     public function __construct(
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
+        // The kernel environment, injected. Defaults to 'prod' so a MANUAL `new ConsoleStepRunner($dir)`
+        // (e.g. UpgradeFinalizeCommandTest, which spawns harmlessly in a throwaway tmpDir) is unaffected;
+        // the DI-autowired instance (DemoController / InstallCommand) gets the REAL env, so an actual
+        // subprocess spawn inside a functional test is refused — see the guard in run().
+        #[Autowire('%kernel.environment%')]
+        private readonly string $env = 'prod',
     ) {
     }
 
@@ -58,6 +64,16 @@ final class ConsoleStepRunner
      */
     public function run(SymfonyStyle $io, array $args, array $env, bool $warnOnly = false): bool
     {
+        // Defense-in-depth: childEnv() strips the .env-managed keys so the child re-reads them from
+        // .env.local — which points at the DEV database. Spawning a subprocess under APP_ENV=test would
+        // therefore mutate DEV, NOT the isolated test DB (tallystcmstest). No test should reach here
+        // (the demo routes are GET / CommandTester-driven; install & upgrade run in prod CLI), so if one
+        // ever does — e.g. a WebTestCase POSTing to /admin/demo/delete — refuse LOUDLY instead of
+        // silently wiping the dev demo. Mock/stub the step in tests instead.
+        if ('test' === $this->env) {
+            throw new \LogicException('ConsoleStepRunner must not spawn subprocesses in the test environment — the child re-reads .env.local and would mutate the DEV database, not the test DB. Mock or stub the step in tests instead.');
+        }
+
         $io->writeln('<info>→ php bin/console '.implode(' ', $args).'</info>');
 
         $php = self::resolvePhpBinary(
