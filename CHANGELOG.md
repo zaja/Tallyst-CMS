@@ -40,6 +40,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ### Changed
 
+- **Photo hero overlay is now a solid footer-colour panel** instead of a gradient
+  — cleaner behind the text, with the image half left clear.
 - **Theme v2 redesign.** The default theme got a full visual pass: a warm orange
   accent, a card-based layout language with soft tints, pill buttons, a dark top
   bar and footer, larger radii, and Space Grotesk/Inter as the default typography.

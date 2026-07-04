@@ -13,11 +13,11 @@
     {% if hero_overlay %}
         {# Hero WITH text: the image is FULL-BLEED across the whole hero; the text (h1 + text + CTA)
            sits OVER it on one 50% half (heroPosition = left/right; full-width on mobile), vertically
-           centred. heroStyle = text treatment only (image always full-bleed): photo = a scrim over
-           the text half + white text; light = white text (for dark images), dark = dark text (for
-           light images) — both with NO panel/scrim, only a subtle text-shadow for edge contrast.
-           Image is decorative (the <h1> carries meaning). Null-safe: no heroImage → the --ink
-           fallback + white text keeps the overlay legible. #}
+           centred. heroStyle = text treatment only (image always full-bleed): photo = a solid
+           --ink-2 (footer-colour) panel over the text half + white text; light = DARK text (for
+           LIGHT images), dark = WHITE text (for DARK images) — both clean on the image, no
+           panel/scrim. Image is decorative (the <h1> carries meaning). Null-safe: no heroImage →
+           the --ink fallback + white text keeps the overlay legible. #}
         <header class="page-hero page-hero--{{ page.heroPosition }} page-hero--{{ page.heroStyle }}{{ page.heroImage ? '' : ' page-hero--no-image' }}">
             {% if page.heroImage %}{{ media_img(page.heroImage, 'hero', null, '') }}{% endif %}
             <div class="page-hero-inner">

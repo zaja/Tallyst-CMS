@@ -403,13 +403,14 @@ th { font-weight: 650; }
      dark   — DARK image → WHITE text straight on the image, no panel/scrim/shadow.
    light/dark are clean text on the image (no shadow) — pick the one matching the image's tone.
    TWO TUNABLES (edit on .page-hero):
-     --hero-photo-fade  : where the photo scrim stays opaque before melting into the clean image
-                          half (raise = wider scrim; lower = image shows sooner).
-     --hero-photo-shade : the photo scrim's max darkness/opacity (0 = none, 1 = solid). Lower it
-                          to let more of the image show through behind the text. */
+     --hero-photo-fade  : the hard edge of the --ink-2 text panel (its width from the text side;
+                          raise = wider panel, lower = image shows sooner). The image half past it
+                          stays clean.
+     --hero-photo-shade : the panel's opacity (0 = none, 1 = solid --ink-2). Lower it to let more of
+                          the image show through behind the text. */
 .page-hero {
     --hero-photo-fade: 55%;
-    --hero-photo-shade: 0.65;
+    --hero-photo-shade: 0.7;
     position: relative;
     display: flex;
     align-items: center;                /* vertical centre */
@@ -438,30 +439,33 @@ th { font-weight: 650; }
 .page-hero-inner h1 { margin: 0 0 var(--s-3); }
 .page-hero-text { margin: 0 0 var(--s-4); font-size: var(--fs-lg); }
 
-/* --- photo: scrim over the text half + white text. The scrim is a ::before, opaque to
-   --hero-photo-fade then fading toward the clean image half (direction follows position).
-   On mobile it spans the full width (no half). --- */
+/* --- photo: a SOLID footer-colour (--ink-2) panel over the TEXT HALF + white text. No gradient —
+   a hard edge at --hero-photo-fade, so the image half stays clean. The panel is translucent
+   (--hero-photo-shade alpha) so the image still shows through behind the text. The two colour
+   stops sit at the SAME position (--hero-photo-fade) → a hard cut, not a fade. --- */
 .page-hero--photo::before {
     content: "";
     position: absolute;
     inset: 0;
     z-index: 1;
     background: linear-gradient(to right,
-        rgba(15, 18, 20, var(--hero-photo-shade)) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
+        color-mix(in srgb, var(--ink-2) calc(var(--hero-photo-shade) * 100%), transparent) var(--hero-photo-fade),
+        transparent var(--hero-photo-fade));
 }
 .page-hero--photo.page-hero--right::before {
     background: linear-gradient(to left,
-        rgba(15, 18, 20, var(--hero-photo-shade)) var(--hero-photo-fade), rgba(15, 18, 20, 0) 100%);
+        color-mix(in srgb, var(--ink-2) calc(var(--hero-photo-shade) * 100%), transparent) var(--hero-photo-fade),
+        transparent var(--hero-photo-fade));
 }
 .page-hero--photo .page-hero-inner,
 .page-hero--photo .page-hero-inner h1,
 .page-hero--photo .page-hero-text { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
-/* Photo on mobile: the text goes full-width, so the scrim is a SOLID overlay over the whole hero
-   (no gradient) — the gradient is a desktop thing (fading toward the clean image half). */
+/* Photo on mobile: the text goes full-width, so the panel is a SOLID --ink-2 overlay over the whole
+   hero (the half-panel is a desktop thing). */
 @media (max-width: 51.999rem) {
     .page-hero--photo::before,
     .page-hero--photo.page-hero--right::before {
-        background: rgba(15, 18, 20, var(--hero-photo-shade));
+        background: color-mix(in srgb, var(--ink-2) calc(var(--hero-photo-shade) * 100%), transparent);
     }
 }
 
