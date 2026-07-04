@@ -54,6 +54,9 @@ core-API change is a MAJOR (flagged ⚠).
 
 ### Fixed
 
+- **Top bar social icons were too small, and intro paragraphs under left-aligned
+  headings looked shifted right** — the social icons are now larger and a lede
+  paragraph only centers when its heading is centered.
 - **Toolbar dropdowns could open outside the editor** (into the sidebar or the
   settings column) — they are now positioned dynamically so they always stay inside
   the editor, whatever the trigger's position or the window width. The icon picker

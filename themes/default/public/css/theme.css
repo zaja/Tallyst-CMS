@@ -134,6 +134,13 @@ h6 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .09em; 
 .display-1 + p, .display-2 + p {
     font-size: var(--fs-lg);
     color: var(--muted);
+}
+/* Center + cap the lede box ONLY when the intro paragraph is itself CENTERED (landing sections).
+   On a LEFT-aligned display heading, a 60ch box with margin-inline:auto would get a big auto left
+   margin and the paragraph would look shifted right. Match BOTH spacings: "text-align:center"
+   (hand-authored demo copy) and "text-align: center" (the editor's TextAlign output). */
+:is(.display-1, .display-2) + p[style*="text-align:center"],
+:is(.display-1, .display-2) + p[style*="text-align: center"] {
     max-width: 60ch;
     margin-inline: auto;
 }
@@ -244,7 +251,9 @@ th { font-weight: 650; }
 .site-topbar__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding-block: var(--s-2); }
 .site-topbar__text a { color: var(--brand-inverse); }
 .site-topbar__text a:hover { color: #ffb27a; }
-.site-topbar__social { display: flex; align-items: center; gap: var(--s-3); }
+/* Social icons a touch larger than the top-bar text (the icons are .tallyst-icon = 1em, so bump
+   this container's font-size; the left .site-topbar__text column is a separate flex child, untouched). */
+.site-topbar__social { display: flex; align-items: center; gap: var(--s-3); font-size: 1rem; }
 .site-topbar__social-link { color: var(--muted-inverse); display: inline-flex; }
 .site-topbar__social-link:hover { color: #fff; }
 .site-topbar__text > :first-child { margin-top: 0; }
