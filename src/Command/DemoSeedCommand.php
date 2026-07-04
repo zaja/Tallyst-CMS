@@ -726,7 +726,11 @@ class DemoSeedCommand extends Command
             <p style="text-align:center"><a class="tallyst-btn tallyst-btn--primary" href="/buy">Download — 15-day free trial</a> <a class="tallyst-btn tallyst-btn--secondary" href="#pricing">See pricing</a></p>
             <p style="text-align:center">Windows 10 &amp; 11 · Backblaze B2 · Amazon S3 · Wasabi · Cloudflare R2 · local disk</p>
 
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
+
             [image id={$homeHero} size=full align=center alt="The Arca app showing a backup in progress"]
+
+            <div class="tallyst-spacer tallyst-spacer--lg"></div>
 
             <h6 style="text-align:center">Features</h6>
             <h2 class="display-2" style="text-align:center">Everything a serious backup needs</h2>
@@ -743,10 +747,14 @@ class DemoSeedCommand extends Command
             <div class="tallyst-column"><p>[icon name=euro]</p><h3>No subscription</h3><p>Pay once, use it forever. No monthly bills.</p></div>
             </div>
 
+            <div class="tallyst-spacer tallyst-spacer--lg"></div>
+
             <div class="tallyst-columns" data-columns="2">
             <div class="tallyst-column">[image id={$featuresFlow} size=medium align=center alt="Files split into chunks and sent to the cloud"]</div>
             <div class="tallyst-column"><h3>Why Arca?</h3><p>Most backup tools want a subscription and your data on their servers. Arca is the opposite: the app is yours, the keys are yours, and storage is wherever you decide. The chunk format means an interrupted transfer picks up exactly where it stopped — even on a slow connection.</p><p><a class="tallyst-btn tallyst-btn--ghost" href="/docs">How it works [icon name=arrow-right]</a></p></div>
             </div>
+
+            <div class="tallyst-spacer tallyst-spacer--lg"></div>
 
             <h6 id="pricing" style="text-align:center">Pricing</h6>
             <h2 class="display-2" style="text-align:center">Try everything — pay once</h2>
@@ -756,6 +764,8 @@ class DemoSeedCommand extends Command
             <div class="tallyst-column"><h3>Trial</h3><p><strong style="font-size:1.8em">€0</strong></p><p>15 days, every feature</p><ul><li>[icon name=check] Full functionality</li><li>[icon name=check] Local and cloud backup</li><li>[icon name=check] No card to try</li></ul><p><a class="tallyst-btn tallyst-btn--secondary" href="/buy">Download free</a></p></div>
             <div class="tallyst-column tallyst-column--highlight"><h6>Most popular</h6><h3>Pro</h3><p><strong style="font-size:1.8em">€29</strong> once</p><p>Lifetime license, no subscription</p><ul><li>[icon name=check] Everything in Trial, forever</li><li>[icon name=check] Database backups (MySQL, PostgreSQL)</li><li>[icon name=check] Free updates</li></ul><p><a class="tallyst-btn tallyst-btn--primary" href="/buy">Buy Pro — €29</a></p></div>
             </div>
+
+            <div class="tallyst-spacer tallyst-spacer--lg"></div>
 
             <h2 class="display-2" style="text-align:center">Ready for your first backup?</h2>
             <p style="text-align:center">Download Arca and you'll have your first safe snapshot in three minutes.</p>
