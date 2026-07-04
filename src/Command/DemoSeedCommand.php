@@ -72,8 +72,9 @@ class DemoSeedCommand extends Command
 
     /** Committed PNG illustrations in demo_content/images/ (tallyst-demo-<name>.png). */
     private const MEDIA_NAMES = [
-        'home-hero', 'features-flow', 'features-db', 'about',
+        'home-hero', 'features-flow', 'features-db',
         'features-hero', 'buy-hero', 'about-hero',
+        'team-1', 'team-2', 'team-3', 'team-4',
         'blog-1', 'blog-2', 'blog-3', 'blog-4', 'blog-5', 'blog-6', 'blog-7', 'blog-8', 'blog-9',
     ];
 
@@ -349,8 +350,8 @@ class DemoSeedCommand extends Command
             'home-hero' => 'The Arca app showing a backup in progress',
             'features-flow' => 'Files split into chunks, compressed, and uploaded to the cloud',
             'features-db' => 'Database tables being exported to a consistent snapshot',
-            'about' => 'The idea behind Arca — protecting your data',
             'features-hero', 'buy-hero', 'about-hero' => 'Abstract Arca illustration',
+            'team-1', 'team-2', 'team-3', 'team-4' => 'Arca team member portrait',
             default => 'Arca blog illustration',
         };
     }
@@ -499,7 +500,7 @@ class DemoSeedCommand extends Command
             'docs' => ['Documentation', 'Arca documentation — installation, configuration, backup types, storage targets, and restores. Everything you need to run Arca.', $this->contentDocs()],
             'install' => ['Installation', 'Install Arca on Windows 10 or 11 and run your first backup — download, install, add a source and target, and schedule a job.', $this->contentInstall()],
             'faq' => ['FAQ', 'Frequently asked questions about Arca — licensing, storage providers, database support, encryption, restores, and the backup format.', $this->contentFaq()],
-            'about' => ['About us', 'Arca is built by a small team that thinks backup software should be simple, honest, and yours. No subscriptions, no lock-in.', $this->contentAbout($img('about'))],
+            'about' => ['About us', 'Arca is built by a small team that thinks backup software should be simple, honest, and yours. No subscriptions, no lock-in.', $this->contentAbout($img('team-1'), $img('team-2'), $img('team-3'), $img('team-4'))],
             'contact' => ['Contact', 'Get in touch with the Arca team — questions about features, licensing, or support. We answer personally.', $this->contentContact($contactForm)],
         ];
 
@@ -523,6 +524,9 @@ class DemoSeedCommand extends Command
                     ->setStatus(Page::STATUS_PUBLISHED)
                     ->setContent($content)
                     ->setMetaDescription($meta)
+                    // Every demo page starts with a display-1 in content OR carries a hero → the auto
+                    // page title would duplicate it, so hide it (the content/hero carries the title).
+                    ->setHideTitle(true)
                     ->setIsDemo(true);
 
                 if (isset($heroes[$slug])) {
@@ -938,12 +942,12 @@ class DemoSeedCommand extends Command
             HTML;
     }
 
-    private function contentAbout(int $aboutImg): string
+    private function contentAbout(int $team1, int $team2, int $team3, int $team4): string
     {
-        // Hero page: no leading display-1 (the hero carries the title). Keep the in-body image.
+        // Hero page: no leading display-1 (the hero carries the title). Demonstrates THREE new
+        // editor tools: 1-column cards (team members), text-colour (roles), spacer (section gaps).
+        // Team avatars use size=thumb (the real "small" Liip filter) + align=left inside the card.
         return <<<HTML
-            [image id={$aboutImg} size=full align=center alt="The idea behind Arca"]
-
             <h6>What we believe</h6>
             <h2 class="display-2">A few simple principles</h2>
             <div class="tallyst-columns tallyst-columns--cards-tint" data-columns="3">
@@ -952,9 +956,35 @@ class DemoSeedCommand extends Command
             <div class="tallyst-column"><p>[icon name=boxes]</p><h3>No lock-in</h3><p>Open, documented formats. You can restore without us if you ever need to.</p></div>
             </div>
 
-            <h6>How we work</h6>
+            <div class="tallyst-spacer tallyst-spacer--lg"></div>
+
+            <h6>Our team</h6>
             <h2 class="display-2">Small on purpose</h2>
-            <p>We're not chasing scale for its own sake. A small team means we can keep Arca focused, answer support email ourselves, and make decisions based on what's right for the people who use it — not what maximizes a subscription number. When you email us, a person who works on Arca reads it.</p>
+            <p>Arca is built and supported by four people. That's not a limitation — it's the point. A small team answers its own support email, ships what it believes in, and knows every line of the product.</p>
+
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
+
+            <div class="tallyst-columns tallyst-columns--cards" data-columns="1">
+            <div class="tallyst-column">[image id={$team1} size=thumb align=left alt="Marko Beker"]<h3>Marko Beker</h3><p><span class="tallyst-color--brand">Founder &amp; Lead Developer</span></p><p>Started Arca after losing a drive full of work to a backup tool that had "quietly" stopped running. Believes software you buy should be yours, keys and all.</p><p><em>"The best backup is the one you never have to think about."</em></p></div>
+            </div>
+
+            <div class="tallyst-columns tallyst-columns--cards" data-columns="1">
+            <div class="tallyst-column">[image id={$team2} size=thumb align=left alt="Ivana Kraljić"]<h3>Ivana Kraljić</h3><p><span class="tallyst-color--blue">Backend Engineer</span></p><p>Owns the chunk format and the compression pipeline. Spends her days making backups smaller and restores faster, and her weekends rock climbing.</p><p><em>"Every byte you don't upload is a byte you never have to worry about."</em></p></div>
+            </div>
+
+            <div class="tallyst-columns tallyst-columns--cards" data-columns="1">
+            <div class="tallyst-column">[image id={$team3} size=thumb align=left alt="Tomislav Horvat"]<h3>Tomislav Horvat</h3><p><span class="tallyst-color--green">Support &amp; Documentation</span></p><p>The person who answers when you email support. Writes the docs, hunts down edge cases, and turns confused tickets into clear guides.</p><p><em>"A feature nobody understands might as well not exist."</em></p></div>
+            </div>
+
+            <div class="tallyst-columns tallyst-columns--cards" data-columns="1">
+            <div class="tallyst-column">[image id={$team4} size=thumb align=left alt="Petra Novak"]<h3>Petra Novak</h3><p><span class="tallyst-color--brand-strong">Design &amp; UX</span></p><p>Shapes how Arca looks and feels — from the first-run setup to the progress bar you glance at once a day. Fights for fewer clicks and clearer words.</p><p><em>"Good backup software gets out of your way."</em></p></div>
+            </div>
+
+            <div class="tallyst-spacer tallyst-spacer--lg"></div>
+
+            <h6>How we work</h6>
+            <h2 class="display-2">A person reads your email</h2>
+            <p>We're not chasing scale for its own sake. A small team means we can keep Arca focused, answer support email ourselves, and make decisions based on what's right for the people who use it — not what maximizes a subscription number. When you email us, one of the four people above reads it.</p>
 
             <h2 class="display-2" style="text-align:center">Come say hello</h2>
             <p style="text-align:center">Questions, feedback, or just curious? We'd love to hear from you.</p>
@@ -992,32 +1022,40 @@ class DemoSeedCommand extends Command
     private function contentBlog1(): string
     {
         return <<<HTML
-            <p>Arca 2.1 is here, and it's the biggest update since we launched. This release is all about doing more with less — smaller backups, faster runs, and one more place to store them. Here's what changed.</p>
+            <p>Arca 2.1 is here, and it's the biggest release since we launched. This one is about doing more with less: smaller backups, faster runs, and one more place to put them. If you're already a Pro user, it's a free update — open Arca and it'll offer to update itself, jobs and schedules intact. Here's the full tour.</p>
 
             <h2>Zstandard compression by default</h2>
-            <p>New backups now compress with Zstandard instead of the old gzip path. In our tests across mixed file sets, Zstandard produced smaller archives <em>and</em> finished faster — a rare case where you don't have to choose. Existing backups keep working exactly as before; the change applies to new runs.</p>
-            <p>If you're curious about the numbers, we wrote up the details in <a href="/blog/why-we-chose-zstandard-over-gzip">a separate post on why we switched</a>.</p>
+            <p>New backups now compress with Zstandard instead of the old gzip path. Across the mixed file sets we tested — source code, documents, a few gigabytes of photos — Zstandard produced smaller archives <span class="tallyst-color--brand">and</span> finished faster. That's rare: usually you trade ratio for speed or the other way round. Zstandard's design lets you have both at the level we ship.</p>
+            <p>Existing backups keep working exactly as they are. The change applies to new runs, so you don't have to migrate anything. If you want the details on why we switched, we wrote a whole post on it: <a href="/blog/why-we-chose-zstandard-over-gzip">Why we chose Zstandard over gzip</a>.</p>
 
             <h2>Cloudflare R2 support</h2>
-            <p>R2 joins Backblaze B2, Amazon S3, and Wasabi as a supported target. Since R2 is S3-compatible, setup is the same as any other bucket — provider, bucket name, and keys:</p>
+            <p>R2 joins Backblaze B2, Amazon S3, and Wasabi as a first-class target. Because R2 is S3-compatible, setup is the same as any other bucket — pick the provider, paste your bucket name and keys, and you're done:</p>
             <pre><code>Provider:   Cloudflare R2
             Bucket:     arca-offsite
-            Endpoint:   https://&lt;account&gt;.r2.cloudflarestorage.com
-            Key ID:     ••••••••
-            App Key:    ••••••••</code></pre>
-            <p>R2's zero-egress pricing makes it a strong pick for backups you hope you'll rarely download.</p>
+            Endpoint:   https://&lt;account-id&gt;.r2.cloudflarestorage.com
+            Key ID:     ••••••••••••
+            App Key:    ••••••••••••</code></pre>
+            <p>R2's zero-egress pricing makes it a strong choice for backups specifically. You pay to store, but not to <em>download</em> — and with backups, downloading is the thing you hope you rarely do. When you do need a restore, it doesn't come with a surprise bandwidth bill.</p>
 
             <h2>Faster incremental backups</h2>
-            <p>We reworked how Arca detects changes between runs. Incremental backups on large source trees are noticeably quicker, because Arca spends less time figuring out what changed and more time actually moving data.</p>
+            <p>We reworked how Arca detects what changed between runs. The old approach walked the entire source tree and compared timestamps; the new one is smarter about which parts of the tree it even needs to look at. On large source trees — think a projects folder with tens of thousands of files — incremental backups are noticeably quicker:</p>
+            <pre><code>Nightly incremental, ~80k file source tree
 
+              2.0    change detection   41s
+              2.1    change detection    9s</code></pre>
+            <p>That's time your machine spends doing nothing you care about, so getting it back is pure win. The backup itself moves the same data as before; it just spends far less time figuring out <em>what</em> to move.</p>
+
+            <h2>Smaller quality-of-life fixes</h2>
             <div class="tallyst-columns tallyst-columns--cards-tint" data-columns="3">
-            <div class="tallyst-column"><p>[icon name=bolt]</p><h3>Smaller &amp; faster</h3><p>Zstandard beats gzip on ratio and speed.</p></div>
-            <div class="tallyst-column"><p>[icon name=cloud-upload]</p><h3>Now with R2</h3><p>Cloudflare R2 joins the supported targets.</p></div>
-            <div class="tallyst-column"><p>[icon name=layers]</p><h3>Quicker increments</h3><p>Less time detecting changes, more time backing up.</p></div>
+            <div class="tallyst-column"><p>[icon name=bolt]</p><h3>Resumable restores</h3><p>Restores now resume the same way backups do — a dropped connection mid-restore no longer starts over.</p></div>
+            <div class="tallyst-column"><p>[icon name=database]</p><h3>Per-job logs</h3><p>Every job keeps its own readable log, so you can see exactly what ran and when.</p></div>
+            <div class="tallyst-column"><p>[icon name=layers]</p><h3>Clearer schedules</h3><p>The schedule editor now shows the next three run times so there's no guessing.</p></div>
             </div>
 
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
+
             <h2>Upgrading</h2>
-            <p>2.1 is a free update for all Pro users — open Arca and it'll offer to update itself. Your existing jobs, schedules, and targets carry over untouched.</p>
+            <p>2.1 is a free update for all Pro users. Open Arca and it'll offer to update; your jobs, schedules, and targets carry over untouched. If you're on the trial, you'll get 2.1 automatically — nothing to do.</p>
             <p><a class="tallyst-btn tallyst-btn--primary" href="/buy">Get Arca 2.1 [icon name=arrow-right]</a></p>
             HTML;
     }
@@ -1025,27 +1063,36 @@ class DemoSeedCommand extends Command
     private function contentBlog2(): string
     {
         return <<<HTML
-            <p>For years, gzip was the safe default for compression: everywhere, well-understood, good enough. When we sat down to pick the compression for Arca's backup format, "good enough" wasn't the bar. Here's how we ended up on Zstandard.</p>
+            <p>For years, gzip was the safe default for compression: it's everywhere, it's well understood, and it's good enough. When we sat down to choose the compression for Arca's backup format, "good enough" wasn't the bar we wanted to clear. A backup tool runs on a schedule, moves gigabytes, and does it over and over — small inefficiencies compound into hours. Here's how we ended up on Zstandard, and why it wasn't a close call.</p>
 
             <h2>The trade-off nobody escapes</h2>
-            <p>Every compressor balances three things: how small the output is (ratio), how fast it runs (speed), and how much CPU it burns getting there. Push one and you usually pay in another. gzip sits at a reasonable middle, which is why it's everywhere — but "reasonable middle" leaves a lot on the table for a backup tool that runs on a schedule and moves gigabytes.</p>
+            <p>Every compressor balances three things: how small the output is (ratio), how fast it runs (speed), and how much CPU it burns getting there. Push one and you usually pay in another. gzip sits at a reasonable middle, which is exactly why it became the default everywhere — but "reasonable middle" leaves a lot on the table when compression is something you do every single night.</p>
+            <p>The question for a backup tool isn't "what's the best ratio" or "what's the fastest" in isolation. It's: <span class="tallyst-color--brand">what gives the best ratio within a time budget that fits a nightly run?</span> That framing is what led us away from gzip.</p>
 
             <h2>What Zstandard changes</h2>
-            <p>Zstandard (zstd) was designed to shift that trade-off. At comparable ratios it's dramatically faster than gzip, and it exposes a wide range of levels so you can dial in exactly where you want to sit. For backups, the sweet spot is a mid-level setting that matches gzip's best ratios while finishing in a fraction of the time.</p>
-            <pre><code># Rough shape of what we measured on a mixed 10 GB source
-            # (your numbers will vary with data and hardware)
+            <p>Zstandard (zstd) was designed by Facebook specifically to shift that trade-off. At comparable ratios it's dramatically faster than gzip, and it exposes a wide range of levels — from very fast and light to slow and thorough — so you can dial in exactly where you want to sit. For backups, the sweet spot is a mid-level setting that matches gzip's <em>best</em> ratios while finishing in a fraction of the time.</p>
+            <p>Here's the rough shape of what we measured on a mixed 10 GB source. Your numbers will vary with data and hardware, but the relationship holds:</p>
+            <pre><code># Mixed 10 GB source (code, docs, images)
 
-            gzip -6      ratio 2.9x    write 100%   (baseline)
-            zstd -3      ratio 2.9x    write  40%
-            zstd -10     ratio 3.3x    write  70%</code></pre>
-            <p>Same ratio, well under half the time — or a better ratio at a similar time budget. For a tool that runs every night, that's hours back over a month.</p>
+            gzip  -6     ratio 2.9x     write 100%   (baseline)
+            zstd  -3     ratio 2.9x     write  38%
+            zstd  -10    ratio 3.3x     write  71%
+            zstd  -19    ratio 3.6x     write 320%</code></pre>
+            <p>Look at <code>zstd -3</code>: the same ratio as gzip, in well under half the time. Or <code>zstd -10</code>: a better ratio <em>and</em> still faster. Only at the extreme high levels (<code>-19</code>) do you pay a real time penalty, and for backups that's rarely worth it. We ship a mid-level default and let power users tune it.</p>
 
-            <h2>Why it matters for cloud backups</h2>
-            <p>Smaller archives aren't just about disk. If your target is object storage, every byte you don't upload is bandwidth you don't wait on and, on some providers, money you don't spend. Faster compression means the whole backup finishes sooner, which means a smaller window where a job is mid-flight.</p>
+            <h2>Why it matters more for cloud backups</h2>
+            <p>Smaller archives aren't just about disk space. If your target is object storage, every byte you don't produce is a byte you don't upload — and upload is usually the slowest part of a cloud backup. Faster compression that also produces smaller output attacks the bottleneck from both sides:</p>
+            <div class="tallyst-columns tallyst-columns--cards-tint" data-columns="2">
+            <div class="tallyst-column"><p>[icon name=bolt]</p><h3>Less to upload</h3><p>A better ratio means fewer bytes over the wire, so the slow part of a cloud backup gets shorter.</p></div>
+            <div class="tallyst-column"><p>[icon name=layers]</p><h3>Shorter window</h3><p>Faster compression means the whole job finishes sooner — a smaller window where a backup is mid-flight.</p></div>
+            </div>
+
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
 
             <h2>The catch, and why it didn't stop us</h2>
-            <p>The honest downside of any newer format is ubiquity: gzip is readable literally everywhere. We handled that by keeping database dumps in standard TAR/GZIP and documenting the file chunk format, so you're never stuck if you don't have Arca handy. For the files themselves, the speed and ratio were worth it.</p>
+            <p>The honest downside of any newer format is ubiquity. gzip is readable literally everywhere — every OS, every language, every rescue disk. zstd is close, but not universal. We handled that deliberately: Arca keeps <strong>database dumps in standard TAR/GZIP</strong>, and the file chunk format is documented, so you're never stuck if you don't have Arca in front of you. For the file data itself, the speed and ratio were worth the small ubiquity cost — and honestly, zstd is everywhere that matters now.</p>
 
+            <p>If you want to see how this fits into the bigger picture of how Arca stores data, the chunk format post is the natural next read: <a href="/blog/chunk-based-backup-dropped-connection">How chunk-based backup survives a dropped connection</a>.</p>
             <p><a class="tallyst-btn tallyst-btn--ghost" href="/features">See how Arca stores backups [icon name=arrow-right]</a></p>
             HTML;
     }
@@ -1053,29 +1100,37 @@ class DemoSeedCommand extends Command
     private function contentBlog3(): string
     {
         return <<<HTML
-            <p>Picture a 40 GB backup, three-quarters uploaded, when your connection drops for ten seconds. With a naive backup tool, that's back to zero. With Arca, it's back to where it left off. The difference is chunking.</p>
+            <p>Picture a 40 GB backup, three-quarters uploaded, when your connection drops for ten seconds. With a naive backup tool, that's back to zero — the whole transfer restarts. With Arca, it's back to where it left off, and you probably don't even notice. The difference is a design decision called chunking, and it quietly shapes almost everything good about how Arca stores data.</p>
 
             <h2>One big blob vs. many small chunks</h2>
-            <p>The simplest way to store a backup is as one large archive. It's easy to reason about — and brutal when a transfer fails, because there's no natural place to resume. You either restart or you build fragile bookkeeping to fake it.</p>
-            <p>Arca takes the other path. Before anything is uploaded, your data is split into chunks — small, fixed-ish pieces, each identified by a hash of its contents. The backup becomes a list of chunk references plus the chunks themselves.</p>
-
-            <h2>Why content-addressing helps twice</h2>
-            <p>Because each chunk is named by its content, two identical chunks have the same name — so Arca never stores or uploads the same data twice. That's deduplication for free: the second backup of a mostly-unchanged folder only moves the handful of chunks that actually changed.</p>
-            <pre><code># A backup is, roughly, a manifest of chunks:
+            <p>The simplest way to store a backup is as one large archive: tar everything up, compress it, upload the result. It's easy to reason about — and brutal when a transfer fails, because there's no natural place to resume. You either restart from the beginning or you build fragile bookkeeping to track how many bytes made it and hope the server agrees.</p>
+            <p>Arca takes the other path. Before anything is uploaded, your data is split into <strong>chunks</strong> — small pieces, each identified by a hash of its own contents. The backup becomes two things: a manifest (a list of which chunks make up which files) and the chunks themselves.</p>
+            <pre><code># A snapshot is a manifest of content-addressed chunks
             snapshot 2026-07-01T02:00
-              file  reports/q2.xlsx  -> [a1f3, 90bc, 55de]
-              file  reports/q1.xlsx  -> [a1f3, 7712]        # a1f3 shared, stored once
-              ...</code></pre>
+              reports/q2.xlsx   -> [a1f3c9, 90bce2, 55de07]
+              reports/q1.xlsx   -> [a1f3c9, 7712bb]        # a1f3c9 shared!
+              notes/todo.md     -> [3f0a11]</code></pre>
 
-            <h2>Resuming is just "which chunks are missing"</h2>
-            <p>Now a dropped connection is a non-event. When Arca reconnects, it asks a simple question: which chunks from this snapshot are already at the target? Everything present is skipped; only the missing chunks are sent. There's no special resume mode and no fragile offset tracking — resumability falls out of the design.</p>
-
+            <h2>Content-addressing helps twice</h2>
+            <p>Because each chunk is named by a hash of its content, two identical chunks get the same name — automatically. Notice <code>a1f3c9</code> in the manifest above: it appears in two files, but Arca stores it <span class="tallyst-color--brand">once</span>. That's deduplication, and it falls out of the naming scheme for free. The second backup of a mostly-unchanged folder only needs to store the handful of chunks that actually changed.</p>
             <div class="tallyst-columns tallyst-columns--cards-tint" data-columns="2">
-            <div class="tallyst-column"><p>[icon name=boxes]</p><h3>Resumable by design</h3><p>Reconnect and Arca sends only the chunks that aren't already there.</p></div>
-            <div class="tallyst-column"><p>[icon name=layers]</p><h3>Deduplicated for free</h3><p>Identical chunks are stored once, so repeat backups stay small.</p></div>
+            <div class="tallyst-column"><p>[icon name=boxes]</p><h3>Resumable by design</h3><p>Reconnect, and Arca sends only the chunks that aren't already at the target.</p></div>
+            <div class="tallyst-column"><p>[icon name=layers]</p><h3>Deduplicated for free</h3><p>Identical chunks share a name, so they're stored exactly once.</p></div>
             </div>
 
-            <p>It's the kind of thing you never think about — until the one night your connection drops at 90%, and the backup just carries on.</p>
+            <h2>Resuming is just "which chunks are missing"</h2>
+            <p>Now the dropped connection is a non-event. When Arca reconnects, it asks the target a simple question: which chunks from this snapshot do you already have? Everything present is skipped; only the missing chunks are sent. There's no special resume mode, no fragile byte-offset tracking, no "are we really at 73%?" — resumability is just the natural consequence of naming chunks by content.</p>
+            <pre><code># On reconnect, Arca reconciles against the target
+            have:    a1f3c9, 90bce2, 7712bb, 3f0a11   (already uploaded)
+            missing: 55de07                            (send just this)
+            => resume by uploading 1 chunk, not 40 GB</code></pre>
+
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
+
+            <h2>The same idea powers restores</h2>
+            <p>Chunking isn't only an upload trick. A restore is the manifest in reverse: fetch the chunks a file needs, in order, and reassemble. Since chunks are shared across files and snapshots, restoring a single file pulls only the chunks that file actually uses — you don't download a monolithic archive to recover one spreadsheet. And just like uploads, restores resume if the connection drops.</p>
+
+            <p>It's the kind of design you never think about — until the one night your connection drops at 90%, and the backup just carries on. If you're curious how this interacts with nightly incremental backups, that's the next post: <a href="/blog/incremental-backups-explained">Incremental backups explained</a>.</p>
             <p><a class="tallyst-btn tallyst-btn--primary" href="/buy">Try Arca free [icon name=arrow-right]</a></p>
             HTML;
     }
@@ -1083,25 +1138,39 @@ class DemoSeedCommand extends Command
     private function contentBlog4(): string
     {
         return <<<HTML
-            <p>There's a tempting shortcut with database backups: just copy the data files. It works right up until the moment it doesn't — because a running database is writing to those files while you copy them, and you end up with a snapshot that's internally inconsistent. Here's how Arca does it properly.</p>
+            <p>There's a tempting shortcut with database backups: just copy the data directory. It's fast, it's simple, and it works right up until the moment it doesn't — because a running database is writing to those files while you copy them. What you get is a snapshot that's internally inconsistent: a backup that might restore cleanly, might not, and won't tell you which until the day you actually need it. Here's how Arca does database backups properly.</p>
 
-            <h2>The problem with copying files</h2>
-            <p>A live database holds state in memory, in write-ahead logs, and on disk, all at once. Copy the on-disk files mid-write and you capture a half-applied transaction — a backup that might restore, might not, and won't tell you which until you need it. Backups you can't trust are worse than no backups, because they lull you into thinking you're covered.</p>
+            <h2>Why copying files is a trap</h2>
+            <p>A live database holds its state in three places at once: in memory, in a write-ahead log, and on disk. Those are constantly being reconciled. Copy the on-disk files in the middle of that and you capture a half-applied transaction — index pointing at a row that isn't written yet, or a row written without its index entry. The copy looks fine. It restores. And then queries return corruption, or the engine refuses to start.</p>
+            <p><span class="tallyst-color--brand">A backup you can't trust is worse than no backup</span>, because it lulls you into thinking you're covered. So Arca doesn't copy database files.</p>
 
-            <h2>Use the engine's own dump path</h2>
-            <p>The reliable way to back up a database is to ask the database itself for a consistent snapshot. Arca uses each engine's native dump mechanism, which gives you the data as it existed at a single point in time — without stopping the server:</p>
-            <pre><code># What Arca runs under the hood, conceptually:
-            mysqldump   --single-transaction --routines --triggers  mydb   > mydb.sql
-            pg_dump     --format=custom  mydb                                > mydb.dump</code></pre>
-            <p>The <code>--single-transaction</code> flag for MySQL (InnoDB) takes the dump inside one consistent transaction, so writes that happen during the dump don't corrupt it. PostgreSQL's <code>pg_dump</code> is consistent by design.</p>
+            <h2>Use the engine's own consistent dump</h2>
+            <p>The reliable way to back up a database is to ask the database itself for a consistent snapshot. Every serious engine has a mechanism for this, and Arca uses it. Under the hood, that's the native dump path for each engine:</p>
+            <pre><code># MySQL / MariaDB — one consistent transaction
+            mysqldump --single-transaction --routines --triggers \
+                      --databases appdb > appdb.sql
 
-            <h2>Wrapped in a standard format</h2>
-            <p>Arca stores those dumps in a standard TAR/GZIP archive. That's deliberate: even if you never touch Arca again, a database backup is just a dump file you can restore with the tools you already know. No lock-in, no proprietary database format to reverse-engineer at the worst possible moment.</p>
+            # PostgreSQL — consistent by design, custom format
+            pg_dump --format=custom --file=appdb.dump appdb</code></pre>
+            <p>The <code>--single-transaction</code> flag is the important part for MySQL with InnoDB: it takes the entire dump inside one transaction, so writes that happen <em>during</em> the dump don't leak into it. You get the database exactly as it existed at the instant the dump began — no torn transactions, no server downtime. PostgreSQL's <code>pg_dump</code> gives you the same point-in-time consistency by design.</p>
 
-            <h2>Restoring</h2>
-            <p>Restoring is the dump in reverse — load the file back into a fresh database. Because the format is standard, you can do it through Arca or straight from the command line:</p>
-            <pre><code>mysql  mydb  &lt; mydb.sql
-            pg_restore  --dbname=mydb  mydb.dump</code></pre>
+            <h2>Wrapped in a standard, boring format</h2>
+            <p>Arca stores those dumps inside a standard TAR/GZIP archive, and that's a deliberate choice. Even if you never open Arca again, a database backup is just a dump file you can restore with the tools you already know. There's no proprietary database format to reverse-engineer at the worst possible moment.</p>
+            <div class="tallyst-columns tallyst-columns--cards-tint" data-columns="2">
+            <div class="tallyst-column"><p>[icon name=database]</p><h3>Consistent</h3><p>A single point-in-time snapshot, taken without stopping the server.</p></div>
+            <div class="tallyst-column"><p>[icon name=boxes]</p><h3>Portable</h3><p>Standard dump in a standard archive — restore anywhere, with or without Arca.</p></div>
+            </div>
+
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
+
+            <h2>Restoring is the dump in reverse</h2>
+            <p>Because the format is standard, restoring is exactly what you'd expect — load the dump back into a fresh database. You can do it through Arca's restore UI, or straight from the command line if you're recovering onto a machine that doesn't have Arca installed:</p>
+            <pre><code># MySQL
+            mysql appdb &lt; appdb.sql
+
+            # PostgreSQL
+            pg_restore --dbname=appdb appdb.dump</code></pre>
+            <p>That "with or without Arca" property is the whole point. Your backup tool should make you safer, not lock you into itself. If it vanished tomorrow, your database backups would still be plain, restorable dumps.</p>
 
             <p><a class="tallyst-btn tallyst-btn--ghost" href="/docs">Read the database docs [icon name=arrow-right]</a></p>
             HTML;
@@ -1110,31 +1179,37 @@ class DemoSeedCommand extends Command
     private function contentBlog5(): string
     {
         return <<<HTML
-            <p>Where should your backups live? It's the first real decision after you install a backup tool, and the honest answer is "probably both." Let's break down the options and the rule of thumb that ties them together.</p>
+            <p>Where should your backups live? It's the first real decision after you install a backup tool, and the honest answer is "probably both." Local and cloud each solve a problem the other can't, and the good news is you don't have to choose. Let's break down the options, the rule of thumb that ties them together, and how to set up a job that covers all of it.</p>
 
             <h2>Local: fast, private, and right there</h2>
-            <p>A local target — an external drive or a NAS on your network — is the fastest way to back up and restore. There's no upload to wait on, no account, and no third party. The catch is obvious: a local copy shares the same roof as the original. Fire, theft, or a spilled coffee takes both.</p>
+            <p>A local target — an external drive, a NAS on your network — is the fastest way to back up and the fastest way to restore. There's no upload to wait on, no account, no third party involved. When you need to pull back a file you deleted an hour ago, it's instant.</p>
+            <p>The catch is obvious once you say it out loud: a local copy shares the same roof as the original. Fire, theft, flood, a spilled coffee that takes out the desk — any of those takes both the original and the backup sitting next to it. Local is necessary. It just isn't sufficient.</p>
 
             <h2>Cloud: off-site by default</h2>
-            <p>An object-storage bucket (Backblaze B2, Amazon S3, Wasabi, Cloudflare R2) puts a copy somewhere the coffee can't reach. It's slower than local and it costs a little, but it's the copy that survives a bad day at home or the office. With Arca, your data goes straight to <em>your</em> bucket with <em>your</em> keys — the cloud provider stores bytes, not access to your life.</p>
+            <p>An object-storage bucket (Backblaze B2, Amazon S3, Wasabi, Cloudflare R2) puts a copy somewhere the coffee can't reach. It's slower than local and it costs a little, but it's the copy that survives a genuinely bad day. And with Arca, the cloud copy is <span class="tallyst-color--brand">yours</span> in a way that matters: your data goes straight to your bucket, encrypted with your key. The provider stores bytes it can't read.</p>
 
             <h2>The 3-2-1 rule</h2>
-            <p>The backup world has a durable piece of advice, and it's worth knowing:</p>
+            <p>The backup world has one durable piece of advice, and it's worth committing to memory:</p>
             <div class="tallyst-columns tallyst-columns--cards-tint" data-columns="3">
-            <div class="tallyst-column"><p>[icon name=layers]</p><h3>3 copies</h3><p>Your live data plus two backups.</p></div>
+            <div class="tallyst-column"><p>[icon name=layers]</p><h3>3 copies</h3><p>Your live data, plus two backups. One backup is a single point of failure.</p></div>
             <div class="tallyst-column"><p>[icon name=database]</p><h3>2 kinds of media</h3><p>Don't keep both backups on the same type of storage.</p></div>
             <div class="tallyst-column"><p>[icon name=cloud-upload]</p><h3>1 off-site</h3><p>At least one copy somewhere else entirely.</p></div>
             </div>
-            <p>A local drive plus a cloud bucket satisfies 3-2-1 on its own, which is exactly why Arca lets a single job write to both at once.</p>
+            <p>A local drive plus a cloud bucket satisfies 3-2-1 on its own: your live data is copy one, the local drive is copy two on one kind of media, and the cloud bucket is copy three, off-site, on another. That's the whole rule, met with two targets.</p>
 
-            <h2>Both, from one job</h2>
-            <p>You don't have to run two backups to get two copies. Add a local target and a cloud target to the same job, and Arca writes to both in one run — a fast copy you can restore from instantly, and an off-site copy for the day you really need it.</p>
+            <h2>Both, from a single job</h2>
+            <p>Here's the part people miss: you don't have to run two separate backups to get two copies. Add a local target and a cloud target to the same job, and Arca writes to both in one run — a fast local copy you can restore from instantly, and an off-site cloud copy for the day you really need it.</p>
             <pre><code>Job: "Documents"
-              Source:  C:\Users\me\Documents
-              Target:  D:\backups           (local, fast restores)
-              Target:  Backblaze B2         (off-site, disaster copy)
-              Schedule: daily 02:00</code></pre>
+              Source:   C:\Users\me\Documents
+              Target:   D:\backups          # local — fast restores
+              Target:   Backblaze B2        # cloud — off-site copy
+              Schedule: daily 02:00
+              Encrypt:  on</code></pre>
+            <p>One job, one schedule, both copies, encrypted. You set it up once and 3-2-1 just happens every night while you're asleep.</p>
 
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
+
+            <p>Once your targets are sorted, the next question is how often to run — which is really a question about how much you'd hate to lose. That's covered here: <a href="/blog/scheduling-backups-that-actually-run">Scheduling backups that actually run</a>.</p>
             <p><a class="tallyst-btn tallyst-btn--primary" href="/buy">Set up your first job [icon name=arrow-right]</a></p>
             HTML;
     }
@@ -1142,25 +1217,29 @@ class DemoSeedCommand extends Command
     private function contentBlog6(): string
     {
         return <<<HTML
-            <p>Open your bank statement and count the monthly software charges. For most of us the list has quietly grown for years. When we built Arca, we decided it wouldn't be on that list. Arca is a one-time purchase — €29, paid once, yours forever. Here's why.</p>
+            <p>Open your bank statement and count the monthly software charges. For most of us that list has grown quietly for years — a few euros here, ten there, each one individually reasonable and collectively a small fortune. When we built Arca, we decided it wouldn't be on that list. Arca is a one-time purchase: <span class="tallyst-color--brand">€29, paid once, yours forever</span>. Here's the thinking behind that, because it wasn't a marketing decision — it was a values one.</p>
 
             <h2>A backup tool is infrastructure, not a service</h2>
-            <p>Some products genuinely earn a subscription: they run servers for you, store your data, deliver something continuously. A backup tool that runs on your machine and writes to your storage isn't that. Charging rent every month for software that lives on your computer and talks to your bucket never sat right with us.</p>
+            <p>Some products genuinely earn a subscription. They run servers on your behalf, store your data, deliver something new and ongoing every month. A streaming service, a hosted database, a monitoring platform — those have real recurring costs, so a recurring price makes sense.</p>
+            <p>A backup tool that runs on your own machine and writes to your own storage is not that. Once you've downloaded Arca, it doesn't cost us anything for you to keep using it. Charging rent every month for software that lives on your computer and talks to your bucket never sat right with us. You bought the software. It should be yours.</p>
 
             <h2>The incentive problem with subscriptions</h2>
-            <p>Subscriptions quietly change what a company optimizes for. Once revenue depends on a recurring charge, the pressure is to keep you subscribed — not necessarily to make the tool something you're glad to own. We'd rather earn your recommendation than depend on your inertia. Pay-once keeps our incentives pointed at building something worth buying.</p>
-
+            <p>Here's the part that's less obvious. A subscription quietly changes what a company optimizes for. Once your revenue depends on a recurring charge, the pressure shifts from "make something worth buying" to "make something hard to cancel." Those aren't the same goal, and sometimes they actively conflict.</p>
             <div class="tallyst-columns tallyst-columns--cards-tint" data-columns="3">
-            <div class="tallyst-column"><p>[icon name=euro]</p><h3>Pay once</h3><p>€29, one time. No monthly line item.</p></div>
-            <div class="tallyst-column"><p>[icon name=bolt]</p><h3>Updates included</h3><p>Free updates for the life of the product.</p></div>
-            <div class="tallyst-column"><p>[icon name=boxes]</p><h3>No lock-in</h3><p>Open formats — leave whenever you like.</p></div>
+            <div class="tallyst-column"><p>[icon name=euro]</p><h3>Pay once</h3><p>€29, one time. No monthly line item to forget about.</p></div>
+            <div class="tallyst-column"><p>[icon name=bolt]</p><h3>Updates included</h3><p>Free updates for the life of the product, not a new tier.</p></div>
+            <div class="tallyst-column"><p>[icon name=boxes]</p><h3>No lock-in</h3><p>Open formats — you can leave whenever you like.</p></div>
             </div>
+            <p>We'd rather earn your recommendation than depend on your inertia. Pay-once keeps our incentives pointed at the only thing that works long-term: building software people are genuinely glad they bought.</p>
 
             <h2>How we keep the lights on</h2>
-            <p>The honest question is whether pay-once is sustainable. It is, because we're small on purpose and we don't carry the cost of storing anyone's data — you bring your own storage. New licenses from people who like Arca and tell their friends fund the work. That's a slower curve than a subscription, and we're fine with that.</p>
+            <p>The honest question is whether pay-once is sustainable, and it's a fair one — plenty of one-time-purchase tools have quietly died. It works for us for two reasons. First, we're small on purpose, so our costs are small. Second, and this is the important one: <strong>we don't store anyone's data</strong>. You bring your own storage, so the single biggest recurring cost in this category — running storage infrastructure for every customer, forever — simply isn't ours to carry.</p>
+            <p>New licenses from people who like Arca and tell their friends fund the ongoing work. That's a slower growth curve than a subscription, and we're completely fine with that. Slower and honest beats faster and extractive.</p>
 
-            <h2>What "forever" means</h2>
-            <p>When you buy Arca, the version you bought keeps working, and every update we ship is free to you. No feature you paid for gets moved behind a new tier later. That's the deal, and it doesn't change.</p>
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
+
+            <h2>What "forever" actually means</h2>
+            <p>When you buy Arca, three things are true and stay true: the version you bought keeps working, every update we ship is free to you, and no feature you paid for gets quietly moved behind a new "Pro Plus" tier later. That last one is a promise we've watched other companies break, and we won't. The deal you get today is the deal.</p>
 
             <p><a class="tallyst-btn tallyst-btn--primary" href="/buy">Buy Arca — €29 once [icon name=arrow-right]</a></p>
             HTML;
@@ -1169,30 +1248,33 @@ class DemoSeedCommand extends Command
     private function contentBlog7(): string
     {
         return <<<HTML
-            <p>"Incremental backup" sounds like something that could go wrong — like each backup is a fragile link in a chain, and if one breaks you lose everything after it. The reality is much friendlier. Let's clear it up.</p>
+            <p>"Incremental backup" sounds like something that could go wrong. It conjures an image of a fragile chain — each backup depending on the one before it, and if a single link breaks, everything after it is lost. That mental model scares people into running slow, wasteful full backups every night. The reality is much friendlier, especially with how Arca does it. Let's clear it up.</p>
 
-            <h2>Full backups: simple, complete, slow</h2>
-            <p>A full backup copies everything you selected, every time. It's the easiest thing to reason about — each backup stands alone — but it's wasteful. If a 50 GB folder changes by a few megabytes a day, a nightly full backup re-copies all 50 GB to capture those few megabytes. That's slow and expensive, especially to the cloud.</p>
+            <h2>Full backups: simple, complete, wasteful</h2>
+            <p>A full backup copies everything you selected, every single time. It's the easiest thing to reason about — each backup stands entirely on its own — but it's enormously wasteful. If a 50 GB folder changes by a few megabytes a day, a nightly full backup re-copies all 50 GB to capture those few megabytes. That's slow, it burns bandwidth if you're going to the cloud, and it fills your target with near-identical copies.</p>
 
             <h2>Incremental backups: only what changed</h2>
-            <p>An incremental backup stores only what changed since the last run. After one full baseline, each night's backup is tiny — just the day's edits. Backups that took an hour now take seconds, and use a fraction of the space.</p>
-            <pre><code>Mon  full         50 GB   (baseline)
-            Tue  incremental   40 MB   (only Tuesday's changes)
-            Wed  incremental   12 MB
-            Thu  incremental   85 MB
-            ...</code></pre>
+            <p>An incremental backup stores only what changed since the last run. You take one full baseline, and after that each night's backup is tiny — just the day's actual edits. A backup that took an hour now takes seconds, and uses a sliver of the space:</p>
+            <pre><code>Mon   full          50 GB     (baseline)
+            Tue   incremental   40 MB     (Tuesday's changes only)
+            Wed   incremental   12 MB
+            Thu   incremental   85 MB
+            Fri   incremental   31 MB</code></pre>
+            <p>Over a week that's roughly 50 GB plus a couple hundred megabytes, versus 250 GB for nightly fulls. <span class="tallyst-color--brand">The savings are enormous</span>, and they compound over months.</p>
 
             <h2>"But what if an early backup is damaged?"</h2>
-            <p>This is the real worry, and it's where Arca's design matters. Because Arca stores data as content-addressed chunks (the same mechanism that makes transfers resumable), a snapshot isn't a fragile diff against yesterday — it's a complete list of the chunks that make up your data at that moment. Unchanged chunks are simply reused, not re-uploaded.</p>
-            <p>The practical upshot: every snapshot is restorable on its own. You browse to any point in time and restore it directly, without replaying a chain of increments and hoping each link holds.</p>
-
+            <p>This is the real fear, and it's where Arca's design matters. In an old-fashioned incremental scheme, Tuesday's backup really was a diff against Monday's, so a corrupt Monday could poison everything after it. That's the fragile chain people imagine.</p>
+            <p>Arca doesn't work that way. Because it stores data as content-addressed chunks — the same mechanism that makes transfers resumable — a snapshot isn't a diff against yesterday. It's a <strong>complete list of the chunks that make up your data at that moment</strong>. Unchanged chunks are simply reused (not re-uploaded), but the snapshot references all of them.</p>
             <div class="tallyst-columns tallyst-columns--cards-tint" data-columns="2">
-            <div class="tallyst-column"><p>[icon name=layers]</p><h3>Fast every night</h3><p>Only the day's changes move, so backups finish quickly.</p></div>
-            <div class="tallyst-column"><p>[icon name=boxes]</p><h3>Every snapshot restorable</h3><p>Restore any point in time directly — no fragile chain.</p></div>
+            <div class="tallyst-column"><p>[icon name=layers]</p><h3>Fast every night</h3><p>Only the day's changed chunks move, so backups finish in seconds.</p></div>
+            <div class="tallyst-column"><p>[icon name=boxes]</p><h3>Every snapshot stands alone</h3><p>Each one references all its chunks — restore any point in time directly.</p></div>
             </div>
+            <p>The practical upshot: every snapshot is independently restorable. You browse to any point in time and restore it directly, with no chain to replay and no single earlier backup that everything else depends on. You get the speed of incrementals with the safety of fulls.</p>
+
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
 
             <h2>You don't have to choose</h2>
-            <p>With Arca there's no toggle to agonize over. The first run of a job is full; every run after is incremental, automatically. You get the completeness of full backups and the speed of incrementals without thinking about it.</p>
+            <p>With Arca there's no agonizing toggle. The first run of a job is a full baseline; every run after is incremental, automatically. You don't schedule "a full on Sundays" or manage retention chains by hand. It just does the fast, safe thing every night — and if you want to understand the chunking that makes it possible, that's here: <a href="/blog/chunk-based-backup-dropped-connection">How chunk-based backup survives a dropped connection</a>.</p>
 
             <p><a class="tallyst-btn tallyst-btn--ghost" href="/features">See how Arca stores backups [icon name=arrow-right]</a></p>
             HTML;
@@ -1201,27 +1283,35 @@ class DemoSeedCommand extends Command
     private function contentBlog8(): string
     {
         return <<<HTML
-            <p>The moment a backup leaves your machine for someone else's storage, a question follows it: who can read this? For anything sensitive, the only comfortable answer is "only me." That's what client-side encryption gives you, and it's worth understanding the difference.</p>
+            <p>The moment a backup leaves your machine for someone else's storage, a question follows it: who can read this? For a backup — which by definition contains a copy of everything you care about — the only comfortable answer is "only me." That's what client-side encryption gives you, and the difference between it and the encryption your cloud provider advertises is worth understanding, because they are not the same thing.</p>
 
-            <h2>Encrypted "at rest" isn't the same as private</h2>
-            <p>Most cloud storage advertises encryption at rest — the provider encrypts your data on their disks. That protects against someone stealing the physical drive, but the provider still holds the keys, which means the provider (and anyone who compels them) can read your data. For a backup of your whole digital life, that may not be the bar you want.</p>
+            <h2>"Encrypted at rest" isn't the same as private</h2>
+            <p>Almost every cloud storage provider advertises encryption at rest: they encrypt your data on their disks. That's real and worth having — it protects against someone physically stealing a drive from their datacenter. But notice who holds the keys: <em>the provider does</em>. Which means the provider can read your data, and so can anyone who compels the provider to — a subpoena, a rogue employee, a breach of their key management. For a backup of your entire digital life, "the storage company can read it" may not be the bar you want.</p>
 
             <h2>Client-side encryption: locked before it leaves</h2>
-            <p>Client-side encryption flips the order. Arca encrypts the backup on your machine, <em>before</em> anything is uploaded. What lands in your bucket is ciphertext — unreadable without your key. The provider stores bytes it cannot interpret.</p>
-            <pre><code>your files ──▶ [ compress ] ──▶ [ encrypt on your machine ] ──▶ upload
-                                            ▲
-                                       key stays here, never uploaded</code></pre>
+            <p>Client-side encryption flips the order of operations. Arca encrypts the backup <strong>on your machine, before anything is uploaded</strong>. What lands in your bucket is ciphertext — meaningless without your key. The provider stores bytes it fundamentally cannot interpret.</p>
+            <pre><code>your files
+               │
+               ▼  compress (zstd)
+               ▼  encrypt  ← happens HERE, on your machine
+               ▼  upload
+               ▼
+            [ cloud bucket ]   stores ciphertext only
+            </code></pre>
+            <p>The key never makes the trip. It stays on your machine, and <span class="tallyst-color--brand">we never see it</span> — there's no Arca server it passes through, because there's no Arca server at all.</p>
 
-            <h2>The rule that makes it work: keys stay with you</h2>
-            <p>Client-side encryption only means something if the key never leaves your control. Arca keeps your encryption key on your machine — it's never uploaded, and we never see it. That has a serious implication we won't hide from you: if you lose the key, we cannot recover your backups. That's not a gap; it's the entire point. A backup only you can decrypt is also a backup only you are responsible for.</p>
-
+            <h2>The rule that makes it real: keys stay with you</h2>
+            <p>Client-side encryption only means something if the key genuinely never leaves your control. Arca keeps your encryption key on your machine, full stop. That has a serious implication we won't hide from you, because hiding it would be dishonest:</p>
             <div class="tallyst-columns tallyst-columns--cards-tint" data-columns="2">
-            <div class="tallyst-column"><p>[icon name=bolt]</p><h3>Encrypted before upload</h3><p>Your provider only ever stores ciphertext.</p></div>
-            <div class="tallyst-column"><p>[icon name=database]</p><h3>Your keys, your responsibility</h3><p>The key never leaves your machine — keep it safe.</p></div>
+            <div class="tallyst-column"><p>[icon name=bolt]</p><h3>Encrypted before upload</h3><p>Your provider only ever stores ciphertext it cannot read.</p></div>
+            <div class="tallyst-column"><p>[icon name=database]</p><h3>Your key, your responsibility</h3><p>It never leaves your machine — which means if you lose it, we can't recover your backups.</p></div>
             </div>
+            <p>If you lose the key, we cannot get your data back. There is no reset link, no support ticket that recovers it, no master key we hold in reserve. That's not a gap in the product — it's the entire point. A backup only you can decrypt is also a backup only you are responsible for. We think that's the right trade for something this sensitive, and we'd rather be straight with you about it than pretend there's a safety net.</p>
+
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
 
             <h2>A practical note on key safety</h2>
-            <p>Since the key is the one thing that can't be replaced, treat it like the important secret it is: store a copy somewhere safe and separate from the machine you're backing up. A password manager or a written copy in a drawer both beat "only on the laptop I'm protecting."</p>
+            <p>Since the key is the one thing that can't be replaced, treat it like the important secret it is. Store a copy somewhere safe and — this is the key part — <em>separate from the machine you're backing up</em>. A password manager, a printed copy in a drawer, an encrypted note on your phone: any of those beats "only on the laptop I'm protecting," because if that laptop is what fails, you'll want the key to be somewhere else.</p>
 
             <p><a class="tallyst-btn tallyst-btn--primary" href="/buy">Back up privately with Arca [icon name=arrow-right]</a></p>
             HTML;
@@ -1230,30 +1320,35 @@ class DemoSeedCommand extends Command
     private function contentBlog9(): string
     {
         return <<<HTML
-            <p>Every survey of data loss finds the same thing: the backup that would have saved the day was the one nobody ran. Manual backups fail not because the tool is bad but because humans forget. The fix is boring and effective — put it on a schedule and stop relying on memory.</p>
+            <p>Every survey of data loss finds the same quiet truth: the backup that would have saved the day was the one nobody ran. Not a corrupted archive, not a failed restore — just a backup that was supposed to happen and didn't, because a human forgot. Manual backups fail for the most human reason there is. The fix is boring and completely effective: put it on a schedule and stop relying on memory.</p>
 
             <h2>Pick a time you're not using the machine</h2>
-            <p>The classic choice is the middle of the night, and it's classic for a reason: the machine is idle, you're not competing for disk or bandwidth, and a slow upload doesn't get in your way. Daily at 2 AM is a sensible default for most people.</p>
+            <p>The classic choice is the middle of the night, and it's classic for good reasons: the machine is idle, you're not competing for disk or CPU, and a slow upload doesn't get in your way. Daily at 2 AM is a sensible default for most people:</p>
             <pre><code>Job: "Documents"
               Schedule: daily 02:00</code></pre>
-            <p>If your machine sleeps at night, pick a time it's actually on — right after you usually sit down in the morning works well.</p>
+            <p>One caveat: if your machine sleeps or shuts down at night, a 2 AM job never fires. In that case pick a time the machine is reliably awake — right after you usually sit down in the morning works well, and Arca will run the backup quietly in the background while you get coffee.</p>
 
             <h2>Match frequency to how much you'd hate to lose</h2>
-            <p>How often to back up comes down to one question: how much work are you willing to redo? That gap is your "recovery point" — the most you could lose between backups.</p>
+            <p>How often to back up comes down to a single question: how much work are you willing to redo? The gap between backups is your <span class="tallyst-color--brand">recovery point</span> — the maximum you could lose if something fails right before the next run.</p>
             <div class="tallyst-columns tallyst-columns--cards-tint" data-columns="3">
-            <div class="tallyst-column"><p>[icon name=layers]</p><h3>Daily</h3><p>Fine for documents and photos that change gradually.</p></div>
-            <div class="tallyst-column"><p>[icon name=bolt]</p><h3>Hourly</h3><p>For active work you'd hate to lose a day of.</p></div>
-            <div class="tallyst-column"><p>[icon name=database]</p><h3>Custom</h3><p>A cron-style expression for anything in between.</p></div>
+            <div class="tallyst-column"><p>[icon name=layers]</p><h3>Daily</h3><p>Fine for documents and photos that change gradually. Worst case, you lose a day.</p></div>
+            <div class="tallyst-column"><p>[icon name=bolt]</p><h3>Hourly</h3><p>For active work — code, writing — you'd hate to lose an afternoon of.</p></div>
+            <div class="tallyst-column"><p>[icon name=database]</p><h3>Custom</h3><p>A cron-style expression for anything in between, or specific days.</p></div>
             </div>
-            <p>Because Arca's backups are incremental after the first run, backing up more often is cheap — an hourly schedule moves only the last hour's changes.</p>
+            <p>Because Arca's backups are incremental after the first run, backing up more often is cheap. An hourly schedule doesn't move your whole source every hour — it moves only the last hour's changed chunks, which is usually tiny. Frequent backups don't cost what people assume they do.</p>
 
             <h2>Don't schedule and forget — verify</h2>
-            <p>A schedule you never check is a guess. Arca shows you the status of every job — when it last ran, whether it succeeded, and how much it moved. Glance at it now and then, and every so often do the thing almost nobody does: actually restore a file. A backup you've never restored from is a backup you're only hoping works.</p>
-            <pre><code># The five-minute habit that turns a backup into a real one:
-            arca restore --job "Documents" --path "any-file.txt" --target ./verify</code></pre>
+            <p>A schedule you never check is a guess dressed up as a plan. Arca shows you the status of every job: when it last ran, whether it succeeded, and how much it moved. Glance at that now and then. And every so often, do the one thing almost nobody does — actually restore a file:</p>
+            <pre><code># The five-minute habit that turns a backup into a real one
+            arca restore --job "Documents" \
+                         --path "any-old-file.txt" \
+                         --target ./verify</code></pre>
+            <p>A backup you've never restored from is a backup you're only <em>hoping</em> works. Restoring one file, once a month, is the cheapest insurance there is — it proves the whole pipeline end to end, from snapshot to disk.</p>
+
+            <div class="tallyst-spacer tallyst-spacer--md"></div>
 
             <h2>Set it once</h2>
-            <p>That's the whole idea behind Arca: set up the job, pick a schedule, and let it run itself. The best backup routine is the one you don't have to think about — because it's already running while you're doing something else.</p>
+            <p>That's the whole philosophy behind Arca, and behind good backup habits generally: set up the job, pick a schedule, verify occasionally, and otherwise let it run itself. The best backup routine is the one you don't have to think about — because it's already running, quietly and on time, while you're busy doing something else.</p>
 
             <p><a class="tallyst-btn tallyst-btn--primary" href="/buy">Set up automatic backups [icon name=arrow-right]</a></p>
             HTML;
