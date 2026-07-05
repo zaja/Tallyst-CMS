@@ -613,8 +613,11 @@ th { font-weight: 650; }
 
 /* ----------------------------------------------- Post prev/next nav --- */
 /* Chronological neighbours at the foot of a post. prev sits left, next right; if only
-   one exists it keeps its side (next uses margin-left:auto rather than space-between). */
-.post-nav { display: flex; gap: var(--s-4); margin: var(--s-7) 0 var(--s-5); }
+   one exists it keeps its side (next uses margin-left:auto rather than space-between).
+   ⚠ Centred to the prose measure with its OWN max-width/margin — NOT via the `.prose`
+   class, because `.prose { display: flow-root }` (the float clearfix) would override
+   `display: flex` (equal specificity, later in the file) and stack the two cards. */
+.post-nav { display: flex; align-items: stretch; gap: var(--s-4); margin: var(--s-7) auto var(--s-5); max-width: var(--measure); }
 .post-nav-link {
     display: flex; align-items: center; gap: var(--s-3);
     flex: 1 1 0; min-width: 0; max-width: 24rem;

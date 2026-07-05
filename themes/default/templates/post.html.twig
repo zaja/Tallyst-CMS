@@ -20,7 +20,7 @@
     </article>
 
     {% if prev or next %}
-        <nav class="post-nav prose" aria-label="{{ 'theme.pagination.label'|trans }}">
+        <nav class="post-nav" aria-label="{{ 'theme.pagination.label'|trans }}">
             {% if prev %}
                 <a class="post-nav-link post-nav-prev" href="{{ path('blog_post', {slug: prev.slug}) }}" rel="prev">
                     {% if prev.featuredImage %}<span class="post-nav-thumb">{{ media_img(prev.featuredImage, 'thumb') }}</span>{% endif %}
