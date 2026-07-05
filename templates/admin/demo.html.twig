@@ -48,7 +48,7 @@
                     <form method="post" action="{{ path('admin_demo_delete') }}" class="mt-auto"
                           onsubmit="return confirm('{{ 'admin.demo.delete.confirm'|trans({}, 'admin')|e('js') }}');">
                         <input type="hidden" name="_token" value="{{ csrf_token('demo-delete') }}">
-                        <button type="submit" class="btn btn-outline-danger">
+                        <button type="submit" class="btn btn-danger">
                             {{ 'admin.demo.delete.button'|trans({}, 'admin') }}
                         </button>
                         <span class="small text-muted ms-2">{{ 'admin.demo.takes_a_moment'|trans({}, 'admin') }}</span>
@@ -70,7 +70,7 @@
                 <form method="post" action="{{ path('admin_demo_unflag') }}"
                       onsubmit="return confirm('{{ 'admin.demo.unflag.confirm'|trans({}, 'admin')|e('js') }}');">
                     <input type="hidden" name="_token" value="{{ csrf_token('demo-unflag') }}">
-                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                    <button type="submit" class="btn btn-sm btn-secondary">
                         {{ 'admin.demo.unflag.button'|trans({}, 'admin') }}
                     </button>
                 </form>

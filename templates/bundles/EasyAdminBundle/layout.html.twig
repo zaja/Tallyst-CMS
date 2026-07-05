@@ -75,6 +75,17 @@
         .menu-header-contents[aria-expanded="true"] .menu-collapse-caret::before {
             content: '\2212'; /* − minus sign (U+2212) when expanded */
         }
+        /* ⚠ EA BUG FIX — small text buttons had 0 horizontal padding. EA ships
+           `.btn-sm:not(:has(.btn-label)){padding:var(--button-padding-y-sm)}` — a SHORTHAND
+           `padding` with a Y-ONLY value (0px, since sm buttons get their height from
+           min-block-size) → it zeros ALL FOUR sides, so a small button WITHOUT a .btn-label
+           child (our plain-text CTAs: demo, media-picker, form-builder…) has no left/right
+           padding and the text touches the edge. Same selector (identical specificity) but
+           declared here, later in the cascade, so it wins; `padding-inline` restores ONLY the
+           horizontal padding and leaves the 0 vertical (height stays from min-block-size).
+           10px = EA's sm token (8px) + a touch of air, without matching the 12px full buttons.
+           Only DevTools (Computed) catches this — a static grep misses it (var, not literal 0). */
+        .btn-sm:not(:has(.btn-label)) { padding-inline: 10px; }
     </style>
     {{ parent() }}
     <div class="tallyst-version text-muted small px-3 py-2 mt-auto" style="opacity: .65;">
