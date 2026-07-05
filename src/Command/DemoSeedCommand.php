@@ -9,6 +9,7 @@ use App\Entity\Page;
 use App\Entity\Post;
 use App\Entity\Theme;
 use App\Entity\User;
+use App\Install\BaselineSeeder;
 use App\Repository\CategoryRepository;
 use App\Repository\MenuRepository;
 use App\Repository\PageRepository;
@@ -96,6 +97,7 @@ class DemoSeedCommand extends Command
         private readonly SettingsManager $settings,
         private readonly UserRepository $users,
         private readonly UserPasswordHasherInterface $hasher,
+        private readonly BaselineSeeder $baseline,
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
     ) {
@@ -225,6 +227,14 @@ class DemoSeedCommand extends Command
         // Reset the footer/favicon settings the seed wrote back to their schema defaults. The active
         // THEME is deliberately NOT touched — the site always needs a working theme.
         $this->resetDemoSettings($io);
+
+        // The demo home (is_demo=true, adopted from the install baseline by ensurePages) was just
+        // deleted with the other demo pages → restore the install baseline home so the front keeps
+        // a persisted, EDITABLE home (symmetry with a clean install; otherwise PageController::home()
+        // falls back to a transient, non-editable welcome). Idempotent: BaselineSeeder skips if a
+        // 'home' page still exists (a user's own, or a permanent one).
+        $this->baseline->ensureHomePage($io);
+        $this->em->flush();
     }
 
     /**
@@ -519,30 +529,48 @@ class DemoSeedCommand extends Command
         $out = [];
         foreach ($defs as $slug => [$title, $meta, $content]) {
             $page = $this->pages->findOneBy(['slug' => $slug]);
-            if (null === $page) {
-                $page = (new Page($title, $slug))
-                    ->setStatus(Page::STATUS_PUBLISHED)
-                    ->setContent($content)
-                    ->setMetaDescription($meta)
-                    // Every demo page starts with a display-1 in content OR carries a hero → the auto
-                    // page title would duplicate it, so hide it (the content/hero carries the title).
-                    ->setHideTitle(true)
-                    ->setIsDemo(true);
 
-                if (isset($heroes[$slug])) {
-                    [$hName, $ht, $htext, $hcl, $hcu] = $heroes[$slug];
-                    $page->setHeroEnabled(true)
-                        ->setHeroImage($media[$hName] ?? null)
-                        ->setHeroStyle('light') // light illustrations → dark text, no scrim
-                        ->setHeroTitle($ht)
-                        ->setHeroText($htext)
-                        ->setHeroCtaLabel($hcl)
-                        ->setHeroCtaUrl($hcu);
-                }
+            // 'home' is the ONE slug that collides with the app:install baseline home (a non-demo
+            // Page): plain additive-skip would leave that install placeholder as the front home. So
+            // for 'home' ONLY, ADOPT an existing NON-demo page — overwrite it with the demo landing
+            // and flag it demo (so --clear removes it and a re-run skips the now-demo home). Every
+            // OTHER slug is create-only (install never makes them → they never collide with baseline).
+            $adopt = 'home' === $slug && null !== $page && !$page->isDemo();
 
-                $this->em->persist($page);
-                $io->writeln('• Kreirana stranica "'.$title.'".');
+            if (null !== $page && !$adopt) {
+                $out[$slug] = $page; // exists (a demo page, or any non-home page) → additive-skip
+                continue;
             }
+
+            $page ??= new Page($title, $slug);
+            $page->setTitle($title)
+                ->setStatus(Page::STATUS_PUBLISHED)
+                ->setContent($content)
+                ->setMetaDescription($meta)
+                // Every demo page starts with a display-1 in content OR carries a hero → the auto
+                // page title would duplicate it, so hide it (the content/hero carries the title).
+                ->setHideTitle(true)
+                ->setIsDemo(true);
+
+            if (isset($heroes[$slug])) {
+                [$hName, $ht, $htext, $hcl, $hcu] = $heroes[$slug];
+                $page->setHeroEnabled(true)
+                    ->setHeroImage($media[$hName] ?? null)
+                    ->setHeroStyle('light') // light illustrations → dark text, no scrim
+                    ->setHeroTitle($ht)
+                    ->setHeroText($htext)
+                    ->setHeroCtaLabel($hcl)
+                    ->setHeroCtaUrl($hcu);
+            } else {
+                // home + docs/install/faq/contact have no hero — ensure it's off (matters for the
+                // adopted baseline home, which could carry a stray hero from an admin edit).
+                $page->setHeroEnabled(false);
+            }
+
+            $this->em->persist($page);
+            $io->writeln($adopt
+                ? '• Zamijenjena install home stranica demo landingom.'
+                : '• Kreirana stranica "'.$title.'".');
             $out[$slug] = $page;
         }
 

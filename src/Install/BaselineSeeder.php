@@ -54,7 +54,12 @@ class BaselineSeeder
         $io->writeln('• Created + activated default theme.');
     }
 
-    private function ensureHomePage(SymfonyStyle $io): Page
+    /**
+     * Idempotent: the install baseline home ('Dobrodošli', slug 'home', non-demo). Public so the
+     * demo uninstaller (DemoSeedCommand::clearDemo) can restore it after deleting the demo home,
+     * keeping install→demo→delete symmetric (a persisted, editable home like a clean install).
+     */
+    public function ensureHomePage(SymfonyStyle $io): Page
     {
         $existing = $this->pages->findOneBy(['slug' => 'home']);
         if (null !== $existing) {
