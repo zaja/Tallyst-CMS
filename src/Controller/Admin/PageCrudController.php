@@ -8,6 +8,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
@@ -96,6 +97,9 @@ class PageCrudController extends AbstractCrudController
         yield ChoiceField::new('status', 'admin.page.field.status')
             ->setChoices(['admin.page.status.draft' => Page::STATUS_DRAFT, 'admin.page.status.published' => Page::STATUS_PUBLISHED])
             ->renderAsBadges([Page::STATUS_DRAFT => 'secondary', Page::STATUS_PUBLISHED => 'success']);
+        // Last-modified date+time on the index (sortable). hideOnForm because updatedAt is
+        // read-only (TimestampableTrait has no setter) — EA must not try to bind it on the form.
+        yield DateTimeField::new('updatedAt', 'admin.page.field.updated_at')->hideOnForm();
         yield IntegerField::new('position', 'admin.page.field.position')->hideOnIndex();
         yield BooleanField::new('hideTitle', 'admin.page.field.hide_title')->hideOnIndex()
             ->setHelp('admin.page.help.hide_title');

@@ -59,6 +59,7 @@ admin:
         field:
             title: Naslov
             status: Status
+            updated_at: Izmijenjeno
             content: Sadržaj
             template: Predložak
             meta_title: Meta naslov
@@ -94,6 +95,7 @@ admin:
             author: Autor
             featured_image: Naslovna slika
             published_at: Objavljeno
+            updated_at: Izmijenjeno
             excerpt: Sažetak
             content: Sadržaj
         status: { draft: Skica, published: Objavljeno }

@@ -59,6 +59,7 @@ admin:
         field:
             title: Title
             status: Status
+            updated_at: Modified
             content: Content
             template: Template
             meta_title: Meta title
@@ -94,6 +95,7 @@ admin:
             author: Author
             featured_image: Featured image
             published_at: Published
+            updated_at: Modified
             excerpt: Excerpt
             content: Content
         status: { draft: Draft, published: Published }
