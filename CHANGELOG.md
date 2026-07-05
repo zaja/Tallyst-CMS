@@ -10,6 +10,19 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.5.1] — 2026-07-05
+
+### Changed
+
+- **The public front-end no longer loads admin/editor JavaScript** (Chart.js, the
+  Tiptap editor, the FilePond uploader) — about 118 KiB smaller on public pages.
+
+### Fixed
+
+- **Demo import replaces the default home page with the demo landing, and removing the
+  demo restores the default home** (previously the home page was skipped on import, and
+  left without a proper page after removal).
+
 ## [1.5.0] — 2026-07-05
 
 ### Added
@@ -234,6 +247,7 @@ Initial public release.
 - **Modular architecture** and distribution via **Packagist**, under the **MIT**
   license.
 
+[1.5.1]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.5.1
 [1.5.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.5.0
 [1.3.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.3.0
 [1.2.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.2.0
