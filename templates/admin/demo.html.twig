@@ -27,7 +27,8 @@
                 <div class="card-header">{{ 'admin.demo.install.heading'|trans({}, 'admin') }}</div>
                 <div class="card-body d-flex flex-column">
                     <p class="small mb-3">{{ 'admin.demo.install.summary'|trans({}, 'admin') }}</p>
-                    <form method="post" action="{{ path('admin_demo_install') }}" class="mt-auto">
+                    <form method="post" action="{{ path('admin_demo_install') }}" class="mt-auto"
+                          onsubmit="return confirm('{{ 'admin.demo.install.confirm'|trans({}, 'admin')|e('js') }}');">
                         <input type="hidden" name="_token" value="{{ csrf_token('demo-install') }}">
                         <button type="submit" class="btn btn-primary">
                             {{ 'admin.demo.install.button'|trans({}, 'admin') }}

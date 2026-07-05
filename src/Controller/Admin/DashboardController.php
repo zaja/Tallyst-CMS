@@ -6,6 +6,7 @@ use App\Dashboard\DashboardWidgetInterface;
 use App\Module\AdminModuleInterface;
 use App\Module\ModuleRegistry;
 use App\Module\ModuleStateManager;
+use App\Settings\SettingsManager;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -16,6 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Tallyst\Media\Twig\MediaRuntime;
 
 class DashboardController extends AbstractDashboardController
 {
@@ -28,6 +30,10 @@ class DashboardController extends AbstractDashboardController
         #[AutowireIterator('app.dashboard_widget')]
         private readonly iterable $widgets,
         private readonly TranslatorInterface $translator,
+        private readonly SettingsManager $settings,
+        // Core→Media is the ONE allowed core→module dependency (see CLAUDE.md) — used to resolve
+        // the admin logo/favicon Media ids to URLs for configureDashboard().
+        private readonly MediaRuntime $media,
     ) {
     }
 
@@ -96,13 +102,25 @@ class DashboardController extends AbstractDashboardController
 
     public function configureDashboard(): Dashboard
     {
+        // ADMIN branding (white-label): the admin logo REPLACES the "Tallyst CMS" title (setTitle
+        // accepts HTML), the admin favicon REPLACES the default. Both null-safe — an unset/deleted
+        // Media falls back to the text title / favicon.ico, so an un-branded install never breaks.
+        $logoUrl = $this->media->adminLogoUrl();
+        $title = null !== $logoUrl
+            ? \sprintf(
+                '<img src="%s" alt="%s" style="max-height:2.25rem;max-width:100%%;width:auto">',
+                htmlspecialchars($logoUrl, \ENT_QUOTES),
+                htmlspecialchars($this->media->siteName(), \ENT_QUOTES),
+            )
+            : 'Tallyst CMS';
+
         return Dashboard::new()
-            ->setTitle('Tallyst CMS')
+            ->setTitle($title)
             // All OUR admin labels (menu + CRUD field/entity/title/help/action) translate via the
             // `admin` domain. EA's own chrome (Save/Delete/pagination/filters) stays in the
             // EasyAdminBundle domain — untouched.
             ->setTranslationDomain('admin')
-            ->setFaviconPath('favicon.ico');
+            ->setFaviconPath($this->media->adminFaviconUrl() ?? 'favicon.ico');
     }
 
     public function configureAssets(): Assets
@@ -163,7 +181,11 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToRoute('admin.menu.email_templates', 'fa fa-envelope-open-text', 'admin_email_templates')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkTo(UserCrudController::class, 'admin.menu.users', 'fa fa-users')->setPermission('ROLE_ADMIN');
         yield MenuItem::linkToRoute('admin.menu.readiness', 'fa fa-clipboard-check', 'admin_readiness')->setPermission('ROLE_ADMIN');
-        yield MenuItem::linkToRoute('admin.menu.demo', 'fa fa-wand-magic-sparkles', 'admin_demo')->setPermission('ROLE_ADMIN');
+        // The Demo link hides when hide_demo_link is on (production) — LINK only; the route stays
+        // reachable directly so the demo tools are never actually removed.
+        if (!$this->settings->get('hide_demo_link')) {
+            yield MenuItem::linkToRoute('admin.menu.demo', 'fa fa-wand-magic-sparkles', 'admin_demo')->setPermission('ROLE_ADMIN');
+        }
         yield MenuItem::linkToRoute('admin.menu.security', 'fa fa-shield-halved', 'admin_security');
 
         yield MenuItem::section('admin.menu.section.appearance')->setPermission('ROLE_ADMIN');

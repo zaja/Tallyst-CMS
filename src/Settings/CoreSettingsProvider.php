@@ -32,11 +32,19 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
             new SettingDefinition('site_name', SettingType::STRING, 'admin.settings.general.site_name.label', 'admin.settings.general.site_name.help', 'Tallyst'),
             new SettingDefinition('site_tagline', SettingType::STRING, 'admin.settings.general.site_tagline.label', 'admin.settings.general.site_tagline.help', ''),
             new SettingDefinition('search_enabled', SettingType::BOOL, 'admin.settings.general.search_enabled.label', 'admin.settings.general.search_enabled.help', false),
+            // Hide the Demo content link from the sidebar (for production, where the demo tools
+            // are no longer needed). Only hides the LINK — the route/page stay reachable directly.
+            new SettingDefinition('hide_demo_link', SettingType::BOOL, 'admin.settings.general.hide_demo_link.label', 'admin.settings.general.hide_demo_link.help', false),
         ]);
 
+        // Front branding (logo/favicon) + separate ADMIN branding (white-label the back-office):
+        // admin_logo replaces the "Tallyst CMS" title, admin_favicon the admin tab icon. All loose
+        // Media id references; null-safe fallbacks in DashboardController when unset.
         yield new SettingsSection('branding', 'admin.settings.branding.title', 'fa-palette', [
             new SettingDefinition('logo_media_id', SettingType::MEDIA, 'admin.settings.branding.logo_media_id.label', 'admin.settings.branding.logo_media_id.help'),
             new SettingDefinition('favicon_media_id', SettingType::MEDIA, 'admin.settings.branding.favicon_media_id.label', 'admin.settings.branding.favicon_media_id.help'),
+            new SettingDefinition('admin_logo_media_id', SettingType::MEDIA, 'admin.settings.branding.admin_logo_media_id.label', 'admin.settings.branding.admin_logo_media_id.help'),
+            new SettingDefinition('admin_favicon_media_id', SettingType::MEDIA, 'admin.settings.branding.admin_favicon_media_id.label', 'admin.settings.branding.admin_favicon_media_id.help'),
         ]);
 
         yield new SettingsSection('blog', 'admin.settings.blog.title', 'fa-newspaper', [

@@ -75,6 +75,34 @@ class MediaRuntime implements RuntimeExtensionInterface
     }
 
     /**
+     * ADMIN branding (white-label the back-office). Both read the admin-specific Setting keys
+     * and resolve the Media id to a deterministic cached URL, or null when unset/deleted — the
+     * DashboardController falls back to the "Tallyst CMS" text / the default favicon.
+     */
+    public function adminLogoUrl(string $filter = 'medium'): ?string
+    {
+        return $this->mediaUrlFromSetting('admin_logo_media_id', $filter);
+    }
+
+    public function adminFaviconUrl(): ?string
+    {
+        return $this->mediaUrlFromSetting('admin_favicon_media_id', 'favicon');
+    }
+
+    /** Resolve a loose Media-id Setting to a cached image URL (null-safe on unset/deleted). */
+    private function mediaUrlFromSetting(string $settingKey, string $filter): ?string
+    {
+        $id = $this->settings->get($settingKey);
+        if (null === $id || '' === $id) {
+            return null;
+        }
+
+        $media = $this->media->find((int) $id);
+
+        return null !== $media ? $this->images->url($media->getImageName(), $filter) : null;
+    }
+
+    /**
      * Render the theme-overridable brand for the header: the logo (Liip-sized) when set
      * and still present, otherwise the site name as text. alt = the media's alt or the
      * site name (a11y).

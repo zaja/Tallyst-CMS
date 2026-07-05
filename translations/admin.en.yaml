@@ -23,7 +23,7 @@ admin:
             content: Content
             sales: Sales
             navigation: Navigation
-            system: System
+            system: 'System & Tools'
             appearance: Appearance
             modules: Modules
     demo:
@@ -38,6 +38,7 @@ admin:
             heading: Install demo
             summary: 'Installs a complete demo site for Arca — a fictional backup app — so you can see how a finished Tallyst site looks. It seeds 8 pages, 9 blog posts in 4 categories, a two-level menu, a three-column footer, 2 forms, and 19 images. Everything is marked as demo, so you can remove it in one click.'
             button: Install demo
+            confirm: 'Install demo content? This adds demo pages, posts, a menu, a footer, and forms. Use it only on a clean site.'
         delete:
             heading: Delete demo
             summary: 'Removes EVERYTHING marked as demo — pages, posts, the menu, forms, images, and orders placed through demo forms. Content whose demo flag you removed stays.'
@@ -47,7 +48,7 @@ admin:
             heading: Make demo permanent
             summary: 'Turns the demo into permanent content. You lose the ability to remove it with the uninstaller.'
             button: Remove demo flag
-            confirm: 'Make all demo content permanent? You will no longer be able to remove it with Delete demo.'
+            confirm: 'Remove the demo flag? This makes the demo content PERMANENT — you will NO LONGER be able to remove it with one click. This cannot be undone.'
         flash:
             installed: Demo content installed.
             deleted: Demo content deleted.
@@ -186,10 +187,13 @@ admin:
             site_name: { label: Site name, help: Shown in the header and the title. }
             site_tagline: { label: Tagline, help: A short site description (meta description). }
             search_enabled: { label: Show the search box, help: 'A search field in the header. Off (default) = a simple site without search; turn it on if you have a lot of content.' }
+            hide_demo_link: { label: Hide the Demo content link in the sidebar, help: 'For production. Hides the link only — the demo page stays reachable directly.' }
         branding:
             title: Branding
             logo_media_id: { label: Logo, help: Shown in the header. Empty = the site name as text. }
             favicon_media_id: { label: Favicon, help: 'Browser-tab icon (PNG/JPG, square ~64px).' }
+            admin_logo_media_id: { label: Admin logo, help: 'Shown in the admin sidebar instead of the "Tallyst CMS" text. Empty = the text.' }
+            admin_favicon_media_id: { label: Admin favicon, help: 'Browser-tab icon for the admin (PNG/JPG, square ~64px). Empty = the default.' }
         blog:
             title: Blog
             blog_posts_per_page: { label: Posts per page, help: 'How many posts to show per page on the blog and archives (1–50).' }

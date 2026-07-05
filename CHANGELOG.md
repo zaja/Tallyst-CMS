@@ -10,12 +10,23 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Added
+
+- **Modified date column on the Pages and Posts lists** (sortable), showing when each
+  was last edited.
+- **Admin logo and favicon** (Branding settings) to white-label the back-office, plus an
+  option to hide the Demo content link in the sidebar.
+
 ### Changed
 
 - **Settings tabs are now routed pages** (each tab has its own URL; saving stays on the
   current tab) and consolidated from 13 to 8 tabs (General now includes Blog, Localization
   and Maintenance; Branding includes Typography; a new Header & Footer tab). Tab content is
   full-width and sub-sections are anchor-linkable.
+- **The Post editor now uses a two-column layout** with metadata (status, category, author,
+  published date, featured image) in the sidebar, matching the Page editor.
+- **Demo actions now all ask for confirmation before running**; the sidebar "System"
+  section is renamed "System & Tools".
 
 ### Fixed
 

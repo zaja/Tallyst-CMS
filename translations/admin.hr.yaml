@@ -23,7 +23,7 @@ admin:
             content: Sadržaj
             sales: Prodaja
             navigation: Navigacija
-            system: Sustav
+            system: Sustav i alati
             appearance: Izgled
             modules: Moduli
     demo:
@@ -38,6 +38,7 @@ admin:
             heading: Instaliraj demo
             summary: 'Instalira potpun demo site za Arcu — izmišljenu backup aplikaciju — da vidite kako izgleda gotov Tallyst site. Sadrži 8 stranica, 9 blog objava u 4 kategorije, dvorazinski izbornik, trokolonski footer, 2 forme i 19 slika. Sve je označeno kao demo pa ga možete ukloniti jednim klikom.'
             button: Instaliraj demo
+            confirm: 'Instalirati demo sadržaj? Ovo dodaje demo stranice, objave, izbornik, footer i forme. Koristi samo na čistom siteu.'
         delete:
             heading: Obriši demo
             summary: 'Briše SVE označeno kao demo — stranice, objave, izbornik, forme, slike i narudžbe nastale kroz demo forme. Sadržaj kojem si maknuo demo flag ostaje.'
@@ -47,7 +48,7 @@ admin:
             heading: Učini demo trajnim
             summary: 'Pretvara demo u trajan sadržaj. Gubiš mogućnost brisanja uninstalerom.'
             button: Makni demo oznaku
-            confirm: 'Učiniti sav demo sadržaj trajnim? Više ga nećeš moći ukloniti preko Obriši demo.'
+            confirm: 'Maknuti demo oznaku? Ovo čini demo sadržaj TRAJNIM — više ga NEĆEŠ moći ukloniti jednim klikom. Ovo se ne može poništiti.'
         flash:
             installed: Demo sadržaj je instaliran.
             deleted: Demo sadržaj je obrisan.
@@ -185,10 +186,13 @@ admin:
             site_name: { label: Naziv sajta, help: Prikazuje se u zaglavlju i naslovu. }
             site_tagline: { label: Slogan, help: Kratak opis sajta (meta opis). }
             search_enabled: { label: Prikaži tražilicu, help: 'Polje za pretragu u zaglavlju. Isključeno (zadano) = jednostavan sajt bez pretrage; uključi ako imaš puno sadržaja.' }
+            hide_demo_link: { label: Sakrij Demo sadržaj link u sidebaru, help: 'Za produkciju. Skriva samo link — demo stranica ostaje dostupna direktno.' }
         branding:
             title: Branding
             logo_media_id: { label: Logo, help: Prikazuje se u zaglavlju. Prazno = naziv sajta kao tekst. }
             favicon_media_id: { label: Favicon, help: 'Ikona u kartici preglednika (PNG/JPG, kvadratna ~64px).' }
+            admin_logo_media_id: { label: Admin logo, help: 'Prikazuje se u admin sidebaru umjesto teksta "Tallyst CMS". Prazno = tekst.' }
+            admin_favicon_media_id: { label: Admin favicon, help: 'Ikona kartice preglednika za admin (PNG/JPG, kvadratna ~64px). Prazno = zadana.' }
         blog:
             title: Blog
             blog_posts_per_page: { label: Objava po stranici, help: 'Koliko objava prikazati po stranici na blogu i arhivama (1–50).' }
