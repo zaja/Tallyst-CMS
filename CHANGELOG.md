@@ -21,6 +21,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ### Changed
 
+- **List row actions (Edit, Preview, Delete) are now compact icon buttons with
+  tooltips**, consistent across all admin lists.
 - **Settings tabs are now routed pages** (each tab has its own URL; saving stays on the
   current tab) and consolidated from 13 to 8 tabs (General now includes Blog, Localization
   and Maintenance; Branding includes Typography; a new Header & Footer tab). Tab content is
@@ -32,6 +34,14 @@ core-API change is a MAJOR (flagged ⚠).
 
 ### Fixed
 
+- **The Forms list Delete now renders as a button** (with a trash icon), consistent
+  with the other content lists.
+- **Small admin buttons had no horizontal padding** (Remove demo flag, media
+  picker actions, form-builder controls, etc.) — their text touched the edges.
+- **The Demo Delete and Remove-flag actions now render as proper buttons** (they
+  previously looked like plain text).
+- **The unsaved-changes warning no longer falsely triggers on forms with media
+  pickers** (file inputs are excluded from change detection).
 - **ConsoleStepRunner refuses to spawn subprocesses in the test environment**,
   preventing a functional test that drives the install/upgrade/demo flow from
   accidentally mutating the development database instead of the isolated test one.

@@ -17,6 +17,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\Media\Field\MediaPickerField;
 use Tallyst\Media\Field\TiptapField;
 
@@ -28,6 +29,7 @@ class PostCrudController extends AbstractCrudController
     public function __construct(
         private readonly Security $security,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -66,9 +68,11 @@ class PostCrudController extends AbstractCrudController
         // Preview the live post (/blog/{slug}); only for published posts.
         $actions = $this->addPreviewAction(
             $actions,
+            $this->translator,
             fn (Post $p): string => $this->urlGenerator->generate('blog_post', ['slug' => $p->getSlug()], UrlGeneratorInterface::ABSOLUTE_URL),
             static fn (Post $p): bool => $p->isPublished(),
         );
+        $actions = $this->iconOnlyRowActions($actions, $this->translator);
 
         return $this->addBackToListAction($actions);
     }

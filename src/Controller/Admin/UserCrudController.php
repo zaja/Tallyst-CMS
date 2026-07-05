@@ -21,6 +21,7 @@ use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Back-office user management. Admin-only. Roles are the friendly choice between
@@ -40,6 +41,7 @@ class UserCrudController extends AbstractCrudController
     public function __construct(
         private readonly UserPasswordHasherInterface $hasher,
         private readonly AdminLockoutGuard $guard,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -62,7 +64,9 @@ class UserCrudController extends AbstractCrudController
         // admin). Server-side enforcement stays in deleteEntity (mirrors blockDelete exactly).
         $hideWhenBlocked = fn (Action $a): Action => $a->displayIf(fn (User $u): bool => null === $this->guard->blockDelete($u));
 
-        $actions = $actions
+        // Icon-only Edit/Delete first; the displayIf STACKS on top of the icon-only Delete (EA's
+        // update() reads the current action and applies the callable), so both survive.
+        $actions = $this->iconOnlyRowActions($actions, $this->translator)
             ->update(Crud::PAGE_INDEX, Action::DELETE, $hideWhenBlocked)
             ->update(Crud::PAGE_DETAIL, Action::DELETE, $hideWhenBlocked);
 

@@ -30,10 +30,21 @@
                         <td><code>[form id={{ f.id }}]</code></td>
                         <td>{{ f.fields|length }}</td>
                         <td class="text-end">
+                            {# Icon-only row actions, matching the EA CRUD lists (Edit pen + Delete
+                               trash, `btn`/`btn-danger btn-invisible` + `.btn-icon`, no label span).
+                               title + aria-label are mandatory (a11y — no visible text). Behaviour
+                               unchanged: Edit → the builder, Delete → CSRF form POST + confirm. #}
+                            <a class="btn btn-secondary action-edit" href="{{ path('form_builder_admin_edit', {id: f.id}) }}"
+                               title="{{ 'admin.action.edit'|trans({}, 'admin') }}" aria-label="{{ 'admin.action.edit'|trans({}, 'admin') }}">
+                                <span class="icon btn-icon"><i class="fa-solid fa-pen"></i></span>
+                            </a>
                             <form method="post" action="{{ path('form_builder_admin_delete', {id: f.id}) }}" class="d-inline"
                                   onsubmit="return confirm('{{ 'admin.form.index.delete_confirm'|trans({}, 'admin')|e('js') }}');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete_form_' ~ f.id) }}">
-                                <button class="btn btn-sm btn-outline-danger" type="submit">{{ 'admin.form.index.delete'|trans({}, 'admin') }}</button>
+                                <button class="btn btn-danger btn-invisible action-delete" type="submit"
+                                        title="{{ 'admin.action.delete'|trans({}, 'admin') }}" aria-label="{{ 'admin.action.delete'|trans({}, 'admin') }}">
+                                    <span class="icon btn-icon"><i class="fa-solid fa-trash"></i></span>
+                                </button>
                             </form>
                         </td>
                     </tr>

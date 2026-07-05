@@ -11,6 +11,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ImageField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\Media\Entity\Media;
 use Vich\UploaderBundle\Form\Type\VichImageType;
 
@@ -23,6 +24,11 @@ use Vich\UploaderBundle\Form\Type\VichImageType;
 class MediaCrudController extends AbstractCrudController
 {
     use AdminCrudPolishTrait;
+
+    public function __construct(
+        private readonly TranslatorInterface $translator,
+    ) {
+    }
 
     public static function getEntityFqcn(): string
     {
@@ -45,7 +51,7 @@ class MediaCrudController extends AbstractCrudController
         // Create = bulk upload on the index panel; NEW is disabled so there's no hidden
         // second single-file upload route. Edit stays for alt/title tweaks + image replace.
         // No preview (media has no public page). Back-to-list on Edit.
-        return $this->addBackToListAction($actions->disable(Action::NEW));
+        return $this->addBackToListAction($this->iconOnlyRowActions($actions->disable(Action::NEW), $this->translator));
     }
 
     public function configureFields(string $pageName): iterable

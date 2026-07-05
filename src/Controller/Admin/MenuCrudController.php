@@ -8,11 +8,17 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[IsGranted('ROLE_ADMIN')]
 class MenuCrudController extends AbstractCrudController
 {
     use AdminCrudPolishTrait;
+
+    public function __construct(
+        private readonly TranslatorInterface $translator,
+    ) {
+    }
 
     public static function getEntityFqcn(): string
     {
@@ -28,7 +34,7 @@ class MenuCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
-        return $this->addBackToListAction($actions);
+        return $this->addBackToListAction($this->iconOnlyRowActions($actions, $this->translator));
     }
 
     public function configureFields(string $pageName): iterable

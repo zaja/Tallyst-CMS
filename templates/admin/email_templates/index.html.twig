@@ -26,7 +26,13 @@
                     </td>
                     <td>{{ row.overridden ? 'admin.email.index.overridden_yes'|trans({}, 'admin') : 'admin.email.index.overridden_no'|trans({}, 'admin') }}</td>
                     <td class="text-end">
-                        <a class="btn btn-sm btn-secondary" href="{{ path('admin_email_template_edit', {key: row.type.key}) }}">{{ 'admin.email.index.edit'|trans({}, 'admin') }}</a>
+                        {# Icon-only Edit (pen), matching the other admin lists. title + aria-label
+                           are mandatory (a11y — no visible text). Only Edit here (templates aren't
+                           deleted/previewed). Behaviour unchanged — links to the template editor. #}
+                        <a class="btn btn-secondary action-edit" href="{{ path('admin_email_template_edit', {key: row.type.key}) }}"
+                           title="{{ 'admin.action.edit'|trans({}, 'admin') }}" aria-label="{{ 'admin.action.edit'|trans({}, 'admin') }}">
+                            <span class="icon btn-icon"><i class="fa-solid fa-pen"></i></span>
+                        </a>
                     </td>
                 </tr>
             {% endfor %}

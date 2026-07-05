@@ -16,6 +16,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\Media\Field\MediaPickerField;
 use Tallyst\Media\Field\TiptapField;
 
@@ -26,6 +27,7 @@ class PageCrudController extends AbstractCrudController
 
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -49,11 +51,13 @@ class PageCrudController extends AbstractCrudController
         // Preview the live page (home slug → "/", others → /{slug}); only for published pages.
         $actions = $this->addPreviewAction(
             $actions,
+            $this->translator,
             fn (Page $p): string => 'home' === $p->getSlug()
                 ? $this->urlGenerator->generate('home', [], UrlGeneratorInterface::ABSOLUTE_URL)
                 : $this->urlGenerator->generate('page_show', ['slug' => $p->getSlug()], UrlGeneratorInterface::ABSOLUTE_URL),
             static fn (Page $p): bool => $p->isPublished(),
         );
+        $actions = $this->iconOnlyRowActions($actions, $this->translator);
 
         return $this->addBackToListAction($actions);
     }

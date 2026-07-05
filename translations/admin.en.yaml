@@ -3,6 +3,8 @@ admin:
     action:
         back_to_list: Back to list
         preview: Preview
+        edit: Edit
+        delete: Delete
     menu:
         dashboard: Dashboard
         pages: Pages

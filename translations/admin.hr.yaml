@@ -3,6 +3,8 @@ admin:
     action:
         back_to_list: Natrag na popis
         preview: Pregled
+        edit: Uredi
+        delete: Obriši
     menu:
         dashboard: Nadzorna ploča
         pages: Stranice
