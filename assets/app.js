@@ -1,10 +1,8 @@
-import './stimulus_bootstrap.js';
 /*
- * Welcome to your app's main JavaScript file!
- *
- * This file will be included onto the page via the importmap() Twig function,
- * which should already be in your base.html.twig.
+ * Front-end 'app' entrypoint (loaded via importmap('app') in the theme layout).
+ * Uses the FRONT-ONLY Stimulus bootstrap so the public site never pulls the admin/editor
+ * JS (chart.js, Tiptap/prosemirror, FilePond). Admin controllers live in stimulus_bootstrap.js,
+ * loaded only by the admin entrypoint.
  */
+import './front_bootstrap.js';
 import './styles/app.css';
-
-console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');

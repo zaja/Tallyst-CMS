@@ -1,3 +1,10 @@
+/*
+ * ADMIN-ONLY Stimulus bootstrap (the EasyAdmin 'admin' entrypoint, via DashboardController::
+ * configureAssets → assets/admin.js). Registers every admin/editor controller + the editor
+ * wiring. ⚠ Do NOT import this from the FRONT 'app' entrypoint — that would drag chart.js /
+ * prosemirror / filepond (~118 KiB) onto public pages. The front has its own minimal bootstrap
+ * (assets/front_bootstrap.js, search--live only).
+ */
 import { startStimulusApp } from '@symfony/stimulus-bundle';
 import FormbuilderConditionsController from '../modules/FormBuilder/assets/controllers/formbuilder_conditions_controller.js';
 import FormbuilderBuilderController from '../modules/FormBuilder/assets/controllers/formbuilder_builder_controller.js';
@@ -9,9 +16,8 @@ import MediaLibraryController from '../modules/Media/assets/controllers/media_li
 import MediaPickerController from '../modules/Media/assets/controllers/media_picker_controller.js';
 import MediaBulkUploadController from '../modules/Media/assets/controllers/media_bulk_upload_controller.js';
 import MediaTiptapController from '../modules/Media/assets/controllers/tiptap_controller.js';
-import EmailEditorController from './controllers/email_editor_controller.js';
-import SearchLiveController from './controllers/search_live_controller.js';
-import MenuCollapseController from './controllers/menu_collapse_controller.js';
+import EmailEditorController from './admin/email_editor_controller.js';
+import MenuCollapseController from './admin/menu_collapse_controller.js';
 import { registerEditorExtension } from '../modules/Media/assets/tiptap_extensions.js';
 import { FormEmbed } from '../modules/FormBuilder/assets/tiptap_form_node.js';
 import { openFormPicker } from '../modules/FormBuilder/assets/form_picker.js';
@@ -51,9 +57,6 @@ app.register('media--tiptap', MediaTiptapController);
 
 // App-level: Tiptap-lite editor for email template bodies (Pass 2). Raw HTML, no converter.
 app.register('email-editor', EmailEditorController);
-
-// Front: live search dropdown under the header field (front 'app' entrypoint).
-app.register('search--live', SearchLiveController);
 
 // Admin: collapsible SYSTEM sidebar section (default collapsed, state in localStorage).
 app.register('admin--menu-collapse', MenuCollapseController);
