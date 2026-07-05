@@ -19,5 +19,28 @@
         {{ post.content|render_content }}
     </article>
 
+    {% if prev or next %}
+        <nav class="post-nav prose" aria-label="{{ 'theme.pagination.label'|trans }}">
+            {% if prev %}
+                <a class="post-nav-link post-nav-prev" href="{{ path('blog_post', {slug: prev.slug}) }}" rel="prev">
+                    {% if prev.featuredImage %}<span class="post-nav-thumb">{{ media_img(prev.featuredImage, 'thumb') }}</span>{% endif %}
+                    <span class="post-nav-text">
+                        <span class="post-nav-label">{{ icon('chevron-left') }} {{ 'theme.post.previous'|trans }}</span>
+                        <span class="post-nav-title">{{ prev.title }}</span>
+                    </span>
+                </a>
+            {% endif %}
+            {% if next %}
+                <a class="post-nav-link post-nav-next" href="{{ path('blog_post', {slug: next.slug}) }}" rel="next">
+                    {% if next.featuredImage %}<span class="post-nav-thumb">{{ media_img(next.featuredImage, 'thumb') }}</span>{% endif %}
+                    <span class="post-nav-text">
+                        <span class="post-nav-label">{{ 'theme.post.next'|trans }} {{ icon('chevron-right') }}</span>
+                        <span class="post-nav-title">{{ next.title }}</span>
+                    </span>
+                </a>
+            {% endif %}
+        </nav>
+    {% endif %}
+
     <p class="prose"><a href="{{ path('blog_index') }}">{{ icon('arrow-left') }} {{ 'theme.post.back_to_blog'|trans }}</a></p>
 {% endblock %}

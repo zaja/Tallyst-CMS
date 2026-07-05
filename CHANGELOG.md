@@ -16,6 +16,8 @@ core-API change is a MAJOR (flagged ⚠).
   was last edited.
 - **Admin logo and favicon** (Branding settings) to white-label the back-office, plus an
   option to hide the Demo content link in the sidebar.
+- **Previous/next post navigation** at the bottom of blog posts (chronological, with a
+  thumbnail and title).
 
 ### Changed
 

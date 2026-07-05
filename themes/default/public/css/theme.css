@@ -611,6 +611,29 @@ th { font-weight: 650; }
 /* ----------------------------------------------------------- Post meta --- */
 .post-meta time { color: var(--muted); }
 
+/* ----------------------------------------------- Post prev/next nav --- */
+/* Chronological neighbours at the foot of a post. prev sits left, next right; if only
+   one exists it keeps its side (next uses margin-left:auto rather than space-between). */
+.post-nav { display: flex; gap: var(--s-4); margin: var(--s-7) 0 var(--s-5); }
+.post-nav-link {
+    display: flex; align-items: center; gap: var(--s-3);
+    flex: 1 1 0; min-width: 0; max-width: 24rem;
+    padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--radius);
+    color: var(--ink); text-decoration: none; background: var(--surface);
+}
+.post-nav-link:hover { box-shadow: var(--shadow); transform: translateY(-2px); text-decoration: none; }
+.post-nav-next { margin-left: auto; flex-direction: row-reverse; text-align: right; }
+.post-nav-thumb { flex: 0 0 auto; }
+.post-nav-thumb .media-img { display: block; width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-sm); }
+.post-nav-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.post-nav-label { color: var(--muted); font-size: var(--fs-sm); }
+.post-nav-title { color: var(--ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.post-nav-link:hover .post-nav-title { color: var(--brand); }
+@media (max-width: 32rem) {
+    .post-nav { flex-direction: column; }
+    .post-nav-next { margin-left: 0; }
+}
+
 /* ------------------------------------------------------- Media / images --- */
 .media-img { border-radius: var(--radius); }
 .featured-image { margin: 0 0 var(--s-5); }

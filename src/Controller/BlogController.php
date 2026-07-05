@@ -30,6 +30,9 @@ class BlogController extends AbstractController
 
         return $this->render('post.html.twig', [
             'post' => $post,
+            // Chronological neighbours (older/newer published posts), null at the ends.
+            'prev' => $posts->findPreviousPublished($post),
+            'next' => $posts->findNextPublished($post),
         ]);
     }
 }

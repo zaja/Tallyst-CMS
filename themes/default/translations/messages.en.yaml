@@ -22,6 +22,8 @@ theme:
     post:
         byline: By %author%
         back_to_blog: Back to blog
+        previous: Previous post
+        next: Next post
     blog:
         title: Blog
         no_posts: No posts yet.
