@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-07-05
+
 ### Added
 
 - **Modified date column on the Pages and Posts lists** (sortable), showing when each
@@ -232,6 +234,7 @@ Initial public release.
 - **Modular architecture** and distribution via **Packagist**, under the **MIT**
   license.
 
+[1.5.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.5.0
 [1.3.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.3.0
 [1.2.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.2.0
 [1.1.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.1.0
