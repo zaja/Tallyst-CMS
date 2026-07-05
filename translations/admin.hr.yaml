@@ -176,6 +176,8 @@ admin:
             note: 'Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.'
             subject: Tallyst — test e-pošte
             body: 'Ovo je test poruka iz Tallyst Postavki. Ako je vidiš, SMTP konfiguracija radi.'
+        header_footer:
+            title: Zaglavlje i podnožje
         general:
             title: Općenito
             site_name: { label: Naziv sajta, help: Prikazuje se u zaglavlju i naslovu. }

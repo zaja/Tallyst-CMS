@@ -28,6 +28,10 @@ class AdminAccessTest extends WebTestCase
         '/admin/settings', '/admin/modules', '/admin/user', '/admin/order',
         '/admin/themes', '/admin/menu', '/admin/menu-item', '/admin/setting',
         '/admin/forms', '/admin/email', '/admin/readiness', '/admin/demo',
+        // Settings tabs are routed pages now — a representative set (consolidated + standalone
+        // + module tabs), each guarded by the same class-level ROLE_ADMIN as /admin/settings.
+        '/admin/settings/general', '/admin/settings/branding', '/admin/settings/header_footer',
+        '/admin/settings/email', '/admin/settings/stripe',
     ];
 
     /** @var string[] */
@@ -52,6 +56,8 @@ class AdminAccessTest extends WebTestCase
     public function testAdminReachesEverything(): void
     {
         $client = static::createClient();
+        // /admin/settings now 302-redirects to its first tab — follow so the final page is 200.
+        $client->followRedirects();
         $client->loginUser($this->makeUser(['ROLE_ADMIN']));
 
         foreach ([...self::EDITOR_OK, ...self::ADMIN_ONLY] as $url) {

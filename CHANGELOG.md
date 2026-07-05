@@ -10,6 +10,13 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Changed
+
+- **Settings tabs are now routed pages** (each tab has its own URL; saving stays on the
+  current tab) and consolidated from 13 to 8 tabs (General now includes Blog, Localization
+  and Maintenance; Branding includes Typography; a new Header & Footer tab). Tab content is
+  full-width and sub-sections are anchor-linkable.
+
 ### Fixed
 
 - **ConsoleStepRunner refuses to spawn subprocesses in the test environment**,

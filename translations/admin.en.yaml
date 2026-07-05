@@ -177,6 +177,8 @@ admin:
             note: 'Sends via the current configuration; the result reports which transport was used.'
             subject: Tallyst — test e-mail
             body: 'This is a test message from Tallyst Settings. If you can see it, the SMTP configuration works.'
+        header_footer:
+            title: Header & Footer
         general:
             title: General
             site_name: { label: Site name, help: Shown in the header and the title. }

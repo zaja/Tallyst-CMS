@@ -6,6 +6,7 @@ use App\Mailer\SettingsMailerTransport;
 use App\Settings\SettingDefinition;
 use App\Settings\SettingsManager;
 use App\Settings\SettingsRegistry;
+use App\Settings\SettingsTab;
 use App\Settings\SettingType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -44,22 +45,54 @@ class SettingsController extends AbstractController
     ) {
     }
 
-    #[Route('', name: 'admin_settings', methods: ['GET', 'POST'])]
-    public function index(Request $request): Response
+    /**
+     * /admin/settings has no tab of its own — send it to the first tab. This keeps the
+     * `admin_settings` route name ALIVE (dashboard sidebar + maintenance banner link it).
+     */
+    #[Route('', name: 'admin_settings', methods: ['GET'])]
+    public function index(): Response
     {
-        $form = $this->buildForm();
+        $first = $this->registry->firstTabKey();
+        if (null === $first) {
+            throw $this->createNotFoundException('No settings sections registered.');
+        }
+
+        return $this->redirectToRoute('admin_settings_tab', ['tab' => $first]);
+    }
+
+    /**
+     * One routed tab. Renders ONLY this tab's sections and builds ONLY their fields (a
+     * per-tab form subset), POSTs to the same route, and redirects back to the SAME tab
+     * after save (so you stay put instead of jumping to the first tab).
+     *
+     * The subset is what makes partial saves safe: setMany() only writes the keys present
+     * in $form->getData(), so saving one tab NEVER touches another tab's secrets (Stripe/
+     * SMTP), and an empty write-only secret is a no-op (see SettingsManager).
+     *
+     * Declared AFTER the /test-email route so that path isn't captured as {tab}.
+     */
+    #[Route('/{tab}', name: 'admin_settings_tab', requirements: ['tab' => '[a-z0-9_-]+'], methods: ['GET', 'POST'])]
+    public function tab(string $tab, Request $request): Response
+    {
+        $current = $this->registry->getTab($tab);
+        if (null === $current) {
+            throw $this->createNotFoundException(sprintf('Unknown settings tab "%s".', $tab));
+        }
+
+        $form = $this->buildForm($current);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->settings->setMany($form->getData());
             $this->addFlash('success', $this->translator->trans('admin.flash.settings_saved', [], 'admin'));
 
-            return $this->redirectToRoute('admin_settings');
+            return $this->redirectToRoute('admin_settings_tab', ['tab' => $current->key]);
         }
 
         return $this->render('admin/settings.html.twig', [
             'form' => $form->createView(),
-            'sections' => $this->registry->getSections(),
+            'tabs' => $this->registry->getTabs(),
+            'current' => $current,
             'test_to_default' => $this->defaultTestRecipient(),
             // Warn (and let the admin re-enter the password) when a stored SMTP password can
             // no longer be decrypted — mail silently falls back to env until it's fixed.
@@ -67,7 +100,9 @@ class SettingsController extends AbstractController
         ]);
     }
 
-    #[Route('/test-email', name: 'admin_settings_test_email', methods: ['POST'])]
+    // priority 10 ensures this concrete path is matched BEFORE the /{tab} catch-all below
+    // (otherwise `test-email` would be captured as a tab and 404).
+    #[Route('/test-email', name: 'admin_settings_test_email', methods: ['POST'], priority: 10)]
     public function testEmail(Request $request, SettingsMailerTransport $transport): Response
     {
         if (!$this->isCsrfTokenValid('settings_test_email', (string) $request->request->get('_token'))) {
@@ -78,12 +113,12 @@ class SettingsController extends AbstractController
         if ('' === $to) {
             $this->addFlash('warning', $this->translator->trans('admin.flash.test_mail_recipient', [], 'admin'));
 
-            return $this->redirectToRoute('admin_settings');
+            return $this->redirectToEmailTab();
         }
         if (false === filter_var($to, \FILTER_VALIDATE_EMAIL)) {
             $this->addFlash('warning', $this->translator->trans('admin.flash.test_mail_invalid', ['%email%' => $to], 'admin'));
 
-            return $this->redirectToRoute('admin_settings');
+            return $this->redirectToEmailTab();
         }
 
         // Which transport will actually carry it — reported in the result so there's no
@@ -107,7 +142,20 @@ class SettingsController extends AbstractController
             $this->addFlash('danger', $this->translator->trans('admin.flash.test_mail_error', ['%type%' => (new \ReflectionClass($e))->getShortName(), '%error%' => $e->getMessage()], 'admin'));
         }
 
-        return $this->redirectToRoute('admin_settings');
+        return $this->redirectToEmailTab();
+    }
+
+    /**
+     * Back to the tab that renders the `email` section (where the test-mail form lives),
+     * falling back to /admin/settings if the section is somehow absent.
+     */
+    private function redirectToEmailTab(): Response
+    {
+        $tab = $this->registry->tabKeyForSection('email');
+
+        return null !== $tab
+            ? $this->redirectToRoute('admin_settings_tab', ['tab' => $tab])
+            : $this->redirectToRoute('admin_settings');
     }
 
     /**
@@ -146,17 +194,23 @@ class SettingsController extends AbstractController
         return (string) ($this->getUser()?->getUserIdentifier() ?? '');
     }
 
-    private function buildForm(): FormInterface
+    /**
+     * Build the form for ONE tab — only its sections' definitions. This subset is what keeps
+     * partial saves safe (see tab()).
+     */
+    private function buildForm(SettingsTab $tab): FormInterface
     {
+        $definitions = $tab->definitions();
+
         $data = [];
-        foreach ($this->registry->allDefinitions() as $def) {
+        foreach ($definitions as $def) {
             $data[$def->key] = $this->settings->getForForm($def);
         }
 
         // Every setting label/help/choice-label is an `admin`-domain translation key (the providers
         // emit keys); a custom form does NOT inherit EA's domain, so set it here.
         $builder = $this->createFormBuilder($data, ['translation_domain' => 'admin']);
-        foreach ($this->registry->allDefinitions() as $def) {
+        foreach ($definitions as $def) {
             $builder->add($def->key, $this->formType($def), $this->formOptions($def));
         }
 
