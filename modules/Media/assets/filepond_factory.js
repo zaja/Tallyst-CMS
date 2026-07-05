@@ -47,7 +47,11 @@ export function createMediaFilePond(input, { uploadUrl, csrfToken, onProcessed }
     // FilePond labels translated by the admin layout (window.__tallystI18n); English fallbacks.
     const FP = (window.__tallystI18n || {}).filePond || {};
     const pond = FilePond.create(input, {
-        name: 'file',
+        // No `name` on purpose: `name` ONLY drives the hidden form-submit input FilePond injects,
+        // and here uploads go via server.process (AJAX) + onProcessed — the file is NEVER form-
+        // submitted (MediaLibraryController::firstUploadedFile reads it regardless of field name).
+        // A named hidden input inside a guarded <form> (the Branding settings pickers) appears AFTER
+        // admin_dirty_guard's snapshot → a false "unsaved changes" beforeunload. Omitting it fixes that.
         allowMultiple: true,
         allowRevert: false,
         credits: false,

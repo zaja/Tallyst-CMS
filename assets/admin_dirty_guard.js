@@ -39,9 +39,23 @@
         return [...forms];
     }
 
+    // Serialize the form's fields, EXCLUDING file inputs. A file input is never meaningful
+    // "unsaved content" — uploads go via AJAX, not a form submit — and, crucially, FilePond
+    // (media pickers) ALWAYS names its file input (its `name` option defaults to 'filepond')
+    // and builds it ASYNCHRONOUSLY via its own requestAnimationFrame loop, so the input lands
+    // AFTER our snapshot. Including it would make the serialization change post-snapshot and
+    // falsely read as dirty (bit the Branding tab with 4 pickers). Filtering File/Blob values
+    // (rather than the raw new URLSearchParams(FormData)) drops every file input generically.
     function serialize(form) {
         try {
-            return new URLSearchParams(new FormData(form)).toString();
+            const params = new URLSearchParams();
+            for (const [key, value] of new FormData(form).entries()) {
+                if (value instanceof File || value instanceof Blob) {
+                    continue;
+                }
+                params.append(key, value);
+            }
+            return params.toString();
         } catch {
             return null;
         }
