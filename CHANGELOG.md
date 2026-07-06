@@ -10,6 +10,14 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.6.1] — 2026-07-06
+
+### Fixed
+
+- **A fresh install (`bin/tallyst-setup`) failed on `cache:clear`** because the production
+  dependencies were installed while the environment still defaulted to `dev` — setup (and
+  upgrade) now run in the production environment.
+
 ## [1.6.0] — 2026-07-06
 
 ### Changed
@@ -266,6 +274,7 @@ Initial public release.
 - **Modular architecture** and distribution via **Packagist**, under the **MIT**
   license.
 
+[1.6.1]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.6.1
 [1.6.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.6.0
 [1.5.1]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.5.1
 [1.5.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.5.0

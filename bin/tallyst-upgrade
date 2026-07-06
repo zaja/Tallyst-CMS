@@ -21,6 +21,13 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/_tallyst-lib.sh"
 cd "$SCRIPT_DIR/.."
 
+# Upgrade in the PRODUCTION environment (same reason as install): we run `composer install
+# --no-dev`, so its post-install `cache:clear` must boot the PROD kernel. A normal prod install
+# already has APP_ENV=prod in .env.local, but a real env var makes it robust even on a dev
+# instance and keeps setup/upgrade consistent. finalize's own subprocesses strip APP_ENV and
+# re-read .env.local, so this doesn't disturb them. Shell-local: does not leak past the script.
+export APP_ENV=prod
+
 require_git
 
 # A git checkout is the ONLY supported install/update mechanism. No .git → stop with a clear

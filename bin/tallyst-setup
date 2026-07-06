@@ -15,6 +15,13 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/_tallyst-lib.sh"
 cd "$SCRIPT_DIR/.."
 
+# Install in the PRODUCTION environment. We install prod-only dependencies (--no-dev), so
+# Composer's post-install `cache:clear` must boot the PROD kernel — the default `dev` kernel
+# (no .env.local yet → .env's APP_ENV=dev) would try to load dev-only bundles (DebugBundle,
+# WebProfiler, Maker) that --no-dev left out, and fail. app:install then persists APP_ENV=prod
+# into .env.local. Shell-local: this does not leak past the script.
+export APP_ENV=prod
+
 detect_php
 detect_composer
 echo "==> Using PHP: $PHP    Composer: $COMPOSER"
