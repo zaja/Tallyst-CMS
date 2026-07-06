@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+#
+# tallyst-setup — first-run install bootstrap (run once, right after `git clone`).
+#
+# Usage:  bin/tallyst-setup
+#
+# It hides the server specifics: detects a PHP >= 8.5 binary and a Composer command (no hardcoded
+# php8.5 / composer path), installs the production dependencies, then hands off to the interactive
+# `app:install` wizard (database, admin account, .env.local). Override the probes with PHP=… or
+# COMPOSER=… if your host is unusual.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=bin/_tallyst-lib.sh
+. "$SCRIPT_DIR/_tallyst-lib.sh"
+cd "$SCRIPT_DIR/.."
+
+detect_php
+detect_composer
+echo "==> Using PHP: $PHP    Composer: $COMPOSER"
+
+echo "==> Installing dependencies…"
+# Word-split $COMPOSER on purpose (it may be "php composer.phar").
+# shellcheck disable=SC2086
+$COMPOSER install --no-interaction --no-dev --optimize-autoloader
+
+echo "==> Starting the interactive installer…"
+"$PHP" bin/console app:install

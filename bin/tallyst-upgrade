@@ -1,54 +1,66 @@
 #!/usr/bin/env bash
 #
-# tallyst-upgrade — one-command upgrade UX over the supported 2-command path.
+# tallyst-upgrade — one-command upgrade over the supported git-checkout path.
 #
 # Usage:  bin/tallyst-upgrade [vX.Y.Z] [-- finalize-options]
 #   bin/tallyst-upgrade            # upgrade to the latest tag
-#   bin/tallyst-upgrade v1.2.0     # upgrade to a specific tag
-#   bin/tallyst-upgrade v1.2.0 --no-backup   # extra args go to app:upgrade:finalize
+#   bin/tallyst-upgrade v1.5.1     # upgrade to a specific tag
+#   bin/tallyst-upgrade v1.5.1 --no-backup   # extra args go to app:upgrade:finalize
 #
-# Why a shell wrapper is SAFE (unlike one big PHP command): each step is a SEPARATE
-# process — git swaps the code atomically, then a FRESH composer and a FRESH php read the
-# NEW code. No process rewrites its own running code mid-flight.
+# Server-agnostic: detects PHP >= 8.5 and Composer (no hardcoded php8.5 / composer path).
+# Safe (no PHP self-modify): each step is a SEPARATE process — git swaps the code atomically,
+# then a FRESH Composer and a FRESH php read the NEW code. It does NOT restart the messenger
+# worker (an ops step — app:upgrade:finalize prints the exact command at the end).
 #
-# It does NOT restart the messenger worker — that needs ops privileges and stays a visible
-# step (app:upgrade:finalize prints the exact command at the end).
+# Tallyst is installed + updated ONLY via git clone (see docs/INSTALL.md), so .git is always
+# present and the checkout is a plain checkout that surfaces conflicts if you edited core.
 set -euo pipefail
 
-PHP=${PHP:-php8.5}
-COMPOSER=${COMPOSER:-/usr/local/bin/composer}
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=bin/_tallyst-lib.sh
+. "$SCRIPT_DIR/_tallyst-lib.sh"
+cd "$SCRIPT_DIR/.."
 
-# Run from the project root (this script lives in bin/).
-cd "$(dirname "$0")/.."
+require_git
 
-# 1) Sanity: a git checkout is the supported swap mechanism. A create-project copy has no
-#    .git — point the user at the one-time bridge in docs/INSTALL.md ("Upgrading").
+# A git checkout is the ONLY supported install/update mechanism. No .git → stop with a clear
+# message (no auto-bridge, no create-project fallback — install via git clone).
 if [ ! -d .git ]; then
-  echo "Error: no .git directory found." >&2
-  echo "This looks like a create-project install. Adopt git once (see the 'Upgrading'" >&2
-  echo "section of docs/INSTALL.md), then re-run this script." >&2
-  exit 1
+    echo "Error: this is not a git checkout (no .git directory)." >&2
+    echo "Tallyst must be installed via 'git clone' — see docs/INSTALL.md." >&2
+    exit 1
 fi
 
+detect_php
+detect_composer
+echo "==> Using PHP: $PHP    Composer: $COMPOSER"
+
+# 1) Fetch tags/branches so 'latest' and the target tag are known.
+echo "==> Fetching…"
+git fetch --tags origin
+
+# 2) Resolve the target tag (arg wins; otherwise the newest tag on origin/main).
 TAG="${1:-}"
-
-# 2) Code swap (visible, atomic; git reports a conflict if you edited core).
-echo "==> Fetching tags…"
-git fetch --tags
-
 if [ -z "$TAG" ]; then
-  TAG="$(git describe --tags --abbrev=0 origin/main)"
-  echo "==> No tag given — using the latest: $TAG"
+    TAG="$(git describe --tags --abbrev=0 origin/main)"
+    echo "==> No version given — using the latest: $TAG"
 fi
 
+# 3) Code swap (atomic; a plain checkout REPORTS a conflict if you edited core files).
 echo "==> Checking out $TAG…"
-git checkout "$TAG"
+if ! git checkout "$TAG"; then
+    echo "Error: checkout failed — you likely have local changes to core files." >&2
+    echo "Commit or stash them, or discard with 'git checkout -- .', then retry." >&2
+    exit 1
+fi
 
-# 3) Dependencies (deterministic from the lock file; the only step that touches vendor/).
+# 4) Dependencies (deterministic from the lock file; the only step that touches vendor/).
 echo "==> Installing dependencies…"
-"$PHP" "$COMPOSER" install --no-interaction --no-dev --optimize-autoloader
+# Word-split $COMPOSER on purpose (it may be "php composer.phar").
+# shellcheck disable=SC2086
+$COMPOSER install --no-interaction --no-dev --optimize-autoloader
 
-# 4) Finalize: backup -> cache:clear -> migrate -> assets -> cache (fresh kernel each).
+# 5) Finalize: backup -> cache:clear -> migrate -> assets -> cache (fresh kernel each).
 #    Pass through any extra args after the tag (e.g. --no-backup).
 echo "==> Finalizing upgrade…"
 "$PHP" bin/console app:upgrade:finalize "${@:2}"

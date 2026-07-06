@@ -2,7 +2,7 @@
 
 A complete, step-by-step guide to deploying Tallyst on your own server. For a 30-second overview see the [README](../README.md); this is the full version — prerequisites, installation, web-server setup, what to do after, and troubleshooting.
 
-Tallyst installs in two steps: `composer create-project` (downloads it and compiles assets), then `app:install` (an interactive wizard for the database, admin account, and configuration).
+Tallyst installs in two steps: `git clone` (downloads it, keeping its git history so upgrades are clean), then `bin/tallyst-setup` (installs dependencies and launches the interactive `app:install` wizard for the database, admin account, and configuration). Both `bin/tallyst-setup` and `bin/tallyst-upgrade` are **server-agnostic** — they auto-detect your PHP 8.5+ binary and Composer, so nothing about your host is assumed.
 
 ---
 
@@ -13,35 +13,27 @@ Tallyst installs in two steps: `composer create-project` (downloads it and compi
   - `sodium` — encrypts the SMTP password stored in Settings. **`app:install` refuses to run without it.** Verify with `php8.5 -m | grep sodium`.
   - `ctype`, `iconv`, `intl`, `mbstring` — standard Symfony requirements (usually bundled with PHP).
 - **MySQL or MariaDB** — create an **empty database and a user** with privileges on it *before* installing. The wizard connects to an existing database; it does not create one for you.
-- **[Composer](https://getcomposer.org)**.
+- **[Composer](https://getcomposer.org)** and **git** — Tallyst is installed and updated via `git clone` / `git checkout`.
 - For production e-mail (password reset, order confirmations): the ability to run a background process — shown in [Post-installation](#4-post-installation). On a typical Linux host this is a user-level systemd service (no root required).
 
 ---
 
 ## 2. Installation
 
-### Step 1 — Create the project
-
 ```bash
-composer create-project tallyst/cms my-site
+git clone https://github.com/zaja/Tallyst-CMS.git my-site
+cd my-site
+bin/tallyst-setup
 ```
 
-This downloads Tallyst and runs a post-create hook that silently compiles the front-end assets (`importmap:install` → `asset-map:compile` → `app:theme:assets:install`).
+- **`git clone`** downloads Tallyst *with* its git history — so every future upgrade is a clean `git checkout` (no re-download, no bridge).
+- **`bin/tallyst-setup`** detects a PHP 8.5+ binary and Composer on your server (nothing is hardcoded — it works whether your PHP is `php8.5`, `php`, or elsewhere), installs the production dependencies, then launches **`app:install`** — the interactive wizard that validates your database connection, writes `.env.local`, runs migrations, compiles the front-end assets, and creates your admin account. Open `/admin` and log in.
 
-> ⚠️ **Composer must run under PHP 8.5+.** Many hosts default to an older `php` (e.g. 8.4). If so, `create-project` fails immediately with a platform error like *"requires php >=8.5 … your php version (8.4.x) does not satisfy that requirement."* Run Composer through the 8.5 binary instead:
+> ℹ️ **The old `php8.5 $(which composer)` hurdle is gone** — `tallyst-setup` runs Composer through the PHP it detected, so Composer's platform check always sees PHP 8.5+. If the probe can't find your binaries, point it at them:
 >
 > ```bash
-> php8.5 $(which composer) create-project tallyst/cms my-site
+> PHP=/path/to/php8.5 COMPOSER=/path/to/composer bin/tallyst-setup
 > ```
->
-> This is the single most common first-time hurdle.
-
-### Step 2 — Run the installer
-
-```bash
-cd my-site
-php8.5 bin/console app:install
-```
 
 `app:install` is an interactive wizard. It first runs a pre-flight check (the `sodium` extension, a writable `var/` directory) and an **already-installed guard** — if it finds a configured database with data, it refuses to overwrite a live site (re-run with `--force` to reconfigure; data is not deleted).
 
@@ -134,58 +126,55 @@ The installer sets **`APP_ENV=prod`** by default (neutral error pages, optimized
 
 ## 5. Upgrading
 
-Tallyst ships as a single project (not a `vendor/` package), so the supported way to move to a newer version is a **git checkout of the new tag + one finalize command**. The code swap is a visible, atomic git step; everything deterministic after it (DB backup, migrations, asset rebuild) is one command.
+Because you installed with `git clone`, upgrading is **one command**:
+
+```bash
+bin/tallyst-upgrade
+```
+
+With no version it moves to the **latest** release. To pin a specific version, pass its tag — find it under [GitHub Releases](https://github.com/zaja/Tallyst-CMS/releases) and replace it with your target:
+
+```bash
+bin/tallyst-upgrade v1.5.1
+```
+
+`tallyst-upgrade` is server-agnostic (it detects your PHP 8.5+ binary and Composer) and does everything in order, each step a separate process so nothing rewrites its own running code:
+
+1. `git fetch` + `git checkout <tag>` — swaps the code atomically, and **reports a conflict if you edited core files** (so you find out instead of silently losing changes).
+2. `composer install` — dependencies from the lock file (the only step that touches `vendor/`).
+3. `app:upgrade:finalize` — DB backup (into `var/backups/`) → `cache:clear` (before migrate) → `doctrine:migrations:migrate` → asset rebuild → `cache:clear`. Idempotent — safe to re-run if a step fails.
 
 ### Before you upgrade — back up first
 
-`app:upgrade:finalize` makes a **database** dump automatically (into `var/backups/`), but it can't back up what lives outside the database. Back these up yourself:
+`app:upgrade:finalize` dumps the **database** automatically, but can't back up what lives outside it. Back these up yourself:
 
 - **`.env.local`** — ⚠️ especially `SETTINGS_ENCRYPTION_KEY`. Losing it permanently kills your stored SMTP password (it can't be decrypted).
 - **`public/media/`** — your uploads (git-ignored, never in the release).
 - **Any custom themes** under `themes/<your-theme>/`.
 
-### The supported path — git (2 commands)
-
-```bash
-git fetch --tags && git checkout vX.Y.Z && composer install
-php8.5 bin/console app:upgrade:finalize
-```
-
-- **git** swaps the code atomically — and *reports a conflict* if you edited core files (so you find out instead of silently losing your changes).
-- **`app:upgrade:finalize`** runs the rest, in order: DB backup → `cache:clear` (before migrate) → `doctrine:migrations:migrate` → asset rebuild (`importmap:install` + `asset-map:compile` + `app:theme:assets:install`) → `cache:clear`. It's idempotent — safe to re-run if a step fails.
-- Then **restart the worker** (a visible, ops step — the command can't do it for you):
-
-  ```bash
-  systemctl --user restart tallyst-messenger
-  ```
-
-- **Shortcut:** `bin/tallyst-upgrade vX.Y.Z` runs all three (git checkout + composer + finalize) in one command. Omit the tag to take the latest. Extra args pass through, e.g. `bin/tallyst-upgrade vX.Y.Z --no-backup`.
-
-### One-time bridge for `create-project` installs (no `.git`)
-
-A `composer create-project` copy has no git history. Adopt git over the existing tree **once** — it's safe, because `.env.local`, `public/media/`, and custom themes are git-ignored, so `checkout -f` leaves them untouched:
-
-```bash
-git init && git remote add origin https://github.com/zaja/Tallyst-CMS.git
-git fetch --tags && git checkout -f vX.Y.Z
-```
-
-After that, the normal 2-command path (above) works for every future upgrade.
-
-### Manual fallback (no git at all)
-
-1. Back up the database, `.env.local`, `public/media/`, and custom themes.
-2. Download the new release (the tag zip, or `composer create-project` into a temp dir).
-3. Replace the core folders — `src/`, `modules/`, `templates/`, `config/`, `themes/default/`, `translations/`, `assets/`, `migrations/` — **keeping** your `.env.local`, `public/media/`, and custom themes.
-4. `composer install`, then `php8.5 bin/console app:upgrade:finalize`.
-
-⚠️ Manual folder replacement **silently overwrites** any edits you made to core files — the git path is strongly preferred because it surfaces conflicts instead.
+Your data is safe across an upgrade: `.env.local`, `public/media/`, `public/themes/`, and compiled assets are all git-ignored, so the code swap never touches them.
 
 ### After every upgrade
 
-- **Restart the messenger worker** (it keeps running the old code until you do).
+- **Restart the messenger worker** (it keeps running the old code until you do) — the command prints the exact restart line at the end, e.g. `systemctl --user restart tallyst-messenger`.
 - **Hard-refresh** the browser — stale compiled assets can linger in the browser cache.
 - Open the **readiness panel** (below) to confirm everything is green.
+
+### If an upgrade fails (rollback)
+
+Migrations are **reversible** and the database is backed up automatically, so you can go back to the previous version:
+
+```bash
+bin/tallyst-upgrade v1.5.0    # the version you were on (GitHub Releases lists them)
+```
+
+If a migration had already run and left the schema changed, restore the database from the automatic pre-upgrade dump:
+
+```bash
+mysql -u <user> -p <database> < var/backups/tallyst-pre-upgrade-<timestamp>.sql
+```
+
+(Or roll the schema back with `bin/console doctrine:migrations:migrate <previous-version>` — every Tallyst migration has a `down()`.) Then restart the worker.
 
 ---
 
@@ -209,7 +198,8 @@ It's honest by design: checks it can't verify with certainty (worker liveness, w
 
 | Symptom | Cause & fix |
 | --- | --- |
-| `create-project` fails: *requires php >=8.5 … does not satisfy* | Your default `php` is older. Run Composer via the 8.5 binary: `php8.5 $(which composer) create-project tallyst/cms my-site`. |
+| `bin/tallyst-setup` / `bin/tallyst-upgrade` can't find PHP or Composer | Point them at your binaries: `PHP=/path/to/php8.5 COMPOSER=/path/to/composer bin/tallyst-setup`. |
+| `bin/tallyst-upgrade` says *"not a git checkout"* | The directory has no `.git`. Tallyst is installed via `git clone` (Installation, above) — re-clone into a fresh directory and copy over your `.env.local`, `public/media/`, and custom themes. |
 | Payment succeeded but the order stays **"U obradi"** (processing) | The webhook returned **401** — basic-auth or an IP restriction on `/webhook/...`. Make the webhook routes publicly reachable; verify with the readiness panel's webhook test. |
 | E-mails don't arrive | The messenger worker isn't running (`systemctl --user status tallyst-messenger`), or SMTP isn't configured / the From address is wrong (553). Check the readiness panel's Mail + Background items. |
 | Admin buttons do nothing / no styling | Assets weren't compiled. Run `php8.5 bin/console importmap:install && php8.5 bin/console asset-map:compile && php8.5 bin/console app:theme:assets:install`, then hard-refresh. |

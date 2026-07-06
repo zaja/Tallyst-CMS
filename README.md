@@ -29,16 +29,15 @@ Tallyst is my answer. You build a payment-enabled form, drop `[form id=N]` into 
 ## Quick start
 
 ```bash
-composer create-project tallyst/cms my-site
+git clone https://github.com/zaja/Tallyst-CMS.git my-site
 cd my-site
-php8.5 bin/console app:install
+bin/tallyst-setup
 ```
 
-1. `create-project` downloads Tallyst and silently compiles its front-end assets (via a post-create hook).
-2. `app:install` is an interactive wizard — it validates your database connection, writes `.env.local`, runs migrations, and creates your admin account. Open `/admin` and log in.
+1. `git clone` downloads Tallyst (keeping its git history, so upgrades are a clean `git checkout`).
+2. `bin/tallyst-setup` auto-detects your PHP 8.5+ binary and Composer, installs dependencies, and launches `app:install` — an interactive wizard that validates your database connection, writes `.env.local`, runs migrations, compiles assets, and creates your admin account. Open `/admin` and log in.
 
-> If your default `php` is older than 8.5, run Composer through the right binary:
-> `php8.5 $(which composer) create-project tallyst/cms my-site`
+Later, upgrade with a single command: `bin/tallyst-upgrade` (no version = latest).
 
 For the full version — server setup, the background worker for e-mail/orders, webhooks, and going live — see the [detailed installation guide](docs/INSTALL.md).
 

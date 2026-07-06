@@ -10,6 +10,25 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-07-06
+
+### Changed
+
+- **Install and update are each a single, server-agnostic command** — `bin/tallyst-setup`
+  (after `git clone`) and `bin/tallyst-upgrade`. They auto-detect your PHP 8.5+ binary and
+  Composer, so nothing about the host is assumed. Git clone is the only supported install
+  method, which makes every upgrade a clean `git checkout` (no bridge, no re-download).
+
+### Fixed
+
+- **The upgrade docs no longer show a confusing `vX.Y.Z` version placeholder** — the upgrade
+  command defaults to the latest release, so no version needs to be typed.
+
+### Removed
+
+- **The `composer create-project` install path** (and its now-dead post-create hook) —
+  install with `git clone` instead.
+
 ## [1.5.1] — 2026-07-05
 
 ### Changed
@@ -247,6 +266,7 @@ Initial public release.
 - **Modular architecture** and distribution via **Packagist**, under the **MIT**
   license.
 
+[1.6.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.6.0
 [1.5.1]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.5.1
 [1.5.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.5.0
 [1.3.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.3.0
