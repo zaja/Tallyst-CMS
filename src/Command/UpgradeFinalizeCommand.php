@@ -46,15 +46,15 @@ class UpgradeFinalizeCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('no-backup', null, InputOption::VALUE_NONE, 'Preskoči DB backup (svjesno — ispisuje glasno upozorenje)')
-            ->addOption('force', null, InputOption::VALUE_NONE, 'Nastavi i kad pre-flight nije siguran ili backup nije moguć')
-            ->addOption('skip-assets', null, InputOption::VALUE_NONE, 'Preskoči rekompajl asseta');
+            ->addOption('no-backup', null, InputOption::VALUE_NONE, 'Skip the DB backup (deliberate — prints a loud warning)')
+            ->addOption('force', null, InputOption::VALUE_NONE, 'Continue even when pre-flight is uncertain or a backup is impossible')
+            ->addOption('skip-assets', null, InputOption::VALUE_NONE, 'Skip the asset rebuild');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('Tallyst — finalizacija nadogradnje');
+        $io->title('Tallyst — upgrade finalization');
 
         $interactive = $input->isInteractive();
         $force = (bool) $input->getOption('force');
@@ -72,17 +72,17 @@ class UpgradeFinalizeCommand extends Command
         }
 
         // 3. cache:clear BEFORE migrate (rebuild the container over the NEW code) -----------------
-        $io->section('Cache (rebuild prije migracija)');
+        $io->section('Cache (rebuild before migrations)');
         if (!$this->step($io, ['cache:clear'])) {
-            $io->error('cache:clear nije uspio — ne nastavljam s migracijama nad starim kontejnerom. Popravi pa ponovi `app:upgrade:finalize` (idempotentno je).');
+            $io->error('cache:clear failed — not continuing with migrations over the old container. Fix it and re-run `app:upgrade:finalize` (it is idempotent).');
 
             return Command::FAILURE;
         }
 
         // 4. MIGRATE -----------------------------------------------------------------------------
-        $io->section('Migracije baze');
+        $io->section('Database migrations');
         if (!$this->step($io, ['doctrine:migrations:migrate', '--no-interaction'])) {
-            $io->error('Migracija nije uspjela. Backup je u var/backups/ — vrati bazu iz njega ako treba. Popravi pa ponovi `app:upgrade:finalize` (idempotentno je).');
+            $io->error('Migration failed. A backup is in var/backups/ — restore the database from it if needed. Fix it and re-run `app:upgrade:finalize` (it is idempotent).');
 
             return Command::FAILURE;
         }
@@ -101,17 +101,17 @@ class UpgradeFinalizeCommand extends Command
 
     private function preflight(SymfonyStyle $io, bool $force): bool
     {
-        $io->section('Pre-flight provjere');
+        $io->section('Pre-flight checks');
 
         if (!\extension_loaded('sodium')) {
-            $io->error('PHP ekstenzija "sodium" nije učitana — potrebna je za enkripciju postavki.');
+            $io->error('The PHP "sodium" extension is not loaded — it is required to encrypt settings.');
 
             return false;
         }
 
         $envLocal = is_file($this->projectDir.'/.env.local') ? (string) file_get_contents($this->projectDir.'/.env.local') : '';
         if (!$this->state->envLocalHasDatabaseUrl($envLocal)) {
-            $io->error('.env.local nema DATABASE_URL — ovo ne izgleda kao instaliran Tallyst. Pokreni `app:install` prvo.');
+            $io->error('.env.local has no DATABASE_URL — this does not look like an installed Tallyst. Run `app:install` first.');
 
             return false;
         }
@@ -119,19 +119,19 @@ class UpgradeFinalizeCommand extends Command
         // The booted connection reflects the current DATABASE_URL (the code swap doesn't touch it).
         try {
             $this->prober->ping($this->connection);
-            $io->writeln('• Baza dostupna.');
+            $io->writeln('• Database reachable.');
         } catch (\Throwable $e) {
-            $io->error('Baza nije dostupna: '.$e->getMessage());
+            $io->error('Database is not reachable: '.$e->getMessage());
             if (!$force) {
                 return false;
             }
-            $io->warning('Nastavljam unatoč nedostupnoj bazi (--force).');
+            $io->warning('Continuing despite the unreachable database (--force).');
         }
 
         // Schema presence is informational — an upgrade with no existing schema is odd, not fatal.
         try {
             if (!$this->state->coreTablesExist($this->connection)) {
-                $io->warning('Baza nema Tallyst tablice — nema postojeće sheme za nadogradnju (svjež install? pokreni `app:install`).');
+                $io->warning('The database has no Tallyst tables — there is no existing schema to upgrade (a fresh install? run `app:install`).');
             }
         } catch (\Throwable) {
             // ping already covered reachability; ignore a schema-probe hiccup here.
@@ -146,16 +146,16 @@ class UpgradeFinalizeCommand extends Command
      */
     private function runBackup(SymfonyStyle $io, bool $noBackup, bool $force, bool $interactive): bool
     {
-        $io->section('Backup baze (prije migracija)');
+        $io->section('Database backup (before migrations)');
 
         if ($noBackup) {
-            $io->warning('Backup preskočen na zahtjev (--no-backup). NEMA sigurnosne kopije baze prije migracija.');
+            $io->warning('Backup skipped on request (--no-backup). There is NO database backup before migrations.');
 
             return true;
         }
 
         if (null === $this->backup->findDumpBinary()) {
-            $io->warning('Nije pronađen mysqldump ni mariadb-dump na PATH-u — backup baze NIJE moguć.');
+            $io->warning('Neither mysqldump nor mariadb-dump was found on PATH — a database backup is NOT possible.');
 
             return $this->continueWithoutBackup($io, $force, $interactive);
         }
@@ -165,7 +165,7 @@ class UpgradeFinalizeCommand extends Command
 
             return true;
         } catch (BackupException $e) {
-            $io->warning('Backup nije uspio: '.$e->getMessage());
+            $io->warning('Backup failed: '.$e->getMessage());
 
             return $this->continueWithoutBackup($io, $force, $interactive);
         }
@@ -174,20 +174,20 @@ class UpgradeFinalizeCommand extends Command
     private function continueWithoutBackup(SymfonyStyle $io, bool $force, bool $interactive): bool
     {
         if ($force) {
-            $io->warning('Nastavljam BEZ backupa (--force).');
+            $io->warning('Continuing WITHOUT a backup (--force).');
 
             return true;
         }
         if ($interactive) {
-            if ($io->confirm('Nastaviti nadogradnju BEZ backupa baze?', false)) {
+            if ($io->confirm('Continue the upgrade WITHOUT a database backup?', false)) {
                 return true;
             }
-            $io->writeln('Prekinuto — napravi backup ručno pa ponovi.');
+            $io->writeln('Aborted — make a backup manually and try again.');
 
             return false;
         }
 
-        $io->error('Backup nije moguć, a nije zadan --no-backup ni --force — prekidam radi sigurnosti.');
+        $io->error('A backup is not possible and neither --no-backup nor --force was given — aborting for safety.');
 
         return false;
     }
@@ -203,12 +203,12 @@ class UpgradeFinalizeCommand extends Command
     private function runAssetSteps(SymfonyStyle $io, bool $skipAssets): array
     {
         if ($skipAssets) {
-            $io->writeln('• --skip-assets — preskačem rekompajl asseta.');
+            $io->writeln('• --skip-assets — skipping the asset rebuild.');
 
             return [];
         }
 
-        $io->section('Asseti (rekompajl)');
+        $io->section('Assets (rebuild)');
 
         $assetFailures = [];
         // Upgrade ALWAYS recompiles (no "already exists" skip): new code ships new JS/CSS, and a
@@ -230,26 +230,26 @@ class UpgradeFinalizeCommand extends Command
         if ([] !== $assetFailures) {
             // Loud, not buried: a failed compile means dead admin/front JS despite a "successful" upgrade.
             $io->warning([
-                'Asseti NISU u potpunosti rekompajlirani ('.implode(', ', $assetFailures).') — admin/front JavaScript možda neće raditi (npr. gumbi koji ništa ne rade).',
-                'Pokreni ručno pa hard-refresh u pregledniku:',
+                'Assets were NOT fully rebuilt ('.implode(', ', $assetFailures).') — admin/front JavaScript may not work (e.g. buttons that do nothing).',
+                'Run manually, then hard-refresh your browser:',
                 '  php8.5 bin/console importmap:install',
                 '  php8.5 bin/console asset-map:compile',
                 '  php8.5 bin/console app:theme:assets:install',
             ]);
         }
 
-        $io->success('Nadogradnja je finalizirana.');
+        $io->success('Upgrade finalized.');
         $io->writeln([
-            '<comment>Sljedeći koraci (vidljivi — traže ops ovlasti, ne radi ih ova komanda):</comment>',
-            '  1) Restartaj messenger worker (radi STARI kod dok ga ne restartaš):',
-            '       systemctl --user restart tallyst-messenger',
-            '     (user-level systemd unit u ~/.config/systemd/user/ + `loginctl enable-linger` — vidi CLAUDE.md)',
-            '  2) Hard-refresh u pregledniku (stari asseti znaju ostati u cacheu).',
+            '<comment>Next steps (visible — they need ops privileges; this command does not do them):</comment>',
+            '  1) Restart the messenger worker (it keeps running the OLD code until you do):',
+            '       see the "Background worker" section in docs/INSTALL.md',
+            '       (systemd, supervisor, or cron — depends on your host)',
+            '  2) Hard-refresh your browser (stale assets can linger in the cache).',
             '',
-            '<comment>Podsjetnik (backup):</comment>',
-            '  DB backup (ako je napravljen) je u var/backups/. `.env.local` (osobito',
-            '  SETTINGS_ENCRYPTION_KEY) i public/media/ backupiraj zasebno — gubitak ključa =',
-            '  nepovratno mrtva SMTP lozinka.',
+            '<comment>Reminder (backup):</comment>',
+            '  The DB backup (if made) is in var/backups/. Back up `.env.local` (especially',
+            '  SETTINGS_ENCRYPTION_KEY) and public/media/ separately — losing the key permanently',
+            '  kills your stored SMTP password.',
         ]);
     }
 }

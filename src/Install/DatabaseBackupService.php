@@ -68,17 +68,17 @@ final class DatabaseBackupService
     {
         $bin = $this->findDumpBinary();
         if (null === $bin) {
-            throw new BackupException('Nije pronađen mysqldump ni mariadb-dump na PATH-u — backup nije moguć.');
+            throw new BackupException('Neither mysqldump nor mariadb-dump was found on PATH — a backup is not possible.');
         }
 
         $creds = $this->parseDsn();
         if ('' === $creds['dbname']) {
-            throw new BackupException('DATABASE_URL ne sadrži naziv baze — backup nije moguć.');
+            throw new BackupException('DATABASE_URL does not contain a database name — a backup is not possible.');
         }
 
         $dir = $this->projectDir.'/var/backups';
         if (!is_dir($dir) && !@mkdir($dir, 0750, true) && !is_dir($dir)) {
-            throw new BackupException(sprintf('Ne mogu kreirati direktorij za backup: %s', $dir));
+            throw new BackupException(sprintf('Cannot create the backup directory: %s', $dir));
         }
 
         $path = sprintf('%s/tallyst-pre-upgrade-%s.sql', $dir, date('Y-m-d_His'));
@@ -109,12 +109,12 @@ final class DatabaseBackupService
 
         if (!$process->isSuccessful()) {
             @unlink($path); // don't leave a half-written file that looks like a backup
-            throw new BackupException(sprintf('mysqldump nije uspio: %s', trim($process->getErrorOutput()) ?: 'nepoznata greška'));
+            throw new BackupException(sprintf('mysqldump failed: %s', trim($process->getErrorOutput()) ?: 'unknown error'));
         }
 
         if (!is_file($path) || filesize($path) < 1) {
             @unlink($path);
-            throw new BackupException('Backup datoteka je prazna — dump nije proizveo podatke.');
+            throw new BackupException('The backup file is empty — the dump produced no data.');
         }
 
         $io->writeln(sprintf('• Backup zapisan: %s (%s)', $path, $this->humanSize((int) filesize($path))));

@@ -118,56 +118,56 @@ class DemoSeedCommand extends Command
         // --unflag = make demo permanent: clear is_demo everywhere, then stop. The uninstaller can no
         // longer remove this content (it deletes by the flag). A one-way, conscious trade-off.
         if ($input->getOption('unflag')) {
-            $io->section('Uklanjam demo oznaku (sadržaj postaje trajan)');
+            $io->section('Removing the demo flag (content becomes permanent)');
             $n = $this->unflagDemo();
-            $io->success(sprintf('Demo oznaka uklonjena s %d zapisa. Sadržaj je sada trajan.', $n));
+            $io->success(sprintf('Demo flag removed from %d records. The content is now permanent.', $n));
 
             return Command::SUCCESS;
         }
 
         // --clear = uninstall: delete the demo set by its is_demo flag, then stop (no reseed).
         if ($input->getOption('clear')) {
-            $io->section('Brišem demo sadržaj (--clear)');
+            $io->section('Deleting demo content (--clear)');
             $this->clearDemo($io);
-            $io->success('Demo sadržaj je obrisan.');
+            $io->success('Demo content deleted.');
 
             return Command::SUCCESS;
         }
 
         if ($input->getOption('fresh')) {
-            $io->section('Brišem postojeći demo (--fresh)');
+            $io->section('Deleting the existing demo (--fresh)');
             $this->clearDemo($io);
         }
 
         $this->ensureActiveTheme($io);
 
-        $io->section('Slike (učitane iz demo_content/images/)');
+        $io->section('Images (loaded from demo_content/images/)');
         $media = $this->ensureMedia($io);
 
-        $io->section('Forme');
+        $io->section('Forms');
         $forms = $this->ensureForms($io);
 
-        $io->section('Kategorije');
+        $io->section('Categories');
         $categories = $this->ensureCategories($io);
 
-        $io->section('Demo autor');
+        $io->section('Demo author');
         $author = $this->ensureDemoAuthor($io);
 
-        $io->section('Stranice');
+        $io->section('Pages');
         $pages = $this->ensurePages($io, $media, $forms);
 
-        $io->section('Objave');
+        $io->section('Posts');
         $this->ensurePosts($io, $media, $categories, $author);
 
-        $io->section('Izbornici (glavni 2-razinski + 2 footer izbornika) — demo ih uvijek iznova gradi');
+        $io->section('Menus (main 2-level + 2 footer menus) — the demo always rebuilds them');
         $this->rebuildMenus($io, $pages);
 
-        $io->section('Footer + favicon postavke');
+        $io->section('Footer + favicon settings');
         $this->ensureSiteSettings($io);
 
         $this->em->flush();
 
-        $io->success('Arca demo je posijan. Pokreni "app:media:thumbnails:warm" ako sličice nedostaju, te pogledaj front na "/".');
+        $io->success('The Arca demo has been seeded. Run "app:media:thumbnails:warm" if thumbnails are missing, and view the front at "/".');
 
         return Command::SUCCESS;
     }
@@ -185,26 +185,26 @@ class DemoSeedCommand extends Command
         // order just keeps the UoW clean.)
         $removed = 0;
         $removed += $n = $this->removeAll($this->orders->findBy(['isDemo' => true]));
-        $io->writeln(sprintf('• Obrisano narudžbi: %d.', $n));
+        $io->writeln(sprintf('• Orders deleted: %d.', $n));
         $removed += $n = $this->removeAll($this->submissions->findBy(['isDemo' => true]));
-        $io->writeln(sprintf('• Obrisano prijava obrazaca: %d.', $n));
+        $io->writeln(sprintf('• Form submissions deleted: %d.', $n));
         // Menus cascade their MenuItems (ORM cascade + orphanRemoval).
         $removed += $n = $this->removeAll($this->menus->findBy(['isDemo' => true]));
-        $io->writeln(sprintf('• Obrisano izbornika: %d.', $n));
+        $io->writeln(sprintf('• Menus deleted: %d.', $n));
         // Pages: any remaining MenuItem pointing at them cascades (DB onDelete); menus already gone.
         $removed += $n = $this->removeAll($this->pages->findBy(['isDemo' => true]));
-        $io->writeln(sprintf('• Obrisano stranica: %d.', $n));
+        $io->writeln(sprintf('• Pages deleted: %d.', $n));
         // Posts reference Category via SET NULL — order-independent, but kept before categories.
         $removed += $n = $this->removeAll($this->posts->findBy(['isDemo' => true]));
-        $io->writeln(sprintf('• Obrisano objava: %d.', $n));
+        $io->writeln(sprintf('• Posts deleted: %d.', $n));
         $removed += $n = $this->removeAll($this->categories->findBy(['isDemo' => true]));
-        $io->writeln(sprintf('• Obrisano kategorija: %d.', $n));
+        $io->writeln(sprintf('• Categories deleted: %d.', $n));
         // Forms: their orders/submissions/fields are already cleared above; cascade is the safety-net.
         $removed += $n = $this->removeAll($this->forms->findBy(['isDemo' => true]));
-        $io->writeln(sprintf('• Obrisano formi: %d.', $n));
+        $io->writeln(sprintf('• Forms deleted: %d.', $n));
         // Media last: every reference to it is SET NULL (real content survives); Vich deletes the files.
         $removed += $n = $this->removeAll($this->mediaRepo->findBy(['isDemo' => true]));
-        $io->writeln(sprintf('• Obrisano slika: %d.', $n));
+        $io->writeln(sprintf('• Images deleted: %d.', $n));
 
         $this->em->flush();
 
@@ -212,7 +212,7 @@ class DemoSeedCommand extends Command
         // (nothing is flagged → $removed === 0) a --clear must be a true no-op: the now-permanent content,
         // its byline author, and the footer/favicon settings the admin chose to keep are all left alone.
         if (0 === $removed) {
-            $io->writeln('• Nema demo sadržaja za brisanje (ništa nije označeno kao demo).');
+            $io->writeln('• No demo content to delete (nothing is flagged as demo).');
 
             return;
         }
@@ -221,7 +221,7 @@ class DemoSeedCommand extends Command
         if (null !== $author = $this->users->findOneBy(['email' => self::AUTHOR_EMAIL])) {
             $this->em->remove($author);
             $this->em->flush();
-            $io->writeln('• Obrisan demo autor.');
+            $io->writeln('• Demo author deleted.');
         }
 
         // Reset the footer/favicon settings the seed wrote back to their schema defaults. The active
@@ -270,8 +270,18 @@ class DemoSeedCommand extends Command
             'footer_copyright' => '',
             'footer_show_powered_by' => true,
             'favicon_media_id' => '',
+            // Top bar back to OFF + cleared (symmetry with the footer reset — demo delete leaves a
+            // clean top bar, not a lingering Arca announcement).
+            'top_bar_enabled' => false,
+            'top_bar_text' => '',
+            'social_github_url' => '',
+            'social_youtube_url' => '',
+            'social_x_url' => '',
+            'social_linkedin_url' => '',
+            'footer_menu' => '',
+            'footer_text' => '',
         ]);
-        $io->writeln('• Resetirane footer + favicon postavke na zadano.');
+        $io->writeln('• Reset footer + top bar + favicon settings to defaults.');
     }
 
     /**
@@ -331,7 +341,7 @@ class DemoSeedCommand extends Command
 
             $src = $dir.$fileName;
             if (!is_file($src)) {
-                $io->warning('Demo slika nedostaje: '.$src.' (preskačem).');
+                $io->warning('Demo image missing: '.$src.' (skipping).');
                 continue;
             }
 
@@ -347,7 +357,7 @@ class DemoSeedCommand extends Command
             }
             $m->setTitle('Arca demo — '.$name)->setAlt($this->altFor($name))->setIsDemo(true);
             $media[$name] = $m;
-            $io->writeln('• Učitana '.$fileName);
+            $io->writeln('• Loaded '.$fileName);
         }
         $this->em->flush();
 
@@ -388,9 +398,9 @@ class DemoSeedCommand extends Command
             $this->addField($kontakt, FormField::TYPE_EMAIL, 'email', 'Email', true, 1);
             $this->addField($kontakt, FormField::TYPE_TEXTAREA, 'message', 'Message', true, 2);
             $this->em->persist($kontakt);
-            $io->writeln('• Kreirana forma "Contact" (besplatna).');
+            $io->writeln('• Created the "Contact" form (free).');
         } else {
-            $io->writeln('• Forma "Contact" već postoji.');
+            $io->writeln('• The "Contact" form already exists.');
         }
 
         $pro = $this->forms->findOneBy(['slug' => 'demo-pro-licenca']);
@@ -407,9 +417,9 @@ class DemoSeedCommand extends Command
             $this->addField($pro, FormField::TYPE_EMAIL, 'email', 'Email (where we\'ll send your license)', true, 1);
             $this->addField($pro, FormField::TYPE_TEXT, 'company', 'Company (optional)', false, 2);
             $this->em->persist($pro);
-            $io->writeln('• Kreirana forma "Arca Pro" (€29, page-as-product).');
+            $io->writeln('• Created the "Arca Pro" form (€29, page-as-product).');
         } else {
-            $io->writeln('• Forma "Arca Pro" već postoji.');
+            $io->writeln('• The "Arca Pro" form already exists.');
         }
 
         $this->em->flush();
@@ -451,7 +461,7 @@ class DemoSeedCommand extends Command
                     ->setDescription($desc)
                     ->setIsDemo(true);
                 $this->em->persist($cat);
-                $io->writeln('• Kreirana kategorija "'.$name.'".');
+                $io->writeln('• Created the "'.$name.'" category.');
             }
             $out[$slug] = $cat;
         }
@@ -470,7 +480,7 @@ class DemoSeedCommand extends Command
     {
         $author = $this->users->findOneBy(['email' => self::AUTHOR_EMAIL]);
         if (null !== $author) {
-            $io->writeln('• Demo autor već postoji.');
+            $io->writeln('• The demo author already exists.');
 
             return $author;
         }
@@ -482,7 +492,7 @@ class DemoSeedCommand extends Command
         $author->setPassword($this->hasher->hashPassword($author, bin2hex(random_bytes(32))));
         $this->em->persist($author);
         $this->em->flush();
-        $io->writeln('• Kreiran demo autor (nadimak "The Arca team").');
+        $io->writeln('• Created the demo author (nickname "The Arca team").');
 
         return $author;
     }
@@ -569,8 +579,8 @@ class DemoSeedCommand extends Command
 
             $this->em->persist($page);
             $io->writeln($adopt
-                ? '• Zamijenjena install home stranica demo landingom.'
-                : '• Kreirana stranica "'.$title.'".');
+                ? '• Replaced the install home page with the demo landing.'
+                : '• Created the "'.$title.'" page.');
             $out[$slug] = $page;
         }
 
@@ -635,7 +645,7 @@ class DemoSeedCommand extends Command
             ++$created;
         }
 
-        $io->writeln(sprintf('• Kreirano objava: %d (preskočeno postojećih: %d).', $created, count($defs) - $created));
+        $io->writeln(sprintf('• Posts created: %d (existing skipped: %d).', $created, count($defs) - $created));
     }
 
     // ------------------------------------------------------------------- menus ---
@@ -685,7 +695,7 @@ class DemoSeedCommand extends Command
         $topPage($main, 'contact', 'Contact', 6);
 
         $this->em->persist($main);
-        $io->writeln('• Izgrađen glavni 2-razinski izbornik.');
+        $io->writeln('• Built the main 2-level menu.');
 
         // ---- Footer menu: Product ----------------------------------------------
         $product = new Menu('Product', self::FOOTER_PRODUCT_LOCATION);
@@ -705,7 +715,7 @@ class DemoSeedCommand extends Command
         $topPage($resources, 'contact', 'Contact', 3);
         $this->em->persist($resources);
 
-        $io->writeln('• Izgrađena dva footer izbornika (Product, Resources).');
+        $io->writeln('• Built two footer menus (Product, Resources).');
     }
 
     // ------------------------------------------------------------------ footer ---
@@ -739,8 +749,23 @@ class DemoSeedCommand extends Command
             'footer_copyright' => '',
             'footer_show_powered_by' => true,
             'favicon_media_id' => '',
+            // Top bar — AUTHORITATIVE like the footer (overwrite any stray top bar an admin left, so a
+            // demo install always shows a clean Arca front). An announcement linking to a demo post +
+            // three placeholder social icons. ⚠ Point them at the platform HOME (not a real profile —
+            // Arca is fictional); a bare '#' is NOT rendered because TopBarExtension::isSafeUrl requires
+            // an http(s):// or '/' URL, so the icons need a real scheme to show at all.
+            'top_bar_enabled' => true,
+            'top_bar_text' => '<p><strong>Arca 2.1 is here</strong> — faster incremental backups, lower memory use. <a href="/blog/introducing-arca-2-1">Read more →</a></p>',
+            'social_github_url' => 'https://github.com',
+            'social_youtube_url' => 'https://youtube.com',
+            'social_x_url' => 'https://x.com',
+            'social_linkedin_url' => '',
+            // Clear the legacy footer keys (superseded by footer_col*; the current layout ignores them)
+            // so no stale value lingers.
+            'footer_menu' => '',
+            'footer_text' => '',
         ]);
-        $io->writeln('• Postavljen demo footer (3 kolone: brand + Product + Resources).');
+        $io->writeln('• Set the demo footer (3 columns) + top bar (Arca announcement + social icons).');
     }
 
     // ------------------------------------------------------- page content (HTML) ---
@@ -997,19 +1022,19 @@ class DemoSeedCommand extends Command
             <div class="tallyst-spacer tallyst-spacer--sm"></div>
 
             <div class="tallyst-columns tallyst-columns--cards" data-columns="1">
-            <div class="tallyst-column">[image id={$team1} size=thumb align=left alt="Marko Beker"]<h3>Marko Beker</h3><p><span class="tallyst-color--brand">Founder &amp; Lead Developer</span></p><p>Started Arca after losing a drive full of work to a backup tool that had "quietly" stopped running. Believes software you buy should be yours, keys and all.</p><p><em>"The best backup is the one you never have to think about."</em></p></div>
+            <div class="tallyst-column">[image id={$team1} size=thumb align=left alt="James Carter"]<h3>James Carter</h3><p><span class="tallyst-color--brand">Founder &amp; Lead Developer</span></p><p>Started Arca after losing a drive full of work to a backup tool that had "quietly" stopped running. Believes software you buy should be yours, keys and all.</p><p><em>"The best backup is the one you never have to think about."</em></p></div>
             </div>
 
             <div class="tallyst-columns tallyst-columns--cards" data-columns="1">
-            <div class="tallyst-column">[image id={$team2} size=thumb align=left alt="Ivana Kraljić"]<h3>Ivana Kraljić</h3><p><span class="tallyst-color--blue">Backend Engineer</span></p><p>Owns the chunk format and the compression pipeline. Spends her days making backups smaller and restores faster, and her weekends rock climbing.</p><p><em>"Every byte you don't upload is a byte you never have to worry about."</em></p></div>
+            <div class="tallyst-column">[image id={$team2} size=thumb align=left alt="Sarah Lin"]<h3>Sarah Lin</h3><p><span class="tallyst-color--blue">Backend Engineer</span></p><p>Owns the chunk format and the compression pipeline. Spends her days making backups smaller and restores faster, and her weekends rock climbing.</p><p><em>"Every byte you don't upload is a byte you never have to worry about."</em></p></div>
             </div>
 
             <div class="tallyst-columns tallyst-columns--cards" data-columns="1">
-            <div class="tallyst-column">[image id={$team3} size=thumb align=left alt="Tomislav Horvat"]<h3>Tomislav Horvat</h3><p><span class="tallyst-color--green">Support &amp; Documentation</span></p><p>The person who answers when you email support. Writes the docs, hunts down edge cases, and turns confused tickets into clear guides.</p><p><em>"A feature nobody understands might as well not exist."</em></p></div>
+            <div class="tallyst-column">[image id={$team3} size=thumb align=left alt="Tom Fisher"]<h3>Tom Fisher</h3><p><span class="tallyst-color--green">Support &amp; Documentation</span></p><p>The person who answers when you email support. Writes the docs, hunts down edge cases, and turns confused tickets into clear guides.</p><p><em>"A feature nobody understands might as well not exist."</em></p></div>
             </div>
 
             <div class="tallyst-columns tallyst-columns--cards" data-columns="1">
-            <div class="tallyst-column">[image id={$team4} size=thumb align=left alt="Petra Novak"]<h3>Petra Novak</h3><p><span class="tallyst-color--brand-strong">Design &amp; UX</span></p><p>Shapes how Arca looks and feels — from the first-run setup to the progress bar you glance at once a day. Fights for fewer clicks and clearer words.</p><p><em>"Good backup software gets out of your way."</em></p></div>
+            <div class="tallyst-column">[image id={$team4} size=thumb align=left alt="Laura Bennett"]<h3>Laura Bennett</h3><p><span class="tallyst-color--brand-strong">Design &amp; UX</span></p><p>Shapes how Arca looks and feels — from the first-run setup to the progress bar you glance at once a day. Fights for fewer clicks and clearer words.</p><p><em>"Good backup software gets out of your way."</em></p></div>
             </div>
 
             <h6>How we work</h6>

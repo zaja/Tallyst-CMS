@@ -53,7 +53,7 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
 
         yield new SettingsSection('maintenance', 'admin.settings.maintenance.title', 'fa-screwdriver-wrench', [
             new SettingDefinition('maintenance_enabled', SettingType::BOOL, 'admin.settings.maintenance.maintenance_enabled.label', 'admin.settings.maintenance.maintenance_enabled.help', false),
-            new SettingDefinition('maintenance_message', SettingType::RICH_TEXT, 'admin.settings.maintenance.maintenance_message.label', 'admin.settings.maintenance.maintenance_message.help', '<p>Stranica je trenutno u održavanju. Vraćamo se uskoro.</p>'),
+            new SettingDefinition('maintenance_message', SettingType::RICH_TEXT, 'admin.settings.maintenance.maintenance_message.label', 'admin.settings.maintenance.maintenance_message.help', "<p>We'll be back shortly — the site is undergoing maintenance.</p>"),
         ]);
 
         yield new SettingsSection('localization', 'admin.settings.localization.title', 'fa-globe', [

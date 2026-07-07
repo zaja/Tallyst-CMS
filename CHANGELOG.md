@@ -10,6 +10,22 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.6.2] — 2026-07-07
+
+### Changed
+
+- **The demo now sets up the top bar** (an announcement plus GitHub/YouTube/X social
+  icons) and clears it again on removal — matching how it manages the footer, so a demo
+  install always presents a clean front.
+
+### Fixed
+
+- **The installer and the other CLI commands now output English** (they were partly
+  Croatian). The worker-setup instructions point to `docs/INSTALL.md` (not an internal
+  file) and now cover systemd, cron, and supervisor rather than assuming systemd.
+- **Fresh-install content, the maintenance message, the order thank-you message, and the
+  demo team names are now English** (they were Croatian).
+
 ## [1.6.1] — 2026-07-06
 
 ### Fixed
@@ -274,6 +290,7 @@ Initial public release.
 - **Modular architecture** and distribution via **Packagist**, under the **MIT**
   license.
 
+[1.6.2]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.6.2
 [1.6.1]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.6.1
 [1.6.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.6.0
 [1.5.1]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.5.1

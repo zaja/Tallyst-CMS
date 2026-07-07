@@ -50,7 +50,7 @@ class ThankYouTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         $body = (string) $this->client->getResponse()->getContent();
-        self::assertStringContainsString('Potvrdu i upute', $body, 'default thank-you message');
+        self::assertStringContainsString('confirmation and instructions', $body, 'default thank-you message');
         self::assertStringContainsString('#'.$this->orderId, $body, 'dynamic order id');
         self::assertStringContainsString('49,00', $body, 'dynamic amount');
     }

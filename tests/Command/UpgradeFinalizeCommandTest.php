@@ -63,7 +63,7 @@ class UpgradeFinalizeCommandTest extends TestCase
         $code = $tester->execute([], ['interactive' => false]);
 
         self::assertSame(1, $code);
-        self::assertStringContainsString('.env.local nema DATABASE_URL', $tester->getDisplay());
+        self::assertStringContainsString('.env.local has no DATABASE_URL', $tester->getDisplay());
     }
 
     public function testPreflightFailsWhenDatabaseUnreachableWithoutForce(): void
@@ -77,7 +77,7 @@ class UpgradeFinalizeCommandTest extends TestCase
         $code = $tester->execute([], ['interactive' => false]);
 
         self::assertSame(1, $code);
-        self::assertStringContainsString('Baza nije dostupna', $tester->getDisplay());
+        self::assertStringContainsString('Database is not reachable', $tester->getDisplay());
     }
 
     public function testForceBypassesUnreachableDatabaseAndProceedsPastPreflight(): void
@@ -93,8 +93,8 @@ class UpgradeFinalizeCommandTest extends TestCase
         $tester->execute(['--force' => true, '--no-backup' => true, '--skip-assets' => true], ['interactive' => false]);
 
         $out = $tester->getDisplay();
-        self::assertStringContainsString('Nastavljam unatoč nedostupnoj bazi (--force)', $out);
-        self::assertStringContainsString('Cache (rebuild prije migracija)', $out, 'force must carry execution past pre-flight + backup');
+        self::assertStringContainsString('Continuing despite the unreachable database (--force)', $out);
+        self::assertStringContainsString('Cache (rebuild before migrations)', $out, 'force must carry execution past pre-flight + backup');
     }
 
     public function testNoBackupSkipsBackupWithLoudWarning(): void
@@ -108,8 +108,8 @@ class UpgradeFinalizeCommandTest extends TestCase
         $tester->execute(['--no-backup' => true, '--skip-assets' => true], ['interactive' => false]);
 
         $out = $tester->getDisplay();
-        self::assertStringContainsString('Backup preskočen na zahtjev (--no-backup)', $out);
+        self::assertStringContainsString('Backup skipped on request (--no-backup)', $out);
         // Proves it didn't abort at backup: it advanced to the cache:clear step after the warning.
-        self::assertStringContainsString('Cache (rebuild prije migracija)', $out);
+        self::assertStringContainsString('Cache (rebuild before migrations)', $out);
     }
 }

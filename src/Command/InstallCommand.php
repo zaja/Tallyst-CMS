@@ -71,20 +71,20 @@ class InstallCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('Tallyst — instalacija');
+        $io->title('Tallyst — installation');
 
         $interactive = $input->isInteractive();
         $force = (bool) $input->getOption('force');
 
         // --- PRE-FLIGHT (no writes) ---------------------------------------------------------
         if (!\extension_loaded('sodium')) {
-            $io->error('PHP ekstenzija "sodium" nije učitana — potrebna je za enkripciju postavki.');
+            $io->error('The PHP "sodium" extension is not loaded — it is required to encrypt settings.');
 
             return Command::FAILURE;
         }
         foreach ([$this->projectDir, $this->projectDir.'/var'] as $dir) {
             if (!is_dir($dir) || !is_writable($dir)) {
-                $io->error(sprintf('Direktorij nije zapisiv (potrebno za .env.local / cache): %s', $dir));
+                $io->error(sprintf('Directory is not writable (needed for .env.local / cache): %s', $dir));
 
                 return Command::FAILURE;
             }
@@ -102,22 +102,22 @@ class InstallCommand extends Command
 
             if ($installed) {
                 if (!$force) {
-                    $io->error('Tallyst je već instaliran (.env.local ima DATABASE_URL i baza sadrži podatke). Odbijam prebrisati živi site.');
-                    $io->writeln('Za reinstalaciju / rekonfiguraciju pokreni s <info>--force</info>.');
+                    $io->error('Tallyst is already installed (.env.local has DATABASE_URL and the database has data). Refusing to overwrite a live site.');
+                    $io->writeln('To reinstall / reconfigure, run with <info>--force</info>.');
 
                     return Command::FAILURE;
                 }
-                if ($interactive && !$io->confirm('Tallyst je već instaliran. Nastaviti u --force modu? (podaci se NE brišu, ali konfiguracija se ažurira)', false)) {
-                    $io->writeln('Prekinuto.');
+                if ($interactive && !$io->confirm('Tallyst is already installed. Continue in --force mode? (data is NOT deleted, but the configuration is updated)', false)) {
+                    $io->writeln('Aborted.');
 
                     return Command::SUCCESS;
                 }
-                $io->warning('Nastavljam u --force modu preko postojeće instalacije.');
+                $io->warning('Continuing in --force mode over an existing installation.');
             }
         }
 
         // --- GATHER + VALIDATE DB (loop until a connection succeeds) -------------------------
-        $io->section('Baza podataka');
+        $io->section('Database');
         $host = (string) ($input->getOption('db-host') ?? '');
         $port = (string) ($input->getOption('db-port') ?? '');
         $name = (string) ($input->getOption('db-name') ?? '');
@@ -130,20 +130,20 @@ class InstallCommand extends Command
             if ($interactive) {
                 $host = (string) $io->ask('DB host', '' !== $host ? $host : '127.0.0.1');
                 $port = (string) $io->ask('DB port', '' !== $port ? $port : '3306');
-                $name = (string) $io->ask('Naziv baze', '' !== $name ? $name : null, $this->requireNonEmpty('Naziv baze je obavezan.'));
-                $dbUser = (string) $io->ask('DB korisnik', '' !== $dbUser ? $dbUser : null, $this->requireNonEmpty('DB korisnik je obavezan.'));
-                $dbPass = (string) $io->askHidden('DB lozinka (skriveno)');
+                $name = (string) $io->ask('Database name', '' !== $name ? $name : null, $this->requireNonEmpty('Database name is required.'));
+                $dbUser = (string) $io->ask('Database user', '' !== $dbUser ? $dbUser : null, $this->requireNonEmpty('Database user is required.'));
+                $dbPass = (string) $io->askHidden('Database password (hidden)');
             } else {
                 $host = '' !== $host ? $host : '127.0.0.1';
                 $port = '' !== $port ? $port : '3306';
                 if ('' === $name) {
-                    return $this->fail($io, 'Nedostaje --db-name.');
+                    return $this->fail($io, 'Missing --db-name.');
                 }
                 if ('' === $dbUser) {
-                    return $this->fail($io, 'Nedostaje --db-user.');
+                    return $this->fail($io, 'Missing --db-user.');
                 }
                 if (null === $dbPass) {
-                    return $this->fail($io, 'Nedostaje --db-pass.');
+                    return $this->fail($io, 'Missing --db-pass.');
                 }
             }
 
@@ -155,17 +155,17 @@ class InstallCommand extends Command
                 $conn = $this->prober->connect($probeDsn);
                 $this->prober->ping($conn);
             } catch (\Throwable $e) {
-                $io->error('Spajanje na bazu nije uspjelo: '.$e->getMessage());
+                $io->error('Database connection failed: '.$e->getMessage());
                 if (!$interactive) {
                     return Command::FAILURE;
                 }
-                $io->note('Provjeri podatke i pokušaj ponovno.');
+                $io->note('Check the details and try again.');
                 continue;
             }
 
             // Refuse to install over a NON-empty target schema unless --force.
             if ($this->state->coreTablesExist($conn) && !$force) {
-                $io->error('Ciljna baza već sadrži Tallyst tablice. Koristi praznu bazu ili pokreni s --force.');
+                $io->error('The target database already contains Tallyst tables. Use an empty database or run with --force.');
                 if (!$interactive) {
                     return Command::FAILURE;
                 }
@@ -173,12 +173,12 @@ class InstallCommand extends Command
             }
 
             $serverVersion = $this->prober->detectServerVersion($conn);
-            $io->writeln(sprintf('• Spajanje uspješno (%s, serverVersion=%s).', $host, $serverVersion ?: '?'));
+            $io->writeln(sprintf('• Connected successfully (%s, serverVersion=%s).', $host, $serverVersion ?: '?'));
             break;
         }
 
         // --- GATHER + VALIDATE ADMIN / SITE -------------------------------------------------
-        $io->section('Administrator i sajt');
+        $io->section('Administrator and site');
 
         $adminEmail = (string) ($input->getOption('admin-email') ?? '');
         while (true) {
@@ -186,10 +186,10 @@ class InstallCommand extends Command
                 $adminEmail = (string) $io->ask('Admin e-mail');
             }
             if ('' === $adminEmail) {
-                return $this->fail($io, 'Nedostaje --admin-email.', Command::INVALID);
+                return $this->fail($io, 'Missing --admin-email.', Command::INVALID);
             }
             if (\count(Validation::createValidator()->validate($adminEmail, new Email())) > 0) {
-                $io->error(sprintf('"%s" nije ispravan e-mail.', $adminEmail));
+                $io->error(sprintf('"%s" is not a valid e-mail.', $adminEmail));
                 if (!$interactive) {
                     return Command::INVALID;
                 }
@@ -206,7 +206,7 @@ class InstallCommand extends Command
 
         $siteName = (string) ($input->getOption('site-name') ?? '');
         if ('' === $siteName && $interactive) {
-            $siteName = (string) $io->ask('Naziv sajta', 'Tallyst');
+            $siteName = (string) $io->ask('Site name', 'Tallyst');
         }
         if ('' === $siteName) {
             $siteName = 'Tallyst';
@@ -215,14 +215,14 @@ class InstallCommand extends Command
         $siteUrl = (string) ($input->getOption('site-url') ?? '');
         while (true) {
             if ('' === $siteUrl && $interactive) {
-                $siteUrl = (string) $io->ask('Javni URL sajta (DEFAULT_URI, npr. https://tallyst.org)');
+                $siteUrl = (string) $io->ask('Public site URL (DEFAULT_URI, e.g. https://tallyst.org)');
             }
             if ('' === $siteUrl) {
-                return $this->fail($io, 'Nedostaje --site-url.', Command::INVALID);
+                return $this->fail($io, 'Missing --site-url.', Command::INVALID);
             }
             $siteUrl = rtrim($siteUrl, '/');
             if (!$this->isAbsoluteHttpUrl($siteUrl)) {
-                $io->error('URL mora biti apsolutan http(s) URL (npr. https://tallyst.org).');
+                $io->error('The URL must be an absolute http(s) URL (e.g. https://tallyst.org).');
                 if (!$interactive) {
                     return Command::INVALID;
                 }
@@ -233,7 +233,7 @@ class InstallCommand extends Command
         }
 
         // --- WRITE CONFIG (all validation passed) -------------------------------------------
-        $io->section('Zapisujem konfiguraciju (.env.local)');
+        $io->section('Writing configuration (.env.local)');
         $finalDsn = $this->dsnBuilder->build([
             'host' => $host, 'port' => $port, 'name' => $name, 'user' => $dbUser,
             'password' => (string) $dbPass, 'serverVersion' => $serverVersion,
@@ -245,32 +245,32 @@ class InstallCommand extends Command
             'ORDER_ADMIN_EMAIL' => $adminEmail,
         ];
         if ($this->envWriter->hasNonEmpty('APP_SECRET')) {
-            $io->writeln('• APP_SECRET već postoji — zadržan (rotacija bi srušila sesije).');
+            $io->writeln('• APP_SECRET already exists — kept (rotating it would break sessions).');
         } else {
             $pairs['APP_SECRET'] = bin2hex(random_bytes(16));
-            $io->writeln('• Generiran APP_SECRET.');
+            $io->writeln('• Generated APP_SECRET.');
         }
         // Default to PROD (safe: neutral error pages, optimised) without asking. Most installs are
         // production; a developer who wants dev gets an instruction in the final message. Only-if-
         // missing, so a re-run/--force never clobbers a developer's deliberate APP_ENV=dev.
         if ($this->envWriter->hasNonEmpty('APP_ENV')) {
-            $io->writeln('• APP_ENV već postavljen u .env.local — zadržan.');
+            $io->writeln('• APP_ENV already set in .env.local — kept.');
         } else {
             $pairs['APP_ENV'] = 'prod';
-            $io->writeln('• Postavljen APP_ENV=prod (sigurno za produkciju).');
+            $io->writeln('• Set APP_ENV=prod (safe for production).');
         }
         $this->envWriter->upsert($pairs);
-        $io->writeln('• Zapisani DATABASE_URL, DEFAULT_URI, ORDER_ADMIN_EMAIL (perms 0600).');
+        $io->writeln('• Wrote DATABASE_URL, DEFAULT_URI, ORDER_ADMIN_EMAIL (perms 0600).');
 
         $io->writeln(null === $this->keyProvisioner->ensure()
-            ? '• Enkripcijski ključ već postoji.'
-            : '• Generiran SETTINGS_ENCRYPTION_KEY.');
+            ? '• Encryption key already exists.'
+            : '• Generated SETTINGS_ENCRYPTION_KEY.');
 
         // --- SUBPROCESSES (fresh kernel each; read the new .env.local) -----------------------
-        $io->section('Migracije i seed (svjež kernel, nova baza)');
+        $io->section('Migrations and seed (fresh kernel, new database)');
 
         if (!$this->steps->run($io, ['doctrine:migrations:migrate', '--no-interaction'], $this->steps->childEnv())) {
-            $io->error('.env.local je zapisan, ali shema NIJE kreirana. Popravi problem s bazom (gore) i ponovno pokreni `php8.5 bin/console app:install` — idempotentno je.');
+            $io->error('.env.local was written, but the schema was NOT created. Fix the database problem (above) and re-run `php8.5 bin/console app:install` — it is idempotent.');
 
             return Command::FAILURE;
         }
@@ -280,7 +280,7 @@ class InstallCommand extends Command
             ['app:install:finalize', '--email='.$adminEmail, '--role=ROLE_ADMIN', '--site-name='.$siteName],
             $this->steps->childEnv([self::PASSWORD_ENV => $adminPass]),
         )) {
-            $io->error('Seed / izrada admina nije uspjela (gore). Popravi i ponovno pokreni `app:install` — idempotentno je.');
+            $io->error('Seed / admin creation failed (above). Fix it and re-run `app:install` — it is idempotent.');
 
             return Command::FAILURE;
         }
@@ -292,9 +292,9 @@ class InstallCommand extends Command
         // the exact recompile command, never just a buried mid-flow warning.
         $assetFailures = [];
         if ($input->getOption('skip-assets')) {
-            $io->writeln('• --skip-assets — preskačem asset korak.');
+            $io->writeln('• --skip-assets — skipping the asset step.');
         } else {
-            $io->section('Asseti (fallback)');
+            $io->section('Assets (fallback)');
             if (!$this->steps->run($io, ['importmap:install'], $this->steps->childEnv(), true)) {
                 $assetFailures[] = 'importmap:install';
             }
@@ -304,7 +304,7 @@ class InstallCommand extends Command
                     $assetFailures[] = 'asset-map:compile';
                 }
             } else {
-                $io->writeln('• Asseti već kompajlirani — preskačem.');
+                $io->writeln('• Assets already compiled — skipping.');
             }
 
             if ($force || !is_dir($this->projectDir.'/public/themes/default')) {
@@ -312,7 +312,7 @@ class InstallCommand extends Command
                     $assetFailures[] = 'app:theme:assets:install';
                 }
             } else {
-                $io->writeln('• Theme asseti već objavljeni — preskačem.');
+                $io->writeln('• Theme assets already published — skipping.');
             }
         }
 
@@ -322,28 +322,28 @@ class InstallCommand extends Command
         if ([] !== $assetFailures) {
             // Loud, not buried: a failed compile means dead admin/front JS despite a "successful" install.
             $io->warning([
-                'Asseti NISU u potpunosti kompajlirani ('.implode(', ', $assetFailures).') — admin/front JavaScript možda neće raditi (npr. gumbi koji ništa ne rade).',
-                'Pokreni ručno pa hard-refresh u pregledniku:',
+                'Assets were NOT fully compiled ('.implode(', ', $assetFailures).') — admin/front JavaScript may not work (e.g. buttons that do nothing).',
+                'Run manually, then hard-refresh your browser:',
                 '  php8.5 bin/console importmap:install',
                 '  php8.5 bin/console asset-map:compile',
                 '  php8.5 bin/console app:theme:assets:install',
             ]);
         }
 
-        $io->success('Tallyst je instaliran.');
+        $io->success('Tallyst is installed.');
         $io->writeln([
-            sprintf('Otvori <info>%s/admin</info> i prijavi se kao <info>%s</info>.', $siteUrl, $adminEmail),
+            sprintf('Open <info>%s/admin</info> and sign in as <info>%s</info>.', $siteUrl, $adminEmail),
             '',
-            '<comment>Sljedeći koraci:</comment>',
-            '  1) Pokreni messenger worker (mailovi reset/narudžbe idu kroz njega):',
-            '       systemctl --user restart tallyst-messenger',
-            '     (user-level systemd unit u ~/.config/systemd/user/ + `loginctl enable-linger` — vidi CLAUDE.md)',
-            '  2) Unesi Stripe/PayPal ključeve i SMTP u Postavke (admin).',
-            '  3) Live Stripe/PayPal ključevi + webhook endpoint BEZ basic-auth',
-            '       (/webhook/stripe + /webhook/paypal — inače plaćanje uspije ali narudžba ostane "U obradi").',
+            '<comment>Next steps:</comment>',
+            '  1) Start the background worker so e-mails send (password reset, orders):',
+            '       see the "Background worker" section in docs/INSTALL.md',
+            '       (systemd, supervisor, or cron — depends on your host)',
+            '  2) Enter Stripe/PayPal keys and SMTP in Settings (admin).',
+            '  3) Live Stripe/PayPal keys + a webhook endpoint WITHOUT basic-auth',
+            '       (/webhook/stripe + /webhook/paypal — else payment succeeds but the order stays "processing").',
             '',
-            '<comment>Mod:</comment> instalacija je u PROD modu (neutralne greške, optimizirano) — preporučeno.',
-            '  Za razvojni mod (detaljne greške/debug) postavi APP_ENV=dev u .env.local, pa cache:clear.',
+            '<comment>Mode:</comment> installed in PROD mode (neutral errors, optimised) — recommended.',
+            '  For development mode (detailed errors/debug) set APP_ENV=dev in .env.local, then cache:clear.',
         ]);
 
         return Command::SUCCESS;
@@ -361,7 +361,7 @@ class InstallCommand extends Command
 
         if (null !== $given) {
             if (\strlen($given) < 8) {
-                $io->error('Admin lozinka mora imati barem 8 znakova.');
+                $io->error('The admin password must be at least 8 characters.');
 
                 return null;
             }
@@ -370,20 +370,20 @@ class InstallCommand extends Command
         }
 
         if (!$interactive) {
-            $io->error(sprintf('Nedostaje admin lozinka (--admin-password ili %s env var).', self::PASSWORD_ENV));
+            $io->error(sprintf('Missing admin password (--admin-password or the %s env var).', self::PASSWORD_ENV));
 
             return null;
         }
 
         while (true) {
-            $p1 = (string) $io->askHidden('Admin lozinka (skriveno, min 8)');
+            $p1 = (string) $io->askHidden('Admin password (hidden, min 8)');
             if (\strlen($p1) < 8) {
-                $io->error('Lozinka mora imati barem 8 znakova.');
+                $io->error('The password must be at least 8 characters.');
                 continue;
             }
-            $p2 = (string) $io->askHidden('Ponovi lozinku');
+            $p2 = (string) $io->askHidden('Repeat the password');
             if ($p1 !== $p2) {
-                $io->error('Lozinke se ne podudaraju.');
+                $io->error('The passwords do not match.');
                 continue;
             }
 

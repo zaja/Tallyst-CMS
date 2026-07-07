@@ -17,8 +17,8 @@ class PageController extends AbstractController
 
         // Fresh install with no "home" page yet — show a transient welcome page.
         if (null === $page) {
-            $page = (new Page('Dobrodošli', 'home'))
-                ->setContent('<p>Tallyst CMS je uspješno postavljen.</p>')
+            $page = (new Page('Welcome', 'home'))
+                ->setContent('<p>Tallyst CMS is installed and running.</p>')
                 ->setStatus(Page::STATUS_PUBLISHED);
         }
 

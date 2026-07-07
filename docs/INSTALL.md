@@ -68,9 +68,11 @@ The installer's closing message lists these too. Work through them before going 
 
 ### Background worker (required for e-mail)
 
-E-mails — password reset, order confirmations, admin notifications — are sent **asynchronously** through a Symfony Messenger worker. Without a running worker they queue but never send. Run it as a **user-level systemd service** (no root needed, survives logout and reboot):
+E-mails — password reset, order confirmations, admin notifications — are sent **asynchronously** through a Symfony Messenger worker. Without a running worker they queue but never send. How you keep it running depends on your host — pick the option that fits.
 
-Create `~/.config/systemd/user/tallyst-messenger.service`:
+#### Option A — systemd (if your host has it)
+
+The best choice on a VPS or a managed host with user systemd (no root needed, survives logout and reboot). Create `~/.config/systemd/user/tallyst-messenger.service`:
 
 ```ini
 [Unit]
@@ -95,6 +97,22 @@ loginctl enable-linger $USER     # keep it running after logout and across reboo
 ```
 
 Check it with `systemctl --user status tallyst-messenger`. After a deploy (a cache rebuild), restart it: `systemctl --user restart tallyst-messenger`.
+
+#### Option B — cron (works almost everywhere)
+
+If your host has no systemd (typical shared hosting), run the worker from cron. It starts a short-lived worker every minute; `--time-limit=60` makes each one exit before the next starts, so processing is effectively continuous. Add to your crontab (`crontab -e`):
+
+```cron
+* * * * * cd /home/USER/htdocs/my-site && /usr/bin/php8.5 bin/console messenger:consume async --time-limit=60 --limit=10 >/dev/null 2>&1
+```
+
+Replace the path and the `php8.5` binary with yours (`which php8.5`). No restart step is needed after a deploy — the next minute's run picks up the new code.
+
+#### Option C — supervisor
+
+If your host uses [Supervisor](http://supervisord.org/), point a program at `php8.5 bin/console messenger:consume async --time-limit=3600` with `autostart=true`, `autorestart=true`, and restart it (`supervisorctl restart tallyst-messenger`) after a deploy.
+
+> Confirm the worker is actually running from the admin **readiness panel** (below) — it reports the worker heartbeat and the queue.
 
 ### Stripe / PayPal
 
