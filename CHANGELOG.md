@@ -10,6 +10,18 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.6.3] — 2026-07-07
+
+### Changed
+
+- **Upgrade output is now clean** — framework deprecation notices go to
+  `var/log/deprecation.log` instead of the console, and the Git detached-HEAD notice is
+  suppressed. Real errors are unaffected.
+
+### Fixed
+
+- **A stray Croatian message in the install/upgrade step runner is now English.**
+
 ## [1.6.2] — 2026-07-07
 
 ### Changed
@@ -290,6 +302,7 @@ Initial public release.
 - **Modular architecture** and distribution via **Packagist**, under the **MIT**
   license.
 
+[1.6.3]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.6.3
 [1.6.2]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.6.2
 [1.6.1]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.6.1
 [1.6.0]: https://github.com/zaja/Tallyst-CMS/releases/tag/v1.6.0

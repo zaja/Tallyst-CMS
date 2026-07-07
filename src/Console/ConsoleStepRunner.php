@@ -95,7 +95,7 @@ final class ConsoleStepRunner
         }
 
         if ($warnOnly) {
-            $io->warning('Korak nije uspio (nastavljam): php bin/console '.implode(' ', $args));
+            $io->warning('Step failed (continuing): php bin/console '.implode(' ', $args));
         }
 
         return false;

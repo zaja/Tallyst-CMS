@@ -51,5 +51,9 @@ when@prod:
             deprecation:
                 type: stream
                 channels: [deprecation]
-                path: php://stderr
+                # File, NOT php://stderr: deprecations are still recorded (for a maintainer to review
+                # before an EasyAdmin/Symfony major) but never spam the console or the worker's journal.
+                # Real errors are unaffected — they flow through the `main`/`nested` (fingers_crossed
+                # action_level: error) handler, which still writes to stderr.
+                path: "%kernel.logs_dir%/deprecation.log"
                 formatter: monolog.formatter.json

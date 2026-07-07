@@ -54,8 +54,10 @@ if [ -z "$TAG" ]; then
 fi
 
 # 3) Code swap (atomic; a plain checkout REPORTS a conflict if you edited core files).
+#    -c advice.detachedHead=false suppresses git's long "detached HEAD" notice (normal for a tag
+#    checkout; inline so it doesn't persist in .git/config). We already print the tag above.
 echo "==> Checking out $TAG…"
-if ! git checkout "$TAG"; then
+if ! git -c advice.detachedHead=false checkout "$TAG"; then
     echo "Error: checkout failed — you likely have local changes to core files." >&2
     echo "Commit or stash them, or discard with 'git checkout -- .', then retry." >&2
     exit 1
