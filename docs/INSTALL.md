@@ -11,10 +11,11 @@ Tallyst installs in two steps: `git clone` (downloads it, keeping its git histor
 - **PHP 8.5 or newer** — both the CLI and the version your web server runs. Required extensions:
   - `pdo_mysql` — database access
   - `sodium` — encrypts the SMTP password stored in Settings. **`app:install` refuses to run without it.** Verify with `php8.5 -m | grep sodium`.
+  - `imagick` — generates image thumbnails (the WebP variants used across the front-end). Verify with `php8.5 -m | grep imagick`.
   - `ctype`, `iconv`, `intl`, `mbstring` — standard Symfony requirements (usually bundled with PHP).
 - **MySQL or MariaDB** — create an **empty database and a user** with privileges on it *before* installing. The wizard connects to an existing database; it does not create one for you.
 - **[Composer](https://getcomposer.org)** and **git** — Tallyst is installed and updated via `git clone` / `git checkout`.
-- For production e-mail (password reset, order confirmations): the ability to run a background process — shown in [Post-installation](#4-post-installation). On a typical Linux host this is a user-level systemd service (no root required).
+- For production e-mail (password reset, order confirmations): the ability to run a background process — shown in [Post-installation](#4-post-installation). Depending on your host that's **systemd, cron, or supervisor** (see §4); none requires root.
 
 ---
 
@@ -34,6 +35,16 @@ bin/tallyst-setup
 > ```bash
 > PHP=/path/to/php8.5 COMPOSER=/path/to/composer bin/tallyst-setup
 > ```
+
+> ℹ️ **Managed hosts (CloudPanel / Plesk / cPanel).** If your host already created the site directory (e.g. `~/htdocs/yourdomain.com`), clone *into it* instead of making a `my-site` subfolder — `cd` into that (empty) directory and clone into `.`:
+>
+> ```bash
+> cd ~/htdocs/yourdomain.com   # must be empty
+> git clone https://github.com/zaja/Tallyst-CMS.git .
+> bin/tallyst-setup
+> ```
+>
+> Point the site's document root at that directory's **`public/`** (see §3).
 
 `app:install` is an interactive wizard. It first runs a pre-flight check (the `sodium` extension, a writable `var/` directory) and an **already-installed guard** — if it finds a configured database with data, it refuses to overwrite a live site (re-run with `--force` to reconfigure; data is not deleted).
 
@@ -116,7 +127,7 @@ If your host uses [Supervisor](http://supervisord.org/), point a program at `php
 
 ### Stripe / PayPal
 
-Enter your keys in the admin under **Postavke → Stripe** and **Postavke → PayPal** (*Settings → Stripe / PayPal*). Each section shows the exact **webhook URL** to paste into the provider's dashboard and the required events:
+Enter your keys in the admin under **Settings → Stripe** and **Settings → PayPal**. Each section shows the exact **webhook URL** to paste into the provider's dashboard and the required events:
 
 - **Stripe** — secret key + webhook signing secret; subscribe the webhook to `checkout.session.completed` and `charge.refunded`.
 - **PayPal** — client id + secret + webhook id + mode (sandbox/live); subscribe to `PAYMENT.CAPTURE.COMPLETED` and `PAYMENT.CAPTURE.REFUNDED`.
@@ -127,14 +138,14 @@ Test and live each need their **own** webhook endpoint (separate keys/secret).
 
 The verified webhook is the **single source of truth** for marking an order paid. The webhook routes — **`/webhook/stripe`** and **`/webhook/paypal`** — must be reachable by Stripe/PayPal **without authentication**.
 
-If they sit behind HTTP basic-auth (or an IP allowlist that excludes the provider), the provider's request gets a **401 before it reaches Tallyst**: the payment succeeds on the provider's side, but the order stays **"U obradi"** (processing) and no confirmation e-mails are sent.
+If they sit behind HTTP basic-auth (or an IP allowlist that excludes the provider), the provider's request gets a **401 before it reaches Tallyst**: the payment succeeds on the provider's side, but the order stays **"Processing"** and no confirmation e-mails are sent.
 
 - Make sure your web server applies **no** basic-auth / IP restriction to `/webhook/stripe` and `/webhook/paypal`.
-- Verify from the admin: **Sustav → Provjera spremnosti** has a **"Provjeri webhook"** button that sends an unsigned test request to your own webhook URL and reports whether it's reachable (a `401` means it's blocked).
+- Verify from the admin: **System & Tools → Readiness check** has a **"Check webhook"** button that sends an unsigned test request to your own webhook URL and reports whether it's reachable (a `401` means it's blocked).
 
 ### SMTP (e-mail)
 
-Configure SMTP in **Postavke → Email** (*Settings → Email*): host, port, username, password, encryption. Also set the **From address** (*"Email pošiljatelja"*) — it must be an address your SMTP account is allowed to send as, or real mail servers reject it (`553 Sender address rejected`). You can send a test message from that page. (If SMTP is left blank, Tallyst falls back to the `MAILER_DSN` environment variable.)
+Configure SMTP in **Settings → Email**: host, port, username, password, encryption. Also set the **From (e-mail)** address — it must be an address your SMTP account is allowed to send as, or real mail servers reject it (`553 Sender address rejected`). You can send a test message from that page. (If SMTP is left blank, Tallyst falls back to the `MAILER_DSN` environment variable.)
 
 ### Environment mode
 
@@ -198,7 +209,7 @@ mysql -u <user> -p <database> < var/backups/tallyst-pre-upgrade-<timestamp>.sql
 
 ## 6. The readiness panel
 
-After installing — and again before going live — open **Sustav → Provjera spremnosti** (*System → Readiness check*, at `/admin/readiness`). It auto-checks what matters and shows ✅ / ⚠ / ❌ per item with a fix hint:
+After installing — and again before going live — open **System & Tools → Readiness check** (at `/admin/readiness`). It auto-checks what matters and shows ✅ / ⚠ / ❌ per item with a fix hint:
 
 - **Security** — `APP_SECRET`, encryption key, HTTPS
 - **Configuration** — `APP_ENV` (is it `prod`?), `DEFAULT_URI`
@@ -208,7 +219,7 @@ After installing — and again before going live — open **Sustav → Provjera 
 - **Database** — no pending migrations
 - **Background processes** — the worker heartbeat (is it actually running?), the message queue, and the on-demand webhook 401 test
 
-It's honest by design: checks it can't verify with certainty (worker liveness, webhook reachability, real TLS) are marked **"provjeri ručno"** (check manually) with instructions — never a false green.
+It's honest by design: checks it can't verify with certainty (worker liveness, webhook reachability, real TLS) are marked **"Check manually"** with instructions — never a false green.
 
 ---
 
@@ -218,11 +229,11 @@ It's honest by design: checks it can't verify with certainty (worker liveness, w
 | --- | --- |
 | `bin/tallyst-setup` / `bin/tallyst-upgrade` can't find PHP or Composer | Point them at your binaries: `PHP=/path/to/php8.5 COMPOSER=/path/to/composer bin/tallyst-setup`. |
 | `bin/tallyst-upgrade` says *"not a git checkout"* | The directory has no `.git`. Tallyst is installed via `git clone` (Installation, above) — re-clone into a fresh directory and copy over your `.env.local`, `public/media/`, and custom themes. |
-| Payment succeeded but the order stays **"U obradi"** (processing) | The webhook returned **401** — basic-auth or an IP restriction on `/webhook/...`. Make the webhook routes publicly reachable; verify with the readiness panel's webhook test. |
+| Payment succeeded but the order stays **"Processing"** | The webhook returned **401** — basic-auth or an IP restriction on `/webhook/...`. Make the webhook routes publicly reachable; verify with the readiness panel's webhook test. |
 | E-mails don't arrive | The messenger worker isn't running (`systemctl --user status tallyst-messenger`), or SMTP isn't configured / the From address is wrong (553). Check the readiness panel's Mail + Background items. |
 | Admin buttons do nothing / no styling | Assets weren't compiled. Run `php8.5 bin/console importmap:install && php8.5 bin/console asset-map:compile && php8.5 bin/console app:theme:assets:install`, then hard-refresh. |
 | Detailed Symfony error pages on a public site | `APP_ENV` isn't `prod`. Set `APP_ENV=prod` in `.env.local` and run `php8.5 bin/console cache:clear`. |
-| `app:install` says *"već instaliran"* (already installed) | It found a configured database with data and refused to overwrite. Use a fresh empty database, or re-run with `--force` (data isn't deleted; configuration is updated). |
+| `app:install` says *"already installed"* | It found a configured database with data and refused to overwrite. Use a fresh empty database, or re-run with `--force` (data isn't deleted; configuration is updated). |
 
 ---
 

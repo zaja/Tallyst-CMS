@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![PHP 8.5+](https://img.shields.io/badge/php-8.5%2B-777bb4.svg)
 
-Built on [Symfony](https://symfony.com), installs with one command, and runs on your own server.
+Built on [Symfony](https://symfony.com), installs with two commands, and runs on your own server.
 
 ## Why Tallyst exists
 
@@ -43,9 +43,9 @@ For the full version — server setup, the background worker for e-mail/orders, 
 
 ## Requirements
 
-- PHP **8.5+**
+- PHP **8.5+** with the `imagick` extension (for image thumbnails)
 - MySQL or MariaDB
-- [Composer](https://getcomposer.org)
+- [Composer](https://getcomposer.org) and **git** (Tallyst installs and updates via `git clone`)
 
 ## What Tallyst is *not*
 
