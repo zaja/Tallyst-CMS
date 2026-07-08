@@ -15,11 +15,20 @@ admin:
             mode: Mode
             variant: Variant
             customer: Customer
+            customer_name: Customer name
+            customer_phone: Customer phone
             net: Net
             tax: Tax
             tax_rate: Rate (%)
             tax_name: Tax name
+            dodo_tax: 'Tax (Dodo)'
+            dodo_settlement: Settlement
+            invoice: Invoice
+            license_key: Licence key
             submission: Form data
+        panel:
+            mor: Merchant of Record (Dodo)
+            mor_help: 'Tax is calculated, collected and remitted by Dodo as the seller of record — Tallyst''s own tax figures above stay empty for these orders.'
         status: { pending: Processing, paid: Awaiting delivery, fulfilled: Delivered, refunded: Refunded }
         mode: { test: Test, live: Live }
         action:

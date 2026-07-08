@@ -99,6 +99,39 @@ class Order
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $customerEmail = null;
 
+    // --- Phase 2: passive capture of what the provider reports (Dodo/MoR). All nullable, all additive.
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $customerName = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $customerPhone = null;
+
+    #[ORM\Column(length: 1024, nullable: true)]
+    private ?string $invoiceUrl = null;
+
+    /** Licence key delivered by the provider (Dodo entitlement). One per order in v1. Read-only mirror. */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $licenseKey = null;
+
+    // Provider-authoritative amounts (minor units). For a MoR order these carry the seller-of-record's
+    // own tax/settlement figures; Tallyst's own tax columns (net/tax/rate) stay null for MoR by design.
+    #[ORM\Column(nullable: true)]
+    private ?int $dodoTaxMinor = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $dodoTotalMinor = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $dodoSettlementMinor = null;
+
+    #[ORM\Column(length: 3, nullable: true)]
+    private ?string $dodoSettlementCurrency = null;
+
+    /** Raw passive provider fields we capture but don't promote to columns (customer_id, entitlement_id…). */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $providerMetadata = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?\DateTimeImmutable $createdAt = null;
 
@@ -356,6 +389,114 @@ class Order
         return $this;
     }
 
+    public function getCustomerName(): ?string
+    {
+        return $this->customerName;
+    }
+
+    public function setCustomerName(?string $customerName): static
+    {
+        $this->customerName = $customerName;
+
+        return $this;
+    }
+
+    public function getCustomerPhone(): ?string
+    {
+        return $this->customerPhone;
+    }
+
+    public function setCustomerPhone(?string $customerPhone): static
+    {
+        $this->customerPhone = $customerPhone;
+
+        return $this;
+    }
+
+    public function getInvoiceUrl(): ?string
+    {
+        return $this->invoiceUrl;
+    }
+
+    public function setInvoiceUrl(?string $invoiceUrl): static
+    {
+        $this->invoiceUrl = $invoiceUrl;
+
+        return $this;
+    }
+
+    public function getLicenseKey(): ?string
+    {
+        return $this->licenseKey;
+    }
+
+    public function setLicenseKey(?string $licenseKey): static
+    {
+        $this->licenseKey = $licenseKey;
+
+        return $this;
+    }
+
+    public function getDodoTaxMinor(): ?int
+    {
+        return $this->dodoTaxMinor;
+    }
+
+    public function setDodoTaxMinor(?int $dodoTaxMinor): static
+    {
+        $this->dodoTaxMinor = $dodoTaxMinor;
+
+        return $this;
+    }
+
+    public function getDodoTotalMinor(): ?int
+    {
+        return $this->dodoTotalMinor;
+    }
+
+    public function setDodoTotalMinor(?int $dodoTotalMinor): static
+    {
+        $this->dodoTotalMinor = $dodoTotalMinor;
+
+        return $this;
+    }
+
+    public function getDodoSettlementMinor(): ?int
+    {
+        return $this->dodoSettlementMinor;
+    }
+
+    public function setDodoSettlementMinor(?int $dodoSettlementMinor): static
+    {
+        $this->dodoSettlementMinor = $dodoSettlementMinor;
+
+        return $this;
+    }
+
+    public function getDodoSettlementCurrency(): ?string
+    {
+        return $this->dodoSettlementCurrency;
+    }
+
+    public function setDodoSettlementCurrency(?string $dodoSettlementCurrency): static
+    {
+        $this->dodoSettlementCurrency = $dodoSettlementCurrency ? strtoupper($dodoSettlementCurrency) : null;
+
+        return $this;
+    }
+
+    public function getProviderMetadata(): ?array
+    {
+        return $this->providerMetadata;
+    }
+
+    public function setProviderMetadata(?array $providerMetadata): static
+    {
+        $this->providerMetadata = $providerMetadata ?: null;
+
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
@@ -376,6 +517,30 @@ class Order
     public function getTaxFormatted(): string
     {
         return null === $this->taxAmountMinor ? '—' : number_format($this->taxAmountMinor / 100, 2, ',', '.');
+    }
+
+    /** True when this order carries provider-authoritative (MoR) figures — drives the "Merchant of Record" detail block. */
+    public function hasProviderSettlement(): bool
+    {
+        return null !== $this->dodoTaxMinor || null !== $this->dodoSettlementMinor || null !== $this->dodoTotalMinor;
+    }
+
+    /** Formatted Dodo tax for the admin detail (string getter — EA TextField rejects raw ints). */
+    public function getDodoTaxFormatted(): string
+    {
+        return null === $this->dodoTaxMinor ? '—' : number_format($this->dodoTaxMinor / 100, 2, ',', '.');
+    }
+
+    /** Formatted Dodo settlement (payout) with its own currency. */
+    public function getDodoSettlementFormatted(): string
+    {
+        if (null === $this->dodoSettlementMinor) {
+            return '—';
+        }
+
+        $amount = number_format($this->dodoSettlementMinor / 100, 2, ',', '.');
+
+        return null !== $this->dodoSettlementCurrency ? $amount.' '.$this->dodoSettlementCurrency : $amount;
     }
 
     /** Human-readable dump of the submitted form data, for the admin detail view. */

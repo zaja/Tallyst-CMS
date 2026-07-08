@@ -14,9 +14,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Factory\FilterFactory;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\UrlField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
@@ -76,7 +78,7 @@ class OrderCrudController extends AbstractCrudController
                 'admin.order.status.fulfilled' => Order::STATUS_FULFILLED,
                 'admin.order.status.refunded' => Order::STATUS_REFUNDED,
             ]))
-            ->add(ChoiceFilter::new('provider', 'admin.order.field.provider')->setChoices(['Stripe' => 'stripe', 'PayPal' => 'paypal']))
+            ->add(ChoiceFilter::new('provider', 'admin.order.field.provider')->setChoices(['Stripe' => 'stripe', 'PayPal' => 'paypal', 'Dodo' => 'dodo']))
             ->add(ChoiceFilter::new('paymentMode', 'admin.order.field.mode')->setChoices(['admin.order.mode.test' => 'test', 'admin.order.mode.live' => 'live']))
             // Date RANGE: clean date-only pickers; pick "između" in the comparison for od/do.
             // (Defaulting to "između" is unsafe — EA throws if BETWEEN is applied with empty dates.)
@@ -151,16 +153,27 @@ class OrderCrudController extends AbstractCrudController
             ]);
         // Provider at a glance in the list (badge, like status).
         yield ChoiceField::new('provider', 'admin.order.field.provider')
-            ->setChoices(['Stripe' => 'stripe', 'PayPal' => 'paypal'])
-            ->renderAsBadges(['stripe' => 'primary', 'paypal' => 'info']);
+            ->setChoices(['Stripe' => 'stripe', 'PayPal' => 'paypal', 'Dodo' => 'dodo'])
+            ->renderAsBadges(['stripe' => 'primary', 'paypal' => 'info', 'dodo' => 'warning']);
         yield TextField::new('variantLabel', 'admin.order.field.variant');
         yield TextField::new('customerEmail', 'admin.order.field.customer');
+        yield TextField::new('customerName', 'admin.order.field.customer_name')->onlyOnDetail();
+        yield TextField::new('customerPhone', 'admin.order.field.customer_phone')->onlyOnDetail();
 
         yield TextField::new('netFormatted', 'admin.order.field.net')->onlyOnDetail();
         yield TextField::new('taxFormatted', 'admin.order.field.tax')->onlyOnDetail();
         yield TextField::new('taxRate', 'admin.order.field.tax_rate')->onlyOnDetail();
         yield TextField::new('taxName', 'admin.order.field.tax_name')->onlyOnDetail();
         yield TextField::new('customerIp', 'IP')->onlyOnDetail();
+
+        // Merchant of Record (Dodo): provider-authoritative figures. For a MoR order Tallyst's own tax
+        // columns above stay null by design — Dodo is the seller of record and collects/remits tax
+        // itself. These read "—" for non-Dodo orders (same pattern as the net/tax fields above).
+        yield FormField::addPanel('admin.order.panel.mor')->setHelp('admin.order.panel.mor_help')->onlyOnDetail();
+        yield TextField::new('dodoTaxFormatted', 'admin.order.field.dodo_tax')->onlyOnDetail();
+        yield TextField::new('dodoSettlementFormatted', 'admin.order.field.dodo_settlement')->onlyOnDetail();
+        yield UrlField::new('invoiceUrl', 'admin.order.field.invoice')->setCustomOption('target', '_blank')->onlyOnDetail();
+        yield TextField::new('licenseKey', 'admin.order.field.license_key')->onlyOnDetail();
 
         yield TextField::new('paymentMode', 'admin.order.field.mode')->onlyOnDetail();
         yield TextField::new('providerSessionId', 'Checkout session')->onlyOnDetail();

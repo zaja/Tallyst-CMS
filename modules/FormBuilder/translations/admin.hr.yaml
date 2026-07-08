@@ -14,11 +14,20 @@ admin:
             mode: Mod
             variant: Varijanta
             customer: Kupac
+            customer_name: Ime kupca
+            customer_phone: Telefon kupca
             net: Neto
             tax: Porez
             tax_rate: Stopa (%)
             tax_name: Naziv poreza
+            dodo_tax: 'Porez (Dodo)'
+            dodo_settlement: Isplata
+            invoice: Račun
+            license_key: Licencni ključ
             submission: Podaci forme
+        panel:
+            mor: Merchant of Record (Dodo)
+            mor_help: 'Porez obračunava, naplaćuje i uplaćuje Dodo kao prodavač od zapisa — Tallystovi vlastiti iznosi poreza iznad ostaju prazni za ove narudžbe.'
         status: { pending: U obradi, paid: Čeka isporuku, fulfilled: Isporučeno, refunded: Refundirano }
         mode: { test: Test, live: Live }
         action:

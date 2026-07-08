@@ -82,10 +82,11 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
     public function getWebhookEvents(): array
     {
         // The events the admin must subscribe in the Dodo dashboard. We ACT on payment.succeeded
-        // (paid) + the refund event; payment.failed is subscribed for visibility (logged only).
-        // ⚠ VERIFY the exact refund event type (assumed 'refund.succeeded').
-        // NOTE: entitlement_grant.* (licence capture) is Phase 2 — NOT subscribed yet.
-        return ['payment.succeeded', 'payment.failed', 'refund.succeeded'];
+        // (paid) + the refund event + entitlement_grant.created (licence capture, Phase 2);
+        // payment.failed is subscribed for visibility (logged only).
+        // ⚠ VERIFY the exact refund + entitlement event types (assumed 'refund.succeeded' /
+        // 'entitlement_grant.created').
+        return ['payment.succeeded', 'payment.failed', 'refund.succeeded', 'entitlement_grant.created'];
     }
 
     /** No reliable per-transaction deep-link documented for Dodo yet — honest null (no dashboard button). */
@@ -161,17 +162,25 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
         }
 
         $isPaid = 'payment.succeeded' === $type;
-        // ⚠ VERIFY refund event type.
+        // ⚠ VERIFY refund + entitlement event types.
         $isRefund = 'refund.succeeded' === $type;
+        $isEntitlement = 'entitlement_grant.created' === $type;
 
         // Correlation: metadata.order_id we sent at checkout, echoed back by Dodo. Look in data.metadata
         // first, then a top-level metadata, then a top-level order_id — whichever Dodo uses. ⚠ VERIFY.
+        // (Entitlement events carry empty metadata → orderId stays null; they correlate by payment_id.)
         $metadata = is_array($data['metadata'] ?? null) ? $data['metadata']
             : (is_array($event['metadata'] ?? null) ? $event['metadata'] : []);
         $orderId = $metadata['order_id'] ?? $event['metadata']['order_id'] ?? null;
 
+        // payment_id is the bridge to the order for BOTH paid and entitlement events. ⚠ VERIFY path.
         $paymentId = $data['payment_id'] ?? null;
         $email = $data['customer']['email'] ?? null;
+
+        // Phase 2 passive capture. Payment fields (customer/finance) live on payment.succeeded; the
+        // licence key lives on entitlement_grant.created (data.license_key.key). ⚠ VERIFY every path.
+        $licenseKey = $isEntitlement ? ($data['license_key']['key'] ?? null) : null;
+        $intOrNull = static fn (mixed $v): ?int => is_numeric($v) ? (int) $v : null;
 
         return new WebhookResult(
             eventType: $type,
@@ -181,6 +190,15 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
             customerEmail: is_string($email) ? $email : null,
             isRefund: $isRefund,
             orderId: is_scalar($orderId) ? (string) $orderId : null,
+            isEntitlement: $isEntitlement,
+            licenseKey: is_string($licenseKey) ? $licenseKey : null,
+            customerName: is_string($data['customer']['name'] ?? null) ? $data['customer']['name'] : null,
+            customerPhone: is_string($data['customer']['phone_number'] ?? null) ? $data['customer']['phone_number'] : null,
+            invoiceUrl: is_string($data['invoice_url'] ?? null) ? $data['invoice_url'] : null,
+            dodoTaxMinor: $intOrNull($data['tax'] ?? null),
+            dodoTotalMinor: $intOrNull($data['total_amount'] ?? null),
+            dodoSettlementMinor: $intOrNull($data['settlement_amount'] ?? null),
+            dodoSettlementCurrency: is_string($data['settlement_currency'] ?? null) ? $data['settlement_currency'] : null,
         );
     }
 

@@ -10,6 +10,7 @@ use Symfony\Component\Workflow\WorkflowInterface;
 use Tallyst\FormBuilder\Entity\Order;
 use Tallyst\FormBuilder\Message\FulfillOrderMessage;
 use Tallyst\FormBuilder\Payment\WebhookResult;
+use Tallyst\FormBuilder\Repository\DodoPendingLicenseRepository;
 use Tallyst\FormBuilder\Repository\OrderRepository;
 
 /**
@@ -34,6 +35,7 @@ class OrderPaymentSync
         private readonly EntityManagerInterface $em,
         private readonly OrderMailer $orderMailer,
         private readonly LoggerInterface $logger,
+        private readonly DodoPendingLicenseRepository $pendingLicenses,
     ) {
     }
 
@@ -71,6 +73,13 @@ class OrderPaymentSync
             if ($result->customerEmail) {
                 $order->setCustomerEmail($result->customerEmail);
             }
+
+            // Phase 2 passive capture (Dodo/MoR). All null for Stripe/PayPal → these are no-ops there.
+            $this->captureProviderFields($order, $result);
+
+            // The order now has its payment_id — claim a licence that arrived BEFORE this payment
+            // (entitlement webhook won the race and parked it in the pending store, keyed by payment_id).
+            $this->claimPendingLicense($order);
 
             // Money truth: mark paid synchronously (a fast DB write).
             if ($this->orderStateMachine->can($order, 'pay')) {
@@ -117,5 +126,86 @@ class OrderPaymentSync
 
         // Anything else — ack so the provider doesn't retry.
         return 'Ignored';
+    }
+
+    /**
+     * Attach the licence delivered by a Dodo entitlement_grant.created event. Passive capture only —
+     * does NOT touch the order state machine (paid/refund are unaffected). Always resolves to a 200 for
+     * the webhook (no retry): either it attaches now, or it parks the licence keyed by payment_id for
+     * the paid webhook to claim (unordered/at-least-once delivery, so the entitlement can precede the
+     * payment). Idempotent: set-if-null on the order, UNIQUE(payment_id) on the pending store.
+     *
+     * @return string a short status (for the webhook response / logs)
+     */
+    public function applyEntitlement(WebhookResult $result): string
+    {
+        $paymentId = $result->paymentIntentId;
+        if (null === $paymentId || null === $result->licenseKey) {
+            return 'Ignored';
+        }
+
+        $order = $this->orders->findOneByProviderPaymentIntentId($paymentId);
+        if (null !== $order) {
+            if (null === $order->getLicenseKey()) {
+                $order->setLicenseKey($result->licenseKey);
+                $this->em->flush();
+            }
+
+            return 'License attached';
+        }
+
+        // Order not found yet — the entitlement beat the payment. Park it; the paid branch claims it.
+        $this->pendingLicenses->upsert($paymentId, $result->licenseKey);
+        $this->em->flush();
+
+        return 'License pending';
+    }
+
+    /** Passive capture of provider-reported fields (Dodo). Null fields (Stripe/PayPal) are skipped. */
+    private function captureProviderFields(Order $order, WebhookResult $result): void
+    {
+        if (null !== $result->customerName) {
+            $order->setCustomerName($result->customerName);
+        }
+        if (null !== $result->customerPhone) {
+            $order->setCustomerPhone($result->customerPhone);
+        }
+        if (null !== $result->invoiceUrl) {
+            $order->setInvoiceUrl($result->invoiceUrl);
+        }
+        if (null !== $result->dodoTaxMinor) {
+            $order->setDodoTaxMinor($result->dodoTaxMinor);
+        }
+        if (null !== $result->dodoTotalMinor) {
+            $order->setDodoTotalMinor($result->dodoTotalMinor);
+        }
+        if (null !== $result->dodoSettlementMinor) {
+            $order->setDodoSettlementMinor($result->dodoSettlementMinor);
+        }
+        if (null !== $result->dodoSettlementCurrency) {
+            $order->setDodoSettlementCurrency($result->dodoSettlementCurrency);
+        }
+    }
+
+    /**
+     * Claim a licence parked by an early entitlement webhook (keyed by the order's payment_id). Runs in
+     * the paid branch AFTER the payment_id is set. Set-if-null on the order, then consume (remove) that
+     * one pending row — both commit with the paid branch's own flush(). No orphan sweeping here (that
+     * would share the money-truth flush + hydrate an unbounded query); see the ROADMAP backlog item.
+     */
+    private function claimPendingLicense(Order $order): void
+    {
+        $paymentId = $order->getProviderPaymentIntentId();
+        if (null === $paymentId || '' === $paymentId || null !== $order->getLicenseKey()) {
+            return;
+        }
+
+        $pending = $this->pendingLicenses->findByPaymentId($paymentId);
+        if (null === $pending) {
+            return;
+        }
+
+        $order->setLicenseKey($pending->getLicenseKey());
+        $this->pendingLicenses->remove($pending);
     }
 }

@@ -25,6 +25,24 @@ final class WebhookResult
          * types (e.g. Phase 2 licence/entitlement events) resolve the order the same way.
          */
         public readonly ?string $orderId = null,
+        /**
+         * Phase 2 — Dodo (MoR) passive capture. All null for Stripe/PayPal, so their construction is
+         * unchanged and OrderPaymentSync's paid/refund path treats them as no-ops.
+         */
+        /** True for a Dodo entitlement_grant.created event (a licence delivery, NOT a paid/refund event). */
+        public readonly bool $isEntitlement = false,
+        /** Licence key from the entitlement event (data.license_key.key). */
+        public readonly ?string $licenseKey = null,
+        /** Buyer name / phone from payment.succeeded.data.customer. */
+        public readonly ?string $customerName = null,
+        public readonly ?string $customerPhone = null,
+        /** Link to the Dodo-hosted invoice (data.invoice_url). */
+        public readonly ?string $invoiceUrl = null,
+        /** Provider-authoritative amounts (minor units) — Dodo is the seller of record. */
+        public readonly ?int $dodoTaxMinor = null,
+        public readonly ?int $dodoTotalMinor = null,
+        public readonly ?int $dodoSettlementMinor = null,
+        public readonly ?string $dodoSettlementCurrency = null,
     ) {
     }
 

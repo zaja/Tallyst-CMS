@@ -45,6 +45,13 @@ class DodoWebhookController extends AbstractController
             return new Response('Invalid signature', Response::HTTP_BAD_REQUEST);
         }
 
+        // Entitlement (licence delivery) is passive capture — its own path, ALWAYS 200 (the pending
+        // store makes ordering deterministic, so there is no retry/non-2xx). Paid/refund stay on the
+        // shared apply() path, untouched.
+        if ($result->isEntitlement) {
+            return new Response($this->sync->applyEntitlement($result), Response::HTTP_OK);
+        }
+
         return new Response($this->sync->apply($result), Response::HTTP_OK);
     }
 

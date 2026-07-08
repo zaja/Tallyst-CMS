@@ -22,9 +22,17 @@ core-API change is a MAJOR (flagged ⚠).
   so Tallyst's own inclusive tax is never applied to a Dodo order (no double tax). Webhooks
   are verified with the Standard Webhooks signature (HMAC-SHA256 + a replay window), and the
   order is matched back by its id carried in the checkout metadata. Refunds are issued from
-  the order screen like the other providers. Price variants and automatic licence/entitlement
-  capture are not covered yet (a later step). _Note: the refund API call is proven; a fully
-  completed refund is to be verified in live mode (a sandbox merchant wallet has no funds)._
+  the order screen like the other providers. Price variants are not covered yet (a later step).
+  _Note: the refund API call is proven; a fully completed refund is to be verified in live mode
+  (a sandbox merchant wallet has no funds)._
+- **Dodo orders capture the buyer and tax details Dodo reports.** After a Dodo purchase the
+  order shows the buyer's name and phone, a link to the Dodo invoice, and — in a new **Merchant
+  of Record** panel — the tax and settlement amounts Dodo calculated, collected and remits as the
+  seller of record (Tallyst's own tax fields stay empty for these orders, by design). When the
+  product grants a licence, its key is captured onto the order as well; the licence attaches
+  reliably no matter which webhook (payment or licence) arrives first. Dodo orders also get their
+  own badge and list filter. This is read-only visibility — Dodo still delivers the licence to the
+  buyer; Tallyst only mirrors it.
 
 ## [1.6.3] — 2026-07-07
 
