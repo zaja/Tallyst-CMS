@@ -10,6 +10,22 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Added
+
+- **DodoPayments as a third payment provider — a Merchant-of-Record.** Configure it in
+  **Settings → Dodo Payments** (API key, webhook secret, and an explicit test/live mode) and
+  link a Dodo product to each paid form — picked from a dropdown of your Dodo catalogue
+  (loaded live in the active mode) or typed in by hand when the catalogue can't be reached.
+  A purchase then flows the same as Stripe/PayPal: checkout → thank-you → the verified
+  `/webhook/dodo` marks the order paid (awaiting delivery), with manual fulfilment unchanged.
+  As the Merchant-of-Record, **Dodo is the legal seller and handles sales tax / VAT itself**,
+  so Tallyst's own inclusive tax is never applied to a Dodo order (no double tax). Webhooks
+  are verified with the Standard Webhooks signature (HMAC-SHA256 + a replay window), and the
+  order is matched back by its id carried in the checkout metadata. Refunds are issued from
+  the order screen like the other providers. Price variants and automatic licence/entitlement
+  capture are not covered yet (a later step). _Note: the refund API call is proven; a fully
+  completed refund is to be verified in live mode (a sandbox merchant wallet has no funds)._
+
 ## [1.6.3] — 2026-07-07
 
 ### Changed

@@ -10,6 +10,8 @@ form:
     payment_unavailable: Plaćanje trenutno nije dostupno.
     invalid_payment_method: Odaberite ispravan način plaćanja.
     invalid_option: Odaberite ispravnu opciju.
+    variants_unsupported: Ovaj način plaćanja još ne podržava opcije cijene. Odaberite drugi način.
+    product_not_linked: Ova forma nije povezana s proizvodom za odabrani način plaćanja.
     checkout: Nastavi na plaćanje
     thankyou:
         page_title: 'Narudžba #%id% — Tallyst'

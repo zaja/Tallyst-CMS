@@ -110,6 +110,10 @@ admin:
             currency: Currency
             payment_methods: Allowed payment methods
             payment_methods_help: 'Empty = all configured. The buyer is offered the intersection of the selected and the configured.'
+            dodo_product: Dodo product
+            dodo_product_help: 'The Dodo product this form sells against (from your Dodo catalogue in the active test/live mode).'
+            dodo_product_help_manual: 'Could not load Dodo products — enter the product ID manually.'
+            dodo_product_help_no_key: 'Configure the Dodo API key in Settings → Dodo Payments to pick from your catalogue.'
             notify_enabled: Send an e-mail on submission
             notify_enabled_help: Free forms only. Paid forms send an order confirmation.
             notify_recipient: Recipient(s)
@@ -204,6 +208,14 @@ admin:
                 label: Mode
                 help: 'PayPal has no test/live prefix in the key — choose explicitly. Sandbox and live have SEPARATE keys and webhooks.'
                 choice: { sandbox: Sandbox (test), live: Live (production) }
+        dodo:
+            title: Dodo Payments
+            dodo_api_key: { label: API key, help: 'Your Dodo API key. Empty = DODO_API_KEY from the environment.' }
+            dodo_webhook_secret: { label: Webhook secret, help: 'The signing secret from the Dodo webhook endpoint. Empty = DODO_WEBHOOK_SECRET from the environment.' }
+            dodo_mode:
+                label: Mode
+                help: 'Dodo keys carry no test/live marker — choose explicitly. Test and live use SEPARATE keys, hosts and webhooks. Dodo is the Merchant-of-Record: it handles tax itself, so Tallyst''s tax is not applied to Dodo orders.'
+                choice: { test: Test, live: Live (production) }
         tax:
             title: Tax
             tax_enabled: { label: Apply tax, help: 'Applies ONE rate (included in the price) to all orders — correct for domestic sales / below the EU OSS threshold (€10,000). For sales above the threshold or global compliance, consult an accountant or a Merchant-of-Record (Paddle/Lemon Squeezy). Tallyst records data for your export; it does not file a tax return.' }

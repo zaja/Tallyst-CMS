@@ -109,6 +109,10 @@ admin:
             currency: Valuta
             payment_methods: Dozvoljeni načini plaćanja
             payment_methods_help: 'Prazno = svi konfigurirani. Kupcu se nudi presjek odabranih i konfiguriranih.'
+            dodo_product: Dodo proizvod
+            dodo_product_help: 'Dodo proizvod protiv kojeg forma prodaje (iz tvog Dodo kataloga u aktivnom test/live modu).'
+            dodo_product_help_manual: 'Nije moguće dohvatiti Dodo proizvode — upiši product ID ručno.'
+            dodo_product_help_no_key: 'Konfiguriraj Dodo API ključ u Postavke → Dodo Payments da biraš iz kataloga.'
             notify_enabled: Pošalji e-mail na prijavu
             notify_enabled_help: Samo za besplatne forme. Plaćene forme šalju potvrdu narudžbe.
             notify_recipient: Primatelj(i)
@@ -203,6 +207,14 @@ admin:
                 label: Način rada
                 help: 'PayPal nema test/live prefiks u ključu — odaberi izričito. Sandbox i live imaju ODVOJENE ključeve i webhookove.'
                 choice: { sandbox: Sandbox (test), live: Live (produkcija) }
+        dodo:
+            title: Dodo Payments
+            dodo_api_key: { label: API ključ, help: 'Vaš Dodo API ključ. Prazno = DODO_API_KEY iz okoline.' }
+            dodo_webhook_secret: { label: Webhook secret, help: 'Signing secret s Dodo webhook endpointa. Prazno = DODO_WEBHOOK_SECRET iz okoline.' }
+            dodo_mode:
+                label: Način rada
+                help: 'Dodo ključevi nemaju test/live oznaku — odaberi izričito. Test i live imaju ODVOJENE ključeve, hostove i webhookove. Dodo je Merchant-of-Record: sam obračunava porez, pa se Tallystov porez ne primjenjuje na Dodo narudžbe.'
+                choice: { test: Test, live: Live (produkcija) }
         tax:
             title: Porez
             tax_enabled: { label: Obračunaj porez, help: 'Primjenjuje JEDNU stopu (uključenu u cijenu) na sve narudžbe — ispravno za domaću prodaju / ispod EU OSS praga (€10.000). Za prodaju preko praga ili globalnu usklađenost konzultiraj knjigovođu ili Merchant-of-Record (Paddle/Lemon Squeezy). Tallyst bilježi podatke za tvoj export, ne podnosi poreznu prijavu.' }

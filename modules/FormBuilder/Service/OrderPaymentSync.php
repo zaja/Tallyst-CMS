@@ -42,14 +42,20 @@ class OrderPaymentSync
     {
         // Payment captured → mark the order paid (money truth).
         if ($result->isPaid) {
-            if (null === $result->sessionId) {
-                return 'No session id';
+            // Correlation: an explicit order id (Dodo echoes metadata.order_id) wins; otherwise the
+            // provider session id (Stripe/PayPal). Additive — Stripe/PayPal pass orderId=null and keep
+            // matching by session id exactly as before.
+            if (null !== $result->orderId) {
+                $order = $this->orders->find((int) $result->orderId);
+            } elseif (null !== $result->sessionId) {
+                $order = $this->orders->findOneByProviderSessionId($result->sessionId);
+            } else {
+                return 'No correlation id';
             }
 
-            $order = $this->orders->findOneByProviderSessionId($result->sessionId);
             if (null === $order) {
-                // Unknown session (e.g. another integration) — ack so the provider stops retrying.
-                $this->logger->info('Payment webhook for unknown session.', ['session' => $result->sessionId]);
+                // Unknown order (e.g. another integration) — ack so the provider stops retrying.
+                $this->logger->info('Payment webhook for unknown order.', ['session' => $result->sessionId, 'order_id' => $result->orderId]);
 
                 return 'Unknown order';
             }
@@ -80,11 +86,18 @@ class OrderPaymentSync
 
         // Full refund (admin-initiated OR done in the provider dashboard) → flip to refunded.
         if ($result->isRefund) {
-            if (null === $result->paymentIntentId) {
+            // Same correlation rule as the paid branch: explicit order id (Dodo) wins, else the
+            // payment-intent/capture id (Stripe/PayPal). Additive — Stripe/PayPal pass orderId=null.
+            // NOTE: we deliberately do NOT fall back to sessionId here — for a Stripe charge.refunded
+            // the result's sessionId is the CHARGE id, which would never match a stored session id.
+            if (null !== $result->orderId) {
+                $order = $this->orders->find((int) $result->orderId);
+            } elseif (null !== $result->paymentIntentId) {
+                $order = $this->orders->findOneByProviderPaymentIntentId($result->paymentIntentId);
+            } else {
                 return 'No payment intent';
             }
 
-            $order = $this->orders->findOneByProviderPaymentIntentId($result->paymentIntentId);
             if (null === $order) {
                 return 'Unknown order';
             }

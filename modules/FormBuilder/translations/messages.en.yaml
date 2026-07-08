@@ -10,6 +10,8 @@ form:
     payment_unavailable: Payment is currently unavailable.
     invalid_payment_method: Choose a valid payment method.
     invalid_option: Choose a valid option.
+    variants_unsupported: This payment method does not support price options yet. Choose another method.
+    product_not_linked: This form is not linked to a product for the selected payment method.
     checkout: Continue to payment
     thankyou:
         page_title: 'Order #%id% — Tallyst'

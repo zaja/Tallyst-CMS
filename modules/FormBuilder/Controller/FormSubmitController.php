@@ -16,6 +16,7 @@ use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
 use Tallyst\FormBuilder\Entity\FormSubmission;
 use Tallyst\FormBuilder\Entity\Order;
+use Tallyst\FormBuilder\Payment\MerchantOfRecordInterface;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 use Tallyst\FormBuilder\Repository\FormSubmissionRepository;
@@ -169,6 +170,24 @@ class FormSubmitController extends AbstractController
             }
         }
 
+        $processor = $this->payments->get($chosen);
+        $isMerchantOfRecord = $processor instanceof MerchantOfRecordInterface;
+
+        // Merchant-of-Record providers (Dodo) support only a FIXED price in v1.7.0 — no variant mapping yet.
+        if ($isMerchantOfRecord && $form->hasVariants()) {
+            $this->addFlash('danger', $this->translator->trans('form.variants_unsupported', [], 'messages'));
+
+            return $this->redirect($return);
+        }
+
+        // A MoR form must have a linked provider product (per-form). Separate from the provider being
+        // configured — a configured Dodo still can't sell a form with no product. Clear error, no 500.
+        if ($isMerchantOfRecord && null === $form->getDodoProductId()) {
+            $this->addFlash('danger', $this->translator->trans('form.product_not_linked', [], 'messages'));
+
+            return $this->redirect($return);
+        }
+
         // Or-or: variants determine the price (the chosen index is resolved server-side against the
         // defined variants — the client never sends a price); else the fixed priceMinor.
         $amountMinor = (int) $form->getPriceMinor();
@@ -191,7 +210,7 @@ class FormSubmitController extends AbstractController
             ->setAmountMinor($amountMinor)
             ->setCurrency($form->getCurrency() ?: 'eur')
             ->setProvider($chosen)
-            ->setPaymentMode($this->payments->get($chosen)->getMode())
+            ->setPaymentMode($processor->getMode())
             ->setVariantLabel($variantLabel)
             // An order through a demo form inherits the demo flag (so the uninstaller removes it too);
             // through a real form it stays false — derived from the form, never hardcoded.
@@ -204,7 +223,9 @@ class FormSubmitController extends AbstractController
         // (export distinguishes that). B2B data (company/VAT) is captured via ordinary form fields
         // (conditional display) → the "Podaci kupca" CSV column, not imposed checkout inputs.
         $order->setCustomerIp($request->getClientIp());
-        if ($this->tax->isEnabled()) {
+        // Merchant-of-Record providers (Dodo) are the legal seller and handle tax themselves — never
+        // apply Tallyst's inclusive tax to a MoR order (it would double-count). Tax fields stay null.
+        if (!$isMerchantOfRecord && $this->tax->isEnabled()) {
             $b = $this->tax->breakdown($amountMinor);
             $order->setNetAmountMinor($b['net'])
                 ->setTaxAmountMinor($b['tax'])
@@ -217,7 +238,7 @@ class FormSubmitController extends AbstractController
         $successUrl = $this->generateUrl('form_builder_order_thankyou', ['id' => $order->getId(), 't' => $order->getThankYouToken()], UrlGeneratorInterface::ABSOLUTE_URL);
         $cancelUrl = $request->getSchemeAndHttpHost().$return;
 
-        $checkoutUrl = $this->payments->get($order->getProvider())->createCheckout($order, $successUrl, $cancelUrl);
+        $checkoutUrl = $processor->createCheckout($order, $successUrl, $cancelUrl);
         $this->orders->save($order); // persist the provider session id set during checkout
 
         return $this->redirect($checkoutUrl, Response::HTTP_SEE_OTHER);

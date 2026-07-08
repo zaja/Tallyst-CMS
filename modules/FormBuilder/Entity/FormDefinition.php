@@ -63,6 +63,15 @@ class FormDefinition
     private ?array $allowedPaymentMethods = null;
 
     /**
+     * The Dodo (Merchant-of-Record) product this form sells against. Per-form so each product maps to
+     * its own Dodo product (with its own tax category / entitlement config in the Dodo dashboard).
+     * NULL = no Dodo product linked → a Dodo checkout for this form is refused (never a dead checkout).
+     * Set via SQL for now — the edit-form UI is Phase 3.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $dodoProductId = null;
+
+    /**
      * Price variants (or-or): a flat list of {label, priceMinor}. When non-empty, the buyer picks one
      * and its price is used INSTEAD of priceMinor; empty/null = fixed priceMinor. Currency is shared
      * (product-level). Single dimension — no matrix.
@@ -272,6 +281,18 @@ class FormDefinition
     public function setAllowedPaymentMethods(?array $allowedPaymentMethods): static
     {
         $this->allowedPaymentMethods = $allowedPaymentMethods ?: null;
+
+        return $this;
+    }
+
+    public function getDodoProductId(): ?string
+    {
+        return $this->dodoProductId;
+    }
+
+    public function setDodoProductId(?string $dodoProductId): static
+    {
+        $this->dodoProductId = $dodoProductId ?: null;
 
         return $this;
     }

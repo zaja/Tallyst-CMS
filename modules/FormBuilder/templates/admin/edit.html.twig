@@ -62,6 +62,11 @@
                 </div>
                 {{ form_row(form.allowedPaymentMethods) }}
 
+                {# Dodo (Merchant-of-Record) per-form product. Dropdown from the live catalogue when
+                   Dodo is configured, else a manual product-id input — always saveable. Explicit
+                   render_row: form_end uses render_rest:false, so an unrendered field would vanish. #}
+                {{ form_row(form.dodoProductId) }}
+
                 {{ form_errors(form.variants) }}
                 <div class="fb-subblock">
                     <p class="fb-section-help mb-2">{{ 'admin.form.builder.payment.variants_help'|trans({}, 'admin') }}</p>
