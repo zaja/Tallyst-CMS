@@ -9,6 +9,8 @@ import { startStimulusApp } from '@symfony/stimulus-bundle';
 import FormbuilderConditionsController from '../modules/FormBuilder/assets/controllers/formbuilder_conditions_controller.js';
 import FormbuilderBuilderController from '../modules/FormBuilder/assets/controllers/formbuilder_builder_controller.js';
 import FormTypeController from '../modules/FormBuilder/assets/controllers/form_type_controller.js';
+import DodoPrefillController from '../modules/FormBuilder/assets/controllers/dodo_prefill_controller.js';
+import PaymentExclusiveController from '../modules/FormBuilder/assets/controllers/payment_exclusive_controller.js';
 import FormRulesController from '../modules/FormBuilder/assets/controllers/form_rules_controller.js';
 import DashboardChartController from '../modules/FormBuilder/assets/controllers/dashboard_chart_controller.js';
 import WebhookCheckController from '../modules/FormBuilder/assets/controllers/webhook_check_controller.js';
@@ -44,6 +46,8 @@ registerEditorExtension({
 app.register('formbuilder--conditions', FormbuilderConditionsController);
 app.register('formbuilder--builder', FormbuilderBuilderController);
 app.register('formbuilder--formtype', FormTypeController);
+app.register('formbuilder--dodo-prefill', DodoPrefillController);
+app.register('formbuilder--payment-exclusive', PaymentExclusiveController);
 app.register('formbuilder--rules', FormRulesController);
 app.register('formbuilder--dashboard-chart', DashboardChartController);
 app.register('formbuilder--webhook-check', WebhookCheckController);

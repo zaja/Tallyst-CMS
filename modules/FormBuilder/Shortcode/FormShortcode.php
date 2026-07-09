@@ -4,9 +4,11 @@ namespace Tallyst\FormBuilder\Shortcode;
 
 use App\Content\ShortcodeInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Form\FormSchemaFactory;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
+use Tallyst\FormBuilder\Service\FormPaymentResolver;
 use Tallyst\FormBuilder\Service\TaxCalculator;
 use Twig\Environment;
 
@@ -26,6 +28,7 @@ class FormShortcode implements ShortcodeInterface
         private readonly RequestStack $requestStack,
         private readonly PaymentProcessorRegistry $payments,
         private readonly TaxCalculator $tax,
+        private readonly FormPaymentResolver $paymentResolver,
     ) {
     }
 
@@ -48,27 +51,31 @@ class FormShortcode implements ShortcodeInterface
 
         [$errors, $old] = $this->pullFlash($id);
 
+        // Single source of truth (FormPaymentResolver): a Merchant-of-Record form (Dodo product or a MoR
+        // provider allowed) suppresses the Tallyst inclusive-tax note — the MoR collects tax itself.
+        $showTax = $this->tax->isEnabled() && $form->isProduct() && !$this->paymentResolver->isMerchantOfRecordForm($form);
+
         return $this->twig->render('@FormBuilder/form/render.html.twig', [
             'form' => $form,
             'schema' => $this->schemas->client($form),
             'errors' => $errors,
             'old' => $old,
-            'payment_methods' => $form->isProduct() ? $this->paymentMethods($form->getAllowedPaymentMethods()) : [],
-            'tax' => ['enabled' => $this->tax->isEnabled(), 'name' => $this->tax->name(), 'rate' => $this->tax->rate()],
+            // MoR form → the resolver offers ONLY Dodo (never Stripe/PayPal), regardless of
+            // allowedPaymentMethods (incl. empty). This closes the front gap (all methods shown).
+            'payment_methods' => $form->isProduct() ? $this->paymentMethods($form) : [],
+            'tax' => ['enabled' => $showTax, 'name' => $this->tax->name(), 'rate' => $this->tax->rate()],
         ]);
     }
 
     /**
-     * Usable providers for the buy button: configured ∩ allowed, as {name,label} for the radios.
-     *
-     * @param string[]|null $allowed
+     * The buy-button providers as {name,label} — driven by the resolver's offeredMethods (MoR-aware).
      *
      * @return array<int, array{name: string, label: string}>
      */
-    private function paymentMethods(?array $allowed): array
+    private function paymentMethods(FormDefinition $form): array
     {
         $methods = [];
-        foreach ($this->payments->availableFor($allowed) as $name) {
+        foreach ($this->paymentResolver->offeredMethods($form) as $name) {
             $methods[] = ['name' => $name, 'label' => self::PROVIDER_LABELS[$name] ?? ucfirst($name)];
         }
 

@@ -63,11 +63,15 @@
                     <small class="text-muted d-block mt-1">{{ 'admin.settings.test_mail.note'|trans({}, 'admin') }}</small>
                 {% endif %}
 
-                {# Payment sections: mode badge + webhook setup guide (FormBuilder-owned partial). #}
-                {% if section.key == 'stripe' %}
-                    {{ include('@FormBuilder/admin/_payment_info.html.twig', {provider: 'stripe', webhook_route: 'form_builder_webhook_stripe', dashboard: 'Stripe'}) }}
-                {% elseif section.key == 'paypal' %}
-                    {{ include('@FormBuilder/admin/_payment_info.html.twig', {provider: 'paypal', webhook_route: 'form_builder_webhook_paypal', dashboard: 'PayPal'}) }}
+                {# Payment sections: mode badge + webhook setup guide (FormBuilder-owned partial).
+                   Generic over any registered provider (route convention: form_builder_webhook_<key>),
+                   so a new provider never edits this Core template. #}
+                {% if section.key in payment_provider_names() %}
+                    {{ include('@FormBuilder/admin/_payment_info.html.twig', {
+                        provider: section.key,
+                        webhook_route: 'form_builder_webhook_' ~ section.key,
+                        dashboard: section.label|trans({}, 'admin'),
+                    }) }}
                 {% endif %}
                 </div>
             {% endfor %}

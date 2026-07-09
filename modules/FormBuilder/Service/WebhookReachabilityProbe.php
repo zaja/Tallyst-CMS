@@ -6,6 +6,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 
 /**
  * On-demand probe for the webhook 401 trap (the recurring go-live failure: basic-auth blocks the
@@ -21,10 +22,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 class WebhookReachabilityProbe
 {
-    private const ROUTES = [
-        'Stripe' => 'form_builder_webhook_stripe',
-        'PayPal' => 'form_builder_webhook_paypal',
-    ];
+    /** Nice-cased display labels; any registered provider without one falls back to ucfirst(name). */
+    private const LABELS = ['stripe' => 'Stripe', 'paypal' => 'PayPal', 'dodo' => 'Dodo'];
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
@@ -32,18 +31,29 @@ class WebhookReachabilityProbe
         #[Autowire('%env(DEFAULT_URI)%')]
         private readonly string $defaultUri,
         private readonly TranslatorInterface $translator,
+        private readonly PaymentProcessorRegistry $payments,
     ) {
     }
 
     /**
+     * Probes EVERY registered payment provider's webhook (route convention: form_builder_webhook_<name>),
+     * so a new provider is covered automatically — no per-provider edit here (same spirit as the settings
+     * template generalization). A provider without such a route is simply skipped.
+     *
      * @return list<array{provider: string, url: string, status: string, message: string}>
      */
     public function probe(): array
     {
         $base = rtrim($this->defaultUri, '/');
+        $routes = $this->router->getRouteCollection();
         $results = [];
-        foreach (self::ROUTES as $provider => $route) {
-            $results[] = $this->probeOne($provider, $base.$this->router->generate($route));
+        foreach ($this->payments->names() as $name) {
+            $route = 'form_builder_webhook_'.$name;
+            if (null === $routes->get($route)) {
+                continue; // provider ships no webhook route → nothing to probe
+            }
+            $label = self::LABELS[$name] ?? ucfirst($name);
+            $results[] = $this->probeOne($label, $base.$this->router->generate($route));
         }
 
         return $results;

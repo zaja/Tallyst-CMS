@@ -22,6 +22,9 @@ class PaymentAdminExtension extends AbstractExtension
         return [
             new TwigFunction('payment_mode', fn (string $provider): string => $this->payments->get($provider)->getMode()),
             new TwigFunction('payment_webhook_events', fn (string $provider): array => $this->payments->get($provider)->getWebhookEvents()),
+            // Every registered payment provider name — lets the Core settings template render the info
+            // partial for ANY payment section generically, so a new provider never touches that template.
+            new TwigFunction('payment_provider_names', fn (): array => $this->payments->names()),
         ];
     }
 }

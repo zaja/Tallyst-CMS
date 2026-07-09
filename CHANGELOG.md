@@ -33,6 +33,16 @@ core-API change is a MAJOR (flagged ⚠).
   reliably no matter which webhook (payment or licence) arrives first. Dodo orders also get their
   own badge and list filter. This is read-only visibility — Dodo still delivers the licence to the
   buyer; Tallyst only mirrors it.
+- **A Dodo form now behaves as Dodo-only, everywhere.** Because Dodo is the seller of record, a form
+  tied to a Dodo product can't also take Stripe/PayPal (their tax models differ). Link a Dodo product
+  per form from a picker that also prefills the price and currency from the chosen product (a starting
+  value you can still edit — Dodo charges the price set on the product). Ticking Dodo (or picking a Dodo
+  product) now locks out Stripe/PayPal in the builder, saving a mixed setup is refused, and — the fix
+  that matters on the storefront — the buy screen offers **only** Dodo (never a stray Stripe/PayPal
+  button), while the Tallyst tax note is hidden on Dodo forms. This is decided in one place, so the
+  builder, the storefront and checkout can't drift. Regular Stripe/PayPal forms are unchanged. Settings
+  and the readiness "webhook check" now cover every payment provider automatically (Dodo included), so
+  future providers need no wiring there.
 
 ## [1.6.3] — 2026-07-07
 

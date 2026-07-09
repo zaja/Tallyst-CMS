@@ -117,11 +117,12 @@ admin:
             price_help: 'Prazno = forma bez naplate. S cijenom forma postaje proizvod (plaćanje na submit). Ignorira se ako postoje varijante.'
             currency: Valuta
             payment_methods: Dozvoljeni načini plaćanja
-            payment_methods_help: 'Prazno = svi konfigurirani. Kupcu se nudi presjek odabranih i konfiguriranih.'
+            payment_methods_help: 'Prazno = nude se svi konfigurirani provideri. Merchant-of-Record način (Dodo) ne miješa se sa Stripe/PayPal — ako su oba tipa konfigurirana, odaberi izričito.'
             dodo_product: Dodo proizvod
             dodo_product_help: 'Dodo proizvod protiv kojeg forma prodaje (iz tvog Dodo kataloga u aktivnom test/live modu).'
             dodo_product_help_manual: 'Nije moguće dohvatiti Dodo proizvode — upiši product ID ručno.'
             dodo_product_help_no_key: 'Konfiguriraj Dodo API ključ u Postavke → Dodo Payments da biraš iz kataloga.'
+            dodo_price_note: 'Za Dodo forme konačnu cijenu naplaćuje Dodo prema postavci proizvoda — ovo je prikaz; uskladi ručno ako mijenjaš na Dodou.'
             notify_enabled: Pošalji e-mail na prijavu
             notify_enabled_help: Samo za besplatne forme. Plaćene forme šalju potvrdu narudžbe.
             notify_recipient: Primatelj(i)
@@ -153,7 +154,7 @@ admin:
         webhook_check:
             header: Plaćanja — webhook (basic-auth zamka)
             intro: 'Najčešća go-live zamka: ako je webhook ruta iza basic-autha, plaćanje uspije ali narudžba ostane "U obradi" (webhook vrati 401 prije aplikacije, bez mailova). Test šalje nepotpisani zahtjev na vlastiti webhook URL — prava logika se NE pokreće (potpis padne na 400). 401 = problem. Pokreće se na zahtjev (ne usporava admin).'
-            button: Provjeri webhook (Stripe/PayPal)
+            button: Provjeri webhookove plaćanja
             running: Provjeravam…
             http_error: 'Greška (HTTP %status%).'
             network_error: 'Mrežna greška: %error%'

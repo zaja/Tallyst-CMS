@@ -118,11 +118,12 @@ admin:
             price_help: 'Empty = a free form. With a price the form becomes a product (payment on submit). Ignored when variants exist.'
             currency: Currency
             payment_methods: Allowed payment methods
-            payment_methods_help: 'Empty = all configured. The buyer is offered the intersection of the selected and the configured.'
+            payment_methods_help: 'Empty = all configured providers are offered. A Merchant-of-Record method (Dodo) can''t be mixed with Stripe/PayPal — if both kinds are configured, choose explicitly.'
             dodo_product: Dodo product
             dodo_product_help: 'The Dodo product this form sells against (from your Dodo catalogue in the active test/live mode).'
             dodo_product_help_manual: 'Could not load Dodo products — enter the product ID manually.'
             dodo_product_help_no_key: 'Configure the Dodo API key in Settings → Dodo Payments to pick from your catalogue.'
+            dodo_price_note: 'For Dodo forms the final price is charged by Dodo per the product''s setting — this is a display value; adjust manually if you change it on Dodo.'
             notify_enabled: Send an e-mail on submission
             notify_enabled_help: Free forms only. Paid forms send an order confirmation.
             notify_recipient: Recipient(s)
@@ -154,7 +155,7 @@ admin:
         webhook_check:
             header: Payments — webhook (basic-auth trap)
             intro: 'The most common go-live trap: if the webhook route sits behind basic auth, payment succeeds but the order stays "Processing" (the webhook returns 401 before the app, with no e-mails). The test sends an unsigned request to your own webhook URL — the real logic does NOT run (the signature fails with 400). 401 = a problem. Runs on demand (it doesn''t slow the admin).'
-            button: Check webhook (Stripe/PayPal)
+            button: Check payment webhooks
             running: Checking…
             http_error: 'Error (HTTP %status%).'
             network_error: 'Network error: %error%'

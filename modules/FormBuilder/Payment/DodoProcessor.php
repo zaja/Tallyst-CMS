@@ -218,9 +218,10 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
 
     /**
      * List the Dodo products in the ACTIVE mode (test/live), for the per-form product picker. READ-ONLY
-     * — never writes to Dodo. Returns a flat list of ['id' => string, 'name' => string, 'price' => ?string]
-     * (price is a best-effort display label, may be null). Returns [] when the provider isn't configured
-     * (no HTTP) or on ANY error — the caller falls back to a manual product-id input, never a hard failure.
+     * — never writes to Dodo (not a payment path). Each item carries a display `price` label PLUS the
+     * structured `priceMinor` + `currency` used to one-time PREFILL the Tallyst price/currency fields.
+     * Returns [] when the provider isn't configured (no HTTP) or on ANY error — the caller falls back
+     * to a manual product-id input, never a hard failure.
      *
      * A short timeout + a page cap keep the edit-form render responsive.
      *
@@ -229,7 +230,7 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
      *   - pagination query keys (assumed page_number + page_size) + the response items key (assumed `items`),
      *   - the product id / name / price field names in each item.
      *
-     * @return list<array{id: string, name: string, price: ?string}>
+     * @return list<array{id: string, name: string, price: ?string, priceMinor: ?int, currency: ?string}>
      */
     public function listProducts(): array
     {
@@ -268,10 +269,13 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
                     if (!is_scalar($id) || '' === (string) $id) {
                         continue;
                     }
+                    $price = $this->extractPrice($item);
                     $products[] = [
                         'id' => (string) $id,
                         'name' => is_scalar($item['name'] ?? null) && '' !== (string) $item['name'] ? (string) $item['name'] : (string) $id,
-                        'price' => $this->productPriceLabel($item),
+                        'price' => $price['label'],
+                        'priceMinor' => $price['minor'],
+                        'currency' => $price['currency'],
                     ];
                 }
 
@@ -289,21 +293,43 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
         return $products;
     }
 
-    /** Best-effort human price label from a product item, or null when the shape is unknown. */
-    private function productPriceLabel(array $item): ?string
+    /**
+     * Best-effort structured price from a product item: minor units + currency + a display label.
+     * ⚠ VERIFY price shape (nested {price: {price, currency}} or flat price/currency). MULTI-CURRENCY /
+     * localized pricing is NOT guessed — a list-shaped price returns all null, and an ambiguous currency
+     * is left null (the prefill then leaves that field untouched: better empty than wrong).
+     *
+     * @return array{minor: ?int, currency: ?string, label: ?string}
+     */
+    private function extractPrice(array $item): array
     {
-        // ⚠ VERIFY price shape. Try a nested {price: {price: minor, currency}} then a flat price/currency.
         $price = $item['price'] ?? null;
-        $amount = is_array($price) ? ($price['price'] ?? $price['amount'] ?? null) : (is_numeric($price) ? $price : null);
-        $currency = is_array($price) ? ($price['currency'] ?? null) : ($item['currency'] ?? null);
+        $amount = null;
+        $currency = null;
 
-        if (!is_numeric($amount)) {
-            return null;
+        if (is_array($price)) {
+            // A list = multi-currency / multiple prices → don't guess anything.
+            if (array_is_list($price)) {
+                return ['minor' => null, 'currency' => null, 'label' => null];
+            }
+            $amount = $price['price'] ?? $price['amount'] ?? null;
+            $currency = $price['currency'] ?? null;
+        } elseif (is_numeric($price)) {
+            $amount = $price;
+            $currency = $item['currency'] ?? null;
         }
 
-        $label = number_format(((int) $amount) / 100, 2);
+        $minor = is_numeric($amount) ? (int) $amount : null;
+        $currency = is_string($currency) && '' !== $currency ? strtoupper($currency) : null;
 
-        return is_string($currency) && '' !== $currency ? $label.' '.strtoupper($currency) : $label;
+        if (null === $minor) {
+            return ['minor' => null, 'currency' => $currency, 'label' => null];
+        }
+
+        $label = number_format($minor / 100, 2);
+        $label = null !== $currency ? $label.' '.$currency : $label;
+
+        return ['minor' => $minor, 'currency' => $currency, 'label' => $label];
     }
 
     // --- internals -------------------------------------------------------------------------------

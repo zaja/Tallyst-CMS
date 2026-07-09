@@ -51,8 +51,11 @@
             </div>
         </div>
 
-        {# Naplata (paid) — pre-hidden in Twig when not a product to avoid a flash before JS boots #}
-        <div class="card mb-3 fb-card{{ isProduct ? '' : ' d-none' }}" data-formbuilder--formtype-target="paid">
+        {# Naplata (paid) — pre-hidden in Twig when not a product to avoid a flash before JS boots.
+           data-controller: dodo-prefill (copies a picked Dodo product's price/currency) +
+           payment-exclusive (a MoR method can't mix with Stripe/PayPal). #}
+        <div class="card mb-3 fb-card{{ isProduct ? '' : ' d-none' }}" data-formbuilder--formtype-target="paid"
+             data-controller="formbuilder--dodo-prefill formbuilder--payment-exclusive">
             <div class="card-body">
                 <h2 class="h5 fb-section-title">{{ 'admin.form.builder.payment.title'|trans({}, 'admin') }} <span class="badge fb-badge-soft">{{ 'admin.form.builder.payment.badge'|trans({}, 'admin') }}</span></h2>
                 <p class="fb-section-help">{{ 'admin.form.builder.payment.help'|trans({}, 'admin') }}</p>
@@ -66,6 +69,7 @@
                    Dodo is configured, else a manual product-id input — always saveable. Explicit
                    render_row: form_end uses render_rest:false, so an unrendered field would vanish. #}
                 {{ form_row(form.dodoProductId) }}
+                <p class="text-muted small mb-3">{{ 'admin.form.def.dodo_price_note'|trans({}, 'admin') }}</p>
 
                 {{ form_errors(form.variants) }}
                 <div class="fb-subblock">

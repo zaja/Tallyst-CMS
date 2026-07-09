@@ -21,6 +21,7 @@ use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 use Tallyst\FormBuilder\Repository\FormSubmissionRepository;
 use Tallyst\FormBuilder\Repository\OrderRepository;
+use Tallyst\FormBuilder\Service\FormPaymentResolver;
 use Tallyst\FormBuilder\Service\SubmissionNotifier;
 use Tallyst\FormBuilder\Service\SubmissionValidator;
 use Tallyst\FormBuilder\Service\TaxCalculator;
@@ -51,6 +52,7 @@ class FormSubmitController extends AbstractController
         #[Autowire(service: 'limiter.form_submit')]
         private readonly RateLimiterFactory $formSubmitLimiter,
         private readonly TranslatorInterface $translator,
+        private readonly FormPaymentResolver $paymentResolver,
     ) {
     }
 
@@ -151,8 +153,9 @@ class FormSubmitController extends AbstractController
 
     private function startCheckout(FormDefinition $form, FormSubmission $submission, Request $request, string $return): Response
     {
-        // Provider = the buyer's choice ∩ what's configured-and-allowed. Never a dead end / 500.
-        $available = $this->payments->availableFor($form->getAllowedPaymentMethods());
+        // Provider = the buyer's choice ∩ what the form actually offers (MoR-aware: a Dodo form offers
+        // only Dodo — the resolver is the single source of truth, matching the front). Never a dead end.
+        $available = $this->paymentResolver->offeredMethods($form);
         if ([] === $available) {
             $this->addFlash('danger', $this->translator->trans('form.payment_unavailable', [], 'messages'));
 
