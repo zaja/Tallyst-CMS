@@ -6,6 +6,14 @@ form:
     price: 'Price:'
     tax_note: Price includes %name% (%rate%%).
     choose_option: Choose an option
+    choose_shipping: Delivery method
+    shipping: Delivery
+    ship:
+        name: Full name
+        address: Address
+        city: City
+        postal: Postal code
+        country: Country
     payment_method: Payment method
     payment_unavailable: Payment is currently unavailable.
     invalid_payment_method: Choose a valid payment method.

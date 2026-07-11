@@ -107,6 +107,54 @@
                         </div>
                     </div>
                 {% endif %}
+
+                {# Shipping (Faza 1): radios when >1 offered, hidden index 0 when exactly one; the server
+                   resolves the choice by INDEX against the same offered list and reads the price from the
+                   catalog (never this markup). Not rendered on MoR forms (shipping is empty there). #}
+                {% if shipping|default([]) is not empty %}
+                    {% if shipping|length > 1 %}
+                        <div class="fb-field fb-shipping">
+                            <label>{{ 'form.choose_shipping'|trans }} <span class="fb-req">*</span></label>
+                            <div class="fb-choices">
+                                {% for m in shipping %}
+                                    <label class="fb-choice">
+                                        <input type="radio" name="shipping" value="{{ loop.index0 }}"{{ loop.first ? ' checked' : '' }} required>
+                                        {{ m.label }} — {{ (m.priceMinor / 100)|number_format(2, ',', '.') }} {{ currency }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <input type="hidden" name="shipping" value="0">
+                        <p class="fb-shipping-single">{{ 'form.shipping'|trans }}: <strong>{{ shipping[0].label }} — {{ (shipping[0].priceMinor / 100)|number_format(2, ',', '.') }} {{ currency }}</strong></p>
+                    {% endif %}
+
+                    {# Delivery address: required whenever delivery is offered (derived, no flag). Values are
+                       saved into the submission data under the ship_* keys. #}
+                    <div class="fb-address">
+                        {% for key, labelKey in shipping_address %}
+                            {% set aval = old[key] is defined ? old[key] : '' %}
+                            {% set aerr = errors[key] is defined ? errors[key] : null %}
+                            <div class="fb-field">
+                                <label for="fb-{{ form.id }}-{{ key }}">{{ labelKey|trans }} <span class="fb-req">*</span></label>
+                                {% if key == 'ship_country' %}
+                                    {# Country (Faza 2): a dropdown limited to the form's allowed countries (or
+                                       the full list when unrestricted). The server re-validates the chosen code. #}
+                                    <select id="fb-{{ form.id }}-{{ key }}" name="{{ key }}" required>
+                                        <option value="">—</option>
+                                        {% for code, name in shipping_countries %}
+                                            <option value="{{ code }}"{{ aval == code ? ' selected' : '' }}>{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    <input type="text" id="fb-{{ form.id }}-{{ key }}" name="{{ key }}" value="{{ aval }}" required>
+                                {% endif %}
+                                {% if aerr %}<p class="fb-error">{{ aerr }}</p>{% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
                 {% if methods|length > 1 %}
                     <div class="fb-field fb-payment">
                         <label>{{ 'form.payment_method'|trans }} <span class="fb-req">*</span></label>

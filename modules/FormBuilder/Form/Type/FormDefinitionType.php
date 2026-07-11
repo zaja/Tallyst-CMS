@@ -7,6 +7,7 @@ use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\CountryType;
 use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -19,6 +20,7 @@ use Tallyst\FormBuilder\Payment\DodoProcessor;
 use Tallyst\FormBuilder\Payment\MerchantOfRecordInterface;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Service\FormPaymentResolver;
+use Tallyst\FormBuilder\Service\ShippingCatalog;
 
 class FormDefinitionType extends AbstractType
 {
@@ -28,6 +30,7 @@ class FormDefinitionType extends AbstractType
         private readonly PaymentProcessorRegistry $payments,
         private readonly DodoProcessor $dodo,
         private readonly FormPaymentResolver $paymentResolver,
+        private readonly ShippingCatalog $shipping,
     ) {
     }
 
@@ -37,6 +40,34 @@ class FormDefinitionType extends AbstractType
         foreach ($this->payments->names() as $name) {
             $methodChoices[self::PROVIDER_LABELS[$name] ?? ucfirst($name)] = $name;
         }
+
+        // Shipping is meaningless on a Merchant-of-Record (Dodo) form — the MoR handles fulfilment/tax
+        // itself. So the whole "Delivery methods" field is OMITTED from the form for a MoR form (same
+        // isMerchantOfRecordForm signal the front/checkout use): it can't be shown, checked, or saved
+        // (a forged POST for shippingMethods hits no field → ignored). Non-MoR forms keep it. Render-time
+        // (on open/save); a live toggle on the Dodo checkbox isn't required. Variants are untouched here.
+        $data = $builder->getData();
+        $isMerchantOfRecordForm = $data instanceof FormDefinition && $this->paymentResolver->isMerchantOfRecordForm($data);
+
+        // Shipping choices come from the catalog — the form stores only the stable KEY (like
+        // allowedPaymentMethods stores provider names), never the price. The visible label shows the
+        // price too ("Express — 8,00 EUR") so the admin sees what they're offering. Currency = the form's
+        // (matches the variant/checkout display); catalog prices are currency-agnostic amounts. choices are
+        // keyed by key (collision-free), the display comes from choice_label. Empty catalog → no choices.
+        $shippingCurrency = strtoupper(($data instanceof FormDefinition ? $data->getCurrency() : null) ?: 'eur');
+        $shippingLabels = [];
+        if (!$isMerchantOfRecordForm) {
+            foreach ($this->shipping->all() as $method) {
+                $shippingLabels[$method['key']] = sprintf(
+                    '%s — %s %s',
+                    $method['label'],
+                    number_format($method['priceMinor'] / 100, 2, ',', '.'),
+                    $shippingCurrency,
+                );
+            }
+        }
+        $shippingKeys = array_keys($shippingLabels);
+        $shippingChoices = array_combine($shippingKeys, $shippingKeys);
 
         $builder
             ->add('name', TextType::class, ['label' => 'admin.form.def.name', 'empty_data' => ''])
@@ -117,6 +148,38 @@ class FormDefinitionType extends AbstractType
                 'prototype_name' => '__field__',
                 'required' => false,
             ]);
+
+        // Per-form shipping offer: which catalog methods to show at checkout (keys only; the buyer picks
+        // one if >1). Mirrors allowedPaymentMethods. Empty = no delivery. OMITTED entirely on a MoR form
+        // (added here, after the chain, so field order is unaffected — the template places it explicitly).
+        if (!$isMerchantOfRecordForm) {
+            $builder->add('shippingMethods', ChoiceType::class, [
+                'required' => false,
+                'label' => 'admin.form.def.shipping_methods',
+                'choices' => $shippingChoices,
+                // Display "label — price currency"; the stored value stays the bare key.
+                'choice_label' => static fn (string $key): string => $shippingLabels[$key] ?? $key,
+                'multiple' => true,
+                'expanded' => true,
+                'help' => 'admin.form.def.shipping_methods_help',
+            ]);
+        }
+
+        // Per-form shipping-country gate (Faza 2): the ISO alpha-2 codes this form ships to. Added for
+        // EVERY non-MoR form (like shippingMethods) so it's ALWAYS in the DOM — the builder then shows it
+        // LIVE only when a delivery method is checked (formbuilder--formtype), and the paid/free toggle
+        // hides the whole card for a free form. Empty = ships everywhere. CountryType provides the standard
+        // list (249, localized by the admin's locale) and validates a forged code as "not a valid choice"
+        // for free. The usable UI (search + presets) is the formbuilder--country-select wrapper.
+        if (!$isMerchantOfRecordForm) {
+            $builder->add('allowedShippingCountries', CountryType::class, [
+                'required' => false,
+                'label' => 'admin.form.def.shipping_countries',
+                'help' => 'admin.form.def.shipping_countries_help',
+                'multiple' => true,
+                'expanded' => true,
+            ]);
+        }
 
         $this->addDodoProductField($builder);
 

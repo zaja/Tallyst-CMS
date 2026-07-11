@@ -4,11 +4,14 @@ namespace Tallyst\FormBuilder\Shortcode;
 
 use App\Content\ShortcodeInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Intl\Countries;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Form\FormSchemaFactory;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 use Tallyst\FormBuilder\Service\FormPaymentResolver;
+use Tallyst\FormBuilder\Service\ShippingAddress;
+use Tallyst\FormBuilder\Service\ShippingCatalog;
 use Tallyst\FormBuilder\Service\TaxCalculator;
 use Twig\Environment;
 
@@ -29,6 +32,7 @@ class FormShortcode implements ShortcodeInterface
         private readonly PaymentProcessorRegistry $payments,
         private readonly TaxCalculator $tax,
         private readonly FormPaymentResolver $paymentResolver,
+        private readonly ShippingCatalog $shipping,
     ) {
     }
 
@@ -53,9 +57,16 @@ class FormShortcode implements ShortcodeInterface
 
         // Single source of truth (FormPaymentResolver): a Merchant-of-Record form (Dodo product or a MoR
         // provider allowed) suppresses the Tallyst inclusive-tax note — the MoR collects tax itself.
-        $showTax = $this->tax->isEnabled() && $form->isProduct() && !$this->paymentResolver->isMerchantOfRecordForm($form);
+        $isMerchantOfRecord = $this->paymentResolver->isMerchantOfRecordForm($form);
+        $showTax = $this->tax->isEnabled() && $form->isProduct() && !$isMerchantOfRecord;
+
+        // Shipping (Faza 1): offered only on a product form that ISN'T MoR — same suppression as the tax
+        // note (a MoR form never shows delivery/address). offeredFor filters the form's selection against
+        // the live catalog. When delivery is offered, the standard address set is required.
+        $offeredShipping = ($form->isProduct() && !$isMerchantOfRecord) ? $this->shipping->offeredFor($form) : [];
 
         return $this->twig->render('@FormBuilder/form/render.html.twig', [
+            'shipping_countries' => [] !== $offeredShipping ? $this->countryOptions($form) : [],
             'form' => $form,
             'schema' => $this->schemas->client($form),
             'errors' => $errors,
@@ -64,7 +75,34 @@ class FormShortcode implements ShortcodeInterface
             // allowedPaymentMethods (incl. empty). This closes the front gap (all methods shown).
             'payment_methods' => $form->isProduct() ? $this->paymentMethods($form) : [],
             'tax' => ['enabled' => $showTax, 'name' => $this->tax->name(), 'rate' => $this->tax->rate()],
+            'shipping' => $offeredShipping,
+            'shipping_address' => [] !== $offeredShipping ? ShippingAddress::FIELDS : [],
+            'currency' => strtoupper($form->getCurrency() ?: 'eur'),
         ]);
+    }
+
+    /**
+     * The country options for the checkout "Country" dropdown: the form's allowed codes (Faza 2), or the
+     * FULL standard list when the form has no allow-list (empty = ships everywhere). Returned as
+     * code => localized name (request locale), sorted by name. Only called when delivery is offered.
+     *
+     * @return array<string, string>
+     */
+    private function countryOptions(FormDefinition $form): array
+    {
+        $locale = $this->requestStack->getCurrentRequest()?->getLocale() ?? 'en';
+        $allowed = $form->getAllowedShippingCountries();
+        $codes = ($allowed && [] !== $allowed) ? $allowed : Countries::getCountryCodes();
+
+        $options = [];
+        foreach ($codes as $code) {
+            if (Countries::exists($code)) {
+                $options[$code] = Countries::getName($code, $locale);
+            }
+        }
+        asort($options); // by localized name, for a usable dropdown
+
+        return $options;
     }
 
     /**

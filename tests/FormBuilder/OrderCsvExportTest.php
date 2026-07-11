@@ -37,6 +37,9 @@ class OrderCsvExportTest extends WebTestCase
         self::assertStringContainsString('pending-paypal@t.local', $all);
         self::assertStringContainsString('paid-paypal@t.local', $all);
         self::assertStringContainsString('Customer data', $all, 'header column present (CSV headers are fixed English)');
+        self::assertStringContainsString('Shipping method', $all, 'shipping columns present in the export');
+        self::assertStringContainsString('Express', $all, 'the chosen delivery method is exported');
+        self::assertStringContainsString('12.00', $all, 'the delivery amount is exported');
         self::assertStringContainsString('Mode', $all);
         self::assertStringNotContainsString('Zemlja', $all);
         self::assertStringNotContainsString('VAT ID', $all);
@@ -86,11 +89,11 @@ class OrderCsvExportTest extends WebTestCase
         $this->submissionId = $submission->getId();
 
         $rows = [
-            ['paid-stripe@t.local', Order::STATUS_PAID, 'stripe', $submission],
-            ['pending-paypal@t.local', Order::STATUS_PENDING, 'paypal', null],
-            ['paid-paypal@t.local', Order::STATUS_PAID, 'paypal', null],
+            ['paid-stripe@t.local', Order::STATUS_PAID, 'stripe', $submission, 'Express', 1200],
+            ['pending-paypal@t.local', Order::STATUS_PENDING, 'paypal', null, null, null],
+            ['paid-paypal@t.local', Order::STATUS_PAID, 'paypal', null, null, null],
         ];
-        foreach ($rows as [$email, $status, $provider, $sub]) {
+        foreach ($rows as [$email, $status, $provider, $sub, $shipLabel, $shipAmount]) {
             $order = (new Order())
                 ->setForm($form)
                 ->setSubmission($sub)
@@ -99,7 +102,9 @@ class OrderCsvExportTest extends WebTestCase
                 ->setPaymentMode('test')
                 ->setAmountMinor(4900)
                 ->setCurrency('eur')
-                ->setCustomerEmail($email);
+                ->setCustomerEmail($email)
+                ->setShippingLabel($shipLabel)
+                ->setShippingAmountMinor($shipAmount);
             $em->persist($order);
             $em->flush();
             $this->orderIds[] = $order->getId();

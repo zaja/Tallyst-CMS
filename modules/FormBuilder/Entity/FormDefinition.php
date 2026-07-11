@@ -6,6 +6,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Intl\Countries;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
@@ -61,6 +62,29 @@ class FormDefinition
      */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $allowedPaymentMethods = null;
+
+    /**
+     * The shipping-method KEYS (from the ShippingCatalog) this form offers at checkout. NULL/empty = no
+     * shipping. Stores ONLY the stable catalog keys — never a price (the catalog is authoritative) — the
+     * same way allowedPaymentMethods stores provider names. The offer is filtered against the LIVE catalog
+     * at render/checkout, so a deleted method silently drops. See PLAN-FAZA-1-DOSTAVA.md §4.
+     *
+     * @var string[]|null
+     */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $shippingMethods = null;
+
+    /**
+     * The ISO 3166-1 alpha-2 country codes this form is allowed to ship to (Faza 2 — a per-form gate).
+     * NULL/empty = ships EVERYWHERE (the gate is opt-in, backward-compatible; a new form starts empty).
+     * Stored as stable UPPERCASE codes, validated against the standard list (symfony/intl); mirrors
+     * shippingMethods. Only enforced when the form offers delivery AND is not a MoR form. See
+     * PLAN-FAZA-2-ZEMLJE.md §4.
+     *
+     * @var string[]|null
+     */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $allowedShippingCountries = null;
 
     /**
      * The Dodo (Merchant-of-Record) product this form sells against. Per-form so each product maps to
@@ -283,6 +307,68 @@ class FormDefinition
         $this->allowedPaymentMethods = $allowedPaymentMethods ?: null;
 
         return $this;
+    }
+
+    /** @return string[]|null */
+    public function getShippingMethods(): ?array
+    {
+        return $this->shippingMethods;
+    }
+
+    /** @param string[]|null $shippingMethods */
+    public function setShippingMethods(?array $shippingMethods): static
+    {
+        $this->shippingMethods = $shippingMethods ?: null;
+
+        return $this;
+    }
+
+    /**
+     * Whether this form offers at least one shipping method (by key). The concrete offer is filtered
+     * against the live catalog at render/checkout (ShippingCatalog::offeredFor) — a form whose only
+     * selected method was later deleted still returns true here but offers nothing downstream.
+     */
+    public function hasShipping(): bool
+    {
+        return null !== $this->shippingMethods && [] !== $this->shippingMethods;
+    }
+
+    /** @return string[]|null */
+    public function getAllowedShippingCountries(): ?array
+    {
+        return $this->allowedShippingCountries;
+    }
+
+    /**
+     * @param string[]|null $allowedShippingCountries stored as valid UPPERCASE alpha-2 codes; invalid /
+     *                                                unknown codes are dropped (defense — never persist junk)
+     */
+    public function setAllowedShippingCountries(?array $allowedShippingCountries): static
+    {
+        $clean = [];
+        foreach ($allowedShippingCountries ?? [] as $code) {
+            $code = strtoupper(trim((string) $code));
+            if ('' !== $code && Countries::exists($code) && !in_array($code, $clean, true)) {
+                $clean[] = $code;
+            }
+        }
+
+        $this->allowedShippingCountries = [] === $clean ? null : $clean;
+
+        return $this;
+    }
+
+    /**
+     * Whether this form ships to the given ISO alpha-2 country code. An EMPTY allow-list means
+     * "everywhere" (the gate is opt-in), so it returns true. Case-insensitive.
+     */
+    public function allowsCountry(string $code): bool
+    {
+        if (null === $this->allowedShippingCountries || [] === $this->allowedShippingCountries) {
+            return true;
+        }
+
+        return in_array(strtoupper(trim($code)), $this->allowedShippingCountries, true);
     }
 
     public function getDodoProductId(): ?string

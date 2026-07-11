@@ -5,12 +5,20 @@
 {% block content_title %}{{ (definition.id ? 'admin.form.builder.edit_title' : 'admin.form.builder.new_title')|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
-    {# UI-only: which sections are relevant is DERIVED from the existing product state (has price or
-       variants). No data model / flag — the toggle just reveals/hides; see form_type_controller.js. #}
-    {% set isProduct = form.vars.value.isProduct() %}
+    {# UI-only: open in "Paid" when the form carries ANY non-empty paid configuration (price/variants —
+       isProduct — OR explicitly chosen payment methods / shipping methods / ship-to countries / a Dodo
+       product). Empty defaults do NOT count. The backend's product decision (has price or variants) is
+       UNCHANGED — this only picks which sections the builder reveals; see form_type_controller.js. #}
+    {% set fbValue = form.vars.value %}
+    {% set isProduct = fbValue.isProduct()
+        or fbValue.getAllowedPaymentMethods()
+        or fbValue.getShippingMethods()
+        or fbValue.getAllowedShippingCountries()
+        or fbValue.getDodoProductId() %}
     {# The builder controller's JS-generated "new field" summary fallback is fed the translated label
        as a Stimulus value (Twig owns the translation; JS reads it). #}
     <div data-controller="formbuilder--builder formbuilder--formtype"
+         data-action="input->formbuilder--formtype#refresh change->formbuilder--formtype#refresh"
          data-formbuilder--builder-new-field-label-value="{{ 'admin.form.field.new'|trans({}, 'admin') }}">
         {{ form_start(form, {attr: {'data-dirty-guard': ''}}) }}
 
@@ -63,6 +71,11 @@
                     <div class="col">{{ form_row(form.priceMinor) }}</div>
                     <div class="col">{{ form_row(form.currency) }}</div>
                 </div>
+                {# Gentle, NON-blocking note: shown (live) only when Paid is active but there's no price and
+                   no variant. Never blocks saving; doesn't touch the backend. #}
+                <p class="text-muted small mb-3 d-none" data-formbuilder--formtype-target="priceHint">
+                    <i class="fa fa-circle-info"></i> {{ 'admin.form.builder.payment.price_hint'|trans({}, 'admin') }}
+                </p>
                 {{ form_row(form.allowedPaymentMethods) }}
 
                 {# Dodo (Merchant-of-Record) per-form product. Dropdown from the live catalogue when
@@ -86,6 +99,49 @@
                         <button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-action="formbuilder--builder#add">{{ 'admin.form.builder.add_variant'|trans({}, 'admin') }}</button>
                     </div>
                 </div>
+
+                {# Shipping offer: which catalog methods this form shows at checkout. OMITTED from the form
+                   on a MoR (Dodo) form (shipping is meaningless there), so guard on field presence; a
+                   muted note when the catalog is empty. #}
+                {% if form.shippingMethods is defined %}
+                    {# Hidden LIVE by formbuilder--formtype when Dodo is selected (a MoR form has no Tallyst
+                       shipping). A saved Dodo form omits this field server-side, so this only covers the
+                       live intermediate step. #}
+                    <div class="fb-subblock" data-formbuilder--formtype-target="shipping">
+                        {{ form_row(form.shippingMethods) }}
+                        {% if shipping_methods() is empty %}
+                            <p class="text-muted small mb-0">{{ 'admin.form.def.shipping_none'|trans({}, 'admin') }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {# Ship-to countries (Faza 2): present only when the form offers delivery (field added by the
+                   type only for a non-MoR form that hasShipping). ~250 checkboxes made usable with search +
+                   EU/All/None presets + a live count (formbuilder--country-select). Empty = ships everywhere. #}
+                {% if form.allowedShippingCountries is defined %}
+                    {# Pre-hidden: revealed live by formbuilder--formtype only when a delivery method is
+                       checked (no flash for the common no-shipping case). #}
+                    <div class="fb-subblock d-none" data-controller="formbuilder--country-select"
+                         data-formbuilder--formtype-target="countries"
+                         data-formbuilder--country-select-count-label-value="{{ 'admin.form.def.countries.selected'|trans({}, 'admin')|e('html_attr') }}">
+                        <label class="form-label fw-semibold mb-1">{{ 'admin.form.def.shipping_countries'|trans({}, 'admin') }}</label>
+                        <p class="fb-section-help mb-2">{{ 'admin.form.def.shipping_countries_help'|trans({}, 'admin') }}</p>
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                            <input type="search" class="form-control form-control-sm" style="max-width: 16rem"
+                                   data-formbuilder--country-select-target="search"
+                                   data-action="input->formbuilder--country-select#filter"
+                                   placeholder="{{ 'admin.form.def.countries.search'|trans({}, 'admin') }}">
+                            <button type="button" class="btn btn-sm btn-secondary" data-action="formbuilder--country-select#selectEu">{{ 'admin.form.def.countries.preset_eu'|trans({}, 'admin') }}</button>
+                            <button type="button" class="btn btn-sm btn-secondary" data-action="formbuilder--country-select#selectAll">{{ 'admin.form.def.countries.preset_all'|trans({}, 'admin') }}</button>
+                            <button type="button" class="btn btn-sm btn-secondary" data-action="formbuilder--country-select#selectNone">{{ 'admin.form.def.countries.preset_none'|trans({}, 'admin') }}</button>
+                            <span class="text-muted small ms-auto" data-formbuilder--country-select-target="count"></span>
+                        </div>
+                        <div class="fb-country-list" data-formbuilder--country-select-target="list"
+                             data-action="change->formbuilder--country-select#updateCount">
+                            {{ form_widget(form.allowedShippingCountries) }}
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
 
@@ -163,6 +219,9 @@
         .fb-section-help { color: var(--bs-secondary-color); font-size: .85rem; margin-bottom: 1rem; }
         .fb-badge-soft { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis, var(--bs-primary)); font-weight: 500; font-size: .7rem; vertical-align: middle; }
         .fb-subblock { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--bs-border-color); }
+        /* Ship-to countries: a scrollable, multi-column checkbox grid so ~250 items stay usable. */
+        .fb-country-list { max-height: 16rem; overflow-y: auto; padding: .5rem .75rem; border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius, .375rem); columns: 12rem auto; }
+        .fb-country-list .form-check { break-inside: avoid; margin-bottom: .15rem; }
 
         /* Type toggle — two selectable cards (buttons; active state, no JS class churn needed). */
         .fb-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }

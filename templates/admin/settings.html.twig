@@ -73,14 +73,24 @@
                         dashboard: section.label|trans({}, 'admin'),
                     }) }}
                 {% endif %}
+
+                {# Shipping catalog editor (FormBuilder-owned partial, loose-Twig include). Its inputs
+                   bind to the separate <form id="settings-shipping"> below via form=, not this form. #}
+                {% if section.key == 'shipping' %}
+                    {{ include('@FormBuilder/admin/_shipping_methods.html.twig') }}
+                {% endif %}
                 </div>
             {% endfor %}
         </div>
     </div>
 
-    <div class="mt-3">
-        <button class="btn btn-primary" type="submit">{{ 'admin.settings.save'|trans({}, 'admin') }}</button>
-    </div>
+    {# The generic Save writes the tab's scalar settings. Hidden on a tab with no scalar fields
+       (e.g. Shipping — its own Save lives in the catalog editor) so there's no confusing no-op button. #}
+    {% if current.definitions|length > 0 %}
+        <div class="mt-3">
+            <button class="btn btn-primary" type="submit">{{ 'admin.settings.save'|trans({}, 'admin') }}</button>
+        </div>
+    {% endif %}
     {{ form_end(form) }}
 
     {# The test-mail form: empty here (no nested forms); its inputs sit in the Email tab above
@@ -88,5 +98,14 @@
        tab that renders the email section. #}
     {% if has_email %}
         <form id="settings-test-email" method="post" action="{{ path('admin_settings_test_email') }}"></form>
+    {% endif %}
+
+    {# The shipping-catalog form: empty here (no nested forms); the catalog editor's inputs sit in the
+       Shipping tab above and bind to it via form="settings-shipping". Only on the tab with that section. #}
+    {% set has_shipping = current.sections|filter(s => s.key == 'shipping')|length > 0 %}
+    {% if has_shipping %}
+        <form id="settings-shipping" method="post" action="{{ path('admin_settings_shipping_save') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('settings_shipping') }}">
+        </form>
     {% endif %}
 {% endblock %}

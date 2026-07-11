@@ -6,6 +6,14 @@ form:
     price: 'Cijena:'
     tax_note: Cijena uključuje %name% (%rate%%).
     choose_option: Odaberi opciju
+    choose_shipping: Način dostave
+    shipping: Dostava
+    ship:
+        name: Ime i prezime
+        address: Adresa
+        city: Grad
+        postal: Poštanski broj
+        country: Država
     payment_method: Način plaćanja
     payment_unavailable: Plaćanje trenutno nije dostupno.
     invalid_payment_method: Odaberite ispravan način plaćanja.

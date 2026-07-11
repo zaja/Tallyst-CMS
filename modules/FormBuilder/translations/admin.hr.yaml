@@ -13,6 +13,9 @@ admin:
             provider: Plaćanje
             mode: Mod
             variant: Varijanta
+            shipping_method: Način dostave
+            shipping_amount: Iznos dostave
+            shipping_address: Adresa za dostavu
             customer: Kupac
             customer_name: Ime kupca
             customer_phone: Telefon kupca
@@ -26,6 +29,10 @@ admin:
             license_key: Licencni ključ
             submission: Podaci forme
         panel:
+            shipping: Dostava
+            tax: Porez
+            payment: Plaćanje
+            form_data: Podaci forme
             mor: Merchant of Record (Dodo)
             mor_help: 'Porez obračunava, naplaćuje i uplaćuje Dodo kao prodavač od zapisa — Tallystovi vlastiti iznosi poreza iznad ostaju prazni za ove narudžbe.'
         status: { pending: U obradi, paid: Čeka isporuku, fulfilled: Isporučeno, refunded: Refundirano }
@@ -79,6 +86,7 @@ admin:
                 badge: samo proizvod
                 help: Cijena, valuta, načini plaćanja i varijante.
                 variants_help: 'Varijante cijene — kupac bira jednu, njena se cijena koristi umjesto fiksne.'
+                price_hint: 'Naplatni proizvod treba cijenu ili barem jednu varijantu.'
             notify:
                 title: Obavijesti
                 help: 'E-mail obavijest na svaku prijavu (za besplatne forme).'
@@ -118,6 +126,17 @@ admin:
             currency: Valuta
             payment_methods: Dozvoljeni načini plaćanja
             payment_methods_help: 'Prazno = nude se svi konfigurirani provideri. Merchant-of-Record način (Dodo) ne miješa se sa Stripe/PayPal — ako su oba tipa konfigurirana, odaberi izričito.'
+            shipping_methods: Načini dostave
+            shipping_methods_help: 'Koje načine dostave nuditi na blagajni (definirani u Postavke → Dostava). Ako ih je više, kupac bira jedan; ostavi sve neoznačeno za bez dostave. Dostava se pribraja cijeni i oporezuje istom stopom kao proizvod.'
+            shipping_none: 'Još nema definiranih načina dostave. Dodaj ih u Postavke → Dostava.'
+            shipping_countries: Zemlje isporuke
+            shipping_countries_help: 'Ograniči dostavu na ove zemlje. Ostavi prazno za isporuku svugdje. Vrijedi samo kad forma nudi dostavu.'
+            countries:
+                search: Pretraži zemlje…
+                preset_eu: EU
+                preset_all: Sve
+                preset_none: Poništi
+                selected: 'odabrano: %count%'
             dodo_product: Dodo proizvod
             dodo_product_help: 'Dodo proizvod protiv kojeg forma prodaje (iz tvog Dodo kataloga u aktivnom test/live modu).'
             dodo_product_help_manual: 'Nije moguće dohvatiti Dodo proizvode — upiši product ID ručno.'
@@ -230,6 +249,15 @@ admin:
             tax_enabled: { label: Obračunaj porez, help: 'Primjenjuje JEDNU stopu (uključenu u cijenu) na sve narudžbe — ispravno za domaću prodaju / ispod EU OSS praga (€10.000). Za prodaju preko praga ili globalnu usklađenost konzultiraj knjigovođu ili Merchant-of-Record (Paddle/Lemon Squeezy). Tallyst bilježi podatke za tvoj export, ne podnosi poreznu prijavu.' }
             tax_rate: { label: Stopa (%), help: 'Npr. 25. Porez je UKLJUČEN u cijenu (izračuna se unatrag) — naplaćeni iznos se ne mijenja.' }
             tax_name: { label: Naziv poreza, help: 'Npr. PDV.' }
+        shipping:
+            title: Dostava
+            intro: 'Imenovani načini dostave s cijenom (porez uključen u iznos). Svaka forma bira koje od ovih nudi na blagajni; kupac odabire jedan ako ih je više.'
+            method: { name: Naziv, price: 'Cijena (s porezom)' }
+            name_placeholder: 'npr. Standardna dostava'
+            add: Dodaj način
+            remove: Ukloni
+            save: Spremi načine dostave
+            flash: { saved: Načini dostave spremljeni. }
         orders:
             title: Narudžbe
             thank_you_message: { label: Poruka zahvale, help: 'Prikazuje se kupcu na stranici zahvale nakon uspješnog plaćanja, iznad podataka o narudžbi.' }

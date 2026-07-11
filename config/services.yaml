@@ -61,4 +61,16 @@ services:
             $inner: '@.inner'
 
     # add more service definitions when explicit configuration is needed
+
+# Test-only fake payment processors (no HTTP) so functional tests can drive the submit → startCheckout
+# flow (shipping summation + the MoR gate) without hitting Stripe/PayPal/Dodo. They implement
+# PaymentProcessorInterface (auto-tagged app.payment_processor), and stay INVISIBLE unless a test sets
+# the `fake_processor_enabled` setting — so they never affect other tests' provider lists.
+when@test:
+    services:
+        _defaults:
+            autowire: true
+            autoconfigure: true
+        App\Tests\Support\:
+            resource: '../tests/Support/'
     # please note that last definitions always *replace* previous ones

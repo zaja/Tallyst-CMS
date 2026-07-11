@@ -2,3 +2,8 @@
 form:
     payment_methods_mixed: "A Merchant-of-Record method (Dodo) can't be combined with Stripe or PayPal — a Dodo form must use Dodo only."
     payment_methods_choose_explicit: 'Both a Merchant-of-Record (Dodo) and a regular provider (Stripe/PayPal) are configured — choose a payment method explicitly for this product so the tax model is unambiguous.'
+validation:
+    shipping:
+        address_required: This field is required for delivery.
+        country_invalid: Please choose a valid country.
+        country_not_allowed: Sorry, we don't deliver to that country.

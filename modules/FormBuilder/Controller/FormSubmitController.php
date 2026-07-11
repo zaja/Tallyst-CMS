@@ -8,6 +8,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\Intl\Countries;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -22,6 +23,8 @@ use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 use Tallyst\FormBuilder\Repository\FormSubmissionRepository;
 use Tallyst\FormBuilder\Repository\OrderRepository;
 use Tallyst\FormBuilder\Service\FormPaymentResolver;
+use Tallyst\FormBuilder\Service\ShippingAddress;
+use Tallyst\FormBuilder\Service\ShippingCatalog;
 use Tallyst\FormBuilder\Service\SubmissionNotifier;
 use Tallyst\FormBuilder\Service\SubmissionValidator;
 use Tallyst\FormBuilder\Service\TaxCalculator;
@@ -53,6 +56,7 @@ class FormSubmitController extends AbstractController
         private readonly RateLimiterFactory $formSubmitLimiter,
         private readonly TranslatorInterface $translator,
         private readonly FormPaymentResolver $paymentResolver,
+        private readonly ShippingCatalog $shipping,
     ) {
     }
 
@@ -89,6 +93,42 @@ class FormSubmitController extends AbstractController
         }
 
         ['errors' => $errors, 'data' => $data] = $this->validator->validate($form, $raw);
+
+        // Shipping address (Faza 1): a form that offers delivery (≥1 live method AND not a MoR form)
+        // requires the standard address set, captured into the submission data under stable ship_* keys.
+        // DERIVED from "offers delivery" — no stored flag. Folded into the SAME errors/data maps so
+        // per-field errors render on the form via the existing flash mechanism, and valid values are saved.
+        if (!$this->paymentResolver->isMerchantOfRecordForm($form) && [] !== $this->shipping->offeredFor($form)) {
+            foreach (array_keys(ShippingAddress::FIELDS) as $key) {
+                $value = trim((string) $request->request->get($key, ''));
+
+                // Country (Faza 2): a chosen ISO code — validate it's a real code AND allowed by this form
+                // (never trust the client, same as the shipping index-gate). We store the localized NAME in
+                // the submission data (readable everywhere); the stable CODE goes on the Order in startCheckout.
+                if ('ship_country' === $key) {
+                    $code = strtoupper($value);
+                    $raw[$key] = $code; // repopulate the <select> on redirect (option values are codes)
+                    if ('' === $code) {
+                        $errors[$key] = $this->translator->trans('validation.shipping.address_required', [], 'validators');
+                    } elseif (!Countries::exists($code)) {
+                        $errors[$key] = $this->translator->trans('validation.shipping.country_invalid', [], 'validators');
+                    } elseif (!$form->allowsCountry($code)) {
+                        $errors[$key] = $this->translator->trans('validation.shipping.country_not_allowed', [], 'validators');
+                    } else {
+                        $data[$key] = Countries::getName($code, $request->getLocale());
+                    }
+
+                    continue;
+                }
+
+                $raw[$key] = $value; // repopulate on redirect
+                if ('' === $value) {
+                    $errors[$key] = $this->translator->trans('validation.shipping.address_required', [], 'validators');
+                } else {
+                    $data[$key] = $value; // captured into FormSubmission.data
+                }
+            }
+        }
 
         if ([] !== $errors) {
             $bag = $request->getSession()->getFlashBag();
@@ -207,6 +247,35 @@ class FormSubmitController extends AbstractController
             $variantLabel = $variant['label'];
         }
 
+        // Shipping (Faza 1) — ENTIRELY on the non-MoR path (same gate as the tax block below): a MoR
+        // order is never shipped by Tallyst, so shippingLabel/Amount stay null and amountMinor is
+        // unchanged. The buyer's chosen method is resolved by INDEX against the form's offered list, with
+        // the price read from the CATALOG (never the request), then folded into the gross amount BEFORE
+        // the tax split so one rate covers product + delivery.
+        $shippingLabel = null;
+        $shippingAmount = null;
+        $customerCountry = null;
+        if (!$isMerchantOfRecord) {
+            $offered = $this->shipping->offeredFor($form);
+            if ([] !== $offered) {
+                $rawShipping = $request->request->get('shipping');
+                $index = is_numeric($rawShipping) ? (int) $rawShipping : -1;
+                if (!isset($offered[$index])) {
+                    $this->addFlash('danger', $this->translator->trans('form.invalid_option', [], 'messages'));
+
+                    return $this->redirect($return);
+                }
+                $shippingLabel = $offered[$index]['label'];
+                $shippingAmount = $offered[$index]['priceMinor'];
+                $amountMinor += $shippingAmount;
+
+                // The buyer's delivery country as the stable ISO CODE (Faza 2). Already validated in submit()
+                // (we only reach here on a valid submission); the readable NAME is in submission.data.
+                $code = strtoupper(trim((string) $request->request->get('ship_country', '')));
+                $customerCountry = '' !== $code ? $code : null;
+            }
+        }
+
         $order = (new Order())
             ->setForm($form)
             ->setSubmission($submission)
@@ -215,6 +284,9 @@ class FormSubmitController extends AbstractController
             ->setProvider($chosen)
             ->setPaymentMode($processor->getMode())
             ->setVariantLabel($variantLabel)
+            ->setShippingLabel($shippingLabel)
+            ->setShippingAmountMinor($shippingAmount)
+            ->setCustomerCountry($customerCountry)
             // An order through a demo form inherits the demo flag (so the uninstaller removes it too);
             // through a real form it stays false — derived from the form, never hardcoded.
             ->setIsDemo($form->isDemo())

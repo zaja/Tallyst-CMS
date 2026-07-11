@@ -1,5 +1,15 @@
 # emails domain (en) — FormBuilder order/form email defaults. Auto-discovered via the bundle.
 email:
+    # Composed sub-blocks (filled in PHP with app_locale, then placed in a mail body as a {tag}). Empty
+    # for a digital/MoR order, so those mails stay unchanged.
+    parts:
+        delivery_block: |
+            Product: %product%
+            Delivery (%method%): %shipping%
+            %tax_line%
+            Delivery address:
+            %address%
+        tax_incl: 'Includes %tax_name% (%tax_rate%%): %tax_amount%'
     order_confirmation:
         label: Order confirmation (to the customer)
         subject: 'Order confirmation #{order_id}'
@@ -9,10 +19,11 @@ email:
             Product: {form_name}<br>
             Amount: {amount} {currency}<br>
             Status: paid</p>
+            <pre>{delivery_details}</pre>
             <p>{site_name}</p>
         tag:
             order_id: Order number.
-            amount: Amount (formatted).
+            amount: Amount (formatted, total incl. delivery).
             currency: Currency.
             tax_amount: Tax amount (formatted).
             net_amount: Net amount (excl. tax).
@@ -20,6 +31,8 @@ email:
             tax_name: Tax name.
             form_name: Form/product name.
             variant: Selected variant (empty if none).
+            shipping: Chosen delivery method and amount (— if none).
+            delivery_details: Delivery breakdown + address block (empty for a digital order).
             site_name: The site name.
     order_admin:
         label: New order (to the admin)
@@ -30,9 +43,12 @@ email:
             Form: {form_name}<br>
             Amount: {amount} {currency}<br>
             Customer: {customer_email}</p>
+            <pre>{delivery_details}</pre>
+            <p><strong>Buyer details (for fulfilment):</strong></p>
+            <pre>{form_data}</pre>
         tag:
             order_id: Order number.
-            amount: Amount (formatted).
+            amount: Amount (formatted, total incl. delivery).
             currency: Currency.
             tax_amount: Tax amount (formatted).
             net_amount: Net amount (excl. tax).
@@ -40,7 +56,11 @@ email:
             tax_name: Tax name.
             form_name: Form/product name.
             variant: Selected variant (empty if none).
+            shipping: Chosen delivery method and amount (— if none).
+            delivery_details: Delivery breakdown + address block (empty for a digital order).
             customer_email: Customer e-mail.
+            form_data: The buyer's other submitted fields (delivery address excluded — shown above).
+            submission_summary: The buyer's submitted fields on one dump (incl. the address).
             site_name: The site name.
     order_delivered:
         label: Order delivered (to the customer)

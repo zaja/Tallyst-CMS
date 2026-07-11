@@ -14,6 +14,9 @@ admin:
             provider: Payment
             mode: Mode
             variant: Variant
+            shipping_method: Delivery method
+            shipping_amount: Delivery amount
+            shipping_address: Delivery address
             customer: Customer
             customer_name: Customer name
             customer_phone: Customer phone
@@ -27,6 +30,10 @@ admin:
             license_key: Licence key
             submission: Form data
         panel:
+            shipping: Delivery
+            tax: Tax
+            payment: Payment
+            form_data: Form data
             mor: Merchant of Record (Dodo)
             mor_help: 'Tax is calculated, collected and remitted by Dodo as the seller of record — Tallyst''s own tax figures above stay empty for these orders.'
         status: { pending: Processing, paid: Awaiting delivery, fulfilled: Delivered, refunded: Refunded }
@@ -80,6 +87,7 @@ admin:
                 badge: product only
                 help: Price, currency, payment methods and variants.
                 variants_help: 'Price variants — the buyer picks one; its price is used instead of the fixed price.'
+                price_hint: 'A paid product needs a price or at least one variant.'
             notify:
                 title: Notifications
                 help: 'E-mail notification on every submission (for free forms).'
@@ -119,6 +127,17 @@ admin:
             currency: Currency
             payment_methods: Allowed payment methods
             payment_methods_help: 'Empty = all configured providers are offered. A Merchant-of-Record method (Dodo) can''t be mixed with Stripe/PayPal — if both kinds are configured, choose explicitly.'
+            shipping_methods: Delivery methods
+            shipping_methods_help: 'Which delivery methods to offer at checkout (defined in Settings → Shipping). If more than one, the buyer picks one; leave all unchecked for no delivery. Delivery is added to the price and taxed at the same rate as the product.'
+            shipping_none: 'No delivery methods are defined yet. Add them in Settings → Shipping.'
+            shipping_countries: Ship to countries
+            shipping_countries_help: 'Restrict delivery to these countries. Leave empty to ship everywhere. Applies only when the form offers delivery.'
+            countries:
+                search: Search countries…
+                preset_eu: EU
+                preset_all: All
+                preset_none: None
+                selected: '%count% selected'
             dodo_product: Dodo product
             dodo_product_help: 'The Dodo product this form sells against (from your Dodo catalogue in the active test/live mode).'
             dodo_product_help_manual: 'Could not load Dodo products — enter the product ID manually.'
@@ -231,6 +250,15 @@ admin:
             tax_enabled: { label: Apply tax, help: 'Applies ONE rate (included in the price) to all orders — correct for domestic sales / below the EU OSS threshold (€10,000). For sales above the threshold or global compliance, consult an accountant or a Merchant-of-Record (Paddle/Lemon Squeezy). Tallyst records data for your export; it does not file a tax return.' }
             tax_rate: { label: Rate (%), help: 'E.g. 25. Tax is INCLUDED in the price (computed backwards) — the charged amount does not change.' }
             tax_name: { label: Tax name, help: 'E.g. VAT.' }
+        shipping:
+            title: Shipping
+            intro: 'Named delivery methods with a price (tax included in the amount). Each form chooses which of these to offer at checkout; the buyer picks one if there is more than one.'
+            method: { name: Name, price: 'Price (incl. tax)' }
+            name_placeholder: 'e.g. Standard delivery'
+            add: Add method
+            remove: Remove
+            save: Save shipping methods
+            flash: { saved: Shipping methods saved. }
         orders:
             title: Orders
             thank_you_message: { label: Thank-you message, help: 'Shown to the buyer on the thank-you page after a successful payment, above the order details.' }

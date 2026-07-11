@@ -5,6 +5,7 @@ namespace Tallyst\FormBuilder\Entity;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tallyst\FormBuilder\Repository\OrderRepository;
+use Tallyst\FormBuilder\Service\ShippingAddress;
 
 /**
  * A payment order for a priced form submission (page-as-product). Its lifecycle is
@@ -49,6 +50,17 @@ class Order
     /** The chosen price variant's label (for display in admin + mail); null for non-variant orders. */
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $variantLabel = null;
+
+    // --- Shipping (Faza 1). Null when the form offered no delivery (or a MoR order — never shipped by
+    // Tallyst). amountMinor INCLUDES the shipping amount; these record which method + how much of it.
+
+    /** The chosen delivery method's label at order time (a snapshot — the catalog may change later). */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $shippingLabel = null;
+
+    /** The delivery amount (minor units, inclusive of tax) folded into amountMinor. */
+    #[ORM\Column(nullable: true)]
+    private ?int $shippingAmountMinor = null;
 
     // --- Tax recording (inclusive). amountMinor stays GROSS; these are derived/recorded only.
     // All null when tax was disabled at order time (so export distinguishes "no tax" from a real 0).
@@ -214,6 +226,36 @@ class Order
         $this->variantLabel = $variantLabel;
 
         return $this;
+    }
+
+    public function getShippingLabel(): ?string
+    {
+        return $this->shippingLabel;
+    }
+
+    public function setShippingLabel(?string $shippingLabel): static
+    {
+        $this->shippingLabel = $shippingLabel;
+
+        return $this;
+    }
+
+    public function getShippingAmountMinor(): ?int
+    {
+        return $this->shippingAmountMinor;
+    }
+
+    public function setShippingAmountMinor(?int $shippingAmountMinor): static
+    {
+        $this->shippingAmountMinor = $shippingAmountMinor;
+
+        return $this;
+    }
+
+    /** Formatted shipping amount for the admin detail (string getter — EA TextField rejects raw ints). */
+    public function getShippingFormatted(): string
+    {
+        return null === $this->shippingAmountMinor ? '—' : number_format($this->shippingAmountMinor / 100, 2, ',', '.');
     }
 
     public function getTaxAmountMinor(): ?int
@@ -543,7 +585,7 @@ class Order
         return null !== $this->dodoSettlementCurrency ? $amount.' '.$this->dodoSettlementCurrency : $amount;
     }
 
-    /** Human-readable dump of the submitted form data, for the admin detail view. */
+    /** Human-readable dump of the submitted form data (ALL keys, incl. ship_*), for the CSV export. */
     public function getSubmissionSummary(): string
     {
         $data = $this->submission?->getData() ?? [];
@@ -551,6 +593,47 @@ class Order
         foreach ($data as $key => $value) {
             $lines[] = $key.': '.(is_array($value) ? implode(', ', $value) : (string) $value);
         }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * The submitted form fields EXCLUDING the ship_* delivery address (which is shown on its own as a
+     * formatted block). For the admin detail "Form data" section + the admin mail. Empty when the form
+     * had only address fields.
+     */
+    public function getFormDataSummary(): string
+    {
+        $data = $this->submission?->getData() ?? [];
+        $shipKeys = array_keys(ShippingAddress::FIELDS);
+        $lines = [];
+        foreach ($data as $key => $value) {
+            if (\in_array($key, $shipKeys, true)) {
+                continue; // the delivery address is rendered separately, formatted
+            }
+            $lines[] = $key.': '.(is_array($value) ? implode(', ', $value) : (string) $value);
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * The delivery address as a formatted, multi-line mailing label read from the submission's ship_*
+     * fields (name / street / postal + city / country), skipping empty lines. Empty when the order has
+     * no delivery address. Used by the admin detail, the admin mail and the customer confirmation.
+     */
+    public function getShippingAddressFormatted(): string
+    {
+        $data = $this->submission?->getData() ?? [];
+        $get = static fn (string $key): string => trim((string) ($data[$key] ?? ''));
+
+        $cityLine = trim($get('ship_postal').' '.$get('ship_city'));
+        $lines = array_filter([
+            $get('ship_name'),
+            $get('ship_address'),
+            $cityLine,
+            $get('ship_country'),
+        ], static fn (string $line): bool => '' !== $line);
 
         return implode("\n", $lines);
     }

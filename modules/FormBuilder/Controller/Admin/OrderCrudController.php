@@ -31,6 +31,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Workflow\WorkflowInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Entity\Order;
+use Tallyst\FormBuilder\Payment\MerchantOfRecordInterface;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\OrderRepository;
 use Tallyst\FormBuilder\Service\OrderMailer;
@@ -157,28 +158,72 @@ class OrderCrudController extends AbstractCrudController
             ->renderAsBadges(['stripe' => 'primary', 'paypal' => 'info', 'dodo' => 'warning']);
         yield TextField::new('variantLabel', 'admin.order.field.variant');
         yield TextField::new('customerEmail', 'admin.order.field.customer');
-        yield TextField::new('customerName', 'admin.order.field.customer_name')->onlyOnDetail();
-        yield TextField::new('customerPhone', 'admin.order.field.customer_phone')->onlyOnDetail();
 
-        yield TextField::new('netFormatted', 'admin.order.field.net')->onlyOnDetail();
-        yield TextField::new('taxFormatted', 'admin.order.field.tax')->onlyOnDetail();
-        yield TextField::new('taxRate', 'admin.order.field.tax_rate')->onlyOnDetail();
-        yield TextField::new('taxName', 'admin.order.field.tax_name')->onlyOnDetail();
-        yield TextField::new('customerIp', 'IP')->onlyOnDetail();
+        // The specific order being viewed (detail/edit only; null on index/CSV) drives which sections
+        // apply: MoR-only fields show ONLY for a Merchant-of-Record (Dodo) order, and the delivery block
+        // ONLY when the order was shipped — so a Stripe/PayPal order never shows empty Dodo fields.
+        $order = $this->getContext()?->getEntity()?->getInstance();
+        $order = $order instanceof Order ? $order : null;
+        $isMerchantOfRecord = $this->isMerchantOfRecordOrder($order);
+        $hasShipping = null !== $order && null !== $order->getShippingLabel();
 
-        // Merchant of Record (Dodo): provider-authoritative figures. For a MoR order Tallyst's own tax
-        // columns above stay null by design — Dodo is the seller of record and collects/remits tax
-        // itself. These read "—" for non-Dodo orders (same pattern as the net/tax fields above).
-        yield FormField::addPanel('admin.order.panel.mor')->setHelp('admin.order.panel.mor_help')->onlyOnDetail();
-        yield TextField::new('dodoTaxFormatted', 'admin.order.field.dodo_tax')->onlyOnDetail();
-        yield TextField::new('dodoSettlementFormatted', 'admin.order.field.dodo_settlement')->onlyOnDetail();
-        yield UrlField::new('invoiceUrl', 'admin.order.field.invoice')->setCustomOption('target', '_blank')->onlyOnDetail();
-        yield TextField::new('licenseKey', 'admin.order.field.license_key')->onlyOnDetail();
+        // --- Delivery (Faza 1) — only for a shipped order. Method + amount + the formatted address, so the
+        //     admin can fulfil manually. The address is read from the submission's ship_* fields. ---
+        if ($hasShipping) {
+            yield FormField::addPanel('admin.order.panel.shipping')->setIcon('fa-truck')->onlyOnDetail();
+            yield TextField::new('shippingLabel', 'admin.order.field.shipping_method')->onlyOnDetail();
+            yield TextField::new('shippingFormatted', 'admin.order.field.shipping_amount')->onlyOnDetail();
+            yield TextareaField::new('shippingAddressFormatted', 'admin.order.field.shipping_address')->onlyOnDetail();
+        }
 
+        // --- Buyer (Dodo passive capture) — name/phone come from the MoR provider, so ONLY for MoR. ---
+        if ($isMerchantOfRecord) {
+            yield TextField::new('customerName', 'admin.order.field.customer_name')->onlyOnDetail();
+            yield TextField::new('customerPhone', 'admin.order.field.customer_phone')->onlyOnDetail();
+        }
+
+        // --- Tallyst tax (inclusive) — only when actually applied (a MoR order has none by design). ---
+        if (null !== $order && null !== $order->getTaxAmountMinor()) {
+            yield FormField::addPanel('admin.order.panel.tax')->onlyOnDetail();
+            yield TextField::new('netFormatted', 'admin.order.field.net')->onlyOnDetail();
+            yield TextField::new('taxFormatted', 'admin.order.field.tax')->onlyOnDetail();
+            yield TextField::new('taxRate', 'admin.order.field.tax_rate')->onlyOnDetail();
+            yield TextField::new('taxName', 'admin.order.field.tax_name')->onlyOnDetail();
+        }
+
+        // --- Merchant of Record (Dodo): provider-authoritative figures — ONLY for a MoR order. ---
+        if ($isMerchantOfRecord) {
+            yield FormField::addPanel('admin.order.panel.mor')->setHelp('admin.order.panel.mor_help')->onlyOnDetail();
+            yield TextField::new('dodoTaxFormatted', 'admin.order.field.dodo_tax')->onlyOnDetail();
+            yield TextField::new('dodoSettlementFormatted', 'admin.order.field.dodo_settlement')->onlyOnDetail();
+            yield UrlField::new('invoiceUrl', 'admin.order.field.invoice')->setCustomOption('target', '_blank')->onlyOnDetail();
+            yield TextField::new('licenseKey', 'admin.order.field.license_key')->onlyOnDetail();
+        }
+
+        // --- Payment (neutral: applies to every provider, not just Dodo). ---
+        yield FormField::addPanel('admin.order.panel.payment')->onlyOnDetail();
         yield TextField::new('paymentMode', 'admin.order.field.mode')->onlyOnDetail();
         yield TextField::new('providerSessionId', 'Checkout session')->onlyOnDetail();
         yield TextField::new('providerPaymentIntentId', 'Payment intent')->onlyOnDetail();
-        yield TextareaField::new('submissionSummary', 'admin.order.field.submission')->onlyOnDetail();
+        yield TextField::new('customerIp', 'IP')->onlyOnDetail();
+
+        // --- Form data (the buyer's other submitted fields; the delivery address is shown above). ---
+        yield FormField::addPanel('admin.order.panel.form_data')->onlyOnDetail();
+        yield TextareaField::new('formDataSummary', 'admin.order.field.submission')->onlyOnDetail();
+    }
+
+    /** Order-level MoR signal: is this order's payment provider a Merchant-of-Record (Dodo)? */
+    private function isMerchantOfRecordOrder(?Order $order): bool
+    {
+        if (null === $order) {
+            return false;
+        }
+
+        try {
+            return $this->payments->get($order->getProvider()) instanceof MerchantOfRecordInterface;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**
@@ -203,7 +248,7 @@ class OrderCrudController extends AbstractCrudController
             // CSV headers are FIXED ENGLISH (never localised, NOT through trans) — a data export is a
             // global, predictable format for accountants / external systems / re-import, independent of
             // the admin's UI language. Deterministic regardless of app_locale.
-            fputcsv($out, ['ID', 'Date', 'Gross', 'Net', 'Tax', 'Rate', 'Tax name', 'Currency', 'Provider', 'Mode', 'Status', 'E-mail', 'Variant', 'Customer data'], ',', '"', '');
+            fputcsv($out, ['ID', 'Date', 'Gross', 'Net', 'Tax', 'Rate', 'Tax name', 'Currency', 'Provider', 'Mode', 'Status', 'E-mail', 'Variant', 'Shipping method', 'Shipping', 'Customer data'], ',', '"', '');
             foreach ($orders as $o) {
                 // Form data on one CSV line: flatten the summary's newlines (fputcsv handles commas/quotes).
                 $customerData = str_replace(["\r\n", "\n", "\r"], '; ', $o->getSubmissionSummary());
@@ -221,6 +266,8 @@ class OrderCrudController extends AbstractCrudController
                     $o->getStatus(),
                     $o->getCustomerEmail() ?? '',
                     $o->getVariantLabel() ?? '',
+                    $o->getShippingLabel() ?? '',
+                    $money($o->getShippingAmountMinor()),
                     $customerData,
                 ], ',', '"', '');
             }
