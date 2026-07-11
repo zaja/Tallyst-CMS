@@ -79,6 +79,13 @@
                 {% if section.key == 'shipping' %}
                     {{ include('@FormBuilder/admin/_shipping_methods.html.twig') }}
                 {% endif %}
+
+                {# Tax editor: master toggle + rate catalog, both bound to the separate <form id="settings-tax">
+                   below via form= (one Save persists both). The tax section declares no scalar defs, so the
+                   generic Save is auto-hidden — like Shipping. #}
+                {% if section.key == 'tax' %}
+                    {{ include('@FormBuilder/admin/_tax_rates.html.twig') }}
+                {% endif %}
                 </div>
             {% endfor %}
         </div>
@@ -106,6 +113,15 @@
     {% if has_shipping %}
         <form id="settings-shipping" method="post" action="{{ path('admin_settings_shipping_save') }}">
             <input type="hidden" name="_token" value="{{ csrf_token('settings_shipping') }}">
+        </form>
+    {% endif %}
+
+    {# The tax-rate catalog form: empty here (no nested forms); the editor's inputs sit in the Tax tab
+       above and bind to it via form="settings-tax". Only on the tab with that section. #}
+    {% set has_tax = current.sections|filter(s => s.key == 'tax')|length > 0 %}
+    {% if has_tax %}
+        <form id="settings-tax" method="post" action="{{ path('admin_settings_tax_save') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('settings_tax') }}">
         </form>
     {% endif %}
 {% endblock %}

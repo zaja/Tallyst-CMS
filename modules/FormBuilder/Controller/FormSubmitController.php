@@ -300,12 +300,19 @@ class FormSubmitController extends AbstractController
         $order->setCustomerIp($request->getClientIp());
         // Merchant-of-Record providers (Dodo) are the legal seller and handle tax themselves — never
         // apply Tallyst's inclusive tax to a MoR order (it would double-count). Tax fields stay null.
-        if (!$isMerchantOfRecord && $this->tax->isEnabled()) {
-            $b = $this->tax->breakdown($amountMinor);
-            $order->setNetAmountMinor($b['net'])
-                ->setTaxAmountMinor($b['tax'])
-                ->setTaxRate((string) $this->tax->rate())
-                ->setTaxName($this->tax->name());
+        if (!$isMerchantOfRecord) {
+            // Per-form resolution (Faza 3): forForm() picks the rate BY KEY from the live catalog (null =
+            // no tax — master off, per-form "no tax", or empty catalog). The gross ($amountMinor, product +
+            // shipping) and the inclusive formula are UNCHANGED — only the rate source moved to the form's
+            // key. The resolved rate/name are snapshotted onto the order (historical — old orders untouched).
+            $eff = $this->tax->forForm($form);
+            if (null !== $eff) {
+                $b = $this->tax->breakdown($amountMinor, (float) $eff['rate']);
+                $order->setNetAmountMinor($b['net'])
+                    ->setTaxAmountMinor($b['tax'])
+                    ->setTaxRate((string) $eff['rate'])
+                    ->setTaxName($eff['name']);
+            }
         }
 
         $this->orders->save($order); // persist to obtain an id

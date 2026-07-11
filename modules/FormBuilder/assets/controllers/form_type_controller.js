@@ -18,7 +18,7 @@ import { Controller } from '@hotwired/stimulus';
  * server's isMerchantOfRecordForm omission — but only for the LIVE builder view; the backend is untouched.
  */
 export default class extends Controller {
-    static targets = ['option', 'paid', 'free', 'priceHint', 'countries', 'shipping'];
+    static targets = ['option', 'paid', 'free', 'priceHint', 'countries', 'shipping', 'tax'];
 
     connect() {
         const active = this.optionTargets.find((b) => b.hasAttribute('data-active')) || this.optionTargets[0];
@@ -47,6 +47,7 @@ export default class extends Controller {
         const mor = this.isMerchantOfRecord();
         this.updateShipping(mor);
         this.updateCountries(mor);
+        this.updateTax(mor);
         this.updateHint();
     }
 
@@ -66,6 +67,11 @@ export default class extends Controller {
     /** Delivery methods are meaningless on a MoR form — hide the whole block live (never cleared). */
     updateShipping(mor) {
         this.shippingTargets.forEach((el) => el.classList.toggle('d-none', mor));
+    }
+
+    /** The MoR handles its own tax — hide the per-form tax-rate block live (never cleared). */
+    updateTax(mor) {
+        this.taxTargets.forEach((el) => el.classList.toggle('d-none', mor));
     }
 
     /** Show the country block only when a delivery method is checked AND the form isn't MoR. */

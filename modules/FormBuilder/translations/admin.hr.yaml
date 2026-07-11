@@ -131,6 +131,10 @@ admin:
             shipping_none: 'Još nema definiranih načina dostave. Dodaj ih u Postavke → Dostava.'
             shipping_countries: Zemlje isporuke
             shipping_countries_help: 'Ograniči dostavu na ove zemlje. Ostavi prazno za isporuku svugdje. Vrijedi samo kad forma nudi dostavu.'
+            tax_rate: Porezna stopa
+            tax_rate_help: 'Koja se porezna stopa primjenjuje na ovaj proizvod (stope se definiraju u Postavke → Porez). Izaberi imenovanu stopu ili „Bez poreza”. Nova forma kreće na zadanoj stopi. Vrijedi samo kad je porez uključen.'
+            tax_rate_default_suffix: zadana
+            tax_rate_none: Bez poreza
             countries:
                 search: Pretraži zemlje…
                 preset_eu: EU
@@ -246,9 +250,16 @@ admin:
                 choice: { test: Test, live: Live (produkcija) }
         tax:
             title: Porez
-            tax_enabled: { label: Obračunaj porez, help: 'Primjenjuje JEDNU stopu (uključenu u cijenu) na sve narudžbe — ispravno za domaću prodaju / ispod EU OSS praga (€10.000). Za prodaju preko praga ili globalnu usklađenost konzultiraj knjigovođu ili Merchant-of-Record (Paddle/Lemon Squeezy). Tallyst bilježi podatke za tvoj export, ne podnosi poreznu prijavu.' }
+            tax_enabled: { label: Obračunaj porez, help: 'Glavni prekidač. Kad je UKLJUČEN, svaki proizvod koristi svoju odabranu stopu iz liste ispod (ili zadanu); proizvod se može postaviti i na "bez poreza". Kad je ISKLJUČEN, nema poreza nigdje. Porez je UKLJUČEN u cijenu — naplaćeni iznos se ne mijenja. Tallyst bilježi podatke za tvoj export, ne podnosi poreznu prijavu.' }
             tax_rate: { label: Stopa (%), help: 'Npr. 25. Porez je UKLJUČEN u cijenu (izračuna se unatrag) — naplaćeni iznos se ne mijenja.' }
             tax_name: { label: Naziv poreza, help: 'Npr. PDV.' }
+            intro: 'Imenovane porezne stope (svaka uključena u cijenu). Svaki proizvod bira jednu — ili zadanu, označenu ispod.'
+            rate: { name: Naziv, rate: 'Stopa (%)', default: Zadana }
+            name_placeholder: 'npr. PDV'
+            add: Dodaj stopu
+            remove: Ukloni
+            save: Spremi porezne stope
+            flash: { saved: Porezne stope spremljene. }
         shipping:
             title: Dostava
             intro: 'Imenovani načini dostave s cijenom (porez uključen u iznos). Svaka forma bira koje od ovih nudi na blagajni; kupac odabire jedan ako ih je više.'

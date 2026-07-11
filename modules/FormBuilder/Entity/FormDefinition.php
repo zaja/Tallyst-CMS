@@ -23,6 +23,12 @@ class FormDefinition
     public const STATUS_DRAFT = 'draft';
     public const STATUS_PUBLISHED = 'published';
 
+    /**
+     * taxRateKey sentinel = "no tax on this form" (an explicit opt-out, distinct from NULL = default rate).
+     * Never collides with a real catalog key (those are 8-hex). See PLAN-FAZA-3-POREZ.md §3.
+     */
+    public const TAX_NONE = 'none';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -85,6 +91,19 @@ class FormDefinition
      */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $allowedShippingCountries = null;
+
+    /**
+     * Which named tax rate (from the TaxCatalog) applies to THIS form (Faza 3). Three states:
+     *   NULL           → the catalog's DEFAULT rate (backward-compat: every existing form has null → charges
+     *                    identically to before, when there was one global rate);
+     *   '<key>'        → that specific catalog rate;
+     *   self::TAX_NONE → an explicit "no tax" opt-out.
+     * A deleted key falls back to the default at resolution time (TaxCalculator::forForm, Faza 3 Komad 4),
+     * so a stale key never breaks checkout. Ignored entirely on a MoR (Dodo) form (the MoR owns tax).
+     * See PLAN-FAZA-3-POREZ.md §3, §4.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $taxRateKey = null;
 
     /**
      * The Dodo (Merchant-of-Record) product this form sells against. Per-form so each product maps to
@@ -369,6 +388,23 @@ class FormDefinition
         }
 
         return in_array(strtoupper(trim($code)), $this->allowedShippingCountries, true);
+    }
+
+    public function getTaxRateKey(): ?string
+    {
+        return $this->taxRateKey;
+    }
+
+    /**
+     * Store null for an empty/absent choice (= the default rate) so a blank submit and an untouched form
+     * are identical; a real 8-hex key or the TAX_NONE sentinel are kept verbatim.
+     */
+    public function setTaxRateKey(?string $taxRateKey): static
+    {
+        $taxRateKey = null === $taxRateKey ? null : trim($taxRateKey);
+        $this->taxRateKey = ('' === $taxRateKey) ? null : $taxRateKey;
+
+        return $this;
     }
 
     public function getDodoProductId(): ?string

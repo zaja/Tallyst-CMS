@@ -2,24 +2,22 @@
 
 namespace Tallyst\FormBuilder\Settings;
 
-use App\Settings\SettingDefinition;
 use App\Settings\SettingsSection;
 use App\Settings\SettingsSectionProviderInterface;
-use App\Settings\SettingType;
 
 /**
- * FormBuilder's "Porez" settings section. Deliberately small: ONE inclusive rate (toggle) — Tallyst
- * is not a tax engine or Merchant-of-Record. The help text states the honest boundary so the admin
- * doesn't mistake it for global compliance.
+ * FormBuilder's "Porez" settings section. Like the Shipping tab, this section carries NO SettingDefinitions —
+ * it exists only to register the tab slot (an ungrouped section → its own tab). Everything the Tax tab edits
+ * is owned by FormBuilder and saved through ONE custom form (the _tax_rates partial + TaxSettingsController):
+ * the `tax_enabled` MASTER switch (default off — a fresh install applies NO tax) AND the named rate LIST
+ * (TaxCatalog, one JSON setting). Both persist on a single "Save" — the Core SettingsController never sees
+ * either. The legacy tax_rate/tax_name scalars seed the catalog's default entry lazily (see TaxCatalog);
+ * they are read only until the admin first saves the list. See PLAN-FAZA-3-POREZ.md §3, §6.
  */
 class TaxSettingsProvider implements SettingsSectionProviderInterface
 {
     public function getSettingsSections(): iterable
     {
-        yield new SettingsSection('tax', 'admin.settings.tax.title', 'fa-percent', [
-            new SettingDefinition('tax_enabled', SettingType::BOOL, 'admin.settings.tax.tax_enabled.label', 'admin.settings.tax.tax_enabled.help', false),
-            new SettingDefinition('tax_rate', SettingType::STRING, 'admin.settings.tax.tax_rate.label', 'admin.settings.tax.tax_rate.help', '25'),
-            new SettingDefinition('tax_name', SettingType::STRING, 'admin.settings.tax.tax_name.label', 'admin.settings.tax.tax_name.help', 'PDV'),
-        ]);
+        yield new SettingsSection('tax', 'admin.settings.tax.title', 'fa-percent', []);
     }
 }

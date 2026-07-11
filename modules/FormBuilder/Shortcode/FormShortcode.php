@@ -58,7 +58,11 @@ class FormShortcode implements ShortcodeInterface
         // Single source of truth (FormPaymentResolver): a Merchant-of-Record form (Dodo product or a MoR
         // provider allowed) suppresses the Tallyst inclusive-tax note — the MoR collects tax itself.
         $isMerchantOfRecord = $this->paymentResolver->isMerchantOfRecordForm($form);
-        $showTax = $this->tax->isEnabled() && $form->isProduct() && !$isMerchantOfRecord;
+        // Per-form resolution (Faza 3): the note shows the form's OWN rate (by key from the live catalog),
+        // so changing a rate's percentage in Settings updates the note immediately. Same gate as before
+        // (product, non-MoR); forForm() also folds in the master switch + per-form "no tax" (→ null).
+        $tax = ($form->isProduct() && !$isMerchantOfRecord) ? $this->tax->forForm($form) : null;
+        $showTax = null !== $tax;
 
         // Shipping (Faza 1): offered only on a product form that ISN'T MoR — same suppression as the tax
         // note (a MoR form never shows delivery/address). offeredFor filters the form's selection against
@@ -74,7 +78,7 @@ class FormShortcode implements ShortcodeInterface
             // MoR form → the resolver offers ONLY Dodo (never Stripe/PayPal), regardless of
             // allowedPaymentMethods (incl. empty). This closes the front gap (all methods shown).
             'payment_methods' => $form->isProduct() ? $this->paymentMethods($form) : [],
-            'tax' => ['enabled' => $showTax, 'name' => $this->tax->name(), 'rate' => $this->tax->rate()],
+            'tax' => ['enabled' => $showTax, 'name' => $tax['name'] ?? '', 'rate' => $tax['rate'] ?? 0.0],
             'shipping' => $offeredShipping,
             'shipping_address' => [] !== $offeredShipping ? ShippingAddress::FIELDS : [],
             'currency' => strtoupper($form->getCurrency() ?: 'eur'),

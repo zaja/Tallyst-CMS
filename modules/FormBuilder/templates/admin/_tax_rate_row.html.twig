@@ -1,0 +1,30 @@
+{# One tax-rate row: hidden stable key + name + rate(%) + default(radio) + remove. Plain-array inputs
+   (rates[i][*]) bound to the separate settings-tax form via the HTML5 form= attribute. `rate` is a
+   {key,name,rate,default} map (empty map for the prototype). The default radio shares one name
+   (default_row) so exactly one is selected; its value is the row index (matches rates[i]). #}
+<div class="fb-field-row fb-variant-row mb-2" data-fb-item>
+    <input type="hidden" name="rates[{{ index }}][key]" value="{{ rate.key|default('') }}" form="settings-tax">
+    <div class="row g-2 align-items-end">
+        <div class="col">
+            <label class="form-label small mb-1">{{ 'admin.settings.tax.rate.name'|trans({}, 'admin') }}</label>
+            <input type="text" class="form-control" name="rates[{{ index }}][name]"
+                   value="{{ rate.name|default('') }}" form="settings-tax"
+                   placeholder="{{ 'admin.settings.tax.name_placeholder'|trans({}, 'admin') }}">
+        </div>
+        <div class="col-auto" style="max-width: 9rem;">
+            <label class="form-label small mb-1">{{ 'admin.settings.tax.rate.rate'|trans({}, 'admin') }}</label>
+            <input type="number" step="0.01" min="0" class="form-control" name="rates[{{ index }}][rate]"
+                   value="{{ rate.rate|default('') }}" form="settings-tax">
+        </div>
+        <div class="col-auto text-center">
+            <label class="form-label small mb-1 d-block">{{ 'admin.settings.tax.rate.default'|trans({}, 'admin') }}</label>
+            <input type="radio" class="form-check-input mt-2" name="default_row" value="{{ index }}"
+                   {{ rate.default|default(false) ? 'checked' : '' }} form="settings-tax"
+                   title="{{ 'admin.settings.tax.rate.default'|trans({}, 'admin') }}">
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-outline-danger" data-action="formbuilder--builder#remove"
+                    title="{{ 'admin.settings.tax.remove'|trans({}, 'admin') }}">&times;</button>
+        </div>
+    </div>
+</div>

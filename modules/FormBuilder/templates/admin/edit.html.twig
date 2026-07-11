@@ -100,6 +100,16 @@
                     </div>
                 </div>
 
+                {# Per-form tax rate (Faza 3): a single dropdown. Placeholder = the catalog DEFAULT rate
+                   (empty value → null → backward-compat); named rates; "no tax". OMITTED server-side on a
+                   MoR form (guard on presence) and hidden LIVE when Dodo is picked (formtype "tax" target).
+                   render_row explicit — form_end uses render_rest:false, so an unrendered field vanishes. #}
+                {% if form.taxRateKey is defined %}
+                    <div class="fb-subblock" data-formbuilder--formtype-target="tax">
+                        {{ form_row(form.taxRateKey) }}
+                    </div>
+                {% endif %}
+
                 {# Shipping offer: which catalog methods this form shows at checkout. OMITTED from the form
                    on a MoR (Dodo) form (shipping is meaningless there), so guard on field presence; a
                    muted note when the catalog is empty. #}

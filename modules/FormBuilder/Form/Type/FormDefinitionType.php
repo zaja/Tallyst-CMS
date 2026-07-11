@@ -15,12 +15,14 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Payment\DodoProcessor;
 use Tallyst\FormBuilder\Payment\MerchantOfRecordInterface;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Service\FormPaymentResolver;
 use Tallyst\FormBuilder\Service\ShippingCatalog;
+use Tallyst\FormBuilder\Service\TaxCatalog;
 
 class FormDefinitionType extends AbstractType
 {
@@ -31,6 +33,8 @@ class FormDefinitionType extends AbstractType
         private readonly DodoProcessor $dodo,
         private readonly FormPaymentResolver $paymentResolver,
         private readonly ShippingCatalog $shipping,
+        private readonly TaxCatalog $tax,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -179,6 +183,52 @@ class FormDefinitionType extends AbstractType
                 'multiple' => true,
                 'expanded' => true,
             ]);
+        }
+
+        // Per-form tax rate (Faza 3): a single dropdown offering ONLY the named catalog rates + a TAX_NONE
+        // "no tax" sentinel — NO "default" item (that was a technical artefact that read like a duplicate).
+        // A new form preselects the catalog DEFAULT rate (the model transformer below maps null → the
+        // default key), so a form is always bound to a CONCRETE rate; changing the default in Settings then
+        // never retroactively changes an existing form. Rate labels are dynamic literals (name + %); "no
+        // tax" is a translation key. OMITTED on a MoR form (the MoR owns tax) — same gate as shipping; the
+        // paid/free card-toggle hides it on a free form. See PLAN-FAZA-3-POREZ.md §3.
+        if (!$isMerchantOfRecordForm) {
+            // A quiet "— default" tag next to the rate flagged default in Settings → Tax (visual only —
+            // the stored value stays the rate key). Rate labels are dynamic literals (already-translated
+            // suffix included), so ChoiceType's trans() is a no-op on them; "no tax" is a translation key.
+            $defaultSuffix = $this->translator->trans('admin.form.def.tax_rate_default_suffix', [], 'admin');
+            $taxChoices = [];
+            foreach ($this->tax->all() as $rate) {
+                $label = sprintf('%s (%s%%)', $rate['name'], $rate['rate']);
+                if ($rate['default']) {
+                    $label .= ' — '.$defaultSuffix;
+                }
+                $taxChoices[$label] = $rate['key'];
+            }
+            $taxChoices['admin.form.def.tax_rate_none'] = FormDefinition::TAX_NONE;
+
+            $builder->add('taxRateKey', ChoiceType::class, [
+                'required' => false,
+                'label' => 'admin.form.def.tax_rate',
+                'help' => 'admin.form.def.tax_rate_help',
+                'choices' => $taxChoices,
+                // No empty option: a non-required non-multiple ChoiceType would otherwise default to an
+                // empty `<option value="">` (a blank artefact like the old "default" item). The transformer
+                // guarantees a value (the default key) is always selected, so false is safe.
+                'placeholder' => false,
+            ]);
+
+            // Preselect the catalog default for a NEW form: map null → the default key for display, so the
+            // dropdown shows the concrete default selected (never an empty/"default" option). Existing forms
+            // are backfilled to a concrete key by migration; this only concretizes a brand-new (or residual
+            // null) form on save — a form already carrying a key or "no tax" is untouched (identity).
+            $defaultKey = $this->tax->default()['key'] ?? null;
+            if (null !== $defaultKey) {
+                $builder->get('taxRateKey')->addModelTransformer(new CallbackTransformer(
+                    static fn (?string $key): ?string => $key ?? $defaultKey,
+                    static fn (?string $key): ?string => $key,
+                ));
+            }
         }
 
         $this->addDodoProductField($builder);
