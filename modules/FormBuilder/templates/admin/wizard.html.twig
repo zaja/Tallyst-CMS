@@ -52,6 +52,8 @@
             </div>
 
             {# Q3 — who handles tax (only for a digital product; physical never asks — it can't be MoR) #}
+            {# Q3 — who handles the tax (CATEGORY: self vs a provider). Only for a digital product. #}
+            {% set any_mor_configured = mor_providers|filter(p => p.configured)|length > 0 %}
             <div class="card mb-3 fb-card d-none" data-formbuilder--wizard-target="q3block">
                 <div class="card-body">
                     <h2 class="h5 fb-section-title">{{ 'admin.form.wizard.q3'|trans({}, 'admin') }}</h2>
@@ -61,14 +63,33 @@
                             <span class="fb-wizard-title">{{ 'admin.form.wizard.q3_self'|trans({}, 'admin') }}</span>
                             <span class="fb-wizard-sub">{{ 'admin.form.wizard.q3_self_sub'|trans({}, 'admin') }}</span>
                         </label>
-                        <label class="fb-wizard-option{{ dodo_configured ? '' : ' fb-wizard-option--disabled' }}">
-                            <input type="radio" name="q3" value="mor" data-action="formbuilder--wizard#change"{{ dodo_configured ? '' : ' disabled' }}>
+                        <label class="fb-wizard-option{{ any_mor_configured ? '' : ' fb-wizard-option--disabled' }}">
+                            <input type="radio" name="q3" value="mor" data-action="formbuilder--wizard#change"{{ any_mor_configured ? '' : ' disabled' }}>
                             <span class="fb-wizard-title">{{ 'admin.form.wizard.q3_mor'|trans({}, 'admin') }}</span>
                             <span class="fb-wizard-sub">{{ 'admin.form.wizard.q3_mor_sub'|trans({}, 'admin') }}</span>
-                            {% if not dodo_configured %}
+                            {% if not any_mor_configured %}
                                 <span class="fb-wizard-note">{{ 'admin.form.wizard.q3_mor_disabled'|trans({}, 'admin') }}</span>
                             {% endif %}
                         </label>
+                    </div>
+                </div>
+            </div>
+
+            {# Q4 — WHICH provider (only when Q3 = provider). One card per registered MoR provider (today
+               only Dodo); an unconfigured one is disabled with a note. #}
+            <div class="card mb-3 fb-card d-none" data-formbuilder--wizard-target="q4block">
+                <div class="card-body">
+                    <h2 class="h5 fb-section-title">{{ 'admin.form.wizard.q4'|trans({}, 'admin') }}</h2>
+                    <div class="fb-wizard-grid">
+                        {% for p in mor_providers %}
+                            <label class="fb-wizard-option{{ p.configured ? '' : ' fb-wizard-option--disabled' }}">
+                                <input type="radio" name="q4" value="{{ p.name }}" data-action="formbuilder--wizard#change"{{ p.configured ? '' : ' disabled' }}>
+                                <span class="fb-wizard-title">{{ p.label }}</span>
+                                {% if not p.configured %}
+                                    <span class="fb-wizard-note">{{ 'admin.form.wizard.q4_unconfigured'|trans({'%provider%': p.label}, 'admin') }}</span>
+                                {% endif %}
+                            </label>
+                        {% endfor %}
                     </div>
                 </div>
             </div>

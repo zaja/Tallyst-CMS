@@ -61,6 +61,15 @@ admin:
         flash:
             deleted: Form deleted.
             saved: Form saved.
+            dodo_unverified: 'The Dodo product couldn''t be verified (Dodo unreachable). Saved — but make sure it''s a fixed-price one-time product.'
+        dodo_refresh:
+            button: Refresh from Dodo
+            confirm: 'Apply these changes from Dodo?'
+            up_to_date: 'This product''s data is already up to date.'
+            unsellable: '⚠ This product is now a subscription / usage-based / pay-what-you-want product — Tallyst can''t sell it.'
+            archived: '⚠ This product is archived on Dodo.'
+            not_found: 'This product no longer exists on Dodo.'
+            error: 'Couldn''t reach Dodo. Nothing was changed.'
         wizard:
             title: Create a form
             intro: A couple of quick questions, then you'll fill in the details.
@@ -79,9 +88,11 @@ admin:
             q3: Who handles the tax?
             q3_self: I do
             q3_self_sub: 'You charge via Stripe/PayPal and handle VAT yourself.'
-            q3_mor: A Merchant-of-Record
-            q3_mor_sub: 'Dodo is the seller and handles global tax for you.'
-            q3_mor_disabled: 'Configure Dodo in Settings → Dodo Payments to use this.'
+            q3_mor: A provider (Merchant-of-Record)
+            q3_mor_sub: 'The provider is the legal seller and handles the tax for you.'
+            q3_mor_disabled: 'Configure a Merchant-of-Record provider (e.g. Dodo) in Settings first.'
+            q4: Which provider?
+            q4_unconfigured: 'Configure %provider% in Settings to use it.'
         index:
             title: Forms
             new: + New form
@@ -118,6 +129,7 @@ admin:
             add_field: + Add field
             add_variant: + Add variant
             duplicate_keys: 'Field keys must be unique within the form. Duplicates: %keys%'
+            dodo_product_unsupported: 'This Dodo product is recurring or pay-what-you-want, which Tallyst can''t sell. Choose a fixed-price one-time product.'
         field:
             new: New field
             required_badge: required
@@ -176,7 +188,7 @@ admin:
             dodo_product_help: 'The Dodo product this form sells against (from your Dodo catalogue in the active test/live mode).'
             dodo_product_help_manual: 'Could not load Dodo products — enter the product ID manually.'
             dodo_product_help_no_key: 'Configure the Dodo API key in Settings → Dodo Payments to pick from your catalogue.'
-            dodo_price_note: 'For Dodo forms the final price is charged by Dodo per the product''s setting — this is a display value; adjust manually if you change it on Dodo.'
+            dodo_price_note: 'For Dodo forms the final price is charged by Dodo per the product''s setting — this is a display value only. Dodo may apply localized prices (per country/currency) and discounts, so the buyer''s total can differ from what''s shown here.'
             notify_enabled: Send an e-mail on submission
             notify_enabled_help: Free forms only. Paid forms send an order confirmation.
             notify_recipient: Recipient(s)

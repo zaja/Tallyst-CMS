@@ -224,7 +224,9 @@ class FormSubmitController extends AbstractController
         }
 
         // A MoR form must have a linked provider product (per-form). Separate from the provider being
-        // configured — a configured Dodo still can't sell a form with no product. Clear error, no 500.
+        // configured — a configured MoR provider still can't sell a form with no product. Clear error, no
+        // 500. The product id is the provider's own (dodoProductId = Dodo's product; a second MoR provider
+        // would key on its own id — Paddle-phase). Gated on the per-PAYMENT $isMerchantOfRecord (unchanged).
         if ($isMerchantOfRecord && null === $form->getDodoProductId()) {
             $this->addFlash('danger', $this->translator->trans('form.product_not_linked', [], 'messages'));
 

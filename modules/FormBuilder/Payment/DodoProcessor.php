@@ -219,18 +219,20 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
     /**
      * List the Dodo products in the ACTIVE mode (test/live), for the per-form product picker. READ-ONLY
      * — never writes to Dodo (not a payment path). Each item carries a display `price` label PLUS the
-     * structured `priceMinor` + `currency` used to one-time PREFILL the Tallyst price/currency fields.
+     * structured `priceMinor` + `currency` + `description` used to one-time PREFILL the Tallyst fields.
      * Returns [] when the provider isn't configured (no HTTP) or on ANY error — the caller falls back
      * to a manual product-id input, never a hard failure.
      *
-     * A short timeout + a page cap keep the edit-form render responsive.
+     * Faza 5 K4: Tallyst sells ONLY a fixed-price one-time product, so the picker must offer ONLY those.
+     * We ask Dodo for one-time, non-archived products (query `recurring=false` + `archived=false`), AND —
+     * belt-and-suspenders, in case the API ignores a filter — DROP any item that reports as recurring /
+     * usage-based or "pay what you want" locally. A recurring/PWYW product can NEVER reach the dropdown.
      *
-     * ⚠ VERIFY (no web access) — assumptions from the brief, correct against the Dodo API reference:
-     *   - endpoint GET /products, Bearer auth (same as the rest of this processor),
-     *   - pagination query keys (assumed page_number + page_size) + the response items key (assumed `items`),
-     *   - the product id / name / price field names in each item.
+     * Query keys (page_size ≤ 100, page_number, recurring, archived) + the item fields (product_id, name,
+     * description, price [minor units], currency, is_recurring, price_detail) are per the Dodo API reference.
+     * ⚠ VERIFY only the LIST envelope key (assumed `items`; some APIs return `data` or a bare array).
      *
-     * @return list<array{id: string, name: string, price: ?string, priceMinor: ?int, currency: ?string}>
+     * @return list<array{id: string, name: string, description: ?string, price: ?string, priceMinor: ?int, currency: ?string}>
      */
     public function listProducts(): array
     {
@@ -245,7 +247,8 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
         try {
             for ($page = 0; $page < $maxPages; ++$page) {
                 $response = $this->request('GET', '/products', [
-                    'query' => ['page_number' => $page, 'page_size' => $pageSize],
+                    // Strings, not booleans: http_build_query turns false into "0" — Dodo wants "false".
+                    'query' => ['page_number' => $page, 'page_size' => $pageSize, 'recurring' => 'false', 'archived' => 'false'],
                     'timeout' => 8,
                 ]);
                 if ($response->getStatusCode() >= 300) {
@@ -269,10 +272,15 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
                     if (!is_scalar($id) || '' === (string) $id) {
                         continue;
                     }
+                    // Local guard: Tallyst can't sell a recurring/usage-based or pay-what-you-want product.
+                    if (!$this->isOneTimeProduct($item) || $this->isPayWhatYouWant($item)) {
+                        continue;
+                    }
                     $price = $this->extractPrice($item);
                     $products[] = [
                         'id' => (string) $id,
                         'name' => is_scalar($item['name'] ?? null) && '' !== (string) $item['name'] ? (string) $item['name'] : (string) $id,
+                        'description' => is_scalar($item['description'] ?? null) && '' !== (string) $item['description'] ? (string) $item['description'] : null,
                         'price' => $price['label'],
                         'priceMinor' => $price['minor'],
                         'currency' => $price['currency'],
@@ -291,6 +299,118 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
         }
 
         return $products;
+    }
+
+    /**
+     * A one-time product = NOT recurring and NOT usage-based. Uses the top-level is_recurring flag first,
+     * then the price_detail union (whether keyed `recurring_price`/`usage_based_price` or tagged by `type`).
+     *
+     * @param array<string, mixed> $item
+     */
+    private function isOneTimeProduct(array $item): bool
+    {
+        if (true === ($item['is_recurring'] ?? null)) {
+            return false;
+        }
+
+        $detail = $item['price_detail'] ?? null;
+        if (is_array($detail)) {
+            if (isset($detail['recurring_price']) || isset($detail['usage_based_price'])) {
+                return false;
+            }
+            $type = is_scalar($detail['type'] ?? null) ? (string) $detail['type'] : null;
+            if (in_array($type, ['recurring_price', 'usage_based_price'], true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * A "pay what you want" product (variable price) — Tallyst has no variable-price concept, so it's
+     * excluded. Tolerates both price_detail.pay_what_you_want and price_detail.one_time_price.pay_what_you_want.
+     *
+     * @param array<string, mixed> $item
+     */
+    private function isPayWhatYouWant(array $item): bool
+    {
+        $detail = $item['price_detail'] ?? null;
+        if (!is_array($detail)) {
+            return false;
+        }
+        if (true === ($detail['pay_what_you_want'] ?? null)) {
+            return true;
+        }
+        $oneTime = $detail['one_time_price'] ?? null;
+
+        return is_array($oneTime) && true === ($oneTime['pay_what_you_want'] ?? null);
+    }
+
+    /**
+     * Fetch ONE product's current data by id (GET /products/{id}) — READ-ONLY, never a checkout path.
+     * Returns:
+     *   - null                        → could NOT fetch (unconfigured / transient API error),
+     *   - ['found' => false]          → the product no longer exists on Dodo (404),
+     *   - ['found' => true, name, description, priceMinor, currency, sellable, archived] → the live data.
+     * `sellable` = a fixed-price one-time product (not recurring / usage-based / pay-what-you-want).
+     * Used by the save-time guard (isSellableProduct) AND the "refresh from Dodo" button (Faza 5 K7).
+     *
+     * @return array{found: bool, name?: string, description?: string, priceMinor?: ?int, currency?: ?string, sellable?: bool, archived?: bool}|null
+     */
+    public function fetchProductInfo(string $id): ?array
+    {
+        if (!$this->isConfigured() || '' === trim($id)) {
+            return null;
+        }
+
+        try {
+            $response = $this->request('GET', '/products/'.rawurlencode($id), ['timeout' => 8]);
+            $status = $response->getStatusCode();
+            if (404 === $status) {
+                return ['found' => false];
+            }
+            if ($status >= 300) {
+                return null; // transient error → "couldn't fetch"
+            }
+            $item = $response->toArray(false);
+            if (!is_array($item)) {
+                return null;
+            }
+
+            $price = $this->extractPrice($item);
+
+            return [
+                'found' => true,
+                'name' => is_scalar($item['name'] ?? null) ? (string) $item['name'] : '',
+                'description' => is_scalar($item['description'] ?? null) ? (string) $item['description'] : '',
+                'priceMinor' => $price['minor'],
+                'currency' => $price['currency'],
+                'sellable' => $this->isOneTimeProduct($item) && !$this->isPayWhatYouWant($item),
+                'archived' => true === ($item['archived'] ?? null), // best-effort — Dodo may not report it here
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->warning('Dodo fetch-product failed: {error}', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Verify ONE product by id — used at form SAVE to vet a MANUALLY-typed product id that wasn't in the
+     * filtered list. READ-ONLY (never a checkout path). Delegates to fetchProductInfo so the two can't drift:
+     *   - true  → sellable (a fixed-price one-time product, not pay-what-you-want),
+     *   - false → NOT sellable (recurring / usage-based / pay-what-you-want) → the caller rejects the save,
+     *   - null  → could NOT verify (unconfigured / not found / API error) → the caller warns but allows.
+     */
+    public function isSellableProduct(string $id): ?bool
+    {
+        $info = $this->fetchProductInfo($id);
+        if (null === $info || false === ($info['found'] ?? false)) {
+            return null;
+        }
+
+        return $info['sellable'] ?? null;
     }
 
     /**

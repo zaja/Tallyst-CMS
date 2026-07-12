@@ -1,6 +1,8 @@
 # validators domain (hr) — FormBuilder modul. Auto-otkriven preko bundlea.
 form:
     payment_methods_mor_on_non_mor: 'Dodo (Merchant-of-Record) dostupan je samo na Merchant-of-Record formi. Napravi formu kao digitalno → Merchant-of-Record da bi ga koristio.'
+    mor_provider_invalid: 'Merchant-of-Record forma mora koristiti konfiguriran MoR provajder.'
+    mor_provider_on_non_mor: 'Samo Merchant-of-Record forma može imati MoR provajder.'
 validation:
     shipping:
         address_required: Ovo polje je obavezno za dostavu.

@@ -28,43 +28,65 @@ class FormWizardTest extends WebTestCase
 
         $crawler = $client->request('GET', '/admin/forms/new');
         self::assertResponseIsSuccessful();
-        // The three question groups' radios are present (Q2/Q3 hidden by JS, still in the DOM).
+        // All four question groups' radios are present (Q2/Q3/Q4 hidden by JS, still in the DOM).
         self::assertGreaterThan(0, $crawler->filter('input[name="q1"][value="messages"]')->count());
         self::assertGreaterThan(0, $crawler->filter('input[name="q1"][value="sells"]')->count());
         self::assertGreaterThan(0, $crawler->filter('input[name="q2"][value="physical"]')->count());
         self::assertGreaterThan(0, $crawler->filter('input[name="q3"][value="mor"]')->count());
+        // Q4 renders one card per registered MoR provider (Dodo is registered).
+        self::assertGreaterThan(0, $crawler->filter('input[name="q4"][value="dodo"]')->count(), 'the Dodo provider card renders');
+        // No MoR provider is configured in the test env → the Q3 "provider" option is disabled.
+        self::assertGreaterThan(0, $crawler->filter('input[name="q3"][value="mor"][disabled]')->count(), 'Q3 provider disabled with no configured MoR');
         self::assertGreaterThan(0, $crawler->filter('form[action$="/admin/forms/new"]')->count());
     }
 
     public function testMessagesPathCreatesAFreeDraft(): void
     {
-        self::assertSame(FormType::MESSAGES, $this->wizard(['q1' => 'messages']));
+        $form = $this->wizard(['q1' => 'messages']);
+        self::assertSame(FormType::MESSAGES, $form->getFormType());
+        self::assertNull($form->getMorProvider(), 'a free form has no MoR provider');
     }
 
     public function testPhysicalPathSkipsQ3(): void
     {
         // Even if a forged q3 arrives, physical wins (it can't be MoR).
-        self::assertSame(FormType::PHYSICAL, $this->wizard(['q1' => 'sells', 'q2' => 'physical', 'q3' => 'mor']));
+        $form = $this->wizard(['q1' => 'sells', 'q2' => 'physical', 'q3' => 'mor']);
+        self::assertSame(FormType::PHYSICAL, $form->getFormType());
+        self::assertNull($form->getMorProvider());
     }
 
     public function testDigitalSelfPath(): void
     {
-        self::assertSame(FormType::DIGITAL, $this->wizard(['q1' => 'sells', 'q2' => 'digital', 'q3' => 'self']));
+        $form = $this->wizard(['q1' => 'sells', 'q2' => 'digital', 'q3' => 'self']);
+        self::assertSame(FormType::DIGITAL, $form->getFormType());
+        self::assertNull($form->getMorProvider());
     }
 
-    public function testDigitalMoRPath(): void
+    public function testDigitalMoRPathRecordsTheChosenProvider(): void
     {
-        self::assertSame(FormType::DIGITAL_MOR, $this->wizard(['q1' => 'sells', 'q2' => 'digital', 'q3' => 'mor']));
+        // Faza 5 K3: Q4 picks WHICH provider; the draft records it.
+        $form = $this->wizard(['q1' => 'sells', 'q2' => 'digital', 'q3' => 'mor', 'q4' => 'dodo']);
+        self::assertSame(FormType::DIGITAL_MOR, $form->getFormType());
+        self::assertSame('dodo', $form->getMorProvider());
+    }
+
+    public function testMissingOrForgedProviderFallsBackToARegisteredMoR(): void
+    {
+        // No Q4 (or an invalid one) → the draft still gets a VALID registered MoR provider (never invalid),
+        // so the MorProviderMatchesType invariant holds even on a forged POST.
+        $form = $this->wizard(['q1' => 'sells', 'q2' => 'digital', 'q3' => 'mor', 'q4' => 'not_a_provider']);
+        self::assertSame(FormType::DIGITAL_MOR, $form->getFormType());
+        self::assertContains($form->getMorProvider(), ['dodo', 'fakemor'], 'falls back to a registered MoR provider');
     }
 
     public function testIncompleteFallsBackToMessages(): void
     {
         // A "sells" with no Q2 is not a valid path → a harmless free draft (never a 500).
-        self::assertSame(FormType::MESSAGES, $this->wizard(['q1' => 'sells']));
+        self::assertSame(FormType::MESSAGES, $this->wizard(['q1' => 'sells'])->getFormType());
     }
 
-    /** Run the wizard POST with the given answers → returns the created draft's FormType (redirect followed). */
-    private function wizard(array $answers): FormType
+    /** Run the wizard POST with the given answers → returns the created draft (redirect followed). */
+    private function wizard(array $answers): FormDefinition
     {
         $client = static::createClient();
         $client->loginUser($this->makeAdmin());
@@ -87,7 +109,20 @@ class FormWizardTest extends WebTestCase
         self::assertNotNull($form, 'the wizard created a draft');
         self::assertSame(FormDefinition::STATUS_DRAFT, $form->getStatus(), 'created as a draft');
 
-        return $form->getFormType();
+        return $form;
+    }
+
+    public function testProviderOptionsEnabledWhenConfigured(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+        // Configure Dodo → the Q3 "provider" option and the Dodo Q4 card become selectable.
+        static::getContainer()->get(\App\Settings\SettingsManager::class)->set('dodo_api_key', 'dodo_test_key');
+
+        $crawler = $client->request('GET', '/admin/forms/new');
+        self::assertResponseIsSuccessful();
+        self::assertSame(0, $crawler->filter('input[name="q3"][value="mor"][disabled]')->count(), 'Q3 provider enabled when a MoR is configured');
+        self::assertSame(0, $crawler->filter('input[name="q4"][value="dodo"][disabled]')->count(), 'the Dodo card is enabled');
     }
 
     private function makeAdmin(): User
@@ -113,6 +148,9 @@ class FormWizardTest extends WebTestCase
         foreach ($this->emails as $email) {
             $conn->executeStatement('DELETE FROM user WHERE email = ?', [$email]);
         }
+        // dodo_api_key may have been set (testProviderOptionsEnabledWhenConfigured) — remove it directly
+        // (an encrypted write-only setting can't be cleared via SettingsManager's empty-is-a-no-op guard).
+        $conn->executeStatement("DELETE FROM setting WHERE name = 'dodo_api_key'");
         $this->formIds = $this->emails = [];
 
         parent::tearDown();

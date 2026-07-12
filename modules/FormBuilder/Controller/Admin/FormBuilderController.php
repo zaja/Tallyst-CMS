@@ -4,6 +4,7 @@ namespace Tallyst\FormBuilder\Controller\Admin;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -14,6 +15,8 @@ use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormType;
 use Tallyst\FormBuilder\Form\Type\FormDefinitionType;
 use Tallyst\FormBuilder\Payment\DodoProcessor;
+use Tallyst\FormBuilder\Payment\MerchantOfRecordInterface;
+use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 
 /**
@@ -34,6 +37,7 @@ class FormBuilderController extends AbstractController
         private readonly FormDefinitionRepository $forms,
         private readonly SluggerInterface $slugger,
         private readonly TranslatorInterface $translator,
+        private readonly PaymentProcessorRegistry $payments,
         private readonly DodoProcessor $dodo,
     ) {
     }
@@ -60,9 +64,14 @@ class FormBuilderController extends AbstractController
                 throw $this->createAccessDeniedException('Invalid CSRF token.');
             }
 
+            $type = $this->wizardType($request);
             $definition = (new FormDefinition())
-                ->setFormType($this->wizardType($request))
+                ->setFormType($type)
                 ->setName($this->translator->trans('admin.form.wizard.default_name', [], 'admin'));
+            // Faza 5 K3: a MoR draft records WHICH provider (Q4, validated against registered MoR providers).
+            if (FormType::DIGITAL_MOR === $type) {
+                $definition->setMorProvider($this->wizardMorProvider($request));
+            }
             $this->normalize($definition); // slug from the name + made unique
             $this->forms->save($definition);
 
@@ -71,7 +80,7 @@ class FormBuilderController extends AbstractController
         }
 
         return $this->render('@FormBuilder/admin/wizard.html.twig', [
-            'dodo_configured' => $this->dodo->isConfigured(),
+            'mor_providers' => $this->morProviders(),
         ]);
     }
 
@@ -93,6 +102,104 @@ class FormBuilderController extends AbstractController
             $sells && $digital => FormType::DIGITAL,
             default => FormType::MESSAGES,
         };
+    }
+
+    /**
+     * The chosen MoR provider (Q4), validated against the REGISTERED MoR providers (same marker the resolver
+     * uses). A forged / missing Q4 falls back to the first registered MoR provider so the draft stays valid
+     * (the MorProviderMatchesType invariant). Never null in practice — Dodo is always registered.
+     */
+    private function wizardMorProvider(Request $request): ?string
+    {
+        $names = array_column($this->morProviders(), 'name');
+        $q4 = (string) $request->request->get('q4');
+
+        return in_array($q4, $names, true) ? $q4 : ($names[0] ?? null);
+    }
+
+    /**
+     * Every REGISTERED Merchant-of-Record provider (the marker interface — the single source of truth),
+     * with its display label + whether it's configured. Drives the wizard Q4 cards.
+     *
+     * @return list<array{name: string, label: string, configured: bool}>
+     */
+    private function morProviders(): array
+    {
+        $out = [];
+        foreach ($this->payments->names() as $name) {
+            $processor = $this->payments->get($name);
+            if ($processor instanceof MerchantOfRecordInterface) {
+                $out[] = ['name' => $name, 'label' => ucfirst($name), 'configured' => $processor->isConfigured()];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Vet the Dodo product on a Dodo MoR form at save time: 'ok' (nothing to check, or a sellable product),
+     * 'reject' (a recurring / usage-based / pay-what-you-want product — Tallyst can't sell it), or 'warn'
+     * (couldn't verify — Dodo unreachable — so allow the save but flag it). A product already in the filtered
+     * list is sellable by construction (no re-fetch); only a MANUALLY-typed / out-of-list id is verified via
+     * GET /products/{id}. The CHECKOUT path is untouched — this is a save-time gate only.
+     */
+    private function dodoProductStatus(FormDefinition $definition): string
+    {
+        if (FormType::DIGITAL_MOR !== $definition->getFormType()
+            || $this->dodo->getName() !== $definition->getMorProvider()
+            || null === ($id = $definition->getDodoProductId())) {
+            return 'ok';
+        }
+
+        if (in_array($id, array_column($this->dodo->listProducts(), 'id'), true)) {
+            return 'ok'; // from the already-filtered list → sellable
+        }
+
+        return match ($this->dodo->isSellableProduct($id)) {
+            true => 'ok',
+            false => 'reject',
+            default => 'warn', // null → couldn't verify
+        };
+    }
+
+    /**
+     * Faza 5 K7: the "refresh from Dodo" button on a Dodo MoR form. Re-fetches ONE product's current data
+     * (GET /products/{id}) so the admin can pull an updated name / description / price / currency AFTER the
+     * one-time prefill. READ-ONLY, on demand — never a live sync, never a checkout path. The JS compares
+     * against the on-screen values, shows the diff and asks for confirmation before applying. JSON `status`:
+     *   - ok        → live data (+ a `sellable`/`archived` flag so the JS can WARN if it turned into a
+     *                 subscription / usage-based / pay-what-you-want / archived product),
+     *   - not_found → the product no longer exists on Dodo,
+     *   - error     → Dodo unreachable / unconfigured (no data lost, the JS just says so).
+     */
+    #[Route('/dodo-product-info', name: 'form_builder_admin_dodo_product', methods: ['GET'])]
+    public function dodoProductInfo(Request $request): JsonResponse
+    {
+        $id = trim((string) $request->query->get('id', ''));
+        if ('' === $id) {
+            return $this->json(['status' => 'error']);
+        }
+
+        $info = $this->dodo->fetchProductInfo($id);
+        if (null === $info) {
+            return $this->json(['status' => 'error']);
+        }
+        if (false === ($info['found'] ?? false)) {
+            return $this->json(['status' => 'not_found']);
+        }
+
+        $minor = $info['priceMinor'] ?? null;
+
+        return $this->json([
+            'status' => 'ok',
+            'name' => $info['name'] ?? '',
+            'description' => $info['description'] ?? '',
+            'priceMajor' => null !== $minor ? number_format($minor / 100, 2, '.', '') : null,
+            // Lowercase to match the form's currency <option> values (eur/usd/gbp); the JS uppercases for display.
+            'currency' => null !== ($info['currency'] ?? null) ? strtolower((string) $info['currency']) : null,
+            'sellable' => (bool) ($info['sellable'] ?? false),
+            'archived' => (bool) ($info['archived'] ?? false),
+        ]);
     }
 
     #[Route('/{id}/edit', name: 'form_builder_admin_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
@@ -121,11 +228,21 @@ class FormBuilderController extends AbstractController
             $this->normalize($definition);
 
             $duplicates = $this->duplicateKeys($definition);
+            // Faza 5 K5: a manually-typed Dodo product id (not from the filtered list) is vetted here — a
+            // recurring / usage-based / pay-what-you-want product is REJECTED; an unverifiable one WARNS.
+            $productStatus = $this->dodoProductStatus($definition);
             if ([] !== $duplicates) {
                 $form->get('fields')->addError(new FormError(
                     $this->translator->trans('admin.form.builder.duplicate_keys', ['%keys%' => implode(', ', $duplicates)], 'admin'),
                 ));
+            } elseif ('reject' === $productStatus) {
+                $form->get('dodoProductId')->addError(new FormError(
+                    $this->translator->trans('admin.form.builder.dodo_product_unsupported', [], 'admin'),
+                ));
             } else {
+                if ('warn' === $productStatus) {
+                    $this->addFlash('warning', $this->translator->trans('admin.form.flash.dodo_unverified', [], 'admin'));
+                }
                 $this->forms->save($definition);
                 $this->addFlash('success', $this->translator->trans('admin.form.flash.saved', [], 'admin'));
 
@@ -147,6 +264,13 @@ class FormBuilderController extends AbstractController
     {
         if ('' === trim($definition->getSlug())) {
             $definition->setSlug($this->slugify($definition->getName()));
+        } elseif ($this->slugShouldFollowName($definition)) {
+            // Faza 5 K6: a DRAFT still carrying the wizard's auto placeholder slug (untitled-form[-N])
+            // follows the name once the admin gives it a real one. SAFEST rule — only auto-change a slug
+            // that is (a) never public yet (draft) AND (b) demonstrably auto-generated (matches the
+            // placeholder pattern), so a published form (live links / [form id=N] elsewhere) or a manually
+            // typed slug is NEVER touched.
+            $definition->setSlug($this->slugify($definition->getName()));
         }
         $definition->setSlug($this->uniqueSlug($definition));
 
@@ -162,6 +286,27 @@ class FormBuilderController extends AbstractController
         foreach ($fields as $index => $field) {
             $field->setPosition($index);
         }
+    }
+
+    /**
+     * Should the slug be regenerated from the name? Only when the form is a DRAFT, the admin has given it a
+     * real name (no longer the wizard default), and the current slug is STILL the auto placeholder
+     * (`untitled-form` or `untitled-form-N`). A published form or a manual slug returns false.
+     */
+    private function slugShouldFollowName(FormDefinition $definition): bool
+    {
+        if ($definition->isPublished()) {
+            return false; // never change a published form's slug (live links / shortcodes)
+        }
+
+        $defaultName = $this->translator->trans('admin.form.wizard.default_name', [], 'admin');
+        if ('' === trim($definition->getName()) || $definition->getName() === $defaultName) {
+            return false; // no real name yet
+        }
+
+        $placeholder = $this->slugify($defaultName);
+
+        return 1 === preg_match('/^'.preg_quote($placeholder, '/').'(-\d+)?$/', $definition->getSlug());
     }
 
     /** @return string[] duplicated field keys */

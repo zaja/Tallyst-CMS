@@ -87,6 +87,7 @@ class FormBuilderBuilderRenderTest extends WebTestCase
             ->setSlug('mor-ship-'.bin2hex(random_bytes(4)))
             ->setStatus(FormDefinition::STATUS_PUBLISHED)
             ->setFormType(FormType::DIGITAL_MOR)
+            ->setMorProvider('dodo')
             ->setPriceMinor(2000)
             ->setCurrency('eur')
             ->setDodoProductId('prod_fake_123');
@@ -148,6 +149,72 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         self::assertSame(2, $crawler->filter('select[name="form_definition[formType]"] option')->count(), 'digital ↔ digital_mor is switchable');
     }
 
+    public function testDraftPlaceholderSlugFollowsTheRealName(): void
+    {
+        // A wizard draft (placeholder name + "untitled-form" slug) → the slug follows once renamed.
+        self::assertSame('my-product', $this->saveWithName('Untitled form', 'untitled-form', false, 'My Product'));
+    }
+
+    public function testManuallySetSlugIsNotTouched(): void
+    {
+        // The slug isn't the auto placeholder → the admin set it → leave it (unique-suffix aside).
+        self::assertSame('my-chosen-slug', $this->saveWithName('Untitled form', 'my-chosen-slug', false, 'Renamed'));
+    }
+
+    public function testPublishedSlugIsNotTouched(): void
+    {
+        // Published → never auto-change the slug (live links / [form id=N]).
+        self::assertSame('untitled-form', $this->saveWithName('Untitled form', 'untitled-form', true, 'Renamed'));
+    }
+
+    /** Create a form, open the builder, rename it, save → return the persisted slug. */
+    private function saveWithName(string $name, string $slug, bool $published, string $newName): string
+    {
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = (new FormDefinition())->setName($name)->setSlug($slug)
+            ->setStatus($published ? FormDefinition::STATUS_PUBLISHED : FormDefinition::STATUS_DRAFT)
+            ->setFormType(FormType::MESSAGES);
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $crawler = $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
+        self::assertResponseIsSuccessful();
+        $formNode = $crawler->filter('form')->first()->form();
+        $formNode['form_definition[name]'] = $newName;
+        $client->submit($formNode);
+        self::assertResponseRedirects();
+
+        $em->clear();
+
+        return $em->getRepository(FormDefinition::class)->find($this->formId)->getSlug();
+    }
+
+    public function testDodoFormWithUnverifiableProductSavesWithWarning(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+
+        // A Dodo form with a MANUALLY-typed product id. Dodo is unconfigured in the test → the save-time
+        // guard can't verify the product → it must NOT block the save (only warn). Faza 5 K5.
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = (new FormDefinition())->setName('Dodo save '.bin2hex(random_bytes(4)))->setSlug('dodo-save-'.bin2hex(random_bytes(4)))
+            ->setStatus(FormDefinition::STATUS_PUBLISHED)->setFormType(FormType::DIGITAL_MOR)->setMorProvider('dodo')
+            ->setPriceMinor(2000)->setCurrency('eur')->setDodoProductId('manual_prod_id');
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $crawler = $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
+        self::assertResponseIsSuccessful();
+        $client->submit($crawler->filter('form')->first()->form());
+
+        // Unverifiable product → save PROCEEDS (redirect), never blocked.
+        self::assertResponseRedirects();
+    }
+
     public function testCountryPickerShownWhenFormOffersDelivery(): void
     {
         $client = static::createClient();
@@ -202,6 +269,32 @@ class FormBuilderBuilderRenderTest extends WebTestCase
 
         self::assertGreaterThan(0, $crawler->filter('input[name="form_definition[allowedShippingCountries][]"]')->count(), 'the country field is always in the DOM');
         self::assertGreaterThan(0, $crawler->filter('.fb-subblock.d-none[data-formbuilder--formtype-target="countries"]')->count(), 'the country block starts hidden on a digital (non-physical) form');
+    }
+
+    // --- Faza 5 K7: the "refresh from Dodo" endpoint (GET /admin/forms/dodo-product-info) ---
+
+    public function testDodoProductInfoWithoutIdReturnsError(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+
+        $client->request('GET', '/admin/forms/dodo-product-info');
+
+        self::assertResponseIsSuccessful();
+        self::assertJson((string) $client->getResponse()->getContent());
+        self::assertSame('error', json_decode((string) $client->getResponse()->getContent(), true)['status']);
+    }
+
+    public function testDodoProductInfoUnconfiguredReturnsError(): void
+    {
+        // Dodo is unconfigured in the test env → fetchProductInfo returns null with NO HTTP call → status error.
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+
+        $client->request('GET', '/admin/forms/dodo-product-info', ['id' => 'pdt_whatever']);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('error', json_decode((string) $client->getResponse()->getContent(), true)['status']);
     }
 
     private function makeAdmin(): User

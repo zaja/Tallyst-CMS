@@ -60,6 +60,15 @@ admin:
         flash:
             deleted: Forma je obrisana.
             saved: Forma je spremljena.
+            dodo_unverified: 'Dodo proizvod nije mogao biti provjeren (Dodo nedostupan). Spremljeno — ali provjeri da je fiksna jednokratna cijena.'
+        dodo_refresh:
+            button: Osvježi s Doda
+            confirm: 'Primijeniti ove promjene s Doda?'
+            up_to_date: 'Podaci ovog proizvoda već su ažurni.'
+            unsellable: '⚠ Ovaj proizvod je sad pretplata / usage-based / plati-koliko-želiš — Tallyst ga ne zna prodati.'
+            archived: '⚠ Ovaj proizvod je arhiviran na Dodu.'
+            not_found: 'Ovaj proizvod više ne postoji na Dodu.'
+            error: 'Dodo nije dostupan. Ništa nije promijenjeno.'
         wizard:
             title: Izrada forme
             intro: Nekoliko kratkih pitanja, pa ćeš ispuniti detalje.
@@ -78,9 +87,11 @@ admin:
             q3: Tko snosi porez?
             q3_self: Ja
             q3_self_sub: 'Naplaćuješ preko Stripe/PayPal i sam vodiš PDV.'
-            q3_mor: Merchant-of-Record
-            q3_mor_sub: 'Dodo je prodavatelj i vodi globalni porez umjesto tebe.'
-            q3_mor_disabled: 'Konfiguriraj Dodo u Postavke → Dodo Payments da bi ovo koristio.'
+            q3_mor: Provajder (Merchant-of-Record)
+            q3_mor_sub: 'Provajder je pravni prodavatelj i rješava porez umjesto tebe.'
+            q3_mor_disabled: 'Prvo konfiguriraj Merchant-of-Record provajder (npr. Dodo) u Postavkama.'
+            q4: Koji provajder?
+            q4_unconfigured: 'Konfiguriraj %provider% u Postavkama da bi ga koristio.'
             none: 'Još nema formi. Kreirajte prvu pa je ubacite u stranicu shortcodeom [form id=N].'
             col: { name: Naziv, status: Status, shortcode: Shortcode, fields: Polja }
             status: { published: Objavljeno, draft: Skica }
@@ -114,6 +125,7 @@ admin:
             add_field: + Dodaj polje
             add_variant: + Dodaj varijantu
             duplicate_keys: 'Ključevi polja moraju biti jedinstveni unutar forme. Duplikati: %keys%'
+            dodo_product_unsupported: 'Ovaj Dodo proizvod je pretplata ili "plati koliko želiš", što Tallyst ne može prodavati. Izaberi proizvod s fiksnom jednokratnom cijenom.'
         field:
             new: Novo polje
             required_badge: obavezno
@@ -172,7 +184,7 @@ admin:
             dodo_product_help: 'Dodo proizvod protiv kojeg forma prodaje (iz tvog Dodo kataloga u aktivnom test/live modu).'
             dodo_product_help_manual: 'Nije moguće dohvatiti Dodo proizvode — upiši product ID ručno.'
             dodo_product_help_no_key: 'Konfiguriraj Dodo API ključ u Postavke → Dodo Payments da biraš iz kataloga.'
-            dodo_price_note: 'Za Dodo forme konačnu cijenu naplaćuje Dodo prema postavci proizvoda — ovo je prikaz; uskladi ručno ako mijenjaš na Dodou.'
+            dodo_price_note: 'Za Dodo forme konačnu cijenu naplaćuje Dodo prema postavci proizvoda — ovo je samo prikaz. Dodo može primijeniti lokalizirane cijene (po zemlji/valuti) i popuste, pa se iznos koji kupac plati može razlikovati od prikazanog.'
             notify_enabled: Pošalji e-mail na prijavu
             notify_enabled_help: Samo za besplatne forme. Plaćene forme šalju potvrdu narudžbe.
             notify_recipient: Primatelj(i)

@@ -15,8 +15,24 @@
     {% set isSelfBilled = isProduct and not isMor %}
     {# The builder controller's JS-generated "new field" summary fallback is fed the translated label
        as a Stimulus value (Twig owns the translation; JS reads it). #}
-    <div data-controller="formbuilder--builder formbuilder--formtype"
-         data-formbuilder--builder-new-field-label-value="{{ 'admin.form.field.new'|trans({}, 'admin') }}">
+    {# dodo-prefill sits on the ROOT so it can reach BOTH the price/currency fields (payment card) and the
+       name/description fields (Osnovno card) as targets when a Dodo product is picked. #}
+    <div data-controller="formbuilder--builder formbuilder--formtype formbuilder--dodo-prefill"
+         data-formbuilder--builder-new-field-label-value="{{ 'admin.form.field.new'|trans({}, 'admin') }}"
+         data-formbuilder--dodo-prefill-url-value="{{ path('form_builder_admin_dodo_product') }}"
+         data-formbuilder--dodo-prefill-labels-value="{{ {
+            name: 'admin.form.def.name'|trans({}, 'admin'),
+            description: 'admin.form.def.description'|trans({}, 'admin'),
+            price: 'admin.form.def.price'|trans({}, 'admin'),
+            currency: 'admin.form.def.currency'|trans({}, 'admin'),
+            confirm_title: 'admin.form.dodo_refresh.confirm'|trans({}, 'admin'),
+            up_to_date: 'admin.form.dodo_refresh.up_to_date'|trans({}, 'admin'),
+            unsellable: 'admin.form.dodo_refresh.unsellable'|trans({}, 'admin'),
+            archived: 'admin.form.dodo_refresh.archived'|trans({}, 'admin'),
+            not_found: 'admin.form.dodo_refresh.not_found'|trans({}, 'admin'),
+            error: 'admin.form.dodo_refresh.error'|trans({}, 'admin'),
+            arrow: '→'
+         }|json_encode|e('html_attr') }}">
         {{ form_start(form, {attr: {'data-dirty-guard': ''}}) }}
 
         {# Osnovno — incl. the explicit form-type select (mapped; the reveal reads it). #}
@@ -46,7 +62,7 @@
            avoid a flash before JS boots. data-controller: dodo-prefill (copies a picked Dodo product's
            price/currency) + payment-exclusive (a MoR method can't mix with Stripe/PayPal). #}
         <div class="card mb-3 fb-card{{ isProduct ? '' : ' d-none' }}" data-formbuilder--formtype-target="product"
-             data-controller="formbuilder--dodo-prefill formbuilder--payment-exclusive">
+             data-controller="formbuilder--payment-exclusive">
             <div class="card-body">
                 <h2 class="h5 fb-section-title">{{ 'admin.form.builder.payment.title'|trans({}, 'admin') }} <span class="badge fb-badge-soft">{{ 'admin.form.builder.payment.badge'|trans({}, 'admin') }}</span></h2>
                 <p class="fb-section-help">{{ 'admin.form.builder.payment.help'|trans({}, 'admin') }}</p>
@@ -65,6 +81,14 @@
                    is never offered Dodo). Dropdown from the live catalogue, else a manual id — always saveable. #}
                 <div class="fb-dodo-product{{ isMor ? '' : ' d-none' }}" data-formbuilder--formtype-target="dodo">
                     {{ form_row(form.dodoProductId) }}
+                    {# On-demand re-fetch of this product's live Dodo data (Faza 5 K7). Hidden until a product is
+                       selected — the controller toggles it. NOT a live sync: it shows a diff + asks to confirm. #}
+                    <button type="button" class="btn btn-secondary btn-sm mb-2 d-none"
+                            data-formbuilder--dodo-prefill-target="refreshButton"
+                            data-action="formbuilder--dodo-prefill#refresh">
+                        <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                        {{ 'admin.form.dodo_refresh.button'|trans({}, 'admin') }}
+                    </button>
                     <p class="text-muted small mb-3">{{ 'admin.form.def.dodo_price_note'|trans({}, 'admin') }}</p>
                 </div>
 

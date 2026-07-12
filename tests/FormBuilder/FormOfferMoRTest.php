@@ -67,6 +67,7 @@ class FormOfferMoRTest extends KernelTestCase
             ->setSlug('offer-'.uniqid())
             ->setStatus(FormDefinition::STATUS_PUBLISHED)
             ->setFormType($type)
+            ->setMorProvider(FormType::DIGITAL_MOR === $type ? 'dodo' : null)
             ->setPriceMinor(4900)
             ->setCurrency('eur')
             ->setDodoProductId($dodoProductId)

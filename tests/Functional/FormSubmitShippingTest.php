@@ -421,6 +421,11 @@ class FormSubmitShippingTest extends WebTestCase
         if (isset($opts['dodoProductId'])) {
             $form->setDodoProductId($opts['dodoProductId']);
         }
+        // Faza 5: a MoR form records WHICH provider — here the MoR provider is the one in `allowed`
+        // (the fake MoR processor). The resolver reads morProvider to offer that provider.
+        if (FormType::DIGITAL_MOR === $formType) {
+            $form->setMorProvider($opts['allowed'][0] ?? null);
+        }
         $em->persist($form);
         $em->flush();
         $this->formIds[] = $form->getId();

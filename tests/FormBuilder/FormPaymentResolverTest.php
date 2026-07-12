@@ -40,6 +40,10 @@ class FormPaymentResolverTest extends TestCase
     {
         $f = new FormDefinition();
         $f->setFormType($type);
+        // Faza 5: a MoR form records WHICH provider — the resolver reads it (Dodo is the fake MoR here).
+        if (FormType::DIGITAL_MOR === $type) {
+            $f->setMorProvider('dodo');
+        }
         $f->setPriceMinor(4900);
         $f->setAllowedPaymentMethods($allowed);
 

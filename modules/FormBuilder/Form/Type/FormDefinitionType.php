@@ -89,14 +89,23 @@ class FormDefinitionType extends AbstractType
         $shippingChoices = array_combine($shippingKeys, $shippingKeys);
 
         $builder
-            ->add('name', TextType::class, ['label' => 'admin.form.def.name', 'empty_data' => ''])
+            // name/description are prefill TARGETS (the Dodo product picker fills them on change).
+            ->add('name', TextType::class, [
+                'label' => 'admin.form.def.name',
+                'empty_data' => '',
+                'attr' => ['data-formbuilder--dodo-prefill-target' => 'name'],
+            ])
             ->add('slug', TextType::class, [
                 'required' => false,
                 'empty_data' => '',
                 'label' => 'admin.form.def.slug',
                 'help' => 'admin.form.def.slug_help',
             ])
-            ->add('description', TextareaType::class, ['required' => false, 'label' => 'admin.form.def.description'])
+            ->add('description', TextareaType::class, [
+                'required' => false,
+                'label' => 'admin.form.def.description',
+                'attr' => ['data-formbuilder--dodo-prefill-target' => 'description'],
+            ])
             ->add('status', ChoiceType::class, [
                 'label' => 'admin.form.def.status',
                 // Choice LABELS are translation keys; stored VALUES (draft/published) are untouched.
@@ -270,9 +279,15 @@ class FormDefinitionType extends AbstractType
      */
     private function addDodoProductField(FormBuilderInterface $builder): void
     {
-        $products = $this->dodo->listProducts(); // [] when unconfigured (no HTTP) or on any error
         $data = $builder->getData();
         $current = $data instanceof FormDefinition ? $data->getDodoProductId() : null;
+
+        // Faza 5 K2: the product picker is the FORM'S MoR provider's catalogue — build the Dodo dropdown
+        // ONLY for a form that uses Dodo (morProvider). Today every MoR form is Dodo, so this is the same
+        // set; it just stops a non-Dodo (or non-MoR) form from fetching Dodo products, and is where a
+        // second provider's picker would branch. Non-Dodo → the manual text fallback (field always exists).
+        $usesDodo = $data instanceof FormDefinition && $data->getMorProvider() === $this->dodo->getName();
+        $products = $usesDodo ? $this->dodo->listProducts() : []; // [] when unconfigured (no HTTP) or on error
 
         if ([] !== $products) {
             $choices = [];
@@ -291,13 +306,15 @@ class FormDefinitionType extends AbstractType
                 'required' => false,
                 'label' => 'admin.form.def.dodo_product',
                 'choices' => $choices,
-                // Carry each product's price/currency on the <option> so the prefill controller can copy
-                // them into the Tallyst price/currency fields on change. Empty when Dodo doesn't report
-                // them (or on the stale-id fallback choice) → prefill leaves that field untouched.
+                // Carry each product's name/description/price/currency on the <option> so the prefill
+                // controller can copy them into the Tallyst fields on change. Empty when Dodo doesn't report
+                // a value (or on the stale-id fallback choice) → prefill leaves that field untouched.
                 'choice_attr' => static function (string $id) use ($byId): array {
                     $p = $byId[$id] ?? null;
 
                     return [
+                        'data-name' => (string) ($p['name'] ?? ''),
+                        'data-description' => (string) ($p['description'] ?? ''),
                         'data-price-minor' => null !== ($p['priceMinor'] ?? null) ? (string) $p['priceMinor'] : '',
                         'data-currency' => strtolower((string) ($p['currency'] ?? '')),
                     ];
@@ -306,19 +323,28 @@ class FormDefinitionType extends AbstractType
                 'help' => 'admin.form.def.dodo_product_help',
                 // Two independent handlers on the same change: prefill (price/currency) + exclusive
                 // (lock out Stripe/PayPal — a Dodo product is a MoR signal). They touch disjoint DOM.
-                'attr' => ['data-action' => 'change->formbuilder--dodo-prefill#fill change->formbuilder--payment-exclusive#productChanged'],
+                // The `product` target + change handler also drive the K7 "refresh" button's visibility.
+                'attr' => [
+                    'data-formbuilder--dodo-prefill-target' => 'product',
+                    'data-action' => 'change->formbuilder--dodo-prefill#fill change->formbuilder--payment-exclusive#productChanged',
+                ],
             ]);
 
             return;
         }
 
         // Fallback: manual entry over the same field. Help text distinguishes "no key" from "load failed".
+        // Same `product` target so the refresh button appears once an id is typed (input event toggles it).
         $builder->add('dodoProductId', TextType::class, [
             'required' => false,
             'label' => 'admin.form.def.dodo_product',
             'help' => $this->dodo->isConfigured()
                 ? 'admin.form.def.dodo_product_help_manual'
                 : 'admin.form.def.dodo_product_help_no_key',
+            'attr' => [
+                'data-formbuilder--dodo-prefill-target' => 'product',
+                'data-action' => 'input->formbuilder--dodo-prefill#toggleRefresh',
+            ],
         ]);
     }
 

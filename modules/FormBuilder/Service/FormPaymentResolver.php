@@ -52,10 +52,15 @@ class FormPaymentResolver
     public function offeredMethods(FormDefinition $form): array
     {
         if ($this->isMerchantOfRecordForm($form)) {
-            return array_values(array_filter(
-                $this->payments->names(),
-                fn (string $name): bool => $this->isMerchantOfRecordProvider($name) && $this->payments->get($name)->isConfigured(),
-            ));
+            // Faza 5 K2: a MoR form offers ITS chosen provider (morProvider), not "all configured MoR". With
+            // Dodo the sole MoR provider today the result is IDENTICAL (a digital_mor form carries 'dodo'),
+            // but this is what lets a second MoR provider (Paddle) coexist without a form offering both.
+            $provider = $form->getMorProvider();
+            if (null !== $provider && $this->isMerchantOfRecordProvider($provider) && $this->payments->get($provider)->isConfigured()) {
+                return [$provider];
+            }
+
+            return [];
         }
 
         // A non-MoR form NEVER offers a Merchant-of-Record provider (Dodo) — not even when

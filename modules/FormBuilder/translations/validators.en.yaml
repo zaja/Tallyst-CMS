@@ -1,6 +1,8 @@
 # validators domain (en) — FormBuilder module. Auto-discovered via the bundle.
 form:
     payment_methods_mor_on_non_mor: 'Dodo (Merchant-of-Record) is available only on a Merchant-of-Record form. Create the form as digital → Merchant-of-Record to use it.'
+    mor_provider_invalid: 'A Merchant-of-Record form must use a configured MoR provider.'
+    mor_provider_on_non_mor: 'Only a Merchant-of-Record form can have a MoR provider.'
 validation:
     shipping:
         address_required: This field is required for delivery.

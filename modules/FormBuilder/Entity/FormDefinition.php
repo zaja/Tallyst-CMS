@@ -10,6 +10,7 @@ use Symfony\Component\Intl\Countries;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
+use Tallyst\FormBuilder\Validator\MorProviderMatchesType;
 
 /**
  * An admin-built form, stored AS DATA (not a compile-time Symfony form). Rendered
@@ -18,6 +19,7 @@ use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 #[ORM\Entity(repositoryClass: FormDefinitionRepository::class)]
 #[ORM\Table(name: 'fb_form')]
 #[ORM\HasLifecycleCallbacks]
+#[MorProviderMatchesType]
 class FormDefinition
 {
     public const STATUS_DRAFT = 'draft';
@@ -122,6 +124,18 @@ class FormDefinition
      */
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $dodoProductId = null;
+
+    /**
+     * WHICH Merchant-of-Record provider this form sells through (Faza 5) — a payment-provider NAME from the
+     * registry (today only 'dodo'; Paddle/Lemon Squeezy later). A STRING (registry key), NOT an enum, because
+     * providers live in the plugin registry (dynamic) — same shape as `Order.provider`/`allowedPaymentMethods`.
+     * Meaningful ONLY on a `digital_mor` form: there it must be a registered MoR provider; on any other type
+     * it MUST be null. Replaces deriving "which MoR" from `dodoProductId` (which stays the Dodo PRODUCT id,
+     * no longer a provider proxy). ⚠ KOMAD 1: stored (wizard + backfill set it) but NOT yet consumed —
+     * offeredMethods/the picker still treat Dodo as the sole MoR until KOMAD 2. See PLAN-FAZA-5-MOR-PROVIDER.md.
+     */
+    #[ORM\Column(length: 32, nullable: true)]
+    private ?string $morProvider = null;
 
     /**
      * Price variants (or-or): a flat list of {label, priceMinor}. When non-empty, the buyer picks one
@@ -457,6 +471,20 @@ class FormDefinition
     public function setDodoProductId(?string $dodoProductId): static
     {
         $this->dodoProductId = $dodoProductId ?: null;
+
+        return $this;
+    }
+
+    public function getMorProvider(): ?string
+    {
+        return $this->morProvider;
+    }
+
+    /** Store null for an empty value; a real provider name is kept verbatim (validated by MorProviderMatchesType). */
+    public function setMorProvider(?string $morProvider): static
+    {
+        $morProvider = null === $morProvider ? null : trim($morProvider);
+        $this->morProvider = ('' === $morProvider) ? null : $morProvider;
 
         return $this;
     }
