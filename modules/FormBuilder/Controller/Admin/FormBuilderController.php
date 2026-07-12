@@ -11,7 +11,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Entity\FormDefinition;
+use Tallyst\FormBuilder\Entity\FormType;
 use Tallyst\FormBuilder\Form\Type\FormDefinitionType;
+use Tallyst\FormBuilder\Payment\DodoProcessor;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
 
 /**
@@ -32,6 +34,7 @@ class FormBuilderController extends AbstractController
         private readonly FormDefinitionRepository $forms,
         private readonly SluggerInterface $slugger,
         private readonly TranslatorInterface $translator,
+        private readonly DodoProcessor $dodo,
     ) {
     }
 
@@ -43,10 +46,53 @@ class FormBuilderController extends AbstractController
         ]);
     }
 
+    /**
+     * Faza 4: creating a form goes through a short WIZARD (Q1 messages/sells → Q2 physical/digital → Q3
+     * self/MoR; physical never asks Q3). GET shows the wizard; POST maps the answers to a formType, creates
+     * a DRAFT with that type, and hands off to the (type-aware) builder. Editing an EXISTING form is the
+     * builder, never the wizard.
+     */
     #[Route('/new', name: 'form_builder_admin_new', methods: ['GET', 'POST'])]
     public function new(Request $request): Response
     {
-        return $this->edit($request, new FormDefinition());
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('form_wizard', (string) $request->request->get('_token'))) {
+                throw $this->createAccessDeniedException('Invalid CSRF token.');
+            }
+
+            $definition = (new FormDefinition())
+                ->setFormType($this->wizardType($request))
+                ->setName($this->translator->trans('admin.form.wizard.default_name', [], 'admin'));
+            $this->normalize($definition); // slug from the name + made unique
+            $this->forms->save($definition);
+
+            // Straight into the type-aware builder to fill in the details.
+            return $this->redirectToRoute('form_builder_admin_edit', ['id' => $definition->getId()]);
+        }
+
+        return $this->render('@FormBuilder/admin/wizard.html.twig', [
+            'dodo_configured' => $this->dodo->isConfigured(),
+        ]);
+    }
+
+    /**
+     * The AUTHORITATIVE mapping of the wizard answers to a FormType (server-side, so it holds even if JS
+     * only drives the reveal). Physical never reaches Q3 — a physical product can't go through a MoR.
+     * Anything unexpected falls back to MESSAGES (a harmless free draft).
+     */
+    private function wizardType(Request $request): FormType
+    {
+        $sells = 'sells' === $request->request->get('q1');
+        $physical = 'physical' === $request->request->get('q2');
+        $digital = 'digital' === $request->request->get('q2');
+        $mor = 'mor' === $request->request->get('q3');
+
+        return match (true) {
+            $sells && $physical => FormType::PHYSICAL,
+            $sells && $digital && $mor => FormType::DIGITAL_MOR,
+            $sells && $digital => FormType::DIGITAL,
+            default => FormType::MESSAGES,
+        };
     }
 
     #[Route('/{id}/edit', name: 'form_builder_admin_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]

@@ -61,6 +61,27 @@ admin:
         flash:
             deleted: Form deleted.
             saved: Form saved.
+        wizard:
+            title: Create a form
+            intro: A couple of quick questions, then you'll fill in the details.
+            default_name: Untitled form
+            continue: Continue
+            q1: What is this form for?
+            q1_messages: Receiving messages
+            q1_messages_sub: 'A contact or enquiry form — no payment.'
+            q1_sells: Selling something
+            q1_sells_sub: 'Take a payment when the form is submitted.'
+            q2: Is a product shipped to the buyer?
+            q2_physical: 'Yes — it''s shipped'
+            q2_physical_sub: 'Physical goods with delivery and an address.'
+            q2_digital: 'No — digital or a service'
+            q2_digital_sub: 'A download, a licence, or a service you provide.'
+            q3: Who handles the tax?
+            q3_self: I do
+            q3_self_sub: 'You charge via Stripe/PayPal and handle VAT yourself.'
+            q3_mor: A Merchant-of-Record
+            q3_mor_sub: 'Dodo is the seller and handles global tax for you.'
+            q3_mor_disabled: 'Configure Dodo in Settings → Dodo Payments to use this.'
         index:
             title: Forms
             new: + New form
@@ -122,6 +143,15 @@ admin:
             description: Description
             status: Status
             status_option: { draft: Draft, published: Published }
+            form_type: What this form does
+            form_type_help: 'Set when the form was created. Only Digital ↔ Merchant-of-Record can be switched here (same product, different billing). Switching never deletes your price/shipping/tax settings.'
+            form_type_locked: 'The purpose is fixed. To make it a different kind of form,'
+            form_type_new_form: create a new form.
+            form_type_option:
+                messages: Receives messages (free)
+                physical: Sells a physical product (shipped)
+                digital: Sells a digital product / service
+                digital_mor: 'Sells digital via Merchant-of-Record (Dodo)'
             price: Price
             price_help: 'Empty = a free form. With a price the form becomes a product (payment on submit). Ignored when variants exist.'
             currency: Currency

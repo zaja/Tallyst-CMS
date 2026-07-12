@@ -4,6 +4,7 @@ namespace App\Tests\FormBuilder;
 
 use PHPUnit\Framework\TestCase;
 use Tallyst\FormBuilder\Entity\FormDefinition;
+use Tallyst\FormBuilder\Entity\FormType;
 use Tallyst\FormBuilder\Entity\Order;
 use Tallyst\FormBuilder\Payment\MerchantOfRecordInterface;
 use Tallyst\FormBuilder\Payment\PaymentProcessorInterface;
@@ -15,6 +16,10 @@ use Tallyst\FormBuilder\Service\FormPaymentResolver;
  * The single source of truth for "is this form MoR / what does it offer". Pure unit test with fake
  * processors (a configured MoR "dodo" + a configured non-MoR "stripe"), so it's deterministic and
  * independent of env/settings.
+ *
+ * Faza 4 KOMAD 2: the FORM-level MoR question is now the EXPLICIT formType (DIGITAL_MOR), NOT the old
+ * guess (Dodo product / a MoR method). offeredMethods keeps its behaviour: a MoR form offers only the
+ * configured MoR provider(s); a non-MoR form offers configured ∩ allowed.
  */
 class FormPaymentResolverTest extends TestCase
 {
@@ -31,63 +36,57 @@ class FormPaymentResolverTest extends TestCase
         return new FormPaymentResolver($this->registry($dodoConfigured, $stripeConfigured));
     }
 
-    private function form(?string $dodoProductId, ?array $allowed): FormDefinition
+    private function form(FormType $type, ?array $allowed = null): FormDefinition
     {
         $f = new FormDefinition();
+        $f->setFormType($type);
         $f->setPriceMinor(4900);
-        $f->setDodoProductId($dodoProductId);
         $f->setAllowedPaymentMethods($allowed);
 
         return $f;
     }
 
-    // --- isMerchantOfRecordForm -------------------------------------------------------------------
+    // --- isMerchantOfRecordForm (now reads formType) ----------------------------------------------
 
-    public function testDodoProductIdMakesItMoR(): void
+    public function testMoRTypeMakesItMoR(): void
     {
-        self::assertTrue($this->resolver()->isMerchantOfRecordForm($this->form('prod_1', null)));
-        self::assertTrue($this->resolver()->isMerchantOfRecordForm($this->form('prod_1', ['stripe']))); // even with a stray non-MoR
+        self::assertTrue($this->resolver()->isMerchantOfRecordForm($this->form(FormType::DIGITAL_MOR)));
+        // A stray non-MoR method in the allow-list doesn't change the type-driven answer.
+        self::assertTrue($this->resolver()->isMerchantOfRecordForm($this->form(FormType::DIGITAL_MOR, ['stripe'])));
     }
 
-    public function testMoRMethodMakesItMoR(): void
+    public function testNonMoRTypesAreNotMoR(): void
     {
-        self::assertTrue($this->resolver()->isMerchantOfRecordForm($this->form(null, ['dodo'])));
-    }
-
-    public function testPureStripeIsNotMoR(): void
-    {
-        self::assertFalse($this->resolver()->isMerchantOfRecordForm($this->form(null, ['stripe'])));
-    }
-
-    public function testEmptyNoProductIsNotMoR(): void
-    {
-        // The known edge: empty + both configured, no product → NOT MoR (no signal) → offers both.
-        self::assertFalse($this->resolver()->isMerchantOfRecordForm($this->form(null, [])));
+        self::assertFalse($this->resolver()->isMerchantOfRecordForm($this->form(FormType::DIGITAL, ['stripe'])));
+        self::assertFalse($this->resolver()->isMerchantOfRecordForm($this->form(FormType::PHYSICAL, ['stripe'])));
+        self::assertFalse($this->resolver()->isMerchantOfRecordForm($this->form(FormType::MESSAGES)));
     }
 
     // --- offeredMethods ---------------------------------------------------------------------------
 
     public function testMoRFormOffersOnlyDodo(): void
     {
-        self::assertSame(['dodo'], $this->resolver()->offeredMethods($this->form('prod_1', null)));
-        self::assertSame(['dodo'], $this->resolver()->offeredMethods($this->form('prod_1', ['stripe', 'paypal'])));
-        self::assertSame(['dodo'], $this->resolver()->offeredMethods($this->form(null, ['dodo'])));
+        self::assertSame(['dodo'], $this->resolver()->offeredMethods($this->form(FormType::DIGITAL_MOR)));
+        // MoR is MoR-only even if the allow-list carries non-MoR methods.
+        self::assertSame(['dodo'], $this->resolver()->offeredMethods($this->form(FormType::DIGITAL_MOR, ['stripe', 'paypal'])));
     }
 
     public function testMoRFormWithUnconfiguredDodoOffersNothing(): void
     {
-        self::assertSame([], $this->resolver(dodoConfigured: false)->offeredMethods($this->form('prod_1', null)));
+        self::assertSame([], $this->resolver(dodoConfigured: false)->offeredMethods($this->form(FormType::DIGITAL_MOR)));
     }
 
     public function testPureStripeOffersStripe(): void
     {
-        self::assertSame(['stripe'], $this->resolver()->offeredMethods($this->form(null, ['stripe'])));
+        self::assertSame(['stripe'], $this->resolver()->offeredMethods($this->form(FormType::DIGITAL, ['stripe'])));
     }
 
-    public function testEmptyBothConfiguredOffersBoth(): void
+    public function testNonMoRFormNeverOffersDodoEvenWhenEmpty(): void
     {
-        // Not a MoR form → availableFor(empty) = all configured (the documented backlog edge).
-        self::assertEqualsCanonicalizing(['stripe', 'dodo'], $this->resolver()->offeredMethods($this->form(null, [])));
+        // Faza 4 K5: a non-MoR form with an empty allow-list offers the configured SELF-BILLED providers
+        // only — never Dodo (a MoR provider), which is reached solely via the digital_mor type.
+        self::assertSame(['stripe'], $this->resolver()->offeredMethods($this->form(FormType::DIGITAL, [])));
+        self::assertSame(['stripe'], $this->resolver()->offeredMethods($this->form(FormType::PHYSICAL, [])));
     }
 
     private function processor(string $name, bool $configured, bool $mor): PaymentProcessorInterface

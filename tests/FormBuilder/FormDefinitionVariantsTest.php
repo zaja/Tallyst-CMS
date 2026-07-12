@@ -4,10 +4,13 @@ namespace App\Tests\FormBuilder;
 
 use PHPUnit\Framework\TestCase;
 use Tallyst\FormBuilder\Entity\FormDefinition;
+use Tallyst\FormBuilder\Entity\FormType;
 
 /**
  * Price variants (or-or): variants replace the fixed price, the chosen index is resolved server-side
  * (variantAt = the reject gate), and a product with no variants keeps the fixed-price behaviour.
+ * Faza 4 KOMAD 2: isProduct() now reads the explicit formType (not price/variants) — the price→product
+ * DERIVATION moved to FormTypeDeriver (its own test); variants mechanics (hasVariants/variantAt) are unchanged.
  */
 class FormDefinitionVariantsTest extends TestCase
 {
@@ -22,14 +25,15 @@ class FormDefinitionVariantsTest extends TestCase
         self::assertTrue($this->withVariants([['label' => 'Pro', 'priceMinor' => 4900]])->hasVariants());
     }
 
-    public function testIsProductCoversVariantsAndFixedPrice(): void
+    public function testIsProductReadsTheExplicitType(): void
     {
-        // Variants, no fixed price → product.
-        self::assertTrue($this->withVariants([['label' => 'Pro', 'priceMinor' => 4900]])->isProduct());
-        // Fixed price, no variants → product (unchanged).
-        self::assertTrue((new FormDefinition())->setPriceMinor(2900)->isProduct());
-        // Neither → not a product.
-        self::assertFalse((new FormDefinition())->isProduct());
+        // A product form is now decided by formType, regardless of a stray price/variant.
+        self::assertTrue((new FormDefinition())->setFormType(FormType::DIGITAL)->isProduct());
+        self::assertTrue((new FormDefinition())->setFormType(FormType::PHYSICAL)->isProduct());
+        self::assertTrue((new FormDefinition())->setFormType(FormType::DIGITAL_MOR)->isProduct());
+        // A messages form is never a product — even if it carries a price/variants.
+        self::assertFalse((new FormDefinition())->setFormType(FormType::MESSAGES)->setPriceMinor(2900)->isProduct());
+        self::assertFalse($this->withVariants([['label' => 'Pro', 'priceMinor' => 4900]])->isProduct(), 'default type MESSAGES → not a product');
     }
 
     public function testVariantAtIsTheServerSideGate(): void

@@ -51,6 +51,15 @@ class FormDefinition
     private string $status = self::STATUS_DRAFT;
 
     /**
+     * The EXPLICIT "what is this form" decision (Faza 4) — the remembered type set by the create wizard,
+     * replacing the old guessing. ⚠ KOMAD 1: stored but NOT yet consumed (isProduct()/isMerchantOfRecordForm()
+     * still guess from price/Dodo). Wiring consumers to read this is KOMAD 2. Defaults to MESSAGES (a free
+     * form) so a bare `new FormDefinition()` is inert. See PLAN-FAZA-4-WIZARD.md §2.
+     */
+    #[ORM\Column(length: 16, enumType: FormType::class, options: ['default' => FormType::MESSAGES->value])]
+    private FormType $formType = FormType::MESSAGES;
+
+    /**
      * Price in the currency's MINOR units (e.g. cents), as an integer — money never
      * touches float. A form with a positive priceMinor is a product (page-as-product).
      */
@@ -231,6 +240,33 @@ class FormDefinition
         return self::STATUS_PUBLISHED === $this->status;
     }
 
+    public function getFormType(): FormType
+    {
+        return $this->formType;
+    }
+
+    public function setFormType(FormType $formType): static
+    {
+        $this->formType = $formType;
+
+        return $this;
+    }
+
+    /**
+     * Type-derived helpers (Faza 4). ⚠ KOMAD 1: these are NEW and not yet wired into the guessing methods
+     * (isProduct()/isMerchantOfRecordForm() still derive from price/Dodo) — that switch is KOMAD 2. Provided
+     * now so the model + tests are complete.
+     */
+    public function isProductType(): bool
+    {
+        return $this->formType->isProduct();
+    }
+
+    public function isMerchantOfRecordType(): bool
+    {
+        return $this->formType->isMerchantOfRecord();
+    }
+
     public function getPriceMinor(): ?int
     {
         return $this->priceMinor;
@@ -243,10 +279,16 @@ class FormDefinition
         return $this;
     }
 
-    /** A priced form is a product: it has variants OR a fixed price; its submission goes through payment. */
+    /**
+     * A product form (sells something → its submission goes through payment). Faza 4 KOMAD 2: this now
+     * reads the EXPLICIT formType (the remembered decision), not the old price/variants guess. A form's
+     * "is it a product" is a stored fact, so a messages form with a stray price stays free, and a product
+     * form with no price yet is still a product. The actual charged amount is still computed from
+     * priceMinor/variants (variantAt) — this only decides free-vs-checkout. See PLAN-FAZA-4-WIZARD.md §2.
+     */
     public function isProduct(): bool
     {
-        return $this->hasVariants() || (null !== $this->priceMinor && $this->priceMinor > 0);
+        return $this->formType->isProduct();
     }
 
     /** @return array<int, array{label: string, priceMinor: int}>|null */

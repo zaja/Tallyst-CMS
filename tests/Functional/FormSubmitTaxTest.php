@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\Tests\Support\FakeProcessor;
 use Tallyst\FormBuilder\Entity\FormDefinition;
+use Tallyst\FormBuilder\Entity\FormType;
 use Tallyst\FormBuilder\Entity\Order;
 use Tallyst\FormBuilder\Service\TaxCatalog;
 
@@ -188,6 +189,7 @@ class FormSubmitTaxTest extends WebTestCase
             ->setName('Tax test '.$suffix)
             ->setSlug('tax-test-'.$suffix)
             ->setStatus(FormDefinition::STATUS_PUBLISHED)
+            ->setFormType(FormType::DIGITAL) // priced, no shipping → a digital product (Faza 4 explicit type)
             ->setPriceMinor($price)
             ->setCurrency('eur')
             ->setAllowedPaymentMethods([FakeProcessor::NAME])

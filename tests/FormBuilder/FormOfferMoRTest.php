@@ -9,12 +9,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Tallyst\FormBuilder\Entity\FormDefinition;
+use Tallyst\FormBuilder\Entity\FormType;
 use Tallyst\FormBuilder\Shortcode\FormShortcode;
 
 /**
  * The main Phase-3 fix, end-to-end through the [form id=N] render: with BOTH Stripe and Dodo
- * configured, a MoR form (dodoProductId set) offers ONLY Dodo on the front — never Stripe — while a
+ * configured, a MoR form (formType DIGITAL_MOR) offers ONLY Dodo on the front — never Stripe — while a
  * pure Stripe form still offers Stripe. Proves FormShortcode reads the resolver.
+ * Faza 4 KOMAD 2: the MoR/product decision is now the explicit formType, not the guessed Dodo product.
  */
 class FormOfferMoRTest extends KernelTestCase
 {
@@ -58,12 +60,13 @@ class FormOfferMoRTest extends KernelTestCase
         parent::tearDown();
     }
 
-    private function publishedForm(?string $dodoProductId, ?array $allowed): FormDefinition
+    private function publishedForm(FormType $type, ?string $dodoProductId, ?array $allowed): FormDefinition
     {
         $f = (new FormDefinition())
             ->setName('T')
             ->setSlug('offer-'.uniqid())
             ->setStatus(FormDefinition::STATUS_PUBLISHED)
+            ->setFormType($type)
             ->setPriceMinor(4900)
             ->setCurrency('eur')
             ->setDodoProductId($dodoProductId)
@@ -77,7 +80,7 @@ class FormOfferMoRTest extends KernelTestCase
 
     public function testMoRFormOffersOnlyDodoOnFront(): void
     {
-        $form = $this->publishedForm('prod_123', null); // Dodo product linked, no explicit methods
+        $form = $this->publishedForm(FormType::DIGITAL_MOR, 'prod_123', null); // a MoR form with its Dodo product
         $html = $this->shortcode->render(['id' => (string) $form->getId()]);
 
         self::assertStringContainsString('name="payment_method" value="dodo"', $html, 'offers Dodo');
@@ -86,7 +89,7 @@ class FormOfferMoRTest extends KernelTestCase
 
     public function testPureStripeFormStillOffersStripe(): void
     {
-        $form = $this->publishedForm(null, ['stripe']);
+        $form = $this->publishedForm(FormType::DIGITAL, null, ['stripe']);
         $html = $this->shortcode->render(['id' => (string) $form->getId()]);
 
         self::assertStringContainsString('name="payment_method" value="stripe"', $html, 'offers Stripe');

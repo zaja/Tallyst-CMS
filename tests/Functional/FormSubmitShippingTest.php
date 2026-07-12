@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Tallyst\FormBuilder\Entity\FormDefinition;
+use Tallyst\FormBuilder\Entity\FormType;
 use Tallyst\FormBuilder\Entity\Order;
 use App\Tests\Support\FakeMoRProcessor;
 use App\Tests\Support\FakeProcessor;
@@ -157,6 +158,45 @@ class FormSubmitShippingTest extends WebTestCase
         // CODE goes on the order. The name is localized (en/hr) — never the raw code.
         self::assertSame('HR', $order->getCustomerCountry(), 'the stable ISO code is stored on the order');
         self::assertContains($data['ship_country'] ?? null, ['Croatia', 'Hrvatska'], 'the localized country NAME is stored in the submission data');
+    }
+
+    /**
+     * Faza 4 K5: shipping/countries are for PHYSICAL forms only. A DIGITAL form that carries a (stray)
+     * shipping method still offers NO delivery on the front — the type gate ignores it.
+     */
+    public function testDigitalFormNeverOffersShipping(): void
+    {
+        $client = static::createClient();
+        $this->clearProviderSettings();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $settings = static::getContainer()->get(SettingsManager::class);
+
+        $settings->set('fake_processor_enabled', '1');
+        $shipKey = $this->seedCatalog($settings, 'Express', 500);
+
+        $suffix = bin2hex(random_bytes(5));
+        $form = (new FormDefinition())
+            ->setName('Dig '.$suffix)->setSlug('dig-'.$suffix)
+            ->setStatus(FormDefinition::STATUS_PUBLISHED)
+            ->setFormType(FormType::DIGITAL) // digital, yet carrying a shipping method
+            ->setPriceMinor(2000)->setCurrency('eur')
+            ->setAllowedPaymentMethods([FakeProcessor::NAME])
+            ->setShippingMethods([$shipKey]);
+        $em->persist($form);
+        $em->flush();
+        $this->formIds[] = $form->getId();
+
+        $slug = 'dig-page-'.$suffix;
+        $page = (new Page('Dig '.$suffix, $slug))->setStatus(Page::STATUS_PUBLISHED)->setContent('[form id='.$form->getId().']');
+        $em->persist($page);
+        $em->flush();
+        $this->pageIds[] = $page->getId();
+
+        $client->request('GET', '/'.$slug);
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringNotContainsString('name="shipping"', $html, 'a digital form offers no delivery');
+        self::assertStringNotContainsString('name="ship_name"', $html, 'a digital form asks for no address');
     }
 
     /** A tampered (out-of-range) shipping index is rejected server-side — no order, never a 500. */
@@ -362,10 +402,17 @@ class FormSubmitShippingTest extends WebTestCase
     {
         $suffix = bin2hex(random_bytes(5));
 
+        // Faza 4: the explicit type replaces the old guessing — declare it from the intended shape
+        // (Dodo → MoR; shipping → physical; else digital), matching what the backfill would assign.
+        $formType = isset($opts['dodoProductId'])
+            ? FormType::DIGITAL_MOR
+            : ([] !== ($opts['shipping'] ?? []) ? FormType::PHYSICAL : FormType::DIGITAL);
+
         $form = (new FormDefinition())
             ->setName('Ship test '.$suffix)
             ->setSlug('ship-test-'.$suffix)
             ->setStatus(FormDefinition::STATUS_PUBLISHED)
+            ->setFormType($formType)
             ->setPriceMinor($opts['price'])
             ->setCurrency('eur')
             ->setAllowedPaymentMethods($opts['allowed'])

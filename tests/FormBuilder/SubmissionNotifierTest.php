@@ -6,6 +6,7 @@ use App\Email\EmailSender;
 use PHPUnit\Framework\TestCase;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormField;
+use Tallyst\FormBuilder\Entity\FormType;
 use Tallyst\FormBuilder\Entity\FormSubmission;
 use Tallyst\FormBuilder\Service\SubmissionNotifier;
 
@@ -87,6 +88,7 @@ class SubmissionNotifierTest extends TestCase
         $sender = $this->createMock(EmailSender::class);
         $sender->expects(self::never())->method('send');
 
-        (new SubmissionNotifier($sender))->notify($this->submission($this->freeForm()->setPriceMinor(500), []));
+        // A product form is now decided by the explicit type (not the price) — a product skips the notify.
+        (new SubmissionNotifier($sender))->notify($this->submission($this->freeForm()->setFormType(FormType::DIGITAL)->setPriceMinor(500), []));
     }
 }

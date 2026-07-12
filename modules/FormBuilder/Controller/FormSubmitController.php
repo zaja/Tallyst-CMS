@@ -94,11 +94,11 @@ class FormSubmitController extends AbstractController
 
         ['errors' => $errors, 'data' => $data] = $this->validator->validate($form, $raw);
 
-        // Shipping address (Faza 1): a form that offers delivery (≥1 live method AND not a MoR form)
-        // requires the standard address set, captured into the submission data under stable ship_* keys.
-        // DERIVED from "offers delivery" — no stored flag. Folded into the SAME errors/data maps so
+        // Shipping address (Faza 1): a PHYSICAL form that offers delivery (≥1 live method) requires the
+        // standard address set, captured into the submission data under stable ship_* keys. Faza 4 K5:
+        // gated on the PHYSICAL type (only physical goods ship). Folded into the SAME errors/data maps so
         // per-field errors render on the form via the existing flash mechanism, and valid values are saved.
-        if (!$this->paymentResolver->isMerchantOfRecordForm($form) && [] !== $this->shipping->offeredFor($form)) {
+        if ($form->getFormType()->isPhysical() && [] !== $this->shipping->offeredFor($form)) {
             foreach (array_keys(ShippingAddress::FIELDS) as $key) {
                 $value = trim((string) $request->request->get($key, ''));
 
@@ -247,15 +247,15 @@ class FormSubmitController extends AbstractController
             $variantLabel = $variant['label'];
         }
 
-        // Shipping (Faza 1) — ENTIRELY on the non-MoR path (same gate as the tax block below): a MoR
-        // order is never shipped by Tallyst, so shippingLabel/Amount stay null and amountMinor is
-        // unchanged. The buyer's chosen method is resolved by INDEX against the form's offered list, with
-        // the price read from the CATALOG (never the request), then folded into the gross amount BEFORE
-        // the tax split so one rate covers product + delivery.
+        // Shipping (Faza 1) — ONLY on a PHYSICAL form (Faza 4 K5): only physical goods ship, so a digital
+        // or MoR order stays unshipped (shippingLabel/Amount null, amountMinor unchanged). The buyer's
+        // chosen method is resolved by INDEX against the form's offered list, with the price read from the
+        // CATALOG (never the request), then folded into the gross amount BEFORE the tax split so one rate
+        // covers product + delivery.
         $shippingLabel = null;
         $shippingAmount = null;
         $customerCountry = null;
-        if (!$isMerchantOfRecord) {
+        if ($form->getFormType()->isPhysical()) {
             $offered = $this->shipping->offeredFor($form);
             if ([] !== $offered) {
                 $rawShipping = $request->request->get('shipping');

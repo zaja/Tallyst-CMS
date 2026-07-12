@@ -27,22 +27,18 @@ class FormPaymentResolver
     }
 
     /**
-     * A form is Merchant-of-Record if it links a Dodo product OR lists a MoR provider among its allowed
-     * methods. (dodoProductId is a MoR signal exactly like ticking the Dodo checkbox.)
+     * A form is Merchant-of-Record if its EXPLICIT type says so. Faza 4 KOMAD 2: this now reads the
+     * remembered formType (DIGITAL_MOR), not the old guess (Dodo product / a MoR method among the allowed
+     * ones). The type is the single source of truth for the FORM-level question. dodoProductId stays a real
+     * field (WHICH Dodo product) but is no longer the type PROXY. See PLAN-FAZA-4-WIZARD.md §0, §2.
+     *
+     * ⚠ This is the PER-FORM signal only. The per-PAYMENT tax gate (submit: $chosen instanceof
+     * MerchantOfRecordInterface) and the per-ORDER display (OrderCrudController) stay keyed on the actual
+     * provider — untouched — so the Dodo money path is byte-identical.
      */
     public function isMerchantOfRecordForm(FormDefinition $form): bool
     {
-        if (null !== $form->getDodoProductId()) {
-            return true;
-        }
-
-        foreach ($form->getAllowedPaymentMethods() ?? [] as $name) {
-            if ($this->isMerchantOfRecordProvider($name)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $form->getFormType()->isMerchantOfRecord();
     }
 
     /**
@@ -62,7 +58,13 @@ class FormPaymentResolver
             ));
         }
 
-        return $this->payments->availableFor($form->getAllowedPaymentMethods());
+        // A non-MoR form NEVER offers a Merchant-of-Record provider (Dodo) — not even when
+        // allowedPaymentMethods is empty (= "all configured"). Faza 4 K5: "fizičkom/digitalnom se ne nudi
+        // Dodo". Dodo is reached only via the digital_mor type, above.
+        return array_values(array_filter(
+            $this->payments->availableFor($form->getAllowedPaymentMethods()),
+            fn (string $name): bool => !$this->isMerchantOfRecordProvider($name),
+        ));
     }
 
     private function isMerchantOfRecordProvider(string $name): bool

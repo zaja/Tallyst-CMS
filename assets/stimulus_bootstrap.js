@@ -10,6 +10,7 @@ import FormbuilderConditionsController from '../modules/FormBuilder/assets/contr
 import FormbuilderBuilderController from '../modules/FormBuilder/assets/controllers/formbuilder_builder_controller.js';
 import CountrySelectController from '../modules/FormBuilder/assets/controllers/country_select_controller.js';
 import FormTypeController from '../modules/FormBuilder/assets/controllers/form_type_controller.js';
+import FormWizardController from '../modules/FormBuilder/assets/controllers/form_wizard_controller.js';
 import DodoPrefillController from '../modules/FormBuilder/assets/controllers/dodo_prefill_controller.js';
 import PaymentExclusiveController from '../modules/FormBuilder/assets/controllers/payment_exclusive_controller.js';
 import FormRulesController from '../modules/FormBuilder/assets/controllers/form_rules_controller.js';
@@ -48,6 +49,7 @@ app.register('formbuilder--conditions', FormbuilderConditionsController);
 app.register('formbuilder--builder', FormbuilderBuilderController);
 app.register('formbuilder--country-select', CountrySelectController);
 app.register('formbuilder--formtype', FormTypeController);
+app.register('formbuilder--wizard', FormWizardController);
 app.register('formbuilder--dodo-prefill', DodoPrefillController);
 app.register('formbuilder--payment-exclusive', PaymentExclusiveController);
 app.register('formbuilder--rules', FormRulesController);

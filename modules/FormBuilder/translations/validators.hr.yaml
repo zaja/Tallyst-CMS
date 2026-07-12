@@ -1,7 +1,6 @@
 # validators domain (hr) — FormBuilder modul. Auto-otkriven preko bundlea.
 form:
-    payment_methods_mixed: 'Merchant-of-Record način (Dodo) ne može se kombinirati sa Stripe ili PayPal — Dodo forma mora koristiti samo Dodo.'
-    payment_methods_choose_explicit: 'Konfigurirani su i Merchant-of-Record (Dodo) i običan provider (Stripe/PayPal) — odaberi način plaćanja izričito za ovaj proizvod da porezni model bude jednoznačan.'
+    payment_methods_mor_on_non_mor: 'Dodo (Merchant-of-Record) dostupan je samo na Merchant-of-Record formi. Napravi formu kao digitalno → Merchant-of-Record da bi ga koristio.'
 validation:
     shipping:
         address_required: Ovo polje je obavezno za dostavu.

@@ -5,24 +5,21 @@
 {% block content_title %}{{ (definition.id ? 'admin.form.builder.edit_title' : 'admin.form.builder.new_title')|trans({}, 'admin') }}{% endblock %}
 
 {% block main %}
-    {# UI-only: open in "Paid" when the form carries ANY non-empty paid configuration (price/variants —
-       isProduct — OR explicitly chosen payment methods / shipping methods / ship-to countries / a Dodo
-       product). Empty defaults do NOT count. The backend's product decision (has price or variants) is
-       UNCHANGED — this only picks which sections the builder reveals; see form_type_controller.js. #}
+    {# Faza 4: the builder reveal is driven by the EXPLICIT formType (the remembered decision), not guessed.
+       Initial d-none per block is computed here; form_type_controller.js re-applies live on the select. #}
     {% set fbValue = form.vars.value %}
-    {% set isProduct = fbValue.isProduct()
-        or fbValue.getAllowedPaymentMethods()
-        or fbValue.getShippingMethods()
-        or fbValue.getAllowedShippingCountries()
-        or fbValue.getDodoProductId() %}
+    {% set ft = fbValue.getFormType().value %}
+    {% set isProduct = ft != 'messages' %}
+    {% set isMor = ft == 'digital_mor' %}
+    {% set isPhysical = ft == 'physical' %}
+    {% set isSelfBilled = isProduct and not isMor %}
     {# The builder controller's JS-generated "new field" summary fallback is fed the translated label
        as a Stimulus value (Twig owns the translation; JS reads it). #}
     <div data-controller="formbuilder--builder formbuilder--formtype"
-         data-action="input->formbuilder--formtype#refresh change->formbuilder--formtype#refresh"
          data-formbuilder--builder-new-field-label-value="{{ 'admin.form.field.new'|trans({}, 'admin') }}">
         {{ form_start(form, {attr: {'data-dirty-guard': ''}}) }}
 
-        {# Osnovno #}
+        {# Osnovno — incl. the explicit form-type select (mapped; the reveal reads it). #}
         <div class="card mb-3 fb-card">
             <div class="card-body">
                 <h2 class="h5 fb-section-title">{{ 'admin.form.builder.basic.title'|trans({}, 'admin') }}</h2>
@@ -33,36 +30,22 @@
                     <div class="col">{{ form_row(form.slug) }}</div>
                     <div class="col">{{ form_row(form.status) }}</div>
                 </div>
+                {{ form_row(form.formType) }}
+                {% if ft not in ['digital', 'digital_mor'] %}
+                    {# messages/physical are locked — the purpose is a wizard decision. Point to a new form. #}
+                    <p class="text-muted small mb-3">
+                        {{ 'admin.form.def.form_type_locked'|trans({}, 'admin') }}
+                        <a href="{{ path('form_builder_admin_new') }}">{{ 'admin.form.def.form_type_new_form'|trans({}, 'admin') }}</a>
+                    </p>
+                {% endif %}
                 {{ form_row(form.description) }}
             </div>
         </div>
 
-        {# Tip forme — UI-only toggle (buttons, nothing submitted) #}
-        <div class="card mb-3 fb-card">
-            <div class="card-body">
-                <h2 class="h5 fb-section-title">{{ 'admin.form.builder.type.title'|trans({}, 'admin') }}</h2>
-                <p class="fb-section-help">{{ 'admin.form.builder.type.help'|trans({}, 'admin') }}</p>
-                <div class="fb-type-grid" role="group">
-                    <button type="button" class="fb-type-option" data-fb-type="free"
-                            data-formbuilder--formtype-target="option"
-                            data-action="formbuilder--formtype#select"{{ isProduct ? '' : ' data-active' }}>
-                        <span class="fb-type-title">{{ 'admin.form.builder.type.free'|trans({}, 'admin') }}</span>
-                        <span class="fb-type-sub">{{ 'admin.form.builder.type.free_sub'|trans({}, 'admin') }}</span>
-                    </button>
-                    <button type="button" class="fb-type-option" data-fb-type="paid"
-                            data-formbuilder--formtype-target="option"
-                            data-action="formbuilder--formtype#select"{{ isProduct ? ' data-active' : '' }}>
-                        <span class="fb-type-title">{{ 'admin.form.builder.type.paid'|trans({}, 'admin') }}</span>
-                        <span class="fb-type-sub">{{ 'admin.form.builder.type.paid_sub'|trans({}, 'admin') }}</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        {# Naplata (paid) — pre-hidden in Twig when not a product to avoid a flash before JS boots.
-           data-controller: dodo-prefill (copies a picked Dodo product's price/currency) +
-           payment-exclusive (a MoR method can't mix with Stripe/PayPal). #}
-        <div class="card mb-3 fb-card{{ isProduct ? '' : ' d-none' }}" data-formbuilder--formtype-target="paid"
+        {# Sales (product) — shown by formType (any product type). Pre-hidden in Twig when not a product to
+           avoid a flash before JS boots. data-controller: dodo-prefill (copies a picked Dodo product's
+           price/currency) + payment-exclusive (a MoR method can't mix with Stripe/PayPal). #}
+        <div class="card mb-3 fb-card{{ isProduct ? '' : ' d-none' }}" data-formbuilder--formtype-target="product"
              data-controller="formbuilder--dodo-prefill formbuilder--payment-exclusive">
             <div class="card-body">
                 <h2 class="h5 fb-section-title">{{ 'admin.form.builder.payment.title'|trans({}, 'admin') }} <span class="badge fb-badge-soft">{{ 'admin.form.builder.payment.badge'|trans({}, 'admin') }}</span></h2>
@@ -71,21 +54,23 @@
                     <div class="col">{{ form_row(form.priceMinor) }}</div>
                     <div class="col">{{ form_row(form.currency) }}</div>
                 </div>
-                {# Gentle, NON-blocking note: shown (live) only when Paid is active but there's no price and
-                   no variant. Never blocks saving; doesn't touch the backend. #}
-                <p class="text-muted small mb-3 d-none" data-formbuilder--formtype-target="priceHint">
-                    <i class="fa fa-circle-info"></i> {{ 'admin.form.builder.payment.price_hint'|trans({}, 'admin') }}
-                </p>
-                {{ form_row(form.allowedPaymentMethods) }}
 
-                {# Dodo (Merchant-of-Record) per-form product. Dropdown from the live catalogue when
-                   Dodo is configured, else a manual product-id input — always saveable. Explicit
-                   render_row: form_end uses render_rest:false, so an unrendered field would vanish. #}
-                {{ form_row(form.dodoProductId) }}
-                <p class="text-muted small mb-3">{{ 'admin.form.def.dodo_price_note'|trans({}, 'admin') }}</p>
+                {# Self-billed payment methods (Stripe/PayPal). Shown for physical/digital only — a MoR form
+                   is Dodo-only (its provider comes from the type, not this list). #}
+                <div class="fb-payment-methods{{ isSelfBilled ? '' : ' d-none' }}" data-formbuilder--formtype-target="selfPayment">
+                    {{ form_row(form.allowedPaymentMethods) }}
+                </div>
 
-                {{ form_errors(form.variants) }}
-                <div class="fb-subblock">
+                {# Dodo (Merchant-of-Record) per-form product — shown ONLY for a digital_mor form (physical
+                   is never offered Dodo). Dropdown from the live catalogue, else a manual id — always saveable. #}
+                <div class="fb-dodo-product{{ isMor ? '' : ' d-none' }}" data-formbuilder--formtype-target="dodo">
+                    {{ form_row(form.dodoProductId) }}
+                    <p class="text-muted small mb-3">{{ 'admin.form.def.dodo_price_note'|trans({}, 'admin') }}</p>
+                </div>
+
+                {# Price variants — self-billed only (MoR supports a fixed price only). #}
+                <div class="fb-subblock{{ isSelfBilled ? '' : ' d-none' }}" data-formbuilder--formtype-target="variants">
+                    {{ form_errors(form.variants) }}
                     <p class="fb-section-help mb-2">{{ 'admin.form.builder.payment.variants_help'|trans({}, 'admin') }}</p>
                     <div data-fb-collection data-fb-level="variants"
                          data-prototype="{{ include('@FormBuilder/admin/_variant_row.html.twig', {variantForm: form.variants.vars.prototype})|e('html_attr') }}"
@@ -100,40 +85,25 @@
                     </div>
                 </div>
 
-                {# Per-form tax rate (Faza 3): a single dropdown. Placeholder = the catalog DEFAULT rate
-                   (empty value → null → backward-compat); named rates; "no tax". OMITTED server-side on a
-                   MoR form (guard on presence) and hidden LIVE when Dodo is picked (formtype "tax" target).
-                   render_row explicit — form_end uses render_rest:false, so an unrendered field vanishes. #}
-                {% if form.taxRateKey is defined %}
-                    <div class="fb-subblock" data-formbuilder--formtype-target="tax">
-                        {{ form_row(form.taxRateKey) }}
-                    </div>
-                {% endif %}
+                {# Per-form tax rate (Faza 3). Shown for self-billed (physical/digital) — a MoR form hides it
+                   (the MoR owns tax). The field is ALWAYS in the DOM (Faza 4 K3), so hiding never clears it. #}
+                <div class="fb-subblock{{ isSelfBilled ? '' : ' d-none' }}" data-formbuilder--formtype-target="tax">
+                    {{ form_row(form.taxRateKey) }}
+                </div>
 
-                {# Shipping offer: which catalog methods this form shows at checkout. OMITTED from the form
-                   on a MoR (Dodo) form (shipping is meaningless there), so guard on field presence; a
-                   muted note when the catalog is empty. #}
-                {% if form.shippingMethods is defined %}
-                    {# Hidden LIVE by formbuilder--formtype when Dodo is selected (a MoR form has no Tallyst
-                       shipping). A saved Dodo form omits this field server-side, so this only covers the
-                       live intermediate step. #}
-                    <div class="fb-subblock" data-formbuilder--formtype-target="shipping">
-                        {{ form_row(form.shippingMethods) }}
-                        {% if shipping_methods() is empty %}
-                            <p class="text-muted small mb-0">{{ 'admin.form.def.shipping_none'|trans({}, 'admin') }}</p>
-                        {% endif %}
-                    </div>
-                {% endif %}
+                {# Shipping offer (physical only). Always in the DOM; hidden by type. #}
+                <div class="fb-subblock{{ isPhysical ? '' : ' d-none' }}" data-formbuilder--formtype-target="shipping">
+                    {{ form_row(form.shippingMethods) }}
+                    {% if shipping_methods() is empty %}
+                        <p class="text-muted small mb-0">{{ 'admin.form.def.shipping_none'|trans({}, 'admin') }}</p>
+                    {% endif %}
+                </div>
 
-                {# Ship-to countries (Faza 2): present only when the form offers delivery (field added by the
-                   type only for a non-MoR form that hasShipping). ~250 checkboxes made usable with search +
+                {# Ship-to countries (Faza 2) — physical only. ~250 checkboxes made usable with search +
                    EU/All/None presets + a live count (formbuilder--country-select). Empty = ships everywhere. #}
-                {% if form.allowedShippingCountries is defined %}
-                    {# Pre-hidden: revealed live by formbuilder--formtype only when a delivery method is
-                       checked (no flash for the common no-shipping case). #}
-                    <div class="fb-subblock d-none" data-controller="formbuilder--country-select"
-                         data-formbuilder--formtype-target="countries"
-                         data-formbuilder--country-select-count-label-value="{{ 'admin.form.def.countries.selected'|trans({}, 'admin')|e('html_attr') }}">
+                <div class="fb-subblock{{ isPhysical ? '' : ' d-none' }}" data-controller="formbuilder--country-select"
+                     data-formbuilder--formtype-target="countries"
+                     data-formbuilder--country-select-count-label-value="{{ 'admin.form.def.countries.selected'|trans({}, 'admin')|e('html_attr') }}">
                         <label class="form-label fw-semibold mb-1">{{ 'admin.form.def.shipping_countries'|trans({}, 'admin') }}</label>
                         <p class="fb-section-help mb-2">{{ 'admin.form.def.shipping_countries_help'|trans({}, 'admin') }}</p>
                         <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
@@ -151,7 +121,6 @@
                             {{ form_widget(form.allowedShippingCountries) }}
                         </div>
                     </div>
-                {% endif %}
             </div>
         </div>
 
@@ -233,13 +202,6 @@
         .fb-country-list { max-height: 16rem; overflow-y: auto; padding: .5rem .75rem; border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius, .375rem); columns: 12rem auto; }
         .fb-country-list .form-check { break-inside: avoid; margin-bottom: .15rem; }
 
-        /* Type toggle — two selectable cards (buttons; active state, no JS class churn needed). */
-        .fb-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .fb-type-option { display: flex; flex-direction: column; gap: .15rem; align-items: flex-start; text-align: left; padding: 1rem 1.1rem; border: 1px solid var(--bs-border-color); border-radius: 12px; cursor: pointer; background: var(--bs-body-bg); color: inherit; transition: border-color .15s, background .15s; }
-        .fb-type-option[data-active] { border-color: var(--bs-primary); background: var(--bs-primary-bg-subtle); }
-        .fb-type-title { font-weight: 600; }
-        .fb-type-sub { color: var(--bs-secondary-color); font-size: .8rem; }
-
         /* Collection rows (field + variant) — theme variables fix the dark-mode "black box". */
         .fb-field-row { border: 1px solid var(--bs-border-color); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; background: var(--bs-tertiary-bg); }
         .fb-row-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: .5rem; }
@@ -269,7 +231,7 @@
         .fb-cond-toggle { margin: .25rem 0 .5rem; }
 
         @media (max-width: 575px) {
-            .fb-type-grid, .fb-grid, .fb-cond-head, .fb-rule-real, .fb-rule-proxy-grid { grid-template-columns: 1fr; }
+            .fb-grid, .fb-cond-head, .fb-rule-real, .fb-rule-proxy-grid { grid-template-columns: 1fr; }
         }
     </style>
 {% endblock %}

@@ -60,9 +60,27 @@ admin:
         flash:
             deleted: Forma je obrisana.
             saved: Forma je spremljena.
-        index:
-            title: Forme
-            new: + Nova forma
+        wizard:
+            title: Izrada forme
+            intro: Nekoliko kratkih pitanja, pa ćeš ispuniti detalje.
+            default_name: Nova forma
+            continue: Nastavi
+            q1: Čemu služi ova forma?
+            q1_messages: Prima poruke
+            q1_messages_sub: 'Kontakt ili upit — bez naplate.'
+            q1_sells: Prodaje nešto
+            q1_sells_sub: 'Naplata pri slanju forme.'
+            q2: Šalje li se proizvod kupcu?
+            q2_physical: 'Da — šalje se'
+            q2_physical_sub: 'Fizička roba s dostavom i adresom.'
+            q2_digital: 'Ne — digitalno ili usluga'
+            q2_digital_sub: 'Preuzimanje, licenca ili usluga koju pružaš.'
+            q3: Tko snosi porez?
+            q3_self: Ja
+            q3_self_sub: 'Naplaćuješ preko Stripe/PayPal i sam vodiš PDV.'
+            q3_mor: Merchant-of-Record
+            q3_mor_sub: 'Dodo je prodavatelj i vodi globalni porez umjesto tebe.'
+            q3_mor_disabled: 'Konfiguriraj Dodo u Postavke → Dodo Payments da bi ovo koristio.'
             none: 'Još nema formi. Kreirajte prvu pa je ubacite u stranicu shortcodeom [form id=N].'
             col: { name: Naziv, status: Status, shortcode: Shortcode, fields: Polja }
             status: { published: Objavljeno, draft: Skica }
@@ -121,6 +139,15 @@ admin:
             description: Opis
             status: Status
             status_option: { draft: Skica, published: Objavljeno }
+            form_type: Što ova forma radi
+            form_type_help: 'Postavljeno pri izradi forme. Ovdje se može mijenjati samo Digitalno ↔ Merchant-of-Record (isti proizvod, drugi način naplate). Promjena nikad ne briše cijenu/dostavu/porez.'
+            form_type_locked: 'Svrha je fiksna. Za drukčiju vrstu forme'
+            form_type_new_form: napravi novu formu.
+            form_type_option:
+                messages: Prima poruke (besplatno)
+                physical: Prodaje fizički proizvod (šalje se)
+                digital: Prodaje digitalni proizvod / uslugu
+                digital_mor: 'Prodaje digitalno preko Merchant-of-Record (Dodo)'
             price: Cijena
             price_help: 'Prazno = forma bez naplate. S cijenom forma postaje proizvod (plaćanje na submit). Ignorira se ako postoje varijante.'
             currency: Valuta

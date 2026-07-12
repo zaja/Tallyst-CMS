@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Tallyst\FormBuilder\Entity\FormDefinition;
+use Tallyst\FormBuilder\Entity\FormType;
 use Tallyst\FormBuilder\Service\ShippingCatalog;
 
 /**
@@ -26,7 +27,15 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         $client = static::createClient();
         $client->loginUser($this->makeAdmin());
 
-        $client->request('GET', '/admin/forms/new');
+        // /new is the wizard now; the BUILDER is an existing form's edit page.
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = (new FormDefinition())->setName('B '.bin2hex(random_bytes(4)))->setSlug('b-'.bin2hex(random_bytes(4)))
+            ->setStatus(FormDefinition::STATUS_PUBLISHED);
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
 
         self::assertResponseIsSuccessful();
         // The collapsed-row summary markup is present (carried in the field prototype).
@@ -42,7 +51,15 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         $catalog = static::getContainer()->get(ShippingCatalog::class);
         $catalog->save([['key' => 'std12345', 'label' => 'Standard delivery', 'price' => '4.90']]);
 
-        $crawler = $client->request('GET', '/admin/forms/new');
+        // A PHYSICAL form's builder shows the shipping choices from the catalog.
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = (new FormDefinition())->setName('Ship '.bin2hex(random_bytes(4)))->setSlug('ship-'.bin2hex(random_bytes(4)))
+            ->setStatus(FormDefinition::STATUS_PUBLISHED)->setFormType(FormType::PHYSICAL)->setPriceMinor(2000)->setCurrency('eur');
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $crawler = $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
         self::assertResponseIsSuccessful();
 
         // A checkbox whose value is the catalog KEY (not the price) — the form stores keys.
@@ -63,12 +80,13 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         $catalog = static::getContainer()->get(ShippingCatalog::class);
         $catalog->save([['key' => 'std12345', 'label' => 'Standard delivery', 'price' => '4.90']]);
 
-        // A MoR form (dodoProductId set) → the whole Delivery-methods field is omitted from the builder.
+        // A MoR form (formType DIGITAL_MOR) → the whole Delivery-methods field is omitted from the builder.
         $em = static::getContainer()->get(EntityManagerInterface::class);
         $form = (new FormDefinition())
             ->setName('MoR ship '.bin2hex(random_bytes(4)))
             ->setSlug('mor-ship-'.bin2hex(random_bytes(4)))
             ->setStatus(FormDefinition::STATUS_PUBLISHED)
+            ->setFormType(FormType::DIGITAL_MOR)
             ->setPriceMinor(2000)
             ->setCurrency('eur')
             ->setDodoProductId('prod_fake_123');
@@ -79,9 +97,55 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         $crawler = $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
         self::assertResponseIsSuccessful();
 
-        self::assertSame(0, $crawler->filter('input[name="form_definition[shippingMethods][]"]')->count(), 'a MoR form omits the shipping field');
-        self::assertSame(0, $crawler->filter('input[name="form_definition[allowedShippingCountries][]"]')->count(), 'a MoR form omits the ship-to-countries field too');
-        self::assertStringNotContainsString('Standard delivery — 4,90 EUR', (string) $client->getResponse()->getContent(), 'no shipping choice on a MoR form');
+        // Faza 4 K3: fields ALWAYS in the DOM (so switching type never clears data) — a MoR form HIDES the
+        // shipping/countries/tax/self-payment blocks (type-driven d-none) and SHOWS the Dodo product block.
+        self::assertGreaterThan(0, $crawler->filter('input[name="form_definition[shippingMethods][]"]')->count(), 'the shipping field stays in the DOM (round-trips)');
+        self::assertGreaterThan(0, $crawler->filter('.fb-subblock.d-none[data-formbuilder--formtype-target="shipping"]')->count(), 'shipping block hidden on a MoR form');
+        self::assertGreaterThan(0, $crawler->filter('.d-none[data-formbuilder--formtype-target="countries"]')->count(), 'countries block hidden on a MoR form');
+        self::assertGreaterThan(0, $crawler->filter('.fb-subblock.d-none[data-formbuilder--formtype-target="tax"]')->count(), 'tax block hidden on a MoR form');
+        self::assertGreaterThan(0, $crawler->filter('.fb-payment-methods.d-none[data-formbuilder--formtype-target="selfPayment"]')->count(), 'Stripe/PayPal hidden on a MoR form');
+        self::assertSame(0, $crawler->filter('.fb-dodo-product.d-none')->count(), 'the Dodo product block IS shown on a MoR form');
+    }
+
+    public function testPhysicalFormLocksTypeAndExcludesDodo(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = (new FormDefinition())->setName('Phys '.bin2hex(random_bytes(4)))->setSlug('phys-'.bin2hex(random_bytes(4)))
+            ->setStatus(FormDefinition::STATUS_PUBLISHED)->setFormType(FormType::PHYSICAL)->setPriceMinor(2000)->setCurrency('eur');
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $crawler = $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
+        self::assertResponseIsSuccessful();
+
+        // Type is LOCKED for a physical form → the select offers exactly one option (itself).
+        self::assertSame(1, $crawler->filter('select[name="form_definition[formType]"] option')->count(), 'physical type is locked');
+        // Dodo (MoR) is never a self-billed method choice on a non-MoR form; Stripe/PayPal are.
+        self::assertSame(0, $crawler->filter('input[name="form_definition[allowedPaymentMethods][]"][value="dodo"]')->count(), 'no Dodo method on a physical form');
+        self::assertGreaterThan(0, $crawler->filter('input[name="form_definition[allowedPaymentMethods][]"][value="stripe"]')->count(), 'Stripe is offered');
+    }
+
+    public function testDigitalFormTypeSelectOffersThePair(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = (new FormDefinition())->setName('Dig '.bin2hex(random_bytes(4)))->setSlug('dig-'.bin2hex(random_bytes(4)))
+            ->setStatus(FormDefinition::STATUS_PUBLISHED)->setFormType(FormType::DIGITAL)->setPriceMinor(2000)->setCurrency('eur');
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $crawler = $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
+        self::assertResponseIsSuccessful();
+
+        // A digital form CAN switch to Merchant-of-Record → the select offers both options.
+        self::assertSame(2, $crawler->filter('select[name="form_definition[formType]"] option')->count(), 'digital ↔ digital_mor is switchable');
     }
 
     public function testCountryPickerShownWhenFormOffersDelivery(): void
@@ -92,12 +156,13 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         $catalog = static::getContainer()->get(ShippingCatalog::class);
         $catalog->save([['key' => 'std12345', 'label' => 'Standard delivery', 'price' => '4.90']]);
 
-        // A form that OFFERS delivery (shippingMethods set → hasShipping) → the country picker appears.
+        // A PHYSICAL form → the shipping + country pickers are shown (type-driven).
         $em = static::getContainer()->get(EntityManagerInterface::class);
         $form = (new FormDefinition())
             ->setName('Ship country '.bin2hex(random_bytes(4)))
             ->setSlug('ship-country-'.bin2hex(random_bytes(4)))
             ->setStatus(FormDefinition::STATUS_PUBLISHED)
+            ->setFormType(FormType::PHYSICAL)
             ->setPriceMinor(2000)->setCurrency('eur')
             ->setShippingMethods(['std12345']);
         $em->persist($form);
@@ -119,14 +184,14 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         $client = static::createClient();
         $client->loginUser($this->makeAdmin());
 
-        // A non-MoR product form WITHOUT shipping methods: the country field is ALWAYS in the DOM (so it
-        // can appear LIVE when a method is checked), but its block starts hidden (d-none) — the Stimulus
-        // controller reveals it only when a delivery method is checked (JS, not observable via the crawler).
+        // A DIGITAL product form (no shipping): the country field is ALWAYS in the DOM (so switching to
+        // physical reveals it without a reload), but its block starts hidden (d-none) — digital ≠ physical.
         $em = static::getContainer()->get(EntityManagerInterface::class);
         $form = (new FormDefinition())
             ->setName('No ship '.bin2hex(random_bytes(4)))
             ->setSlug('no-ship-'.bin2hex(random_bytes(4)))
             ->setStatus(FormDefinition::STATUS_PUBLISHED)
+            ->setFormType(FormType::DIGITAL)
             ->setPriceMinor(2000)->setCurrency('eur');
         $em->persist($form);
         $em->flush();
@@ -135,8 +200,8 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         $crawler = $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
         self::assertResponseIsSuccessful();
 
-        self::assertGreaterThan(0, $crawler->filter('input[name="form_definition[allowedShippingCountries][]"]')->count(), 'the country field is always in the DOM for a non-MoR form');
-        self::assertGreaterThan(0, $crawler->filter('.fb-subblock.d-none[data-formbuilder--formtype-target="countries"]')->count(), 'the country block starts hidden (revealed live by JS when a method is checked)');
+        self::assertGreaterThan(0, $crawler->filter('input[name="form_definition[allowedShippingCountries][]"]')->count(), 'the country field is always in the DOM');
+        self::assertGreaterThan(0, $crawler->filter('.fb-subblock.d-none[data-formbuilder--formtype-target="countries"]')->count(), 'the country block starts hidden on a digital (non-physical) form');
     }
 
     private function makeAdmin(): User

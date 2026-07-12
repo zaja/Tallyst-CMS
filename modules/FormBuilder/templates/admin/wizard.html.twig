@@ -1,0 +1,102 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}{{ 'admin.form.wizard.title'|trans({}, 'admin') }}{% endblock %}
+
+{% block main %}
+    {# Faza 4 wizard: a couple of plain-language questions → a formType, then the type-aware builder.
+       Q2 appears only for "sells", Q3 only for "digital" (physical never asks who handles tax). The
+       server maps the answers authoritatively (FormBuilderController::wizardType); the controller only
+       reveals questions + enables Continue. #}
+    <div class="fb-wizard" data-controller="formbuilder--wizard">
+        <p class="fb-section-help mb-3">{{ 'admin.form.wizard.intro'|trans({}, 'admin') }}</p>
+
+        <form method="post" action="{{ path('form_builder_admin_new') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('form_wizard') }}">
+
+            {# Q1 — what the form is for #}
+            <div class="card mb-3 fb-card">
+                <div class="card-body">
+                    <h2 class="h5 fb-section-title">{{ 'admin.form.wizard.q1'|trans({}, 'admin') }}</h2>
+                    <div class="fb-wizard-grid">
+                        <label class="fb-wizard-option">
+                            <input type="radio" name="q1" value="messages" data-action="formbuilder--wizard#change">
+                            <span class="fb-wizard-title">{{ 'admin.form.wizard.q1_messages'|trans({}, 'admin') }}</span>
+                            <span class="fb-wizard-sub">{{ 'admin.form.wizard.q1_messages_sub'|trans({}, 'admin') }}</span>
+                        </label>
+                        <label class="fb-wizard-option">
+                            <input type="radio" name="q1" value="sells" data-action="formbuilder--wizard#change">
+                            <span class="fb-wizard-title">{{ 'admin.form.wizard.q1_sells'|trans({}, 'admin') }}</span>
+                            <span class="fb-wizard-sub">{{ 'admin.form.wizard.q1_sells_sub'|trans({}, 'admin') }}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {# Q2 — shipped or not (only when selling) #}
+            <div class="card mb-3 fb-card d-none" data-formbuilder--wizard-target="q2block">
+                <div class="card-body">
+                    <h2 class="h5 fb-section-title">{{ 'admin.form.wizard.q2'|trans({}, 'admin') }}</h2>
+                    <div class="fb-wizard-grid">
+                        <label class="fb-wizard-option">
+                            <input type="radio" name="q2" value="physical" data-action="formbuilder--wizard#change">
+                            <span class="fb-wizard-title">{{ 'admin.form.wizard.q2_physical'|trans({}, 'admin') }}</span>
+                            <span class="fb-wizard-sub">{{ 'admin.form.wizard.q2_physical_sub'|trans({}, 'admin') }}</span>
+                        </label>
+                        <label class="fb-wizard-option">
+                            <input type="radio" name="q2" value="digital" data-action="formbuilder--wizard#change">
+                            <span class="fb-wizard-title">{{ 'admin.form.wizard.q2_digital'|trans({}, 'admin') }}</span>
+                            <span class="fb-wizard-sub">{{ 'admin.form.wizard.q2_digital_sub'|trans({}, 'admin') }}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {# Q3 — who handles tax (only for a digital product; physical never asks — it can't be MoR) #}
+            <div class="card mb-3 fb-card d-none" data-formbuilder--wizard-target="q3block">
+                <div class="card-body">
+                    <h2 class="h5 fb-section-title">{{ 'admin.form.wizard.q3'|trans({}, 'admin') }}</h2>
+                    <div class="fb-wizard-grid">
+                        <label class="fb-wizard-option">
+                            <input type="radio" name="q3" value="self" data-action="formbuilder--wizard#change">
+                            <span class="fb-wizard-title">{{ 'admin.form.wizard.q3_self'|trans({}, 'admin') }}</span>
+                            <span class="fb-wizard-sub">{{ 'admin.form.wizard.q3_self_sub'|trans({}, 'admin') }}</span>
+                        </label>
+                        <label class="fb-wizard-option{{ dodo_configured ? '' : ' fb-wizard-option--disabled' }}">
+                            <input type="radio" name="q3" value="mor" data-action="formbuilder--wizard#change"{{ dodo_configured ? '' : ' disabled' }}>
+                            <span class="fb-wizard-title">{{ 'admin.form.wizard.q3_mor'|trans({}, 'admin') }}</span>
+                            <span class="fb-wizard-sub">{{ 'admin.form.wizard.q3_mor_sub'|trans({}, 'admin') }}</span>
+                            {% if not dodo_configured %}
+                                <span class="fb-wizard-note">{{ 'admin.form.wizard.q3_mor_disabled'|trans({}, 'admin') }}</span>
+                            {% endif %}
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" disabled data-formbuilder--wizard-target="submit">
+                    {{ 'admin.form.wizard.continue'|trans({}, 'admin') }}
+                </button>
+                <a class="btn btn-light" href="{{ path('form_builder_admin_index') }}">{{ 'admin.form.builder.cancel'|trans({}, 'admin') }}</a>
+            </div>
+        </form>
+    </div>
+
+    <style>
+        .fb-wizard { max-width: 52rem; }
+        .fb-card { border-radius: 14px; }
+        .fb-section-title { margin-bottom: .75rem; }
+        .fb-section-help { color: var(--bs-secondary-color); font-size: .9rem; }
+        .fb-wizard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .fb-wizard-option { display: flex; flex-direction: column; gap: .2rem; padding: 1rem 1.1rem; border: 1px solid var(--bs-border-color); border-radius: 12px; cursor: pointer; background: var(--bs-body-bg); transition: border-color .15s, background .15s; }
+        .fb-wizard-option:hover { border-color: var(--bs-primary); }
+        .fb-wizard-option:has(input:checked) { border-color: var(--bs-primary); background: var(--bs-primary-bg-subtle); }
+        .fb-wizard-option input { margin-bottom: .25rem; }
+        .fb-wizard-title { font-weight: 600; }
+        .fb-wizard-sub { color: var(--bs-secondary-color); font-size: .82rem; }
+        .fb-wizard-note { color: var(--bs-warning-text-emphasis, var(--bs-secondary-color)); font-size: .78rem; margin-top: .3rem; }
+        .fb-wizard-option--disabled { opacity: .55; cursor: not-allowed; }
+        .fb-wizard-option--disabled:hover { border-color: var(--bs-border-color); }
+        @media (max-width: 575px) { .fb-wizard-grid { grid-template-columns: 1fr; } }
+    </style>
+{% endblock %}

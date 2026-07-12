@@ -64,10 +64,10 @@ class FormShortcode implements ShortcodeInterface
         $tax = ($form->isProduct() && !$isMerchantOfRecord) ? $this->tax->forForm($form) : null;
         $showTax = null !== $tax;
 
-        // Shipping (Faza 1): offered only on a product form that ISN'T MoR — same suppression as the tax
-        // note (a MoR form never shows delivery/address). offeredFor filters the form's selection against
-        // the live catalog. When delivery is offered, the standard address set is required.
-        $offeredShipping = ($form->isProduct() && !$isMerchantOfRecord) ? $this->shipping->offeredFor($form) : [];
+        // Shipping (Faza 1): offered ONLY on a PHYSICAL form (Faza 4 K5 — delivery/countries belong to
+        // physical goods; a digital or MoR form never ships). offeredFor filters the form's selection
+        // against the live catalog. When delivery is offered, the standard address set is required.
+        $offeredShipping = $form->getFormType()->isPhysical() ? $this->shipping->offeredFor($form) : [];
 
         return $this->twig->render('@FormBuilder/form/render.html.twig', [
             'shipping_countries' => [] !== $offeredShipping ? $this->countryOptions($form) : [],
