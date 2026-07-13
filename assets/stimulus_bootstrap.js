@@ -13,6 +13,7 @@ import FormTypeController from '../modules/FormBuilder/assets/controllers/form_t
 import FormWizardController from '../modules/FormBuilder/assets/controllers/form_wizard_controller.js';
 import MorUnitController from '../modules/FormBuilder/assets/controllers/mor_unit_controller.js';
 import MorPriceController from '../modules/FormBuilder/assets/controllers/mor_price_controller.js';
+import MorImportController from '../modules/FormBuilder/assets/controllers/mor_import_controller.js';
 import PaymentExclusiveController from '../modules/FormBuilder/assets/controllers/payment_exclusive_controller.js';
 import FormRulesController from '../modules/FormBuilder/assets/controllers/form_rules_controller.js';
 import DashboardChartController from '../modules/FormBuilder/assets/controllers/dashboard_chart_controller.js';
@@ -53,6 +54,7 @@ app.register('formbuilder--formtype', FormTypeController);
 app.register('formbuilder--wizard', FormWizardController);
 app.register('formbuilder--mor-unit', MorUnitController);
 app.register('formbuilder--mor-price', MorPriceController);
+app.register('formbuilder--mor-import', MorImportController);
 app.register('formbuilder--payment-exclusive', PaymentExclusiveController);
 app.register('formbuilder--rules', FormRulesController);
 app.register('formbuilder--dashboard-chart', DashboardChartController);

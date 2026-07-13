@@ -396,6 +396,40 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         self::assertStringNotContainsString('admin.form.builder', $html);
     }
 
+    public function testMorBuilderExposesTheImportUiDomContract(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+
+        // Faza 7 K3: the "import from collection" UI is JS-driven (the button is revealed on connect if the
+        // provider has collections). PHPUnit can't run the JS, so lock the DOM contract the controller needs:
+        // its controller, the endpoint-URL / provider / labels values, and the button/panel/select/preview/
+        // apply targets.
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = (new FormDefinition())->setName('Import UI '.bin2hex(random_bytes(4)))->setSlug('import-ui-'.bin2hex(random_bytes(4)))
+            ->setStatus(FormDefinition::STATUS_DRAFT)->setFormType(FormType::DIGITAL_MOR)->setMorProvider('fakemor')
+            ->setMorUnits([['label' => 'Standard', 'unitId' => 'ok_x', 'priceMinor' => 4900, 'currency' => 'eur']]);
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+
+        self::assertStringContainsString('formbuilder--mor-import', $html);
+        self::assertStringContainsString('data-formbuilder--mor-import-containers-url-value="/admin/forms/mor-containers"', $html);
+        self::assertStringContainsString('data-formbuilder--mor-import-units-url-value="/admin/forms/mor-container-units"', $html);
+        self::assertStringContainsString('data-formbuilder--mor-import-provider-value="fakemor"', $html);
+        foreach (['button', 'panel', 'select', 'preview', 'apply'] as $target) {
+            self::assertStringContainsString('data-formbuilder--mor-import-target="'.$target.'"', $html, "import UI is missing the $target target");
+        }
+        // The reveal button starts hidden (JS reveals it after confirming there are collections).
+        self::assertMatchesRegularExpression('/class="[^"]*d-none[^"]*"[^>]*data-formbuilder--mor-import-target="button"/', $html);
+        // No raw i18n keys in the import labels/markup.
+        self::assertStringNotContainsString('admin.form.mor_import', $html);
+    }
+
     private function makeAdmin(): User
     {
         $container = static::getContainer();

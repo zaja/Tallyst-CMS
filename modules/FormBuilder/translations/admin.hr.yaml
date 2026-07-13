@@ -208,6 +208,24 @@ admin:
             unit: Proizvod
             price: Cijena
             remove: Ukloni proizvod
+        mor_import:
+            button: Uvezi iz kolekcije
+            choose: 'Kolekcija'
+            choose_placeholder: '— odaberi kolekciju —'
+            products_count: '%n% proizvoda'
+            name_change: 'Naziv forme: "%old%" → "%new%"'
+            description_set: 'Opis će se postaviti iz kolekcije.'
+            options_replace: 'Zamjenjujem %n% postojećih opcija s %m% iz kolekcije:'
+            options_add: 'Uvozim %m% opcija:'
+            skipped_title: 'Preskočeno (neće se uvesti):'
+            reason_inactive: neaktivan
+            reason_recurring: pretplata
+            reason_usage_based: naplata po potrošnji
+            reason_pay_what_you_want: plati-koliko-želiš
+            empty: 'Ova kolekcija nema proizvoda za prodaju — nema što uvesti.'
+            error: 'Dodo nije dostupan. Pokušaj ponovno.'
+            apply: Uvezi
+            cancel: Odustani
         variant:
             remove: Ukloni varijantu
             name: Naziv varijante

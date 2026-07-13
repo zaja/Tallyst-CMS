@@ -216,6 +216,24 @@ admin:
             unit: Product
             price: Price
             remove: Remove product
+        mor_import:
+            button: Import from collection
+            choose: 'Collection'
+            choose_placeholder: '— choose a collection —'
+            products_count: '%n% products'
+            name_change: 'Form name: "%old%" → "%new%"'
+            description_set: 'Description will be set from the collection.'
+            options_replace: 'Replace the %n% current option(s) with %m% from the collection:'
+            options_add: 'Import %m% option(s):'
+            skipped_title: 'Skipped (not imported):'
+            reason_inactive: inactive
+            reason_recurring: subscription
+            reason_usage_based: usage-based
+            reason_pay_what_you_want: pay-what-you-want
+            empty: 'This collection has no sellable products — nothing to import.'
+            error: 'Couldn''t reach Dodo. Try again.'
+            apply: Import
+            cancel: Cancel
         payment_info:
             live_badge: LIVE MODE
             live_note: '— charges go live.'

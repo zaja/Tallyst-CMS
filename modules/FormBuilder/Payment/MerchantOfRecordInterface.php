@@ -45,4 +45,26 @@ interface MerchantOfRecordInterface extends PaymentProcessorInterface
      *   - null  → could NOT verify (unconfigured / not found / error) → the caller warns but allows.
      */
     public function isSellableUnit(string $id): ?bool;
+
+    /**
+     * The provider's unit CONTAINERS — a source to IMPORT a whole list of units from (Dodo product
+     * collections; Paddle/LS: a product's price/variant group). Faza 7. NOT a stored relation — a one-time
+     * import source only. Generic shape; empty list when the provider has none / is unconfigured / on error
+     * (never throws) → the import UI simply doesn't offer the action.
+     *
+     * @return list<array{id: string, name: string, description: ?string, productsCount?: ?int}>
+     */
+    public function listContainers(): array;
+
+    /**
+     * ONE container's sellable units + the products SKIPPED (not sellable) with a reason, plus the
+     * container's own name/description (for the import prefill). READ-ONLY. Returns:
+     *   - null → could NOT fetch (unconfigured / not found / error),
+     *   - ['name','description','units','skipped'] → the container (units may be EMPTY = nothing sellable).
+     * `units` reuse the listUnits() item shape; `skipped[].reason` ∈ inactive|recurring|usage_based|
+     * pay_what_you_want. Faza 7.
+     *
+     * @return array{name: string, description: string, units: list<array<string, mixed>>, skipped: list<array{name: string, reason: string}>}|null
+     */
+    public function containerUnits(string $containerId): ?array;
 }

@@ -222,6 +222,87 @@ class FormBuilderController extends AbstractController
         ]);
     }
 
+    /**
+     * Resolve the MoR provider for a read-only builder endpoint — the ?provider= hint (the form's morProvider,
+     * sent by the JS), else the first registered MoR provider (today Dodo). Provider-agnostic (Faza 7): a
+     * second MoR provider answers here unchanged.
+     */
+    private function morProvider(Request $request): ?MerchantOfRecordInterface
+    {
+        return $this->payments->merchantOfRecord($request->query->get('provider'))
+            ?? $this->payments->firstMerchantOfRecord();
+    }
+
+    /**
+     * Faza 7: the "import from collection" picker source — the MoR provider's unit CONTAINERS (Dodo product
+     * collections). READ-ONLY. JSON:
+     *   - error → no MoR provider / the provider is unconfigured (`listContainers()` returns [] for BOTH
+     *             unconfigured AND genuinely-none, so the isConfigured() check is what tells them apart),
+     *   - ok    → `containers` (may be EMPTY → the provider simply has no collections; the UI hides import).
+     */
+    #[Route('/mor-containers', name: 'form_builder_admin_mor_containers', methods: ['GET'])]
+    public function morContainers(Request $request): JsonResponse
+    {
+        $provider = $this->morProvider($request);
+        if (null === $provider || !$provider->isConfigured()) {
+            return $this->json(['status' => 'error']);
+        }
+
+        return $this->json([
+            'status' => 'ok',
+            'containers' => array_map(static fn (array $c): array => [
+                'id' => (string) ($c['id'] ?? ''),
+                'name' => (string) ($c['name'] ?? ''),
+                'description' => $c['description'] ?? null,
+                'productsCount' => $c['productsCount'] ?? null,
+            ], $provider->listContainers()),
+        ]);
+    }
+
+    /**
+     * Faza 7: ONE container's data for import — its name/description (form prefill) + the sellable units +
+     * the SKIPPED products (name + reason: inactive/recurring/usage_based/pay_what_you_want). READ-ONLY. JSON:
+     *   - error → no provider / no id / unconfigured / not found / API error (`containerUnits()` returns null),
+     *   - ok    → name/description + units (may be EMPTY = nothing sellable) + skipped.
+     * The per-unit guard already ran in containerUnits(); the save-time morUnitsStatus is still the final gate.
+     */
+    #[Route('/mor-container-units', name: 'form_builder_admin_mor_container_units', methods: ['GET'])]
+    public function morContainerUnits(Request $request): JsonResponse
+    {
+        $provider = $this->morProvider($request);
+        $id = trim((string) $request->query->get('id', ''));
+        if (null === $provider || '' === $id) {
+            return $this->json(['status' => 'error']);
+        }
+
+        $data = $provider->containerUnits($id);
+        if (null === $data) {
+            return $this->json(['status' => 'error']); // unconfigured / not found / API error
+        }
+
+        return $this->json([
+            'status' => 'ok',
+            'name' => (string) ($data['name'] ?? ''),
+            'description' => (string) ($data['description'] ?? ''),
+            'units' => array_map(static function (array $u): array {
+                $minor = $u['priceMinor'] ?? null;
+
+                return [
+                    'unitId' => (string) ($u['id'] ?? ''),
+                    'name' => (string) ($u['name'] ?? ''),
+                    'description' => $u['description'] ?? null,
+                    'priceMajor' => null !== $minor ? number_format($minor / 100, 2, '.', '') : null,
+                    // Lowercase to match the form's currency <option> values (eur/usd/gbp).
+                    'currency' => null !== ($u['currency'] ?? null) ? strtolower((string) $u['currency']) : null,
+                ];
+            }, $data['units']),
+            'skipped' => array_map(static fn (array $s): array => [
+                'name' => (string) ($s['name'] ?? ''),
+                'reason' => (string) ($s['reason'] ?? ''),
+            ], $data['skipped']),
+        ]);
+    }
+
     #[Route('/{id}/edit', name: 'form_builder_admin_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function editExisting(Request $request, FormDefinition $form): Response
     {

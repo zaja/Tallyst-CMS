@@ -97,4 +97,35 @@ class FakeMoRProcessor implements PaymentProcessorInterface, MerchantOfRecordInt
 
         return null; // unverifiable
     }
+
+    // Faza 7: unit CONTAINERS (Dodo collections). Deterministic — `col_full` has 2 sellable + 1 skipped,
+    // `col_empty` has none. Lets functional tests drive the "import from collection" flow without HTTP.
+
+    public function listContainers(): array
+    {
+        return [
+            ['id' => 'col_full', 'name' => 'Fake Collection', 'description' => 'A fake collection', 'productsCount' => 3],
+            ['id' => 'col_empty', 'name' => 'Empty Collection', 'description' => null, 'productsCount' => 0],
+        ];
+    }
+
+    public function containerUnits(string $containerId): ?array
+    {
+        if ('col_full' === $containerId) {
+            return [
+                'name' => 'Fake Collection',
+                'description' => 'A fake collection',
+                'units' => [
+                    ['id' => 'ok_a', 'name' => 'Personal', 'description' => null, 'price' => '29.00 EUR', 'priceMinor' => 2900, 'currency' => 'EUR'],
+                    ['id' => 'ok_b', 'name' => 'Team', 'description' => null, 'price' => '49.00 EUR', 'priceMinor' => 4900, 'currency' => 'EUR'],
+                ],
+                'skipped' => [['name' => 'Monthly', 'reason' => 'recurring']],
+            ];
+        }
+        if ('col_empty' === $containerId) {
+            return ['name' => 'Empty Collection', 'description' => '', 'units' => [], 'skipped' => []];
+        }
+
+        return null; // not found
+    }
 }

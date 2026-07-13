@@ -144,7 +144,7 @@ class FormPaymentResolverTest extends TestCase
                     return null;
                 }
 
-                // Faza 6 K2: the MoR sellable-unit contract (unused by the resolver — it only reads the marker).
+                // Faza 6 K2 / Faza 7: the MoR contract (unused by the resolver — it only reads the marker).
                 public function listUnits(): array
                 {
                     return [];
@@ -156,6 +156,16 @@ class FormPaymentResolverTest extends TestCase
                 }
 
                 public function isSellableUnit(string $id): ?bool
+                {
+                    return null;
+                }
+
+                public function listContainers(): array
+                {
+                    return [];
+                }
+
+                public function containerUnits(string $containerId): ?array
                 {
                     return null;
                 }

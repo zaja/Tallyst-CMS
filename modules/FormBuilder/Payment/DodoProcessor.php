@@ -428,6 +428,172 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
     }
 
     /**
+     * Faza 7: implements MerchantOfRecordInterface::listContainers() — Dodo "product collections". READ-ONLY
+     * (GET /product-collections, non-archived, paged). Live-probed shape: envelope `items`, each collection
+     * `{id, name, description, image, products_count, …}`. Empty on any failure → the import UI hides itself.
+     *
+     * @return list<array{id: string, name: string, description: ?string, productsCount: ?int}>
+     */
+    public function listContainers(): array
+    {
+        if (!$this->isConfigured()) {
+            return [];
+        }
+
+        $pageSize = 100;
+        $maxPages = 5; // collections are few; a small cap (never loop unbounded)
+        $out = [];
+        try {
+            for ($page = 0; $page < $maxPages; ++$page) {
+                $response = $this->request('GET', '/product-collections', [
+                    'query' => ['page_number' => $page, 'page_size' => $pageSize, 'archived' => 'false'],
+                    'timeout' => 8,
+                ]);
+                if ($response->getStatusCode() >= 300) {
+                    $this->logger->warning('Dodo list-collections returned {status}', ['status' => $response->getStatusCode()]);
+                    break;
+                }
+                $data = $response->toArray(false);
+                $items = $data['items'] ?? $data['data'] ?? (array_is_list($data) ? $data : []);
+                if (!is_array($items) || [] === $items) {
+                    break;
+                }
+                foreach ($items as $c) {
+                    if (!is_array($c)) {
+                        continue;
+                    }
+                    $id = $c['id'] ?? null;
+                    if (!is_scalar($id) || '' === (string) $id) {
+                        continue;
+                    }
+                    $out[] = [
+                        'id' => (string) $id,
+                        'name' => is_scalar($c['name'] ?? null) && '' !== (string) $c['name'] ? (string) $c['name'] : (string) $id,
+                        'description' => is_scalar($c['description'] ?? null) && '' !== (string) $c['description'] ? (string) $c['description'] : null,
+                        'productsCount' => is_numeric($c['products_count'] ?? null) ? (int) $c['products_count'] : null,
+                    ];
+                }
+                if (count($items) < $pageSize) {
+                    break; // last page
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->logger->warning('Dodo list-collections failed: {error}', ['error' => $e->getMessage()]);
+
+            return [];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Faza 7: implements MerchantOfRecordInterface::containerUnits() — the products of ONE Dodo collection,
+     * for the "import from collection" builder action. READ-ONLY (GET /product-collections/{id}). Live-probed:
+     * ONE call returns the collection meta + all products nested under `groups[].products[]` (each with
+     * `product_id, name, description, price, currency, status, price_detail{type, pay_what_you_want}`), so no
+     * N+1 and no grouping (the LIST endpoint carries NO collection id — proven). Iterates ALL groups; a product
+     * that is inactive (`status===false`) / recurring / usage-based / pay-what-you-want is SKIPPED with a reason
+     * (never imported). Reuses the same guards as listUnits so the two can't disagree.
+     *
+     * @return array{name: string, description: string, units: list<array{id: string, name: string, description: ?string, price: ?string, priceMinor: ?int, currency: ?string}>, skipped: list<array{name: string, reason: string}>}|null
+     */
+    public function containerUnits(string $containerId): ?array
+    {
+        if (!$this->isConfigured() || '' === trim($containerId)) {
+            return null;
+        }
+
+        try {
+            $response = $this->request('GET', '/product-collections/'.rawurlencode($containerId), ['timeout' => 8]);
+            if ($response->getStatusCode() >= 300) {
+                $this->logger->warning('Dodo collection {id} returned {status}', ['id' => $containerId, 'status' => $response->getStatusCode()]);
+
+                return null; // not found / error → the endpoint maps this to a clear message
+            }
+            $data = $response->toArray(false);
+            if (!is_array($data)) {
+                return null;
+            }
+
+            $units = [];
+            $skipped = [];
+            $groups = $data['groups'] ?? [];
+            if (is_array($groups)) {
+                foreach ($groups as $group) { // iterate ALL groups (plan-switching groups; one-time = one group)
+                    $products = is_array($group) ? ($group['products'] ?? []) : [];
+                    if (!is_array($products)) {
+                        continue;
+                    }
+                    foreach ($products as $p) {
+                        if (!is_array($p)) {
+                            continue;
+                        }
+                        $id = $p['product_id'] ?? $p['id'] ?? null;
+                        if (!is_scalar($id) || '' === (string) $id) {
+                            continue;
+                        }
+                        $name = is_scalar($p['name'] ?? null) && '' !== (string) $p['name'] ? (string) $p['name'] : (string) $id;
+
+                        $reason = $this->unitSkipReason($p);
+                        if (null !== $reason) {
+                            $skipped[] = ['name' => $name, 'reason' => $reason];
+                            continue;
+                        }
+
+                        $price = $this->extractPrice($p);
+                        $units[] = [
+                            'id' => (string) $id,
+                            'name' => $name,
+                            'description' => is_scalar($p['description'] ?? null) && '' !== (string) $p['description'] ? (string) $p['description'] : null,
+                            'price' => $price['label'],
+                            'priceMinor' => $price['minor'],
+                            'currency' => $price['currency'],
+                        ];
+                    }
+                }
+            }
+
+            return [
+                'name' => is_scalar($data['name'] ?? null) ? (string) $data['name'] : '',
+                'description' => is_scalar($data['description'] ?? null) ? (string) $data['description'] : '',
+                'units' => $units,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->warning('Dodo container-units failed: {error}', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Why a collection product can't be imported (Faza 7), or null if it's a sellable fixed-price one-time
+     * unit. `inactive` = Dodo `status===false`; then reuse the same recurring/usage/PWYW guards as the picker.
+     *
+     * @param array<string, mixed> $p
+     */
+    private function unitSkipReason(array $p): ?string
+    {
+        if (false === ($p['status'] ?? null)) {
+            return 'inactive';
+        }
+        if (!$this->isOneTimeProduct($p)) {
+            $detail = $p['price_detail'] ?? null;
+            $type = is_array($detail) ? ($detail['type'] ?? null) : null;
+            if ('usage_based_price' === $type || (is_array($detail) && isset($detail['usage_based_price']))) {
+                return 'usage_based';
+            }
+
+            return 'recurring';
+        }
+        if ($this->isPayWhatYouWant($p)) {
+            return 'pay_what_you_want';
+        }
+
+        return null;
+    }
+
+    /**
      * Best-effort structured price from a product item: minor units + currency + a display label.
      * ⚠ VERIFY price shape (nested {price: {price, currency}} or flat price/currency). MULTI-CURRENCY /
      * localized pricing is NOT guessed — a list-shaped price returns all null, and an ambiguous currency

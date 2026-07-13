@@ -72,6 +72,26 @@
                    a manual id) + a read-only display price. Reuses the generic add/remove; each row's
                    formbuilder--mor-unit reads the shared refresh URL / provider / labels from this wrapper. #}
                 <div class="fb-dodo-product{{ isMor ? '' : ' d-none' }}" data-formbuilder--formtype-target="dodo"
+                     data-controller="formbuilder--mor-import"
+                     data-formbuilder--mor-import-containers-url-value="{{ path('form_builder_admin_mor_containers') }}"
+                     data-formbuilder--mor-import-units-url-value="{{ path('form_builder_admin_mor_container_units') }}"
+                     data-formbuilder--mor-import-provider-value="{{ definition.morProvider }}"
+                     data-formbuilder--mor-import-labels-value="{{ {
+                        button: 'admin.form.mor_import.button'|trans({}, 'admin'),
+                        choose_placeholder: 'admin.form.mor_import.choose_placeholder'|trans({}, 'admin'),
+                        products_count: 'admin.form.mor_import.products_count'|trans({}, 'admin'),
+                        name_change: 'admin.form.mor_import.name_change'|trans({}, 'admin'),
+                        description_set: 'admin.form.mor_import.description_set'|trans({}, 'admin'),
+                        options_replace: 'admin.form.mor_import.options_replace'|trans({}, 'admin'),
+                        options_add: 'admin.form.mor_import.options_add'|trans({}, 'admin'),
+                        skipped_title: 'admin.form.mor_import.skipped_title'|trans({}, 'admin'),
+                        reason_inactive: 'admin.form.mor_import.reason_inactive'|trans({}, 'admin'),
+                        reason_recurring: 'admin.form.mor_import.reason_recurring'|trans({}, 'admin'),
+                        reason_usage_based: 'admin.form.mor_import.reason_usage_based'|trans({}, 'admin'),
+                        reason_pay_what_you_want: 'admin.form.mor_import.reason_pay_what_you_want'|trans({}, 'admin'),
+                        empty: 'admin.form.mor_import.empty'|trans({}, 'admin'),
+                        error: 'admin.form.mor_import.error'|trans({}, 'admin')
+                     }|json_encode|e('html_attr') }}"
                      data-mor-units
                      data-mor-refresh-url="{{ path('form_builder_admin_dodo_product') }}"
                      data-mor-provider="{{ definition.morProvider }}"
@@ -103,6 +123,35 @@
                             {% endfor %}
                         </div>
                         <button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-action="formbuilder--builder#add">{{ 'admin.form.builder.add_mor_unit'|trans({}, 'admin') }}</button>
+                        {# Import a whole collection at once (Faza 7). Hidden until the controller confirms the
+                           provider actually HAS collections (a lazy, non-blocking connect fetch). #}
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2 ms-2 d-none"
+                                data-formbuilder--mor-import-target="button"
+                                data-action="formbuilder--mor-import#open">
+                            <i class="fa-solid fa-file-import" aria-hidden="true"></i>
+                            {{ 'admin.form.mor_import.button'|trans({}, 'admin') }}
+                        </button>
+                    </div>
+
+                    {# Import preview panel — hidden until "Import from collection" is clicked. Shows exactly
+                       what will change (name/description/options) + a READABLE list of SKIPPED products with the
+                       reason, and only applies on confirm. #}
+                    <div class="fb-mor-import card mt-3 d-none" data-formbuilder--mor-import-target="panel">
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <label class="form-label small mb-1">{{ 'admin.form.mor_import.choose'|trans({}, 'admin') }}</label>
+                                <select class="form-select form-select-sm" data-formbuilder--mor-import-target="select"
+                                        data-action="change->formbuilder--mor-import#loadContainer"></select>
+                            </div>
+                            <div class="fb-mor-import-preview" data-formbuilder--mor-import-target="preview"></div>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-primary btn-sm" disabled
+                                        data-formbuilder--mor-import-target="apply"
+                                        data-action="formbuilder--mor-import#apply">{{ 'admin.form.mor_import.apply'|trans({}, 'admin') }}</button>
+                                <button type="button" class="btn btn-secondary btn-sm"
+                                        data-action="formbuilder--mor-import#cancel">{{ 'admin.form.mor_import.cancel'|trans({}, 'admin') }}</button>
+                            </div>
+                        </div>
                     </div>
                     <p class="text-muted small mb-3">{{ 'admin.form.def.dodo_price_note'|trans({}, 'admin') }}</p>
                 </div>
@@ -268,6 +317,10 @@
         .fb-rule .mb-3 { margin-bottom: 0 !important; }
         .fb-variant-row .mb-3 { margin-bottom: 0 !important; }
         .fb-cond-toggle { margin: .25rem 0 .5rem; }
+        .fb-mor-import-preview { font-size: .9rem; }
+        .fb-mor-import-list { margin: .25rem 0 .5rem; padding-left: 1.25rem; }
+        .fb-mor-import-list li { margin: .1rem 0; }
+        .fb-mor-import-skipped li { color: var(--bs-secondary-color); }
 
         @media (max-width: 575px) {
             .fb-grid, .fb-cond-head, .fb-rule-real, .fb-rule-proxy-grid { grid-template-columns: 1fr; }
