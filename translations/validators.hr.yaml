@@ -14,6 +14,7 @@ validation:
         notify_recipient_required: Unesi barem jednog primatelja kad je notifikacija uključena.
         notify_email_invalid: 'Neispravna e-mail adresa: %email%'
         variant_incomplete: Svaka varijanta treba naziv i cijenu veću od 0.
+        mor_unit_incomplete: Svaka opcija treba naziv i povezan proizvod.
     field:
         required: Ovo polje je obavezno.
         email: Unesite ispravan e-mail.

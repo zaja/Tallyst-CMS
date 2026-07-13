@@ -19,7 +19,6 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormType;
-use Tallyst\FormBuilder\Payment\DodoProcessor;
 use Tallyst\FormBuilder\Payment\MerchantOfRecordInterface;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Service\ShippingCatalog;
@@ -31,7 +30,6 @@ class FormDefinitionType extends AbstractType
 
     public function __construct(
         private readonly PaymentProcessorRegistry $payments,
-        private readonly DodoProcessor $dodo,
         private readonly ShippingCatalog $shipping,
         private readonly TaxCatalog $tax,
         private readonly TranslatorInterface $translator,
@@ -88,12 +86,18 @@ class FormDefinitionType extends AbstractType
         $shippingKeys = array_keys($shippingLabels);
         $shippingChoices = array_combine($shippingKeys, $shippingKeys);
 
+        // Faza 6 K3: the MoR sellable-unit catalogue for the per-row picker, resolved THROUGH the form's MoR
+        // provider (registry + MerchantOfRecordInterface — never `instanceof DodoProcessor`). One HTTP call
+        // per render (shared across all rows via entry_options). Empty → each row falls back to a manual id.
+        $morProvider = $this->payments->merchantOfRecord($data instanceof FormDefinition ? $data->getMorProvider() : null);
+        $morProducts = null !== $morProvider ? $morProvider->listUnits() : [];
+
         $builder
-            // name/description are prefill TARGETS (the Dodo product picker fills them on change).
+            // The form name/description are the product PAGE's own metadata. Faza 6: prefill is PER-UNIT-ROW
+            // now (the morUnits collection), not form-level — so no dodo-prefill targets on these fields.
             ->add('name', TextType::class, [
                 'label' => 'admin.form.def.name',
                 'empty_data' => '',
-                'attr' => ['data-formbuilder--dodo-prefill-target' => 'name'],
             ])
             ->add('slug', TextType::class, [
                 'required' => false,
@@ -104,7 +108,6 @@ class FormDefinitionType extends AbstractType
             ->add('description', TextareaType::class, [
                 'required' => false,
                 'label' => 'admin.form.def.description',
-                'attr' => ['data-formbuilder--dodo-prefill-target' => 'description'],
             ])
             ->add('status', ChoiceType::class, [
                 'label' => 'admin.form.def.status',
@@ -133,8 +136,6 @@ class FormDefinitionType extends AbstractType
                 'currency' => false,
                 'label' => 'admin.form.def.price',
                 'help' => 'admin.form.def.price_help',
-                // Prefill target (the Dodo product picker fills this on change; JS writes MAJOR units).
-                'attr' => ['data-formbuilder--dodo-prefill-target' => 'price'],
             ])
             ->add('currency', ChoiceType::class, [
                 'required' => false,
@@ -142,7 +143,6 @@ class FormDefinitionType extends AbstractType
                 // Currency codes are language-neutral labels (left untranslated).
                 'choices' => ['EUR' => 'eur', 'USD' => 'usd', 'GBP' => 'gbp'],
                 'placeholder' => '—',
-                'attr' => ['data-formbuilder--dodo-prefill-target' => 'currency'],
             ])
             ->add('variants', CollectionType::class, [
                 'label' => false,
@@ -152,6 +152,21 @@ class FormDefinitionType extends AbstractType
                 'by_reference' => false,
                 'prototype' => true,
                 'prototype_name' => '__variant__',
+                'required' => false,
+            ])
+            // Faza 6 K3: MoR sellable units (digital_mor) — the pandan of variants, but each row carries a
+            // provider UNIT ID (not a price; the provider charges). Same generic add/remove mechanism. The
+            // per-row picker choices come from the MoR provider's listUnits() (entry_options.products); empty
+            // → a manual id per row. by_reference:false so setMorUnits() runs.
+            ->add('morUnits', CollectionType::class, [
+                'label' => false,
+                'entry_type' => MorUnitType::class,
+                'entry_options' => ['products' => $morProducts],
+                'allow_add' => true,
+                'allow_delete' => true,
+                'by_reference' => false,
+                'prototype' => true,
+                'prototype_name' => '__morunit__',
                 'required' => false,
             ])
             ->add('allowedPaymentMethods', ChoiceType::class, [
@@ -255,8 +270,6 @@ class FormDefinitionType extends AbstractType
             ));
         }
 
-        $this->addDodoProductField($builder);
-
         // Money is stored as integer minor units on the entity; the field edits it
         // in major units. Convert with (int) round(...) — never a bare float cast.
         $builder->get('priceMinor')->addModelTransformer(new CallbackTransformer(
@@ -269,83 +282,6 @@ class FormDefinitionType extends AbstractType
                 return (int) round(((float) $major) * 100);
             },
         ));
-    }
-
-    /**
-     * The Dodo (Merchant-of-Record) per-form product picker, bound to the single dodoProductId field.
-     * A DROPDOWN from the live catalogue (active mode) when Dodo is configured and products load; a
-     * plain text INPUT fallback otherwise (no API key / fetch error / empty catalogue) — the form is
-     * ALWAYS saveable with a manually-typed product id, never locked. Both write the same field.
-     */
-    private function addDodoProductField(FormBuilderInterface $builder): void
-    {
-        $data = $builder->getData();
-        $current = $data instanceof FormDefinition ? $data->getDodoProductId() : null;
-
-        // Faza 5 K2: the product picker is the FORM'S MoR provider's catalogue — build the Dodo dropdown
-        // ONLY for a form that uses Dodo (morProvider). Today every MoR form is Dodo, so this is the same
-        // set; it just stops a non-Dodo (or non-MoR) form from fetching Dodo products, and is where a
-        // second provider's picker would branch. Non-Dodo → the manual text fallback (field always exists).
-        $usesDodo = $data instanceof FormDefinition && $data->getMorProvider() === $this->dodo->getName();
-        $products = $usesDodo ? $this->dodo->listProducts() : []; // [] when unconfigured (no HTTP) or on error
-
-        if ([] !== $products) {
-            $choices = [];
-            $byId = [];
-            foreach ($products as $p) {
-                $label = null !== $p['price'] ? $p['name'].' — '.$p['price'] : $p['name'];
-                $choices[$label] = $p['id'];
-                $byId[$p['id']] = $p;
-            }
-            // Keep a saved id selectable even if it's not in the current-mode catalogue (stale / other mode).
-            if (null !== $current && !in_array($current, array_column($products, 'id'), true)) {
-                $choices[$current] = $current;
-            }
-
-            $builder->add('dodoProductId', ChoiceType::class, [
-                'required' => false,
-                'label' => 'admin.form.def.dodo_product',
-                'choices' => $choices,
-                // Carry each product's name/description/price/currency on the <option> so the prefill
-                // controller can copy them into the Tallyst fields on change. Empty when Dodo doesn't report
-                // a value (or on the stale-id fallback choice) → prefill leaves that field untouched.
-                'choice_attr' => static function (string $id) use ($byId): array {
-                    $p = $byId[$id] ?? null;
-
-                    return [
-                        'data-name' => (string) ($p['name'] ?? ''),
-                        'data-description' => (string) ($p['description'] ?? ''),
-                        'data-price-minor' => null !== ($p['priceMinor'] ?? null) ? (string) $p['priceMinor'] : '',
-                        'data-currency' => strtolower((string) ($p['currency'] ?? '')),
-                    ];
-                },
-                'placeholder' => '—',
-                'help' => 'admin.form.def.dodo_product_help',
-                // Two independent handlers on the same change: prefill (price/currency) + exclusive
-                // (lock out Stripe/PayPal — a Dodo product is a MoR signal). They touch disjoint DOM.
-                // The `product` target + change handler also drive the K7 "refresh" button's visibility.
-                'attr' => [
-                    'data-formbuilder--dodo-prefill-target' => 'product',
-                    'data-action' => 'change->formbuilder--dodo-prefill#fill change->formbuilder--payment-exclusive#productChanged',
-                ],
-            ]);
-
-            return;
-        }
-
-        // Fallback: manual entry over the same field. Help text distinguishes "no key" from "load failed".
-        // Same `product` target so the refresh button appears once an id is typed (input event toggles it).
-        $builder->add('dodoProductId', TextType::class, [
-            'required' => false,
-            'label' => 'admin.form.def.dodo_product',
-            'help' => $this->dodo->isConfigured()
-                ? 'admin.form.def.dodo_product_help_manual'
-                : 'admin.form.def.dodo_product_help_no_key',
-            'attr' => [
-                'data-formbuilder--dodo-prefill-target' => 'product',
-                'data-action' => 'input->formbuilder--dodo-prefill#toggleRefresh',
-            ],
-        ]);
     }
 
     /** Is this provider a Merchant-of-Record (Dodo)? Single source of truth = the marker interface. */

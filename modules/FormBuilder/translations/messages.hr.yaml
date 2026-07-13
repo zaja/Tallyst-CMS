@@ -6,6 +6,7 @@ form:
     price: 'Cijena:'
     tax_note: Cijena uključuje %name% (%rate%%).
     choose_option: Odaberi opciju
+    mor_price_note: Konačnu cijenu naplaćuje pružatelj plaćanja i može se razlikovati (lokalizirane cijene / popusti).
     choose_shipping: Način dostave
     shipping: Dostava
     ship:

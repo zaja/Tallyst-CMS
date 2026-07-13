@@ -27,7 +27,10 @@
             </label>
         </div>
 
-        {% if form.priceMinor and not form.hasVariants %}
+        {# MoR with a CHOICE (>1 units): the buyer sees a price per option below — showing the form price
+           here too would be confusing (Faza 6). Single-unit / self-billed keep the form price line. #}
+        {% set mor_multi = is_mor|default(false) and (mor_units|default([]))|length > 1 %}
+        {% if form.priceMinor and not form.hasVariants and not mor_multi %}
             <p class="fb-price">{{ 'form.price'|trans }} <strong>{{ (form.priceMinor / 100)|number_format(2, ',', '.') }} {{ (form.currency ?: 'eur')|upper }}</strong></p>
         {% endif %}
 
@@ -105,6 +108,26 @@
                                 </label>
                             {% endfor %}
                         </div>
+                    </div>
+                {% endif %}
+
+                {# MoR sellable units (Faza 6): the buyer picks one → the server resolves the index to its
+                   provider unit id (createCheckout charges THAT unit). >1 → radios (label + DISPLAY-cache
+                   price); exactly 1 → NO choice (the server defaults to index 0, same as before Faza 6). The
+                   price shown is a display value — the provider charges the unit's own price (the note says
+                   so). Same `name="variant"` index as self-billed (a form is self-billed XOR MoR). #}
+                {% if is_mor|default(false) and (mor_units|default([]))|length > 1 %}
+                    <div class="fb-field fb-variants fb-mor-units">
+                        <label>{{ 'form.choose_option'|trans }} <span class="fb-req">*</span></label>
+                        <div class="fb-choices">
+                            {% for u in mor_units %}
+                                <label class="fb-choice">
+                                    <input type="radio" name="variant" value="{{ loop.index0 }}"{{ loop.first ? ' checked' : '' }} required>
+                                    {{ u.label }}{% if u.priceMinor is not null %} — {{ (u.priceMinor / 100)|number_format(2, ',', '.') }} {{ (u.currency ?: form.currency ?: 'eur')|upper }}{% endif %}
+                                </label>
+                            {% endfor %}
+                        </div>
+                        <p class="fb-mor-note">{{ 'form.mor_price_note'|trans }}</p>
                     </div>
                 {% endif %}
 
@@ -196,4 +219,5 @@
     .fb-field[hidden] { display: none; }
     .fb-hp { position: absolute !important; left: -9999px !important; top: -9999px !important; height: 0; width: 0; overflow: hidden; }
     .fb-price { font-size: 1.05rem; }
+    .fb-mor-note { font-size: 0.85rem; color: var(--muted, #6b7280); margin-top: 0.35rem; }
 </style>

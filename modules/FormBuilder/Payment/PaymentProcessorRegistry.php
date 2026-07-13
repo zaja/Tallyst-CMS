@@ -33,6 +33,36 @@ class PaymentProcessorRegistry
     }
 
     /**
+     * Resolve a name to its Merchant-of-Record provider, or null if the name is unknown / not a MoR provider
+     * (Faza 6 K2). The single "which MoR provider" lookup for the builder picker, the refresh endpoint and the
+     * per-unit save guard — so callers go THROUGH MerchantOfRecordInterface, never `instanceof DodoProcessor`.
+     */
+    public function merchantOfRecord(?string $name): ?MerchantOfRecordInterface
+    {
+        if (null === $name || !isset($this->processors[$name])) {
+            return null;
+        }
+        $processor = $this->processors[$name];
+
+        return $processor instanceof MerchantOfRecordInterface ? $processor : null;
+    }
+
+    /**
+     * The FIRST registered Merchant-of-Record provider, or null if none (Faza 6 K2). A defensive fallback for
+     * the refresh endpoint when no explicit provider is passed (today Dodo; keeps back-compat generic).
+     */
+    public function firstMerchantOfRecord(): ?MerchantOfRecordInterface
+    {
+        foreach ($this->processors as $processor) {
+            if ($processor instanceof MerchantOfRecordInterface) {
+                return $processor;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * All known provider names (configured or not) — the choice list for the per-product limit.
      *
      * @return string[]

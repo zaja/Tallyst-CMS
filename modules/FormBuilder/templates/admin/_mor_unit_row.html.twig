@@ -1,0 +1,37 @@
+{# One MoR sellable-unit row (Faza 6 K3): label + unit picker + read-only display price + "refresh from
+   Dodo" + remove. [data-fb-item] + the remove button use the generic formbuilder--builder controller (same
+   mechanism as variant/field rows). Per-row formbuilder--mor-unit drives prefill (on unit change) + refresh;
+   it reads the shared refresh URL / provider / labels from the [data-mor-units] wrapper. The priceMinor/
+   currency hidden fields are the DISPLAY cache (the provider charges) — the visible price is rendered from
+   them. Inherits the themed .fb-field-row so it follows EA's light/dark theme. #}
+{% set pm = unitForm.priceMinor.vars.value %}
+{% set cur = unitForm.currency.vars.value %}
+<div class="fb-field-row fb-mor-unit-row" data-fb-item data-controller="formbuilder--mor-unit">
+    {# One line on ≥md (label + product grow, price/refresh/× stay compact); wraps on narrow screens. #}
+    <div class="d-flex flex-wrap flex-md-nowrap align-items-end gap-2">
+        <div class="flex-grow-1" style="min-width: 8rem;">{{ form_row(unitForm.label) }}</div>
+        <div class="flex-grow-1" style="min-width: 10rem;">{{ form_row(unitForm.unitId) }}</div>
+        <div class="flex-shrink-0 text-nowrap">
+            <label class="form-label small text-muted d-block mb-1">{{ 'admin.form.mor_unit.price'|trans({}, 'admin') }}</label>
+            <span class="fb-mor-price" data-formbuilder--mor-unit-target="display">
+                {%- if pm is not empty -%}{{ (pm / 100)|number_format(2, ',', '.') }} {{ (cur ?: '')|upper }}{%- else -%}—{%- endif -%}
+            </span>
+        </div>
+        <div class="flex-shrink-0">
+            <button type="button" class="btn btn-secondary btn-sm d-none"
+                    data-formbuilder--mor-unit-target="refreshButton"
+                    data-action="formbuilder--mor-unit#refresh"
+                    title="{{ 'admin.form.dodo_refresh.button'|trans({}, 'admin') }}"
+                    aria-label="{{ 'admin.form.dodo_refresh.button'|trans({}, 'admin') }}">
+                <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="flex-shrink-0">
+            <button type="button" class="btn btn-outline-danger" data-action="formbuilder--builder#remove"
+                    title="{{ 'admin.form.mor_unit.remove'|trans({}, 'admin') }}">×</button>
+        </div>
+    </div>
+    {# Display cache — hidden, round-trips so the shown price survives a save. #}
+    {{ form_widget(unitForm.priceMinor) }}
+    {{ form_widget(unitForm.currency) }}
+</div>

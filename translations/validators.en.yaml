@@ -15,6 +15,7 @@ validation:
         notify_recipient_required: Enter at least one recipient when notifications are on.
         notify_email_invalid: 'Invalid e-mail address: %email%'
         variant_incomplete: Each variant needs a name and a price greater than 0.
+        mor_unit_incomplete: Each option needs a name and a linked product.
     field:
         required: This field is required.
         email: Please enter a valid e-mail.

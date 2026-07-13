@@ -14,7 +14,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\FormType;
 use Tallyst\FormBuilder\Form\Type\FormDefinitionType;
-use Tallyst\FormBuilder\Payment\DodoProcessor;
 use Tallyst\FormBuilder\Payment\MerchantOfRecordInterface;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
@@ -38,7 +37,6 @@ class FormBuilderController extends AbstractController
         private readonly SluggerInterface $slugger,
         private readonly TranslatorInterface $translator,
         private readonly PaymentProcessorRegistry $payments,
-        private readonly DodoProcessor $dodo,
     ) {
     }
 
@@ -137,29 +135,42 @@ class FormBuilderController extends AbstractController
     }
 
     /**
-     * Vet the Dodo product on a Dodo MoR form at save time: 'ok' (nothing to check, or a sellable product),
-     * 'reject' (a recurring / usage-based / pay-what-you-want product — Tallyst can't sell it), or 'warn'
-     * (couldn't verify — Dodo unreachable — so allow the save but flag it). A product already in the filtered
-     * list is sellable by construction (no re-fetch); only a MANUALLY-typed / out-of-list id is verified via
-     * GET /products/{id}. The CHECKOUT path is untouched — this is a save-time gate only.
+     * Vet EVERY MoR sellable unit on a MoR form at save time (Faza 6 K3). Returns the FIRST problem found:
+     *   ['status' => 'reject', 'label' => <row>]  → a recurring / usage-based / pay-what-you-want unit —
+     *                                                Tallyst can't sell it → the whole save is rejected,
+     *   ['status' => 'warn',   'label' => <row>]  → couldn't verify (provider unreachable) → save + flag,
+     *   ['status' => 'ok']                        → all units are sellable (or there are none to check).
+     * A unit already in the filtered list is sellable by construction (no re-fetch); only a MANUALLY-typed /
+     * out-of-list id is verified. Resolved THROUGH MerchantOfRecordInterface (the form's morProvider), never
+     * `instanceof DodoProcessor` — a non-MoR form has no provider → 'ok'. The CHECKOUT path is untouched.
+     *
+     * @return array{status: string, label?: string}
      */
-    private function dodoProductStatus(FormDefinition $definition): string
+    private function morUnitsStatus(FormDefinition $definition): array
     {
-        if (FormType::DIGITAL_MOR !== $definition->getFormType()
-            || $this->dodo->getName() !== $definition->getMorProvider()
-            || null === ($id = $definition->getDodoProductId())) {
-            return 'ok';
+        $provider = $this->payments->merchantOfRecord($definition->getMorProvider());
+        if (null === $provider) {
+            return ['status' => 'ok'];
         }
 
-        if (in_array($id, array_column($this->dodo->listProducts(), 'id'), true)) {
-            return 'ok'; // from the already-filtered list → sellable
+        $listed = array_column($provider->listUnits(), 'id');
+        $warn = null;
+        foreach ($definition->getMorUnits() ?? [] as $unit) {
+            $id = trim((string) ($unit['unitId'] ?? ''));
+            if ('' === $id || in_array($id, $listed, true)) {
+                continue; // empty (half-filled → validateMorUnits) or from the filtered list → sellable
+            }
+            $label = ('' !== trim((string) ($unit['label'] ?? ''))) ? $unit['label'] : $id;
+            $verdict = $provider->isSellableUnit($id);
+            if (false === $verdict) {
+                return ['status' => 'reject', 'label' => $label]; // one bad unit fails the whole save
+            }
+            if (null === $verdict && null === $warn) {
+                $warn = ['status' => 'warn', 'label' => $label];
+            }
         }
 
-        return match ($this->dodo->isSellableProduct($id)) {
-            true => 'ok',
-            false => 'reject',
-            default => 'warn', // null → couldn't verify
-        };
+        return $warn ?? ['status' => 'ok'];
     }
 
     /**
@@ -180,7 +191,16 @@ class FormBuilderController extends AbstractController
             return $this->json(['status' => 'error']);
         }
 
-        $info = $this->dodo->fetchProductInfo($id);
+        // Faza 6 K2: resolve the MoR provider from the ?provider= hint (the form's morProvider, sent by the
+        // JS), else the first registered MoR provider (back-compat — today Dodo). Provider-agnostic; a second
+        // MoR provider's fetchUnit() would answer here with no change.
+        $provider = $this->payments->merchantOfRecord($request->query->get('provider'))
+            ?? $this->payments->firstMerchantOfRecord();
+        if (null === $provider) {
+            return $this->json(['status' => 'error']);
+        }
+
+        $info = $provider->fetchUnit($id);
         if (null === $info) {
             return $this->json(['status' => 'error']);
         }
@@ -228,20 +248,21 @@ class FormBuilderController extends AbstractController
             $this->normalize($definition);
 
             $duplicates = $this->duplicateKeys($definition);
-            // Faza 5 K5: a manually-typed Dodo product id (not from the filtered list) is vetted here — a
-            // recurring / usage-based / pay-what-you-want product is REJECTED; an unverifiable one WARNS.
-            $productStatus = $this->dodoProductStatus($definition);
+            // Faza 6 K3: EVERY MoR sellable unit is vetted (per-unit) — a manually-typed id not in the
+            // filtered list is verified; a recurring / usage-based / pay-what-you-want unit REJECTS the whole
+            // save (the message names the offending row), an unverifiable one WARNS. (Faza 5 was one product.)
+            $unitsStatus = $this->morUnitsStatus($definition);
             if ([] !== $duplicates) {
                 $form->get('fields')->addError(new FormError(
                     $this->translator->trans('admin.form.builder.duplicate_keys', ['%keys%' => implode(', ', $duplicates)], 'admin'),
                 ));
-            } elseif ('reject' === $productStatus) {
-                $form->get('dodoProductId')->addError(new FormError(
-                    $this->translator->trans('admin.form.builder.dodo_product_unsupported', [], 'admin'),
+            } elseif ('reject' === $unitsStatus['status']) {
+                $form->get('morUnits')->addError(new FormError(
+                    $this->translator->trans('admin.form.builder.mor_unit_unsupported', ['%unit%' => $unitsStatus['label']], 'admin'),
                 ));
             } else {
-                if ('warn' === $productStatus) {
-                    $this->addFlash('warning', $this->translator->trans('admin.form.flash.dodo_unverified', [], 'admin'));
+                if ('warn' === $unitsStatus['status']) {
+                    $this->addFlash('warning', $this->translator->trans('admin.form.flash.dodo_unverified', ['%unit%' => $unitsStatus['label']], 'admin'));
                 }
                 $this->forms->save($definition);
                 $this->addFlash('success', $this->translator->trans('admin.form.flash.saved', [], 'admin'));
@@ -285,6 +306,16 @@ class FormBuilderController extends AbstractController
         usort($fields, static fn ($a, $b): int => $a->getPosition() <=> $b->getPosition());
         foreach ($fields as $index => $field) {
             $field->setPosition($index);
+        }
+
+        // Faza 6 K3 (transitional): the builder now writes morUnits, but the front + checkout still read the
+        // legacy single dodoProductId (that moves to the unit list in Komad 4). So MIRROR the first unit's id
+        // into dodoProductId — a single-unit MoR form then behaves IDENTICALLY to today (checkout charges that
+        // product), and 0 units → null → the existing "product not linked" path. Removed once the checkout
+        // reads sellableUnits() directly (K4). Only for MoR forms (a non-MoR form has no morUnits/dodoProductId).
+        if ($definition->getFormType()->isMerchantOfRecord()) {
+            $units = $definition->getMorUnits() ?? [];
+            $definition->setDodoProductId($units[0]['unitId'] ?? null);
         }
     }
 

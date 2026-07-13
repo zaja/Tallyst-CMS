@@ -97,26 +97,36 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
 
     public function createCheckout(Order $order, string $successUrl, string $cancelUrl): string
     {
-        // v1.7.0 = FIXED price only. Variant forms are not supported for MoR yet (the buyer-facing
-        // guard lives in FormSubmitController; this is a defensive backstop).
+        // Defensive backstop: a MoR form carries SELLABLE UNITS (morUnits), never self-billed price variants.
+        // Self-billed variants on a MoR order would be a bug upstream — refuse rather than mischarge.
         if ($order->getForm()?->hasVariants()) {
-            throw new \RuntimeException('Dodo (Merchant-of-Record) supports only a fixed price in v1.7.0; this form uses variants.');
+            throw new \RuntimeException('Dodo (Merchant-of-Record) uses sellable units, not price variants; this form has variants.');
         }
 
-        // Per-form Dodo product (set via SQL for now; the edit-form UI is Phase 3). The buyer-facing
-        // guard lives in FormSubmitController; this is a defensive backstop (never a dead checkout).
-        $productId = (string) $order->getForm()?->getDodoProductId();
+        // Faza 6: charge the CHOSEN sellable unit — the buyer's pick, resolved server-side in startCheckout
+        // and recorded on the order. Fall back to the form's legacy single dodoProductId (a not-yet-migrated
+        // single-product form). '' → no unit linked → a clear error, never a dead checkout.
+        $productId = $order->getProviderUnitId() ?: (string) $order->getForm()?->getDodoProductId();
         if ('' === $productId) {
-            throw new \RuntimeException('This form has no linked Dodo product.');
+            throw new \RuntimeException('This order has no linked Dodo product.');
         }
 
         // ⚠ VERIFY endpoint + shape. Brief: checkoutSessions.create(product_cart, metadata) → returns
-        // a hosted checkout_url + a session id. Dynamic pricing carries the per-order amount.
+        // a hosted checkout_url + a session id.
+        //
+        // MONEY-SAFETY (Faza 6 §12) — LIVE-PROVEN: `product_cart[].amount` is Dodo's PAY-WHAT-YOU-WANT
+        // override, honored ONLY for a product whose one_time_price.pay_what_you_want is TRUE. For a
+        // FIXED-price product Dodo charges the product's OWN configured price and IGNORES `amount`. Verified
+        // on the live test system: Tallyst price set to 100 EUR, Dodo product priced 49 EUR → Dodo charged
+        // 49 EUR. Tallyst sells ONLY fixed-price one-time units (pay-what-you-want is rejected at save +
+        // dropped from the picker), so `amount` is ignored for every unit we send. That matters because from
+        // Faza 6 `amountMinor` is a DISPLAY CACHE (may be null→0 / stale) — since Dodo ignores it, a wrong/zero
+        // cache can NEVER mischarge (the unit's own Dodo price is charged). We keep sending it bit-identically
+        // (a harmless no-op that also feeds a PWYW product if one ever slipped through).
         $data = $this->json('POST', '/checkouts', [
             'product_cart' => [[
                 'product_id' => $productId,
                 'quantity' => 1,
-                // ⚠ VERIFY the dynamic-pricing amount field + unit (assumed minor units, like Stripe).
                 'amount' => $order->getAmountMinor(),
             ]],
             // Primary correlation key: Dodo echoes this back on the webhook (metadata.order_id).
@@ -232,9 +242,11 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
      * description, price [minor units], currency, is_recurring, price_detail) are per the Dodo API reference.
      * ⚠ VERIFY only the LIST envelope key (assumed `items`; some APIs return `data` or a bare array).
      *
+     * Faza 6 K2: implements MerchantOfRecordInterface::listUnits() — a Dodo "sellable unit" is a product.
+     *
      * @return list<array{id: string, name: string, description: ?string, price: ?string, priceMinor: ?int, currency: ?string}>
      */
-    public function listProducts(): array
+    public function listUnits(): array
     {
         if (!$this->isConfigured()) {
             return [];
@@ -354,11 +366,12 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
      *   - ['found' => false]          → the product no longer exists on Dodo (404),
      *   - ['found' => true, name, description, priceMinor, currency, sellable, archived] → the live data.
      * `sellable` = a fixed-price one-time product (not recurring / usage-based / pay-what-you-want).
-     * Used by the save-time guard (isSellableProduct) AND the "refresh from Dodo" button (Faza 5 K7).
+     * Used by the save-time guard (isSellableUnit) AND the "refresh from Dodo" button (Faza 5 K7).
+     * Faza 6 K2: implements MerchantOfRecordInterface::fetchUnit() — a Dodo "unit" is a product.
      *
      * @return array{found: bool, name?: string, description?: string, priceMinor?: ?int, currency?: ?string, sellable?: bool, archived?: bool}|null
      */
-    public function fetchProductInfo(string $id): ?array
+    public function fetchUnit(string $id): ?array
     {
         if (!$this->isConfigured() || '' === trim($id)) {
             return null;
@@ -398,14 +411,15 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
 
     /**
      * Verify ONE product by id — used at form SAVE to vet a MANUALLY-typed product id that wasn't in the
-     * filtered list. READ-ONLY (never a checkout path). Delegates to fetchProductInfo so the two can't drift:
+     * filtered list. READ-ONLY (never a checkout path). Delegates to fetchUnit so the two can't drift:
      *   - true  → sellable (a fixed-price one-time product, not pay-what-you-want),
      *   - false → NOT sellable (recurring / usage-based / pay-what-you-want) → the caller rejects the save,
      *   - null  → could NOT verify (unconfigured / not found / API error) → the caller warns but allows.
+     * Faza 6 K2: implements MerchantOfRecordInterface::isSellableUnit().
      */
-    public function isSellableProduct(string $id): ?bool
+    public function isSellableUnit(string $id): ?bool
     {
-        $info = $this->fetchProductInfo($id);
+        $info = $this->fetchUnit($id);
         if (null === $info || false === ($info['found'] ?? false)) {
             return null;
         }

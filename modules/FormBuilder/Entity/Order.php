@@ -51,6 +51,16 @@ class Order
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $variantLabel = null;
 
+    /**
+     * The Merchant-of-Record sellable-unit id the buyer chose (Faza 6) — the provider's own id (Dodo
+     * product_id today; a GENERIC name so Paddle/LS reuse). Set at checkout from the chosen sellable unit;
+     * DodoProcessor::createCheckout reads it (falling back to the form's legacy single dodoProductId) so the
+     * right unit is charged. Null for self-billed / legacy orders. ⚠ KOMAD 1: column added, DORMANT — nobody
+     * sets or reads it yet (the checkout wiring is KOMAD 4).
+     */
+    #[ORM\Column(name: 'provider_unit_id', length: 191, nullable: true)]
+    private ?string $providerUnitId = null;
+
     // --- Shipping (Faza 1). Null when the form offered no delivery (or a MoR order — never shipped by
     // Tallyst). amountMinor INCLUDES the shipping amount; these record which method + how much of it.
 
@@ -224,6 +234,19 @@ class Order
     public function setVariantLabel(?string $variantLabel): static
     {
         $this->variantLabel = $variantLabel;
+
+        return $this;
+    }
+
+    public function getProviderUnitId(): ?string
+    {
+        return $this->providerUnitId;
+    }
+
+    public function setProviderUnitId(?string $providerUnitId): static
+    {
+        $providerUnitId = null === $providerUnitId ? null : trim($providerUnitId);
+        $this->providerUnitId = ('' === $providerUnitId) ? null : $providerUnitId;
 
         return $this;
     }

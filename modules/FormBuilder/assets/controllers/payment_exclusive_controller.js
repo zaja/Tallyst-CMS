@@ -36,19 +36,6 @@ export default class extends Controller {
         this.recompute();
     }
 
-    /*
-     * Selecting a Dodo PRODUCT is itself a MoR signal (like ticking the Dodo box) — so it must lock out
-     * Stripe/PayPal too, not just the checkbox. Fired from the dodoProductId <select> change (alongside
-     * the prefill controller, which touches only the price/currency inputs → no clash). Clearing the
-     * product just recomputes from the checkboxes.
-     */
-    productChanged(event) {
-        if ('' !== event.target.value) {
-            this.boxes.forEach((b) => { b.checked = '1' === b.dataset.mor; });
-        }
-        this.recompute();
-    }
-
     recompute() {
         const anyMor = this.boxes.some((b) => b.checked && '1' === b.dataset.mor);
         const anyNonMor = this.boxes.some((b) => b.checked && '0' === b.dataset.mor);

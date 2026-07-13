@@ -192,17 +192,18 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         return $em->getRepository(FormDefinition::class)->find($this->formId)->getSlug();
     }
 
-    public function testDodoFormWithUnverifiableProductSavesWithWarning(): void
+    public function testDodoFormWithUnverifiableUnitSavesWithWarning(): void
     {
         $client = static::createClient();
         $client->loginUser($this->makeAdmin());
 
-        // A Dodo form with a MANUALLY-typed product id. Dodo is unconfigured in the test → the save-time
-        // guard can't verify the product → it must NOT block the save (only warn). Faza 5 K5.
+        // A Dodo form with a MANUALLY-typed unit id. Dodo is unconfigured in the test → the save-time guard
+        // can't verify the unit → it must NOT block the save (only warn). Faza 6 K3 (per-unit).
         $em = static::getContainer()->get(EntityManagerInterface::class);
         $form = (new FormDefinition())->setName('Dodo save '.bin2hex(random_bytes(4)))->setSlug('dodo-save-'.bin2hex(random_bytes(4)))
             ->setStatus(FormDefinition::STATUS_PUBLISHED)->setFormType(FormType::DIGITAL_MOR)->setMorProvider('dodo')
-            ->setPriceMinor(2000)->setCurrency('eur')->setDodoProductId('manual_prod_id');
+            ->setPriceMinor(2000)->setCurrency('eur')
+            ->setMorUnits([['label' => 'Standard', 'unitId' => 'manual_prod_id', 'priceMinor' => 2000, 'currency' => 'eur']]);
         $em->persist($form);
         $em->flush();
         $this->formId = $form->getId();
@@ -211,8 +212,64 @@ class FormBuilderBuilderRenderTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $client->submit($crawler->filter('form')->first()->form());
 
-        // Unverifiable product → save PROCEEDS (redirect), never blocked.
+        // Unverifiable unit → save PROCEEDS (redirect), never blocked.
         self::assertResponseRedirects();
+    }
+
+    public function testMorFormWithSubscriptionUnitIsRejected(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+
+        // A MoR form (fakemor provider) with a "subscription" unit (id sub_*) → the per-unit save guard
+        // REJECTS the whole save: no redirect, the builder re-renders with the error. Faza 6 K3.
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = (new FormDefinition())->setName('Sub reject '.bin2hex(random_bytes(4)))->setSlug('sub-reject-'.bin2hex(random_bytes(4)))
+            ->setStatus(FormDefinition::STATUS_DRAFT)->setFormType(FormType::DIGITAL_MOR)->setMorProvider('fakemor')
+            ->setMorUnits([['label' => 'Monthly', 'unitId' => 'sub_1', 'priceMinor' => 900, 'currency' => 'eur']]);
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $crawler = $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
+        self::assertResponseIsSuccessful();
+        $client->submit($crawler->filter('form')->first()->form());
+
+        // Rejected → the page re-renders (200), NOT a redirect.
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('.invalid-feedback, .form-error-message, .alert', 'Monthly');
+    }
+
+    public function testMorFormMirrorsDodoProductIdFromFirstUnit(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+
+        // Faza 6 K3 transitional mirror: saving the builder sets the legacy dodoProductId = the FIRST unit's
+        // id, so the still-unchanged front/checkout behave identically for a single-unit form. Two ok_* units
+        // (fakemor accepts them) → save succeeds → dodoProductId mirrors the first.
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = (new FormDefinition())->setName('Mirror '.bin2hex(random_bytes(4)))->setSlug('mirror-'.bin2hex(random_bytes(4)))
+            ->setStatus(FormDefinition::STATUS_DRAFT)->setFormType(FormType::DIGITAL_MOR)->setMorProvider('fakemor')
+            ->setMorUnits([
+                ['label' => 'Personal', 'unitId' => 'ok_first', 'priceMinor' => 2900, 'currency' => 'eur'],
+                ['label' => 'Team', 'unitId' => 'ok_second', 'priceMinor' => 4900, 'currency' => 'eur'],
+            ]);
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $crawler = $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
+        self::assertResponseIsSuccessful();
+        // No raw i18n keys leak in the MoR builder (K3.5 — the mor_units help key was misplaced once).
+        self::assertStringNotContainsString('admin.form.builder', (string) $client->getResponse()->getContent());
+        $client->submit($crawler->filter('form')->first()->form());
+        self::assertResponseRedirects();
+
+        $em->clear();
+        $saved = $em->getRepository(FormDefinition::class)->find($this->formId);
+        self::assertCount(2, $saved->getMorUnits(), 'both units are stored');
+        self::assertSame('ok_first', $saved->getDodoProductId(), 'dodoProductId mirrors the first unit');
     }
 
     public function testCountryPickerShownWhenFormOffersDelivery(): void
@@ -295,6 +352,48 @@ class FormBuilderBuilderRenderTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame('error', json_decode((string) $client->getResponse()->getContent(), true)['status']);
+    }
+
+    public function testMorBuilderExposesTheDomContractThePrefillJsNeeds(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->makeAdmin());
+
+        // Faza 6 K3.6: the per-row prefill JS fills the FORM fields (single-unit) BY NAME and reads/writes the
+        // row targets. Lock that exact DOM contract — a form-prefix / field-name change (or a missing target)
+        // would silently kill prefill again. PHPUnit can't run the JS, so we assert the selectors it depends on
+        // are actually present in the rendered builder.
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = (new FormDefinition())->setName('Contract '.bin2hex(random_bytes(4)))->setSlug('contract-'.bin2hex(random_bytes(4)))
+            ->setStatus(FormDefinition::STATUS_DRAFT)->setFormType(FormType::DIGITAL_MOR)->setMorProvider('fakemor')
+            ->setMorUnits([['label' => 'Standard', 'unitId' => 'ok_x', 'priceMinor' => 4900, 'currency' => 'eur']]);
+        $em->persist($form);
+        $em->flush();
+        $this->formId = $form->getId();
+
+        $client->request('GET', '/admin/forms/'.$this->formId.'/edit');
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+
+        // The FORM fields the JS's formField('…') queries by name (single-unit prefill target).
+        foreach (['name', 'description', 'priceMinor', 'currency'] as $field) {
+            self::assertStringContainsString('name="form_definition['.$field.']"', $html, "prefill needs form_definition[$field]");
+        }
+        // The row targets the JS reads/writes.
+        foreach (['label', 'unitId', 'priceMinor', 'currency', 'display', 'refreshButton'] as $target) {
+            self::assertStringContainsString('data-formbuilder--mor-unit-target="'.$target.'"', $html, "row is missing the $target target");
+        }
+        // The wrapper carrying the shared refresh URL / provider / labels the row controller reads.
+        self::assertStringContainsString('data-mor-units', $html);
+        self::assertStringContainsString('data-mor-refresh-url=', $html);
+        self::assertStringContainsString('data-mor-provider="fakemor"', $html);
+
+        // K6: the mor-price reveal (hides the form Price/Currency when >1 units) — its controller + targets.
+        self::assertStringContainsString('formbuilder--mor-price', $html);
+        self::assertStringContainsString('data-formbuilder--mor-price-target="priceBlock"', $html);
+        self::assertStringContainsString('data-formbuilder--mor-price-target="priceNote"', $html);
+        // No raw i18n key leaks (K3.5/K6 both had a misplaced-key bug).
+        self::assertStringNotContainsString('admin.form.builder', $html);
     }
 
     private function makeAdmin(): User

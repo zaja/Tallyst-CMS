@@ -143,6 +143,22 @@ class FormPaymentResolverTest extends TestCase
                 {
                     return null;
                 }
+
+                // Faza 6 K2: the MoR sellable-unit contract (unused by the resolver — it only reads the marker).
+                public function listUnits(): array
+                {
+                    return [];
+                }
+
+                public function fetchUnit(string $id): ?array
+                {
+                    return null;
+                }
+
+                public function isSellableUnit(string $id): ?bool
+                {
+                    return null;
+                }
             };
         }
 

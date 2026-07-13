@@ -10,7 +10,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 use Tallyst\FormBuilder\Payment\DodoProcessor;
 
 /**
- * Faza 5 K4: DodoProcessor::listProducts() offers ONLY fixed-price one-time products for the picker. It asks
+ * Faza 5 K4: DodoProcessor::listUnits() offers ONLY fixed-price one-time products for the picker. It asks
  * Dodo for one-time, non-archived products (query recurring=false + archived=false) AND drops any recurring /
  * usage-based / pay-what-you-want item LOCALLY (belt-and-suspenders if the API ignores a filter). Description
  * is carried through for prefill. Pure unit test with a MockHttpClient — no network, no checkout path touched.
@@ -33,7 +33,7 @@ class DodoListProductsTest extends TestCase
     public function testSendsRecurringAndArchivedFilters(): void
     {
         $url = null;
-        $this->dodo(['items' => []], $url)->listProducts();
+        $this->dodo(['items' => []], $url)->listUnits();
 
         self::assertStringContainsString('recurring=false', (string) $url);
         self::assertStringContainsString('archived=false', (string) $url);
@@ -54,7 +54,7 @@ class DodoListProductsTest extends TestCase
             ['product_id' => 'pdt_use', 'name' => 'Metered', 'is_recurring' => false, 'price_detail' => ['usage_based_price' => ['price' => 10]]],
             // Pay-what-you-want → dropped (variable price unsupported).
             ['product_id' => 'pdt_pwyw', 'name' => 'Donate', 'is_recurring' => false, 'price_detail' => ['one_time_price' => ['pay_what_you_want' => true]]],
-        ]])->listProducts();
+        ]])->listUnits();
 
         self::assertCount(1, $products, 'only the fixed-price one-time product survives');
         self::assertSame('pdt_one', $products[0]['id']);
@@ -70,24 +70,24 @@ class DodoListProductsTest extends TestCase
         // No env key + no setting → not configured → no HTTP.
         $dodo = new DodoProcessor($http, $settings, new NullLogger(), '', '', 'test');
 
-        self::assertSame([], $dodo->listProducts());
+        self::assertSame([], $dodo->listUnits());
     }
 
-    // --- isSellableProduct (save-time guard for a manually-typed id) ---
+    // --- isSellableUnit (save-time guard for a manually-typed id) ---
 
     public function testIsSellableProductAcceptsOneTime(): void
     {
         $item = ['product_id' => 'pdt_one', 'is_recurring' => false, 'price_detail' => ['one_time_price' => ['price' => 4900, 'pay_what_you_want' => false]]];
-        self::assertTrue($this->dodoForProduct($item)->isSellableProduct('pdt_one'));
+        self::assertTrue($this->dodoForProduct($item)->isSellableUnit('pdt_one'));
     }
 
     public function testIsSellableProductRejectsRecurringAndPwyw(): void
     {
         $recurring = ['product_id' => 'pdt_sub', 'is_recurring' => true, 'price_detail' => ['recurring_price' => ['price' => 999]]];
-        self::assertFalse($this->dodoForProduct($recurring)->isSellableProduct('pdt_sub'));
+        self::assertFalse($this->dodoForProduct($recurring)->isSellableUnit('pdt_sub'));
 
         $pwyw = ['product_id' => 'pdt_pwyw', 'is_recurring' => false, 'price_detail' => ['one_time_price' => ['pay_what_you_want' => true]]];
-        self::assertFalse($this->dodoForProduct($pwyw)->isSellableProduct('pdt_pwyw'));
+        self::assertFalse($this->dodoForProduct($pwyw)->isSellableUnit('pdt_pwyw'));
     }
 
     public function testIsSellableProductNullWhenNotFoundOrUnconfigured(): void
@@ -95,11 +95,11 @@ class DodoListProductsTest extends TestCase
         // 404 → can't confirm it's bad → null (the caller warns, never hard-rejects).
         $http = new MockHttpClient(static fn (): MockResponse => new MockResponse('{}', ['http_code' => 404]));
         $settings = $this->createStub(SettingsManager::class);
-        self::assertNull((new DodoProcessor($http, $settings, new NullLogger(), 'dodo_test_key', '', 'test'))->isSellableProduct('pdt_x'));
+        self::assertNull((new DodoProcessor($http, $settings, new NullLogger(), 'dodo_test_key', '', 'test'))->isSellableUnit('pdt_x'));
 
         // Unconfigured → null, no HTTP.
         $noHttp = new MockHttpClient(static fn () => throw new \RuntimeException('must not call'));
-        self::assertNull((new DodoProcessor($noHttp, $settings, new NullLogger(), '', '', 'test'))->isSellableProduct('pdt_x'));
+        self::assertNull((new DodoProcessor($noHttp, $settings, new NullLogger(), '', '', 'test'))->isSellableUnit('pdt_x'));
     }
 
     /** @param array<string, mixed> $item */
@@ -110,7 +110,7 @@ class DodoListProductsTest extends TestCase
         return new DodoProcessor($http, $this->createStub(SettingsManager::class), new NullLogger(), 'dodo_test_key', '', 'test');
     }
 
-    // --- fetchProductInfo (the "refresh from Dodo" button, Faza 5 K7) ---
+    // --- fetchUnit (the "refresh from Dodo" button, Faza 5 K7) ---
 
     public function testFetchProductInfoReturnsLiveData(): void
     {
@@ -119,7 +119,7 @@ class DodoListProductsTest extends TestCase
             'price' => 3900, 'currency' => 'EUR', 'is_recurring' => false,
             'price_detail' => ['one_time_price' => ['price' => 3900, 'currency' => 'EUR', 'pay_what_you_want' => false]],
         ];
-        $info = $this->dodoForProduct($item)->fetchProductInfo('pdt_one');
+        $info = $this->dodoForProduct($item)->fetchUnit('pdt_one');
 
         self::assertNotNull($info);
         self::assertTrue($info['found']);
@@ -134,7 +134,7 @@ class DodoListProductsTest extends TestCase
     public function testFetchProductInfoFlagsUnsellable(): void
     {
         $recurring = ['product_id' => 'pdt_sub', 'is_recurring' => true, 'price_detail' => ['recurring_price' => ['price' => 999]]];
-        $info = $this->dodoForProduct($recurring)->fetchProductInfo('pdt_sub');
+        $info = $this->dodoForProduct($recurring)->fetchUnit('pdt_sub');
 
         self::assertNotNull($info);
         self::assertTrue($info['found']);
@@ -144,7 +144,7 @@ class DodoListProductsTest extends TestCase
     public function testFetchProductInfoReportsArchivedWhenPresent(): void
     {
         $item = ['product_id' => 'pdt_arc', 'archived' => true, 'is_recurring' => false, 'price_detail' => ['one_time_price' => ['price' => 100]]];
-        $info = $this->dodoForProduct($item)->fetchProductInfo('pdt_arc');
+        $info = $this->dodoForProduct($item)->fetchUnit('pdt_arc');
 
         self::assertNotNull($info);
         self::assertTrue($info['archived']);
@@ -153,7 +153,7 @@ class DodoListProductsTest extends TestCase
     public function testFetchProductInfoNotFoundOn404(): void
     {
         $http = new MockHttpClient(static fn (): MockResponse => new MockResponse('{}', ['http_code' => 404]));
-        $info = (new DodoProcessor($http, $this->createStub(SettingsManager::class), new NullLogger(), 'dodo_test_key', '', 'test'))->fetchProductInfo('pdt_x');
+        $info = (new DodoProcessor($http, $this->createStub(SettingsManager::class), new NullLogger(), 'dodo_test_key', '', 'test'))->fetchUnit('pdt_x');
 
         self::assertSame(['found' => false], $info);
     }
@@ -162,10 +162,10 @@ class DodoListProductsTest extends TestCase
     {
         // Transient 500 → null (couldn't fetch).
         $http = new MockHttpClient(static fn (): MockResponse => new MockResponse('{}', ['http_code' => 500]));
-        self::assertNull((new DodoProcessor($http, $this->createStub(SettingsManager::class), new NullLogger(), 'dodo_test_key', '', 'test'))->fetchProductInfo('pdt_x'));
+        self::assertNull((new DodoProcessor($http, $this->createStub(SettingsManager::class), new NullLogger(), 'dodo_test_key', '', 'test'))->fetchUnit('pdt_x'));
 
         // Unconfigured → null, no HTTP.
         $noHttp = new MockHttpClient(static fn () => throw new \RuntimeException('must not call'));
-        self::assertNull((new DodoProcessor($noHttp, $this->createStub(SettingsManager::class), new NullLogger(), '', '', 'test'))->fetchProductInfo('pdt_x'));
+        self::assertNull((new DodoProcessor($noHttp, $this->createStub(SettingsManager::class), new NullLogger(), '', '', 'test'))->fetchUnit('pdt_x'));
     }
 }

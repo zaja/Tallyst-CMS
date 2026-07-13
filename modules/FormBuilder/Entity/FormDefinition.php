@@ -142,10 +142,32 @@ class FormDefinition
      * and its price is used INSTEAD of priceMinor; empty/null = fixed priceMinor. Currency is shared
      * (product-level). Single dimension — no matrix.
      *
+     * ⚠ SELF-BILLED ONLY (Stripe/PayPal): the variant CARRIES THE PRICE Tallyst charges. This is a
+     * DIFFERENT concept from a MoR sellable unit (see $morUnits) — kept a SEPARATE column, never a
+     * dual-meaning field. A digital_mor form never has variants (the builder gates it self-billed-only).
+     *
      * @var array<int, array{label: string, priceMinor: int}>|null
      */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $variants = null;
+
+    /**
+     * MoR sellable units (Faza 6): a flat list of {label, unitId, priceMinor?, currency?}. A MoR form
+     * (digital_mor) sells a LIST of provider "sellable units" — the buyer picks one on the Tallyst form,
+     * then goes to the provider's checkout for THAT unit. Distinct from $variants:
+     *   - $variants (self-billed): the row CARRIES THE PRICE → Tallyst charges it.
+     *   - $morUnits (MoR): the row carries a UNIT ID → the PROVIDER charges; priceMinor/currency here are a
+     *     DISPLAY CACHE (nullable; refreshed via the Faza-5 mechanism), never the charged amount.
+     * `unitId` is the provider's own sellable-unit id (Dodo product_id today; a GENERIC name so Paddle
+     * (price_id) / Lemon Squeezy (variant_id) reuse it). A form is self-billed XOR MoR (by formType), so
+     * only ONE of $variants/$morUnits is ever populated — but they are SEPARATE columns with SEPARATE
+     * semantics. See sellableUnits() for the read path (falls back to the single dodoProductId).
+     * ⚠ KOMAD 1: stored + backfilled, but NOT yet consumed (nobody reads it) → zero behaviour change.
+     *
+     * @var array<int, array{label: string, unitId: string, priceMinor?: int|null, currency?: string|null}>|null
+     */
+    #[ORM\Column(name: 'mor_units', type: 'json', nullable: true)]
+    private ?array $morUnits = null;
 
     /**
      * Submission-notification config for FREE forms (priced forms use the order/fulfilment
@@ -356,6 +378,113 @@ class FormDefinition
         $list = array_values($this->variants ?? []);
 
         return ($index >= 0 && isset($list[$index])) ? $list[$index] : null;
+    }
+
+    // --- MoR sellable units (Faza 6) — the MoR pandan of variants; unit carries an ID, not a price. ---
+
+    /** @return array<int, array{label: string, unitId: string, priceMinor?: int|null, currency?: string|null}>|null */
+    public function getMorUnits(): ?array
+    {
+        return $this->morUnits;
+    }
+
+    /**
+     * Store MoR sellable units, dropping fully-empty rows (prototype/blank) and coercing types. Half-filled
+     * rows (label xor unitId) are KEPT so validateMorUnits can flag them. priceMinor/currency are the
+     * DISPLAY cache (nullable — the provider charges its own). Faza 6.
+     *
+     * @param array<int, array{label?: string, unitId?: string, priceMinor?: mixed, currency?: mixed}>|null $units
+     */
+    public function setMorUnits(?array $units): static
+    {
+        $clean = [];
+        foreach ($units ?? [] as $u) {
+            $label = trim((string) ($u['label'] ?? ''));
+            $unitId = trim((string) ($u['unitId'] ?? ''));
+            if ('' === $label && '' === $unitId) {
+                continue; // fully empty row — not a unit
+            }
+            $price = $u['priceMinor'] ?? null;
+            $currency = $u['currency'] ?? null;
+            $clean[] = [
+                'label' => $label,
+                'unitId' => $unitId,
+                'priceMinor' => (null === $price || '' === $price) ? null : (int) $price,
+                'currency' => (null === $currency || '' === $currency) ? null : (string) $currency,
+            ];
+        }
+
+        $this->morUnits = [] === $clean ? null : array_values($clean);
+
+        return $this;
+    }
+
+    /** Whether this MoR form has ≥1 COMPLETE sellable unit (label + unitId) — the pandan of hasVariants(). */
+    public function hasMorUnits(): bool
+    {
+        foreach ($this->morUnits ?? [] as $u) {
+            if ('' !== trim((string) ($u['label'] ?? '')) && '' !== trim((string) ($u['unitId'] ?? ''))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The MoR unit at $index, or null if out of range — the server-side selection gate (mirrors variantAt).
+     * Resolves against sellableUnits() so a not-yet-migrated single-product form still resolves at index 0.
+     *
+     * @return array{label: string, unitId: string, priceMinor: int|null, currency: string|null}|null
+     */
+    public function morUnitAt(int $index): ?array
+    {
+        $list = $this->sellableUnits();
+
+        return ($index >= 0 && isset($list[$index])) ? $list[$index] : null;
+    }
+
+    /**
+     * The MoR read path (front + checkout): the explicit morUnits list (complete rows only), else a SINGLE
+     * synthesized unit from the legacy dodoProductId (so an un-migrated / single-product MoR form behaves as
+     * a one-entry list), else []. The synthesized unit's label is cosmetic — a single unit is never shown as
+     * a choice (the buyer sees a choice only when count > 1). Independent of migration state, so every
+     * intermediate Faza-6 step stays money-correct. Faza 6.
+     *
+     * @return list<array{label: string, unitId: string, priceMinor: int|null, currency: string|null}>
+     */
+    public function sellableUnits(): array
+    {
+        $out = [];
+        foreach ($this->morUnits ?? [] as $u) {
+            $unitId = trim((string) ($u['unitId'] ?? ''));
+            if ('' === $unitId) {
+                continue; // a row with no unit id can't be sold
+            }
+            $price = $u['priceMinor'] ?? null;
+            $currency = $u['currency'] ?? null;
+            $out[] = [
+                'label' => trim((string) ($u['label'] ?? '')),
+                'unitId' => $unitId,
+                'priceMinor' => (null === $price || '' === $price) ? null : (int) $price,
+                'currency' => (null === $currency || '' === $currency) ? null : (string) $currency,
+            ];
+        }
+        if ([] !== $out) {
+            return $out;
+        }
+
+        // Fallback: the legacy single Dodo product as a one-entry list (label cosmetic; never surfaced).
+        if (null !== $this->dodoProductId && '' !== $this->dodoProductId) {
+            return [[
+                'label' => '',
+                'unitId' => $this->dodoProductId,
+                'priceMinor' => $this->priceMinor,
+                'currency' => $this->currency,
+            ]];
+        }
+
+        return [];
     }
 
     public function getCurrency(): ?string
@@ -573,6 +702,24 @@ class FormDefinition
             if ('' === $label || $price <= 0) {
                 $context->buildViolation('validation.form.variant_incomplete')
                     ->atPath('variants['.$i.']')->addViolation();
+            }
+        }
+    }
+
+    /**
+     * Each MoR unit must have a label AND a unit id (a half-filled row is an error). Price is a display
+     * cache (the provider charges) → NOT validated here. Faza 6 — the pandan of validateVariants(); the
+     * per-unit "is it a sellable product" guard (recurring/PWYW/archived) lives in the builder controller.
+     */
+    #[Assert\Callback]
+    public function validateMorUnits(ExecutionContextInterface $context): void
+    {
+        foreach (array_values($this->morUnits ?? []) as $i => $u) {
+            $label = trim((string) ($u['label'] ?? ''));
+            $unitId = trim((string) ($u['unitId'] ?? ''));
+            if ('' === $label || '' === $unitId) {
+                $context->buildViolation('validation.form.mor_unit_incomplete')
+                    ->atPath('morUnits['.$i.']')->addViolation();
             }
         }
     }

@@ -103,6 +103,132 @@ class FormSubmitShippingTest extends WebTestCase
         self::assertNull($order->getNetAmountMinor());
     }
 
+    /**
+     * MoR MONEY PATH (Faza 6 K4): a MoR form with TWO sellable units — the buyer picks index 1 → the order
+     * records THAT unit's id (createCheckout charges it), its label (a choice WAS offered → >1), and its
+     * display price. The K5 front will render the radios; here we send the chosen index directly (the server
+     * resolves it — the client never sends a price/id).
+     */
+    public function testMoRMultiUnitOrderChargesTheChosenUnit(): void
+    {
+        $client = static::createClient();
+        $this->clearProviderSettings();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $settings = static::getContainer()->get(SettingsManager::class);
+        $settings->set('fake_processor_enabled', '1');
+
+        $slug = $this->seedProductForm($em, [
+            'price' => 0,
+            'allowed' => [FakeMoRProcessor::NAME],
+            'morUnits' => [
+                ['label' => 'Personal', 'unitId' => 'pdt_personal', 'priceMinor' => 2900, 'currency' => 'eur'],
+                ['label' => 'Team', 'unitId' => 'pdt_team', 'priceMinor' => 4900, 'currency' => 'eur'],
+            ],
+        ]);
+
+        $crawler = $client->request('GET', '/'.$slug);
+        self::assertResponseIsSuccessful();
+        $form = $crawler->filter('button.fb-submit')->form();
+        $values = $form->getPhpValues();
+        $values['variant'] = '1'; // the buyer chose "Team"
+        $client->request($form->getMethod(), $form->getUri(), $values);
+
+        $order = $this->latestOrder($em);
+        self::assertNotNull($order);
+        self::assertSame('pdt_team', $order->getProviderUnitId(), 'the chosen unit id → createCheckout charges it');
+        self::assertSame('Team', $order->getVariantLabel(), 'the chosen option label (a choice was offered)');
+        self::assertSame(4900, $order->getAmountMinor(), 'the chosen unit display price is recorded');
+    }
+
+    /**
+     * MoR FRONT (Faza 6 K5): a form with >1 units renders the choice (radios with per-unit prices) + the
+     * provider-charges note, and HIDES the form price (form.priceMinor) — the buyer sees prices per option.
+     */
+    public function testMoRMultiUnitFrontShowsTheChoiceAndHidesFormPrice(): void
+    {
+        $client = static::createClient();
+        $this->clearProviderSettings();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $settings = static::getContainer()->get(SettingsManager::class);
+        $settings->set('fake_processor_enabled', '1');
+
+        $slug = $this->seedProductForm($em, [
+            'price' => 9900, // a form price is set — but it must NOT show for a >1-unit MoR form
+            'allowed' => [FakeMoRProcessor::NAME],
+            'morUnits' => [
+                ['label' => 'Personal', 'unitId' => 'pdt_personal', 'priceMinor' => 2900, 'currency' => 'eur'],
+                ['label' => 'Team', 'unitId' => 'pdt_team', 'priceMinor' => 4900, 'currency' => 'eur'],
+            ],
+        ]);
+
+        $client->request('GET', '/'.$slug);
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+
+        self::assertStringContainsString('name="variant"', $html, 'a >1-unit MoR form renders the choice');
+        self::assertStringContainsString('Personal', $html);
+        self::assertStringContainsString('Team', $html);
+        self::assertStringContainsString('29,00', $html, 'per-unit display price is shown');
+        self::assertStringContainsString('49,00', $html);
+        self::assertStringNotContainsString('class="fb-price"', $html, 'the form price line is hidden when there is a choice');
+        self::assertStringContainsString('fb-mor-note', $html, 'the provider-charges note is shown with the choice');
+    }
+
+    /**
+     * MoR FRONT single-unit (Faza 6 K5): exactly one unit → NO choice rendered (works as before), and the
+     * form price line IS shown.
+     */
+    public function testMoRSingleUnitFrontShowsNoChoice(): void
+    {
+        $client = static::createClient();
+        $this->clearProviderSettings();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $settings = static::getContainer()->get(SettingsManager::class);
+        $settings->set('fake_processor_enabled', '1');
+
+        $slug = $this->seedProductForm($em, [
+            'price' => 3900,
+            'allowed' => [FakeMoRProcessor::NAME],
+            'morUnits' => [['label' => 'Standard', 'unitId' => 'pdt_only', 'priceMinor' => 3900, 'currency' => 'eur']],
+        ]);
+
+        $client->request('GET', '/'.$slug);
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+
+        self::assertStringNotContainsString('name="variant"', $html, 'a single-unit MoR form shows no choice');
+        self::assertStringContainsString('class="fb-price"', $html, 'the form price line is shown for a single unit');
+    }
+
+    /**
+     * MoR single-unit (Faza 6 K4): no buyer choice → the order records the unit id but NO variant label
+     * (identical to before Faza 6 — a single-product MoR order). Proves the ">1 → label" rule.
+     */
+    public function testMoRSingleUnitOrderHasNoVariantLabel(): void
+    {
+        $client = static::createClient();
+        $this->clearProviderSettings();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $settings = static::getContainer()->get(SettingsManager::class);
+        $settings->set('fake_processor_enabled', '1');
+
+        $slug = $this->seedProductForm($em, [
+            'price' => 0,
+            'allowed' => [FakeMoRProcessor::NAME],
+            'morUnits' => [['label' => 'Standard', 'unitId' => 'pdt_only', 'priceMinor' => 3900, 'currency' => 'eur']],
+        ]);
+
+        $crawler = $client->request('GET', '/'.$slug);
+        self::assertResponseIsSuccessful();
+        $client->submit($crawler->filter('button.fb-submit')->form());
+
+        $order = $this->latestOrder($em);
+        self::assertNotNull($order);
+        self::assertSame('pdt_only', $order->getProviderUnitId());
+        self::assertNull($order->getVariantLabel(), 'a single-unit MoR order has no variant label');
+        self::assertSame(3900, $order->getAmountMinor());
+    }
+
     /** Non-MoR: amount = product + delivery, and one inclusive tax rate covers the whole (product+shipping). */
     public function testNonMoROrderAddsShippingAndTaxesTheWhole(): void
     {
@@ -403,8 +529,8 @@ class FormSubmitShippingTest extends WebTestCase
         $suffix = bin2hex(random_bytes(5));
 
         // Faza 4: the explicit type replaces the old guessing — declare it from the intended shape
-        // (Dodo → MoR; shipping → physical; else digital), matching what the backfill would assign.
-        $formType = isset($opts['dodoProductId'])
+        // (Dodo/MoR units → MoR; shipping → physical; else digital), matching what the backfill would assign.
+        $formType = (isset($opts['dodoProductId']) || isset($opts['morUnits']))
             ? FormType::DIGITAL_MOR
             : ([] !== ($opts['shipping'] ?? []) ? FormType::PHYSICAL : FormType::DIGITAL);
 
@@ -420,6 +546,9 @@ class FormSubmitShippingTest extends WebTestCase
             ->setAllowedShippingCountries($opts['countries'] ?? null);
         if (isset($opts['dodoProductId'])) {
             $form->setDodoProductId($opts['dodoProductId']);
+        }
+        if (isset($opts['morUnits'])) {
+            $form->setMorUnits($opts['morUnits']);
         }
         // Faza 5: a MoR form records WHICH provider — here the MoR provider is the one in `allowed`
         // (the fake MoR processor). The resolver reads morProvider to offer that provider.

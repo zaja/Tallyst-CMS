@@ -14,25 +14,11 @@
     {% set isPhysical = ft == 'physical' %}
     {% set isSelfBilled = isProduct and not isMor %}
     {# The builder controller's JS-generated "new field" summary fallback is fed the translated label
-       as a Stimulus value (Twig owns the translation; JS reads it). #}
-    {# dodo-prefill sits on the ROOT so it can reach BOTH the price/currency fields (payment card) and the
-       name/description fields (Osnovno card) as targets when a Dodo product is picked. #}
-    <div data-controller="formbuilder--builder formbuilder--formtype formbuilder--dodo-prefill"
-         data-formbuilder--builder-new-field-label-value="{{ 'admin.form.field.new'|trans({}, 'admin') }}"
-         data-formbuilder--dodo-prefill-url-value="{{ path('form_builder_admin_dodo_product') }}"
-         data-formbuilder--dodo-prefill-labels-value="{{ {
-            name: 'admin.form.def.name'|trans({}, 'admin'),
-            description: 'admin.form.def.description'|trans({}, 'admin'),
-            price: 'admin.form.def.price'|trans({}, 'admin'),
-            currency: 'admin.form.def.currency'|trans({}, 'admin'),
-            confirm_title: 'admin.form.dodo_refresh.confirm'|trans({}, 'admin'),
-            up_to_date: 'admin.form.dodo_refresh.up_to_date'|trans({}, 'admin'),
-            unsellable: 'admin.form.dodo_refresh.unsellable'|trans({}, 'admin'),
-            archived: 'admin.form.dodo_refresh.archived'|trans({}, 'admin'),
-            not_found: 'admin.form.dodo_refresh.not_found'|trans({}, 'admin'),
-            error: 'admin.form.dodo_refresh.error'|trans({}, 'admin'),
-            arrow: '→'
-         }|json_encode|e('html_attr') }}">
+       as a Stimulus value (Twig owns the translation; JS reads it). formbuilder--mor-price hides the
+       form-level price/currency when the MoR unit list has >1 rows (per-row prefill/refresh is
+       formbuilder--mor-unit, scoped to each row). #}
+    <div data-controller="formbuilder--builder formbuilder--formtype formbuilder--mor-price"
+         data-formbuilder--builder-new-field-label-value="{{ 'admin.form.field.new'|trans({}, 'admin') }}">
         {{ form_start(form, {attr: {'data-dirty-guard': ''}}) }}
 
         {# Osnovno — incl. the explicit form-type select (mapped; the reveal reads it). #}
@@ -59,17 +45,21 @@
         </div>
 
         {# Sales (product) — shown by formType (any product type). Pre-hidden in Twig when not a product to
-           avoid a flash before JS boots. data-controller: dodo-prefill (copies a picked Dodo product's
-           price/currency) + payment-exclusive (a MoR method can't mix with Stripe/PayPal). #}
+           avoid a flash before JS boots. data-controller: payment-exclusive (a MoR method can't mix with
+           Stripe/PayPal on the self-billed checkboxes). #}
         <div class="card mb-3 fb-card{{ isProduct ? '' : ' d-none' }}" data-formbuilder--formtype-target="product"
              data-controller="formbuilder--payment-exclusive">
             <div class="card-body">
                 <h2 class="h5 fb-section-title">{{ 'admin.form.builder.payment.title'|trans({}, 'admin') }} <span class="badge fb-badge-soft">{{ 'admin.form.builder.payment.badge'|trans({}, 'admin') }}</span></h2>
                 <p class="fb-section-help">{{ 'admin.form.builder.payment.help'|trans({}, 'admin') }}</p>
-                <div class="row">
+                {# Price + currency. For a MoR form with >1 units these are MEANINGLESS (each option carries
+                   its own price; the provider charges it) → formbuilder--mor-price HIDES them live and shows
+                   the note. Hidden (not cleared) → the value round-trips + returns if it drops back to 1 unit. #}
+                <div class="row" data-formbuilder--mor-price-target="priceBlock">
                     <div class="col">{{ form_row(form.priceMinor) }}</div>
                     <div class="col">{{ form_row(form.currency) }}</div>
                 </div>
+                <p class="fb-section-help d-none" data-formbuilder--mor-price-target="priceNote">{{ 'admin.form.builder.payment.mor_units_price_note'|trans({}, 'admin') }}</p>
 
                 {# Self-billed payment methods (Stripe/PayPal). Shown for physical/digital only — a MoR form
                    is Dodo-only (its provider comes from the type, not this list). #}
@@ -77,18 +67,43 @@
                     {{ form_row(form.allowedPaymentMethods) }}
                 </div>
 
-                {# Dodo (Merchant-of-Record) per-form product — shown ONLY for a digital_mor form (physical
-                   is never offered Dodo). Dropdown from the live catalogue, else a manual id — always saveable. #}
-                <div class="fb-dodo-product{{ isMor ? '' : ' d-none' }}" data-formbuilder--formtype-target="dodo">
-                    {{ form_row(form.dodoProductId) }}
-                    {# On-demand re-fetch of this product's live Dodo data (Faza 5 K7). Hidden until a product is
-                       selected — the controller toggles it. NOT a live sync: it shows a diff + asks to confirm. #}
-                    <button type="button" class="btn btn-secondary btn-sm mb-2 d-none"
-                            data-formbuilder--dodo-prefill-target="refreshButton"
-                            data-action="formbuilder--dodo-prefill#refresh">
-                        <i class="fa-solid fa-rotate" aria-hidden="true"></i>
-                        {{ 'admin.form.dodo_refresh.button'|trans({}, 'admin') }}
-                    </button>
+                {# Dodo (Merchant-of-Record) sellable units — shown ONLY for a digital_mor form (Faza 6 K3).
+                   A LIST: the buyer picks one on the front. Each row = label + unit picker (live catalogue or
+                   a manual id) + a read-only display price. Reuses the generic add/remove; each row's
+                   formbuilder--mor-unit reads the shared refresh URL / provider / labels from this wrapper. #}
+                <div class="fb-dodo-product{{ isMor ? '' : ' d-none' }}" data-formbuilder--formtype-target="dodo"
+                     data-mor-units
+                     data-mor-refresh-url="{{ path('form_builder_admin_dodo_product') }}"
+                     data-mor-provider="{{ definition.morProvider }}"
+                     data-mor-labels="{{ {
+                        name: 'admin.form.mor_unit.name'|trans({}, 'admin'),
+                        price: 'admin.form.mor_unit.price'|trans({}, 'admin'),
+                        form_name: 'admin.form.def.name'|trans({}, 'admin'),
+                        form_description: 'admin.form.def.description'|trans({}, 'admin'),
+                        form_price: 'admin.form.def.price'|trans({}, 'admin'),
+                        form_currency: 'admin.form.def.currency'|trans({}, 'admin'),
+                        confirm_title: 'admin.form.dodo_refresh.confirm'|trans({}, 'admin'),
+                        up_to_date: 'admin.form.dodo_refresh.up_to_date'|trans({}, 'admin'),
+                        up_to_date_named: 'admin.form.dodo_refresh.up_to_date_named'|trans({}, 'admin'),
+                        unsellable: 'admin.form.dodo_refresh.unsellable'|trans({}, 'admin'),
+                        archived: 'admin.form.dodo_refresh.archived'|trans({}, 'admin'),
+                        not_found: 'admin.form.dodo_refresh.not_found'|trans({}, 'admin'),
+                        error: 'admin.form.dodo_refresh.error'|trans({}, 'admin'),
+                        arrow: '→'
+                     }|json_encode|e('html_attr') }}">
+                    <p class="fb-section-help mb-2">{{ 'admin.form.builder.payment.mor_units_help'|trans({}, 'admin') }}</p>
+                    {{ form_errors(form.morUnits) }}
+                    <div data-fb-collection data-fb-level="morUnits"
+                         data-prototype="{{ include('@FormBuilder/admin/_mor_unit_row.html.twig', {unitForm: form.morUnits.vars.prototype})|e('html_attr') }}"
+                         data-prototype-name="__morunit__"
+                         data-fb-index="{{ form.morUnits|length }}">
+                        <div data-fb-items>
+                            {% for unitForm in form.morUnits %}
+                                {{ include('@FormBuilder/admin/_mor_unit_row.html.twig', {unitForm: unitForm}) }}
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" data-action="formbuilder--builder#add">{{ 'admin.form.builder.add_mor_unit'|trans({}, 'admin') }}</button>
+                    </div>
                     <p class="text-muted small mb-3">{{ 'admin.form.def.dodo_price_note'|trans({}, 'admin') }}</p>
                 </div>
 

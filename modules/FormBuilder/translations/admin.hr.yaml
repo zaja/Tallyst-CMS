@@ -60,11 +60,12 @@ admin:
         flash:
             deleted: Forma je obrisana.
             saved: Forma je spremljena.
-            dodo_unverified: 'Dodo proizvod nije mogao biti provjeren (Dodo nedostupan). Spremljeno — ali provjeri da je fiksna jednokratna cijena.'
+            dodo_unverified: '"%unit%" nije mogao biti provjeren (Dodo nedostupan). Spremljeno — ali provjeri da je fiksna jednokratna cijena.'
         dodo_refresh:
             button: Osvježi s Doda
             confirm: 'Primijeniti ove promjene s Doda?'
             up_to_date: 'Podaci ovog proizvoda već su ažurni.'
+            up_to_date_named: 'Opcija "%option%" je već ažurna.'
             unsellable: '⚠ Ovaj proizvod je sad pretplata / usage-based / plati-koliko-želiš — Tallyst ga ne zna prodati.'
             archived: '⚠ Ovaj proizvod je arhiviran na Dodu.'
             not_found: 'Ovaj proizvod više ne postoji na Dodu.'
@@ -116,6 +117,8 @@ admin:
                 help: Cijena, valuta, načini plaćanja i varijante.
                 variants_help: 'Varijante cijene — kupac bira jednu, njena se cijena koristi umjesto fiksne.'
                 price_hint: 'Naplatni proizvod treba cijenu ili barem jednu varijantu.'
+                mor_units_help: 'Proizvodi između kojih kupac bira. Dodaj jedan za jedan proizvod, ili više za opcije — provajder naplaćuje cijenu svakog proizvoda.'
+                mor_units_price_note: 'Svaka opcija ima svoju cijenu — provajder je naplaćuje. Cijena forme ispod se ne koristi.'
             notify:
                 title: Obavijesti
                 help: 'E-mail obavijest na svaku prijavu (za besplatne forme).'
@@ -124,8 +127,10 @@ admin:
                 help: Što posjetitelj ispunjava.
             add_field: + Dodaj polje
             add_variant: + Dodaj varijantu
+            add_mor_unit: + Dodaj proizvod
             duplicate_keys: 'Ključevi polja moraju biti jedinstveni unutar forme. Duplikati: %keys%'
             dodo_product_unsupported: 'Ovaj Dodo proizvod je pretplata ili "plati koliko želiš", što Tallyst ne može prodavati. Izaberi proizvod s fiksnom jednokratnom cijenom.'
+            mor_unit_unsupported: 'Opcija "%unit%" je pretplata ili "plati koliko želiš", što Tallyst ne može prodavati. Izaberi proizvod s fiksnom jednokratnom cijenom.'
         field:
             new: Novo polje
             required_badge: obavezno
@@ -198,6 +203,11 @@ admin:
             field_deleted: '(obrisano: %key%)'
             no_options: — polje nema opcija (dodaj ih ili koristi checkbox) —
             value_placeholder: — vrijednost —
+        mor_unit:
+            name: Naziv opcije
+            unit: Proizvod
+            price: Cijena
+            remove: Ukloni proizvod
         variant:
             remove: Ukloni varijantu
             name: Naziv varijante

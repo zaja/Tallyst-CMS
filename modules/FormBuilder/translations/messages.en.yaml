@@ -6,6 +6,7 @@ form:
     price: 'Price:'
     tax_note: Price includes %name% (%rate%%).
     choose_option: Choose an option
+    mor_price_note: The final price is charged by the payment provider and may differ (localised prices / discounts).
     choose_shipping: Delivery method
     shipping: Delivery
     ship:

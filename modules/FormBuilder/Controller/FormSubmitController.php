@@ -216,28 +216,41 @@ class FormSubmitController extends AbstractController
         $processor = $this->payments->get($chosen);
         $isMerchantOfRecord = $processor instanceof MerchantOfRecordInterface;
 
-        // Merchant-of-Record providers (Dodo) support only a FIXED price in v1.7.0 — no variant mapping yet.
-        if ($isMerchantOfRecord && $form->hasVariants()) {
-            $this->addFlash('danger', $this->translator->trans('form.variants_unsupported', [], 'messages'));
-
-            return $this->redirect($return);
-        }
-
-        // A MoR form must have a linked provider product (per-form). Separate from the provider being
-        // configured — a configured MoR provider still can't sell a form with no product. Clear error, no
-        // 500. The product id is the provider's own (dodoProductId = Dodo's product; a second MoR provider
-        // would key on its own id — Paddle-phase). Gated on the per-PAYMENT $isMerchantOfRecord (unchanged).
-        if ($isMerchantOfRecord && null === $form->getDodoProductId()) {
+        // A MoR form must have at least one linked sellable unit (per-form). Separate from the provider being
+        // configured — a configured MoR provider still can't sell a form with no unit. Clear error, no 500.
+        // Gated on the per-PAYMENT $isMerchantOfRecord (unchanged). Faza 6: the check is now "≥1 unit" (the
+        // builder mirrors the first unit into the legacy dodoProductId, but sellableUnits() is the read path).
+        if ($isMerchantOfRecord && [] === $form->sellableUnits()) {
             $this->addFlash('danger', $this->translator->trans('form.product_not_linked', [], 'messages'));
 
             return $this->redirect($return);
         }
 
-        // Or-or: variants determine the price (the chosen index is resolved server-side against the
-        // defined variants — the client never sends a price); else the fixed priceMinor.
+        // The charged/recorded amount + the chosen option. The client only ever sends an INDEX — the server
+        // resolves it (never trusts a client price/id):
+        //  - MoR (Faza 6): the buyer picks one of the form's sellable units → resolve the index to its
+        //    provider UNIT ID (put on the order so createCheckout charges THAT unit) + the display-cache
+        //    price (RECORD ONLY — the MoR provider charges the unit's own price). variantLabel only when a
+        //    choice was actually offered (>1 units), so a single-unit MoR order stays variantLabel = null
+        //    (identical to before Faza 6).
+        //  - self-billed: variants (or-or) determine the price, else the fixed priceMinor (unchanged).
         $amountMinor = (int) $form->getPriceMinor();
         $variantLabel = null;
-        if ($form->hasVariants()) {
+        $providerUnitId = null;
+        if ($isMerchantOfRecord) {
+            $units = $form->sellableUnits();
+            $raw = $request->request->get('variant');
+            $index = \count($units) > 1 ? (is_numeric($raw) ? (int) $raw : -1) : 0;
+            $unit = $form->morUnitAt($index);
+            if (null === $unit) {
+                $this->addFlash('danger', $this->translator->trans('form.invalid_option', [], 'messages'));
+
+                return $this->redirect($return);
+            }
+            $providerUnitId = $unit['unitId'];
+            $amountMinor = $unit['priceMinor'] ?? 0; // display/record only — the provider charges its own price
+            $variantLabel = \count($units) > 1 ? $unit['label'] : null;
+        } elseif ($form->hasVariants()) {
             $raw = $request->request->get('variant');
             $variant = $form->variantAt(is_numeric($raw) ? (int) $raw : -1);
             if (null === $variant) {
@@ -286,6 +299,8 @@ class FormSubmitController extends AbstractController
             ->setProvider($chosen)
             ->setPaymentMode($processor->getMode())
             ->setVariantLabel($variantLabel)
+            // Faza 6: the chosen MoR unit id (null for self-billed) — createCheckout charges THIS unit.
+            ->setProviderUnitId($providerUnitId)
             ->setShippingLabel($shippingLabel)
             ->setShippingAmountMinor($shippingAmount)
             ->setCustomerCountry($customerCountry)

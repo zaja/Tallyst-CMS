@@ -65,4 +65,36 @@ class FakeMoRProcessor implements PaymentProcessorInterface, MerchantOfRecordInt
 
         return $successUrl;
     }
+
+    // Faza 6 K2/K3: the MoR sellable-unit contract. No HTTP — deterministic by id PREFIX, so functional
+    // tests can drive the per-unit save guard: `sub_*` = not sellable (subscription/PWYW → reject),
+    // `ok_*` = a fixed-price one-time unit (accept), anything else = unverifiable (warn). listUnits is empty
+    // (the builder falls back to a manual id field), which is what the tests exercise.
+
+    public function listUnits(): array
+    {
+        return [];
+    }
+
+    public function fetchUnit(string $id): ?array
+    {
+        $sellable = $this->isSellableUnit($id);
+        if (null === $sellable) {
+            return null;
+        }
+
+        return ['found' => true, 'name' => 'Fake '.$id, 'description' => '', 'priceMinor' => 4900, 'currency' => 'EUR', 'sellable' => $sellable, 'archived' => false];
+    }
+
+    public function isSellableUnit(string $id): ?bool
+    {
+        if (str_starts_with($id, 'sub_')) {
+            return false; // a "subscription" / pay-what-you-want unit — Tallyst can't sell it
+        }
+        if (str_starts_with($id, 'ok_')) {
+            return true; // a fixed-price one-time unit
+        }
+
+        return null; // unverifiable
+    }
 }

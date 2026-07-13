@@ -78,6 +78,10 @@ class FormShortcode implements ShortcodeInterface
             // MoR form → the resolver offers ONLY Dodo (never Stripe/PayPal), regardless of
             // allowedPaymentMethods (incl. empty). This closes the front gap (all methods shown).
             'payment_methods' => $form->isProduct() ? $this->paymentMethods($form) : [],
+            // MoR sellable units (Faza 6): the buyer picks one on the front (>1 → radios, 1 → hidden, 0 →
+            // "not linked"). Each carries a DISPLAY cache price/currency — the provider charges its own price.
+            'is_mor' => $isMerchantOfRecord,
+            'mor_units' => $isMerchantOfRecord ? $form->sellableUnits() : [],
             'tax' => ['enabled' => $showTax, 'name' => $tax['name'] ?? '', 'rate' => $tax['rate'] ?? 0.0],
             'shipping' => $offeredShipping,
             'shipping_address' => [] !== $offeredShipping ? ShippingAddress::FIELDS : [],

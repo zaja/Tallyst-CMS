@@ -61,11 +61,12 @@ admin:
         flash:
             deleted: Form deleted.
             saved: Form saved.
-            dodo_unverified: 'The Dodo product couldn''t be verified (Dodo unreachable). Saved — but make sure it''s a fixed-price one-time product.'
+            dodo_unverified: 'Couldn''t verify "%unit%" (Dodo unreachable). Saved — but make sure it''s a fixed-price one-time product.'
         dodo_refresh:
             button: Refresh from Dodo
             confirm: 'Apply these changes from Dodo?'
             up_to_date: 'This product''s data is already up to date.'
+            up_to_date_named: 'Option "%option%" is already up to date.'
             unsellable: '⚠ This product is now a subscription / usage-based / pay-what-you-want product — Tallyst can''t sell it.'
             archived: '⚠ This product is archived on Dodo.'
             not_found: 'This product no longer exists on Dodo.'
@@ -120,6 +121,8 @@ admin:
                 help: Price, currency, payment methods and variants.
                 variants_help: 'Price variants — the buyer picks one; its price is used instead of the fixed price.'
                 price_hint: 'A paid product needs a price or at least one variant.'
+                mor_units_help: 'The products the buyer chooses from. Add one for a single product, or several to offer options — the provider charges each product''s own price.'
+                mor_units_price_note: 'Each option has its own price — the provider charges it. The form price below is not used.'
             notify:
                 title: Notifications
                 help: 'E-mail notification on every submission (for free forms).'
@@ -128,8 +131,10 @@ admin:
                 help: What the visitor fills in.
             add_field: + Add field
             add_variant: + Add variant
+            add_mor_unit: + Add product
             duplicate_keys: 'Field keys must be unique within the form. Duplicates: %keys%'
             dodo_product_unsupported: 'This Dodo product is recurring or pay-what-you-want, which Tallyst can''t sell. Choose a fixed-price one-time product.'
+            mor_unit_unsupported: 'Option "%unit%" is a recurring or pay-what-you-want product, which Tallyst can''t sell. Choose a fixed-price one-time product.'
         field:
             new: New field
             required_badge: required
@@ -206,6 +211,11 @@ admin:
             remove: Remove variant
             name: Variant name
             price: Price
+        mor_unit:
+            name: Option name
+            unit: Product
+            price: Price
+            remove: Remove product
         payment_info:
             live_badge: LIVE MODE
             live_note: '— charges go live.'
