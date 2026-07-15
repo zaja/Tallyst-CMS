@@ -131,6 +131,43 @@ class DodoListProductsTest extends TestCase
         self::assertFalse($info['archived']);
     }
 
+    /**
+     * Faza 8 regression: the DETAIL payload (GET /products/{id}) carries tax_inclusive ONLY inside the `price`
+     * OBJECT — NO top-level flag, NO price_detail (live-probed 2026-07-15). The old helper read only top-level
+     * + price_detail → returned null → the refresh button never populated the front's exclusive-tax note. It
+     * MUST now read `price.tax_inclusive`.
+     */
+    public function testFetchProductInfoReadsTaxInclusiveFromPriceObject(): void
+    {
+        $exclusive = [
+            'product_id' => 'pdt_excl', 'name' => 'Excl', 'is_recurring' => false,
+            'price' => ['type' => 'one_time_price', 'price' => 4900, 'currency' => 'EUR', 'tax_inclusive' => false, 'pay_what_you_want' => false],
+        ];
+        self::assertFalse($this->dodoForProduct($exclusive)->fetchUnit('pdt_excl')['taxInclusive'], 'price.tax_inclusive=false → exclusive');
+
+        $inclusive = $exclusive;
+        $inclusive['price']['tax_inclusive'] = true;
+        self::assertTrue($this->dodoForProduct($inclusive)->fetchUnit('pdt_excl')['taxInclusive'], 'price.tax_inclusive=true → inclusive');
+
+        // No flag anywhere → null (unknown → the front stays neutral, never a false "added on top").
+        $unknown = ['product_id' => 'pdt_u', 'is_recurring' => false, 'price' => ['type' => 'one_time_price', 'price' => 100]];
+        self::assertNull($this->dodoForProduct($unknown)->fetchUnit('pdt_u')['taxInclusive']);
+    }
+
+    /**
+     * Faza 8: pricing_mode is at the TOP LEVEL of the product payload (live-probed) — 'by_currency'/'by_country'
+     * = localised price → the front's "may adjust to your region" wording; null/absent → standard (no wording).
+     */
+    public function testFetchProductInfoReadsPricingMode(): void
+    {
+        $localised = ['product_id' => 'pdt_l', 'is_recurring' => false, 'pricing_mode' => 'by_currency', 'price' => ['type' => 'one_time_price', 'price' => 4900]];
+        self::assertSame('by_currency', $this->dodoForProduct($localised)->fetchUnit('pdt_l')['pricingMode']);
+
+        // Present-but-null (standard product) → null.
+        $standard = ['product_id' => 'pdt_s', 'is_recurring' => false, 'pricing_mode' => null, 'price' => ['type' => 'one_time_price', 'price' => 4900]];
+        self::assertNull($this->dodoForProduct($standard)->fetchUnit('pdt_s')['pricingMode']);
+    }
+
     public function testFetchProductInfoFlagsUnsellable(): void
     {
         $recurring = ['product_id' => 'pdt_sub', 'is_recurring' => true, 'price_detail' => ['recurring_price' => ['price' => 999]]];

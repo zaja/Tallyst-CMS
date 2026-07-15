@@ -38,8 +38,8 @@ class FormMorUnitsTest extends TestCase
 
         $units = $form->getMorUnits();
         self::assertCount(2, $units);
-        self::assertSame(['label' => 'Personal', 'unitId' => 'pdt_a', 'priceMinor' => 4900, 'currency' => 'eur'], $units[0]);
-        self::assertSame(['label' => 'Team', 'unitId' => 'pdt_b', 'priceMinor' => null, 'currency' => null], $units[1]);
+        self::assertSame(['label' => 'Personal', 'unitId' => 'pdt_a', 'priceMinor' => 4900, 'currency' => 'eur', 'taxInclusive' => null, 'pricingMode' => null], $units[0]);
+        self::assertSame(['label' => 'Team', 'unitId' => 'pdt_b', 'priceMinor' => null, 'currency' => null, 'taxInclusive' => null, 'pricingMode' => null], $units[1]);
     }
 
     public function testEmptyMorUnitsAreNull(): void
@@ -73,6 +73,49 @@ class FormMorUnitsTest extends TestCase
         self::assertSame('pdt_a', $units[0]['unitId']);
         self::assertSame(2900, $units[0]['priceMinor']);
         self::assertNull($units[1]['priceMinor'], 'a null display-cache price stays null');
+    }
+
+    public function testTaxInclusiveRoundTrips(): void
+    {
+        // Faza 8: the tax-inclusive display cache round-trips as a bool; '1'/'0'/'' coerce; missing → null.
+        $form = $this->mor()->setMorUnits([
+            ['label' => 'Incl', 'unitId' => 'pdt_a', 'taxInclusive' => true],
+            ['label' => 'Excl', 'unitId' => 'pdt_b', 'taxInclusive' => '0'],   // form submits strings
+            ['label' => 'InclStr', 'unitId' => 'pdt_c', 'taxInclusive' => '1'],
+            ['label' => 'Unknown', 'unitId' => 'pdt_d'],                        // no key → null
+        ]);
+
+        $units = $form->sellableUnits();
+        self::assertTrue($units[0]['taxInclusive']);
+        self::assertFalse($units[1]['taxInclusive'], 'exclusive → false (drives the front note)');
+        self::assertTrue($units[2]['taxInclusive']);
+        self::assertNull($units[3]['taxInclusive'], 'unknown → null → neutral note');
+    }
+
+    public function testPricingModeRoundTrips(): void
+    {
+        // Faza 8: the pricing-mode display cache round-trips as a raw string; empty → null (front → no
+        // localised wording). Only 'by_currency'/'by_country' drive the "may adjust to your region" note.
+        $form = $this->mor()->setMorUnits([
+            ['label' => 'Loc', 'unitId' => 'pdt_a', 'taxInclusive' => true, 'pricingMode' => 'by_currency'],
+            ['label' => 'Std', 'unitId' => 'pdt_b', 'taxInclusive' => true, 'pricingMode' => ''],   // empty → null
+            ['label' => 'None', 'unitId' => 'pdt_c', 'taxInclusive' => true],                       // absent → null
+        ]);
+
+        $units = $form->sellableUnits();
+        self::assertSame('by_currency', $units[0]['pricingMode']);
+        self::assertNull($units[1]['pricingMode'], 'empty string → null');
+        self::assertNull($units[2]['pricingMode'], 'absent → null');
+    }
+
+    public function testLegacyFallbackTaxInclusiveIsNull(): void
+    {
+        // A not-yet-migrated single-product form (dodoProductId fallback) has no tax/pricing cache → null.
+        $units = $this->mor()->setDodoProductId('pdt_legacy')->setPriceMinor(4900)->sellableUnits();
+        self::assertArrayHasKey('taxInclusive', $units[0]);
+        self::assertNull($units[0]['taxInclusive']);
+        self::assertArrayHasKey('pricingMode', $units[0]);
+        self::assertNull($units[0]['pricingMode']);
     }
 
     public function testSellableUnitsFallsBackToLegacyDodoProductId(): void

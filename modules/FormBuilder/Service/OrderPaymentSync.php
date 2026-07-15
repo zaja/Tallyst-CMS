@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
 use Symfony\Component\Workflow\WorkflowInterface;
 use Tallyst\FormBuilder\Entity\Order;
 use Tallyst\FormBuilder\Message\FulfillOrderMessage;
@@ -27,6 +28,14 @@ use Tallyst\FormBuilder\Repository\OrderRepository;
  */
 class OrderPaymentSync
 {
+    /**
+     * Grace window (ms) before the customer confirmation is sent for a MoR order whose licence hasn't landed
+     * yet. K0 measured the licence entitlement arriving <~730 ms after payment; 60 s is a safe margin. It's
+     * a FALLBACK only — a licence-bearing entitlement dispatches the mail immediately (applyEntitlement), so
+     * this delay only actually elapses for a no-licence product (which never gets a licence entitlement).
+     */
+    private const MOR_MAIL_GRACE_MS = 60_000;
+
     public function __construct(
         private readonly OrderRepository $orders,
         #[Target('orderStateMachine')]
@@ -87,8 +96,19 @@ class OrderPaymentSync
             }
             $this->em->flush();
 
-            // Fulfillment (e-mails) is a separate, retriable async step.
-            $this->bus->dispatch(new FulfillOrderMessage((int) $order->getId()));
+            // Fulfillment (e-mails) is a separate, retriable async step. Faza 8 K2 — order the mail so it
+            // never goes out too early (K0 proved the licence entitlement usually arrives AFTER payment):
+            //  - non-MoR (Stripe/PayPal): dispatch NOW (unchanged — no licence concept);
+            //  - MoR with the licence already on the order (claimed from the pending store): dispatch NOW;
+            //  - MoR without the licence yet: dispatch with a GRACE delay — the fallback for a no-licence
+            //    product (K0 order 43: no licence entitlement EVER) or a very slow one; if a licence-bearing
+            //    entitlement lands first, applyEntitlement dispatches immediately and this delayed message
+            //    becomes a no-op (handler idempotency via confirmationSentAt).
+            $isMoR = $order->getForm()?->getFormType()->isMerchantOfRecord() ?? false;
+            $waitForLicense = $isMoR && null === $order->getLicenseKey();
+
+            $stamps = $waitForLicense ? [new DelayStamp(self::MOR_MAIL_GRACE_MS)] : [];
+            $this->bus->dispatch(new FulfillOrderMessage((int) $order->getId()), $stamps);
 
             return 'OK';
         }
@@ -149,6 +169,14 @@ class OrderPaymentSync
             if (null === $order->getLicenseKey()) {
                 $order->setLicenseKey($result->licenseKey);
                 $this->em->flush();
+            }
+
+            // Faza 8 K2: the licence just landed on a PAID order whose confirmation hasn't been sent yet
+            // (the licence entitlement arrived after payment — K0's majority case) → dispatch the mail NOW,
+            // so it carries the licence instead of waiting out the grace window. Idempotent: the handler
+            // sends once (confirmationSentAt); the grace-delayed message from the paid branch becomes a no-op.
+            if ($order->isPaid() && null === $order->getConfirmationSentAt()) {
+                $this->bus->dispatch(new FulfillOrderMessage((int) $order->getId()));
             }
 
             return 'License attached';

@@ -127,7 +127,6 @@
                                 </label>
                             {% endfor %}
                         </div>
-                        <p class="fb-mor-note">{{ 'form.mor_price_note'|trans }}</p>
                     </div>
                 {% endif %}
 
@@ -193,6 +192,20 @@
                 {% else %}
                     <input type="hidden" name="payment_method" value="{{ methods[0].name }}">
                 {% endif %}
+                {# MoR tax note (Faza 8) — ONE muted italic line right above the button (as MoR provider
+                   checkouts read). Strict === on the display cache: any EXCLUSIVE unit → "tax added"; else any
+                   INCLUSIVE unit → "included" (+ "may adjust" when the provider LOCALISES the price). All-null
+                   (old / unrefreshed form) → NO note (an empty price claim only confuses). Shown ONCE for the
+                   whole form (single AND multi-option). No rate/amount promised. #}
+                {% if is_mor|default(false) %}
+                    {% set mor_list = mor_units|default([]) %}
+                    {% if mor_list|filter(u => u.taxInclusive is same as (false))|length > 0 %}
+                        <p class="fb-mor-note">{{ 'form.mor_note_exclusive'|trans }}</p>
+                    {% elseif mor_list|filter(u => u.taxInclusive is same as (true))|length > 0 %}
+                        {% set mor_localised = mor_list|filter(u => u.taxInclusive is same as (true) and u.pricingMode in ['by_currency', 'by_country'])|length > 0 %}
+                        <p class="fb-mor-note">{{ (mor_localised ? 'form.mor_note_inclusive_localised' : 'form.mor_note_inclusive')|trans }}</p>
+                    {% endif %}
+                {% endif %}
                 <button type="submit" class="fb-submit">{{ 'form.checkout'|trans }}</button>
             {% endif %}
         {% else %}
@@ -219,5 +232,5 @@
     .fb-field[hidden] { display: none; }
     .fb-hp { position: absolute !important; left: -9999px !important; top: -9999px !important; height: 0; width: 0; overflow: hidden; }
     .fb-price { font-size: 1.05rem; }
-    .fb-mor-note { font-size: 0.85rem; color: var(--muted, #6b7280); margin-top: 0.35rem; }
+    .fb-mor-note { font-size: 0.8rem; font-style: italic; color: var(--muted, #6b7280); margin: 0 0 0.6rem; }
 </style>

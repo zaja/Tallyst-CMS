@@ -406,11 +406,18 @@ class FormDefinition
             }
             $price = $u['priceMinor'] ?? null;
             $currency = $u['currency'] ?? null;
+            $tax = $u['taxInclusive'] ?? null;
+            $mode = $u['pricingMode'] ?? null;
             $clean[] = [
                 'label' => $label,
                 'unitId' => $unitId,
                 'priceMinor' => (null === $price || '' === $price) ? null : (int) $price,
                 'currency' => (null === $currency || '' === $currency) ? null : (string) $currency,
+                // Faza 8: display cache — is the provider price tax-inclusive? null = unknown (front → neutral).
+                'taxInclusive' => (null === $tax || '' === $tax) ? null : (bool) (int) $tax,
+                // Faza 8: pricing mode (null/'standard' = one price; 'by_currency'/'by_country' = localised) —
+                // wording only ("may adjust to your region"); NEVER the charged amount. '' → null.
+                'pricingMode' => (null === $mode || '' === $mode) ? null : (string) $mode,
             ];
         }
 
@@ -451,7 +458,7 @@ class FormDefinition
      * a choice (the buyer sees a choice only when count > 1). Independent of migration state, so every
      * intermediate Faza-6 step stays money-correct. Faza 6.
      *
-     * @return list<array{label: string, unitId: string, priceMinor: int|null, currency: string|null}>
+     * @return list<array{label: string, unitId: string, priceMinor: int|null, currency: string|null, taxInclusive: bool|null, pricingMode: string|null}>
      */
     public function sellableUnits(): array
     {
@@ -463,11 +470,15 @@ class FormDefinition
             }
             $price = $u['priceMinor'] ?? null;
             $currency = $u['currency'] ?? null;
+            $tax = $u['taxInclusive'] ?? null;
+            $mode = $u['pricingMode'] ?? null;
             $out[] = [
                 'label' => trim((string) ($u['label'] ?? '')),
                 'unitId' => $unitId,
                 'priceMinor' => (null === $price || '' === $price) ? null : (int) $price,
                 'currency' => (null === $currency || '' === $currency) ? null : (string) $currency,
+                'taxInclusive' => (null === $tax || '' === $tax) ? null : (bool) (int) $tax,
+                'pricingMode' => (null === $mode || '' === $mode) ? null : (string) $mode,
             ];
         }
         if ([] !== $out) {
@@ -475,12 +486,15 @@ class FormDefinition
         }
 
         // Fallback: the legacy single Dodo product as a one-entry list (label cosmetic; never surfaced).
+        // taxInclusive/pricingMode unknown for a legacy form (never cached) → null → the front shows NO note.
         if (null !== $this->dodoProductId && '' !== $this->dodoProductId) {
             return [[
                 'label' => '',
                 'unitId' => $this->dodoProductId,
                 'priceMinor' => $this->priceMinor,
                 'currency' => $this->currency,
+                'taxInclusive' => null,
+                'pricingMode' => null,
             ]];
         }
 

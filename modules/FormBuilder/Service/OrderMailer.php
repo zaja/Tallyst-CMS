@@ -100,7 +100,41 @@ class OrderMailer
             // SHIPPED order, or EMPTY for a digital/MoR order — so those mails are unchanged (bar an empty
             // <pre>). Rendered in a <pre> block by the default bodies.
             'delivery_details' => $this->deliveryDetails($order),
+            // MoR (Dodo, Faza 8): the licence key + provider invoice link. Raw tags for custom templates;
+            // `mor_delivery` is a composed, gracefully-empty block for the default body (like delivery_details)
+            // — EMPTY for a non-MoR / no-licence order, so the default body shows no dangling "Licence:" line.
+            'license_key' => $order->getLicenseKey() ?? '',
+            'invoice_url' => $order->getInvoiceUrl() ?? '',
+            'mor_delivery' => $this->morDelivery($order),
         ];
+    }
+
+    /**
+     * The MoR (Dodo) licence + invoice as a translated, multi-line PLAIN-TEXT block (rendered in a <pre> by
+     * the default bodies). Empty when the order has neither — so a non-MoR / no-licence order's mail is
+     * unchanged (bar an empty <pre>), and there is never a dangling label. Same locale handling as
+     * deliveryDetails (the worker has no request locale). Faza 8.
+     */
+    private function morDelivery(Order $order): string
+    {
+        $license = $order->getLicenseKey();
+        $invoice = $order->getInvoiceUrl();
+        $hasLicense = null !== $license && '' !== $license;
+        $hasInvoice = null !== $invoice && '' !== $invoice;
+        if (!$hasLicense && !$hasInvoice) {
+            return '';
+        }
+
+        $locale = (string) ($this->settings->get('app_locale') ?: 'en');
+        $lines = [];
+        if ($hasLicense) {
+            $lines[] = $this->translator->trans('email.parts.license_line', ['%license_key%' => $license], 'emails', $locale);
+        }
+        if ($hasInvoice) {
+            $lines[] = $this->translator->trans('email.parts.invoice_line', ['%invoice_url%' => $invoice], 'emails', $locale);
+        }
+
+        return implode("\n", $lines);
     }
 
     /**

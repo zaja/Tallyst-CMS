@@ -6,7 +6,9 @@ form:
     price: 'Price:'
     tax_note: Price includes %name% (%rate%%).
     choose_option: Choose an option
-    mor_price_note: The final price is charged by the payment provider and may differ (localised prices / discounts).
+    mor_note_exclusive: Tax is added at checkout.
+    mor_note_inclusive: Price includes tax.
+    mor_note_inclusive_localised: Price includes tax; may adjust to your region.
     choose_shipping: Delivery method
     shipping: Delivery
     ship:

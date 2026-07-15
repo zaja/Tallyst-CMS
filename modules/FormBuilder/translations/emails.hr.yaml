@@ -10,6 +10,8 @@ email:
             Adresa za dostavu:
             %address%
         tax_incl: 'Uključuje %tax_name% (%tax_rate%%): %tax_amount%'
+        license_line: 'Licencni ključ: %license_key%'
+        invoice_line: 'Račun: %invoice_url%'
     order_confirmation:
         label: Potvrda narudžbe (kupcu)
         subject: 'Potvrda narudžbe #{order_id}'
@@ -20,6 +22,7 @@ email:
             Iznos: {amount} {currency}<br>
             Status: plaćeno</p>
             <pre>{delivery_details}</pre>
+            <pre>{mor_delivery}</pre>
             <p>{site_name}</p>
         tag:
             order_id: Broj narudžbe.
@@ -33,6 +36,9 @@ email:
             variant: Odabrana varijanta (prazno ako nema).
             shipping: Odabrani način dostave i iznos (— ako nema).
             delivery_details: Razlomak dostave + adresa (prazno za digitalnu narudžbu).
+            license_key: 'Licencni ključ (Dodo/MoR narudžba; inače prazno).'
+            invoice_url: 'Link na račun provajdera (Dodo/MoR; inače prazno).'
+            mor_delivery: 'Blok licenca + račun (prazno za ne-MoR / narudžbu bez licence).'
             site_name: Naziv sajta.
     order_admin:
         label: Nova narudžba (administratoru)
@@ -44,6 +50,7 @@ email:
             Iznos: {amount} {currency}<br>
             Kupac: {customer_email}</p>
             <pre>{delivery_details}</pre>
+            <pre>{mor_delivery}</pre>
             <p><strong>Podaci kupca (za isporuku):</strong></p>
             <pre>{form_data}</pre>
         tag:
@@ -58,6 +65,9 @@ email:
             variant: Odabrana varijanta (prazno ako nema).
             shipping: Odabrani način dostave i iznos (— ako nema).
             delivery_details: Razlomak dostave + adresa (prazno za digitalnu narudžbu).
+            license_key: 'Licencni ključ (Dodo/MoR narudžba; inače prazno).'
+            invoice_url: 'Link na račun provajdera (Dodo/MoR; inače prazno).'
+            mor_delivery: 'Blok licenca + račun (prazno za ne-MoR / narudžbu bez licence).'
             customer_email: E-mail kupca.
             form_data: Ostala polja koja je kupac ispunio (bez adrese — prikazana iznad).
             submission_summary: Sva polja koja je kupac ispunio u jednom ispisu (uklj. adresu).

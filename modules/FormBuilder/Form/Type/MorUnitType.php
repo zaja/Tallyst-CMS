@@ -64,6 +64,10 @@ class MorUnitType extends AbstractType
                         'data-description' => (string) ($p['description'] ?? ''),
                         'data-price-minor' => null !== ($p['priceMinor'] ?? null) ? (string) $p['priceMinor'] : '',
                         'data-currency' => strtolower((string) ($p['currency'] ?? '')),
+                        // Faza 8: '1'/'0'/'' — the front's exclusive-tax note (empty = unknown → neutral).
+                        'data-tax-inclusive' => isset($p['taxInclusive']) && null !== $p['taxInclusive'] ? ($p['taxInclusive'] ? '1' : '0') : '',
+                        // Faza 8: pricing mode string ('by_currency'/'by_country' → the "may adjust to your region" note).
+                        'data-pricing-mode' => (string) ($p['pricingMode'] ?? ''),
                     ];
                 },
                 'placeholder' => '—',
@@ -93,6 +97,18 @@ class MorUnitType extends AbstractType
         $builder->add('currency', HiddenType::class, [
             'required' => false,
             'attr' => ['data-formbuilder--mor-unit-target' => 'currency'],
+        ]);
+        // Faza 8: tax-inclusive display cache ('1'/'0'/'') — the prefill/refresh/import JS writes it; the
+        // front shows the exclusive-tax note when the buyer's provider price adds tax on top.
+        $builder->add('taxInclusive', HiddenType::class, [
+            'required' => false,
+            'attr' => ['data-formbuilder--mor-unit-target' => 'taxInclusive'],
+        ]);
+        // Faza 8: pricing-mode display cache (raw string, e.g. 'by_currency') — the prefill/refresh/import JS
+        // writes it; the front adds "may adjust to your region" to the inclusive note when it's localised.
+        $builder->add('pricingMode', HiddenType::class, [
+            'required' => false,
+            'attr' => ['data-formbuilder--mor-unit-target' => 'pricingMode'],
         ]);
     }
 

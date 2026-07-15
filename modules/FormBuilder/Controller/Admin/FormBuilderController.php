@@ -217,6 +217,8 @@ class FormBuilderController extends AbstractController
             'priceMajor' => null !== $minor ? number_format($minor / 100, 2, '.', '') : null,
             // Lowercase to match the form's currency <option> values (eur/usd/gbp); the JS uppercases for display.
             'currency' => null !== ($info['currency'] ?? null) ? strtolower((string) $info['currency']) : null,
+            'taxInclusive' => $info['taxInclusive'] ?? null, // Faza 8: bool|null → the front's exclusive-tax note
+            'pricingMode' => $info['pricingMode'] ?? null,   // Faza 8: string|null → localised-price wording
             'sellable' => (bool) ($info['sellable'] ?? false),
             'archived' => (bool) ($info['archived'] ?? false),
         ]);
@@ -294,6 +296,8 @@ class FormBuilderController extends AbstractController
                     'priceMajor' => null !== $minor ? number_format($minor / 100, 2, '.', '') : null,
                     // Lowercase to match the form's currency <option> values (eur/usd/gbp).
                     'currency' => null !== ($u['currency'] ?? null) ? strtolower((string) $u['currency']) : null,
+                    'taxInclusive' => $u['taxInclusive'] ?? null, // Faza 8: bool|null
+                    'pricingMode' => $u['pricingMode'] ?? null,   // Faza 8: string|null (localised pricing)
                 ];
             }, $data['units']),
             'skipped' => array_map(static fn (array $s): array => [

@@ -105,4 +105,66 @@ class OrderMailerShippingTest extends KernelTestCase
         self::assertStringContainsString('Ana Anić', $sent['order_confirmation']['delivery_details']);
         self::assertStringContainsString('Express', $sent['order_confirmation']['delivery_details']);
     }
+
+    public function testMoROrderCarriesLicenceAndInvoiceToCustomerAndAdmin(): void
+    {
+        self::bootKernel();
+        $sent = [];
+        $mailer = $this->mailer($sent);
+
+        // A MoR (Dodo) order with a licence + a provider invoice — passive-captured on the order.
+        $order = (new Order())
+            ->setCustomerEmail('buyer@t.local')
+            ->setAmountMinor(4900)->setCurrency('eur')
+            ->setLicenseKey('ABCD-1234-EFGH')
+            ->setInvoiceUrl('https://dodo.test/invoice/inv_123');
+
+        $mailer->sendConfirmation($order);
+        $mailer->sendAdminNotice($order);
+
+        foreach (['order_confirmation', 'order_admin'] as $type) {
+            // Raw tags (for custom templates).
+            self::assertSame('ABCD-1234-EFGH', $sent[$type]['license_key'], "$type license_key raw tag");
+            self::assertSame('https://dodo.test/invoice/inv_123', $sent[$type]['invoice_url'], "$type invoice_url raw tag");
+            // Composed block for the default body — carries both, no leftover placeholders.
+            self::assertStringContainsString('ABCD-1234-EFGH', $sent[$type]['mor_delivery']);
+            self::assertStringContainsString('https://dodo.test/invoice/inv_123', $sent[$type]['mor_delivery']);
+            self::assertDoesNotMatchRegularExpression('/%[a-z_]+%/', $sent[$type]['mor_delivery'], 'no leftover template placeholders');
+        }
+    }
+
+    public function testNonMoROrderLeavesLicenceBlockEmpty(): void
+    {
+        self::bootKernel();
+        $sent = [];
+        $mailer = $this->mailer($sent);
+
+        // A Stripe/PayPal (or no-licence) order → no licence, no invoice → the block collapses (no dangling
+        // "Licence:" line in the shared default body).
+        $order = (new Order())->setCustomerEmail('buyer@t.local')->setAmountMinor(2900)->setCurrency('eur');
+
+        $mailer->sendConfirmation($order);
+
+        self::assertSame('', $sent['order_confirmation']['license_key']);
+        self::assertSame('', $sent['order_confirmation']['invoice_url']);
+        self::assertSame('', $sent['order_confirmation']['mor_delivery'], 'empty → the default body shows nothing');
+    }
+
+    public function testMoROrderWithInvoiceButNoLicenceShowsOnlyInvoice(): void
+    {
+        self::bootKernel();
+        $sent = [];
+        $mailer = $this->mailer($sent);
+
+        // The no-licence MoR product case (proven live in K0: invoice always present, licence never) — the
+        // block must carry the invoice but NOT a dangling licence line.
+        $order = (new Order())->setCustomerEmail('buyer@t.local')->setAmountMinor(1900)->setCurrency('eur')
+            ->setInvoiceUrl('https://dodo.test/invoice/inv_x');
+
+        $mailer->sendConfirmation($order);
+
+        $block = $sent['order_confirmation']['mor_delivery'];
+        self::assertStringContainsString('https://dodo.test/invoice/inv_x', $block);
+        self::assertStringNotContainsStringIgnoringCase('licence key', $block, 'no licence line when there is no licence');
+    }
 }

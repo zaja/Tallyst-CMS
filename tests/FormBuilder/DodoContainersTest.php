@@ -99,6 +99,21 @@ class DodoContainersTest extends TestCase
         self::assertCount(4, $res['skipped']);
     }
 
+    public function testContainerUnitsCarryTaxInclusive(): void
+    {
+        // Faza 8: tax_inclusive (top-level or price_detail) flows onto each unit → the front's exclusive note.
+        $detail = ['id' => 'pdc_t', 'name' => 'Tax', 'description' => '', 'groups' => [
+            ['products' => [
+                ['product_id' => 'pdt_incl', 'status' => true, 'name' => 'Incl', 'price' => 4900, 'currency' => 'EUR', 'tax_inclusive' => true, 'price_detail' => ['type' => 'one_time_price']],
+                ['product_id' => 'pdt_excl', 'status' => true, 'name' => 'Excl', 'price' => 4900, 'currency' => 'EUR', 'price_detail' => ['type' => 'one_time_price', 'tax_inclusive' => false]],
+            ]],
+        ]];
+        $res = $this->dodo(fn () => new MockResponse(json_encode($detail), ['http_code' => 200]))->containerUnits('pdc_t');
+
+        self::assertTrue($res['units'][0]['taxInclusive'], 'top-level tax_inclusive=true');
+        self::assertFalse($res['units'][1]['taxInclusive'], 'price_detail.tax_inclusive=false');
+    }
+
     public function testContainerUnitsEmptyCollection(): void
     {
         $detail = ['id' => 'pdc_e', 'name' => 'Empty', 'description' => '', 'groups' => []];

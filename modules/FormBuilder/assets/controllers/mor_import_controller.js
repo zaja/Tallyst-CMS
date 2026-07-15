@@ -207,6 +207,14 @@ export default class extends Controller {
         if (currency) {
             currency.value = unit.currency || '';
         }
+        const tax = q('taxInclusive'); // Faza 8: bool|null → '1'/'0'/''
+        if (tax) {
+            tax.value = true === unit.taxInclusive ? '1' : (false === unit.taxInclusive ? '0' : '');
+        }
+        const mode = q('pricingMode'); // Faza 8: raw string ('by_currency'…) or ''
+        if (mode) {
+            mode.value = unit.pricingMode ? String(unit.pricingMode) : '';
+        }
         const display = q('display');
         if (display) {
             display.textContent = this.priceText(minor, unit.currency);

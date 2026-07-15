@@ -31,7 +31,9 @@
                     title="{{ 'admin.form.mor_unit.remove'|trans({}, 'admin') }}">×</button>
         </div>
     </div>
-    {# Display cache — hidden, round-trips so the shown price survives a save. #}
+    {# Display cache — hidden, round-trips so the shown price + tax flag + pricing mode survive a save. #}
     {{ form_widget(unitForm.priceMinor) }}
     {{ form_widget(unitForm.currency) }}
+    {{ form_widget(unitForm.taxInclusive) }}
+    {{ form_widget(unitForm.pricingMode) }}
 </div>

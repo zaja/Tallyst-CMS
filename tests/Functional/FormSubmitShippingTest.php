@@ -200,6 +200,94 @@ class FormSubmitShippingTest extends WebTestCase
         self::assertStringContainsString('class="fb-price"', $html, 'the form price line is shown for a single unit');
     }
 
+    /** Faza 8: a tax-EXCLUSIVE MoR unit → the short "Tax is added at checkout." note — on SINGLE too (the hole
+     *  that only >1 forms had a note is now closed), and once for a MULTI-option form when ANY unit is exclusive. */
+    public function testMoRExclusiveTaxNoteShownOnSingleAndMulti(): void
+    {
+        $client = static::createClient();
+        $this->clearProviderSettings();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $settings = static::getContainer()->get(SettingsManager::class);
+        $settings->set('fake_processor_enabled', '1');
+
+        // SINGLE-unit, tax-exclusive → the note appears (previously no note at all on single).
+        $single = $this->seedProductForm($em, [
+            'price' => 3900, 'allowed' => [FakeMoRProcessor::NAME],
+            'morUnits' => [['label' => 'Standard', 'unitId' => 'pdt_x', 'priceMinor' => 3900, 'currency' => 'eur', 'taxInclusive' => false]],
+        ]);
+        $client->request('GET', '/'.$single);
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('Tax is added at checkout.', $html, 'exclusive note on a single-unit MoR form');
+        // Count the ACTUAL <p> (class="fb-mor-note"), not the string 'fb-mor-note' — the latter also appears in the CSS.
+        self::assertSame(1, substr_count($html, 'class="fb-mor-note"'), 'the note is shown exactly once');
+
+        // MULTI-unit, tax-exclusive on ONE → the exclusive note wins (buyer pays more).
+        $multi = $this->seedProductForm($em, [
+            'price' => 0, 'allowed' => [FakeMoRProcessor::NAME],
+            'morUnits' => [
+                ['label' => 'A', 'unitId' => 'pdt_a', 'priceMinor' => 2900, 'currency' => 'eur', 'taxInclusive' => true],
+                ['label' => 'B', 'unitId' => 'pdt_b', 'priceMinor' => 4900, 'currency' => 'eur', 'taxInclusive' => false],
+            ],
+        ]);
+        $client->request('GET', '/'.$multi);
+        $mhtml = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('Tax is added at checkout.', $mhtml, 'exclusive note when any unit is exclusive');
+        self::assertSame(1, substr_count($mhtml, 'class="fb-mor-note"'), 'once for the whole multi-option form');
+    }
+
+    /** Faza 8: a tax-INCLUSIVE MoR unit → the plain "Price includes tax." note; a LOCALISED-price one adds the
+     *  "may adjust to your region" wording; neither says "added at checkout". */
+    public function testMoRInclusiveTaxNotePlainAndLocalised(): void
+    {
+        $client = static::createClient();
+        $this->clearProviderSettings();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $settings = static::getContainer()->get(SettingsManager::class);
+        $settings->set('fake_processor_enabled', '1');
+
+        // Plain inclusive (pricingMode null) → "Price includes tax." with no region wording.
+        $plain = $this->seedProductForm($em, [
+            'price' => 3900, 'allowed' => [FakeMoRProcessor::NAME],
+            'morUnits' => [['label' => 'Standard', 'unitId' => 'pdt_i', 'priceMinor' => 3900, 'currency' => 'eur', 'taxInclusive' => true]],
+        ]);
+        $client->request('GET', '/'.$plain);
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('Price includes tax.', $html);
+        self::assertStringNotContainsString('added at checkout', $html, 'inclusive → no exclusive wording');
+        self::assertStringNotContainsString('adjust to your region', $html, 'standard pricing → no region wording');
+
+        // Localised inclusive (pricingMode by_currency) → the "may adjust to your region" variant.
+        $localised = $this->seedProductForm($em, [
+            'price' => 3900, 'allowed' => [FakeMoRProcessor::NAME],
+            'morUnits' => [['label' => 'Std', 'unitId' => 'pdt_l', 'priceMinor' => 3900, 'currency' => 'eur', 'taxInclusive' => true, 'pricingMode' => 'by_currency']],
+        ]);
+        $client->request('GET', '/'.$localised);
+        self::assertStringContainsString('may adjust to your region', (string) $client->getResponse()->getContent());
+    }
+
+    /** Faza 8: an UNKNOWN tax flag (null — old / unrefreshed form) → NO note at all (an empty price claim only
+     *  confuses; the previous "neutral note" was dropped). */
+    public function testMoRUnknownTaxShowsNoNote(): void
+    {
+        $client = static::createClient();
+        $this->clearProviderSettings();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $settings = static::getContainer()->get(SettingsManager::class);
+        $settings->set('fake_processor_enabled', '1');
+
+        // No taxInclusive key → setMorUnits stores null → the front stays silent.
+        $slug = $this->seedProductForm($em, [
+            'price' => 3900, 'allowed' => [FakeMoRProcessor::NAME],
+            'morUnits' => [['label' => 'Standard', 'unitId' => 'pdt_u', 'priceMinor' => 3900, 'currency' => 'eur']],
+        ]);
+        $client->request('GET', '/'.$slug);
+        $html = (string) $client->getResponse()->getContent();
+
+        self::assertResponseIsSuccessful();
+        // The CSS block always defines .fb-mor-note; assert the actual <p> (class="…") is absent.
+        self::assertStringNotContainsString('class="fb-mor-note"', $html, 'unknown tax → no note');
+    }
+
     /**
      * MoR single-unit (Faza 6 K4): no buyer choice → the order records the unit id but NO variant label
      * (identical to before Faza 6 — a single-product MoR order). Proves the ">1 → label" rule.

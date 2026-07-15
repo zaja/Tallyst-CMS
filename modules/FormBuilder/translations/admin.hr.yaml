@@ -70,6 +70,10 @@ admin:
             archived: '⚠ Ovaj proizvod je arhiviran na Dodu.'
             not_found: 'Ovaj proizvod više ne postoji na Dodu.'
             error: 'Dodo nije dostupan. Ništa nije promijenjeno.'
+            tax: 'Porez'
+            tax_inclusive: 'uključen u cijenu'
+            tax_exclusive: 'dodaje se na cijenu'
+            tax_unknown: 'nepoznato'
         wizard:
             title: Izrada forme
             intro: Nekoliko kratkih pitanja, pa ćeš ispuniti detalje.

@@ -296,6 +296,8 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
                         'price' => $price['label'],
                         'priceMinor' => $price['minor'],
                         'currency' => $price['currency'],
+                        'taxInclusive' => $this->taxInclusive($item),
+                        'pricingMode' => $this->pricingMode($item),
                     ];
                 }
 
@@ -360,6 +362,61 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
     }
 
     /**
+     * Whether the product's price is TAX-INCLUSIVE (Faza 8). ⚠ The flag lives in a DIFFERENT place per
+     * endpoint (live-probed 2026-07-15):
+     *   - LIST /products              → top-level `tax_inclusive` AND `price_detail.tax_inclusive`;
+     *   - DETAIL /products/{id}       → ONLY `price.tax_inclusive` (the `price` object IS the one_time_price;
+     *                                   there is NO top-level flag and NO `price_detail`);
+     *   - COLLECTION /product-collections/{id} groups[].products[] → top-level AND `price_detail`.
+     * So check ALL of: top-level, the `price` OBJECT, `price_detail`, and `price_detail.one_time_price`
+     * (defensive, mirroring how isPayWhatYouWant tolerates the nested one_time_price). The FIRST bool wins.
+     * Null when Dodo doesn't report it → the front shows the NEUTRAL note (unknown → never claim tax is
+     * added). A DISPLAY cache like the price; the buyer sees the exclusive-tax warning only when this is FALSE.
+     *
+     * @param array<string, mixed> $item
+     */
+    private function taxInclusive(array $item): ?bool
+    {
+        if (is_bool($item['tax_inclusive'] ?? null)) {
+            return $item['tax_inclusive'];
+        }
+        // DETAIL payload: `price` is the one_time_price OBJECT carrying tax_inclusive.
+        $price = $item['price'] ?? null;
+        if (is_array($price) && is_bool($price['tax_inclusive'] ?? null)) {
+            return $price['tax_inclusive'];
+        }
+        $detail = $item['price_detail'] ?? null;
+        if (is_array($detail)) {
+            if (is_bool($detail['tax_inclusive'] ?? null)) {
+                return $detail['tax_inclusive'];
+            }
+            $oneTime = $detail['one_time_price'] ?? null;
+            if (is_array($oneTime) && is_bool($oneTime['tax_inclusive'] ?? null)) {
+                return $oneTime['tax_inclusive'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The product's PRICING MODE (Faza 8) — read from the top-level `pricing_mode` (live-probed 2026-07-15:
+     * present at the TOP LEVEL of the LIST + DETAIL payloads, ABSENT on collection products). A string enum:
+     *   - null / 'standard'          → ONE price for everyone;
+     *   - 'by_currency' / 'by_country' → the provider LOCALISES the price per buyer region.
+     * Used ONLY to word the front's inclusive-tax note ("may adjust to your region") — it NEVER touches the
+     * charged amount. Null when absent/unknown (front → no localisation wording). A display cache like the price.
+     *
+     * @param array<string, mixed> $item
+     */
+    private function pricingMode(array $item): ?string
+    {
+        $mode = $item['pricing_mode'] ?? null;
+
+        return is_string($mode) && '' !== $mode ? $mode : null;
+    }
+
+    /**
      * Fetch ONE product's current data by id (GET /products/{id}) — READ-ONLY, never a checkout path.
      * Returns:
      *   - null                        → could NOT fetch (unconfigured / transient API error),
@@ -399,6 +456,8 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
                 'description' => is_scalar($item['description'] ?? null) ? (string) $item['description'] : '',
                 'priceMinor' => $price['minor'],
                 'currency' => $price['currency'],
+                'taxInclusive' => $this->taxInclusive($item),
+                'pricingMode' => $this->pricingMode($item),
                 'sellable' => $this->isOneTimeProduct($item) && !$this->isPayWhatYouWant($item),
                 'archived' => true === ($item['archived'] ?? null), // best-effort — Dodo may not report it here
             ];
@@ -548,6 +607,8 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
                             'price' => $price['label'],
                             'priceMinor' => $price['minor'],
                             'currency' => $price['currency'],
+                            'taxInclusive' => $this->taxInclusive($p),
+                            'pricingMode' => $this->pricingMode($p),
                         ];
                     }
                 }

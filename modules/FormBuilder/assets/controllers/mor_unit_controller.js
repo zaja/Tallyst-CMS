@@ -18,7 +18,7 @@ import { Controller } from '@hotwired/stimulus';
  * connect), so every row — including a freshly-added one — shares them without repeating per row.
  */
 export default class extends Controller {
-    static targets = ['unitId', 'label', 'priceMinor', 'currency', 'display', 'refreshButton'];
+    static targets = ['unitId', 'label', 'priceMinor', 'currency', 'display', 'refreshButton', 'taxInclusive', 'pricingMode'];
 
     connect() {
         const wrap = this.element.closest('[data-mor-units]');
@@ -50,6 +50,8 @@ export default class extends Controller {
         const minor = option.dataset.priceMinor;
         const hasMinor = minor !== undefined && '' !== minor;
         this.setPrice(hasMinor ? minor : '', option.dataset.currency || '');
+        this.setTaxInclusive(option.dataset.taxInclusive); // already '1'/'0'/'' from the <option>
+        this.setPricingMode(option.dataset.pricingMode);   // raw string ('by_currency'…) or ''
         this.toggleRefresh();
 
         if (this.isSingleUnit()) {
@@ -124,6 +126,15 @@ export default class extends Controller {
         if (null != newMinor && String(newMinor) !== String(this.priceMinorTarget.value || '')) {
             diffs.push(`${L.price}: ${this.displayText()} ${arrow} ${data.priceMajor} ${(data.currency || '').toUpperCase()}`.trim());
         }
+        // Tax-inclusive flag (Faza 8) — MUST be in the diff, else a tax-only change reads as "up to date" and
+        // the apply below never runs (the smoke bug: an exclusive product stayed neutral). Only a KNOWN new
+        // value ('1'/'0') counts — a provider "unknown" (null) never clears a stored flag (mirrors "never
+        // clear on empty" of the other fields). '' → known is a real change (old un-refreshed form → false).
+        const newTaxCode = this.taxCode(data.taxInclusive);
+        const taxChanged = '' !== newTaxCode && newTaxCode !== this.currentTaxCode();
+        if (taxChanged) {
+            diffs.push(`${L.tax || 'Tax'}: ${this.taxWord(this.currentTaxCode(), L)} ${arrow} ${this.taxWord(newTaxCode, L)}`);
+        }
 
         // Single-unit form → also diff the FORM fields (name/description/price/currency).
         const fName = single ? this.formField('name') : null;
@@ -164,6 +175,12 @@ export default class extends Controller {
         if (null != newMinor) {
             this.setPrice(String(newMinor), data.currency || '');
         }
+        // Only a KNOWN value is applied — a provider "unknown" (null) never clears the stored flag.
+        if ('' !== newTaxCode) {
+            this.setTaxInclusive(data.taxInclusive);
+        }
+        // Pricing mode: Dodo always reports it (null = standard), so apply it as-is to keep the cache fresh.
+        this.setPricingMode(data.pricingMode);
         if (single) {
             this.setFormValue('name', data.name);
             this.setFormValue('description', data.description);
@@ -182,6 +199,50 @@ export default class extends Controller {
             this.currencyTarget.value = currency;
         }
         this.updateDisplay();
+    }
+
+    /** Normalize a tax-inclusive value (bool / '1' / '0' / null / '') to a code '1'/'0'/'' ('' = unknown). */
+    taxCode(value) {
+        if (true === value || '1' === value) {
+            return '1';
+        }
+        if (false === value || '0' === value) {
+            return '0';
+        }
+
+        return '';
+    }
+
+    /** This row's currently-stored tax code ('1'/'0'/''). */
+    currentTaxCode() {
+        return this.hasTaxInclusiveTarget ? this.taxCode(this.taxInclusiveTarget.value) : '';
+    }
+
+    /** A human word for a tax code, for the refresh diff line (falls back to English if a label is missing). */
+    taxWord(code, L) {
+        if ('1' === code) {
+            return (L && L.tax_inclusive) || 'inclusive';
+        }
+        if ('0' === code) {
+            return (L && L.tax_exclusive) || 'exclusive';
+        }
+
+        return (L && L.tax_unknown) || 'unknown';
+    }
+
+    /** Store the tax-inclusive flag as '1'/'0'/'' (Faza 8). Accepts a string ('1'/'0'/''), boolean, or null. */
+    setTaxInclusive(value) {
+        if (!this.hasTaxInclusiveTarget) {
+            return;
+        }
+        this.taxInclusiveTarget.value = this.taxCode(value);
+    }
+
+    /** Store the raw pricing-mode string (or '') — the front reads it for the localised-price wording (Faza 8). */
+    setPricingMode(value) {
+        if (this.hasPricingModeTarget) {
+            this.pricingModeTarget.value = value ? String(value) : '';
+        }
     }
 
     updateDisplay() {

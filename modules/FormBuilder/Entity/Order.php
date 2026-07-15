@@ -154,6 +154,15 @@ class Order
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $providerMetadata = null;
 
+    /**
+     * When the customer confirmation + admin notice were sent (Faza 8 K2). Idempotency marker so the
+     * fulfilment mail goes EXACTLY ONCE regardless of which trigger fires first — the entitlement
+     * re-dispatch (licence just landed) or the grace-delayed dispatch (fallback). Null = not sent yet.
+     * Gates ONLY the automatic handler; the admin "resend confirmation" always sends.
+     */
+    #[ORM\Column(name: 'confirmation_sent_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $confirmationSentAt = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?\DateTimeImmutable $createdAt = null;
 
@@ -558,6 +567,18 @@ class Order
     public function setProviderMetadata(?array $providerMetadata): static
     {
         $this->providerMetadata = $providerMetadata ?: null;
+
+        return $this;
+    }
+
+    public function getConfirmationSentAt(): ?\DateTimeImmutable
+    {
+        return $this->confirmationSentAt;
+    }
+
+    public function setConfirmationSentAt(?\DateTimeImmutable $confirmationSentAt): static
+    {
+        $this->confirmationSentAt = $confirmationSentAt;
 
         return $this;
     }

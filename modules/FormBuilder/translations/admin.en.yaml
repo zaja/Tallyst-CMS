@@ -71,6 +71,10 @@ admin:
             archived: '⚠ This product is archived on Dodo.'
             not_found: 'This product no longer exists on Dodo.'
             error: 'Couldn''t reach Dodo. Nothing was changed.'
+            tax: 'Tax'
+            tax_inclusive: 'included in the price'
+            tax_exclusive: 'added on top'
+            tax_unknown: 'unknown'
         wizard:
             title: Create a form
             intro: A couple of quick questions, then you'll fill in the details.

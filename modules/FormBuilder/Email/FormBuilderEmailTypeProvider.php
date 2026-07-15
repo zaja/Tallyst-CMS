@@ -31,6 +31,12 @@ class FormBuilderEmailTypeProvider implements EmailTypeProviderInterface
                 'variant' => 'email.order_confirmation.tag.variant',
                 'shipping' => 'email.order_confirmation.tag.shipping',
                 'delivery_details' => 'email.order_confirmation.tag.delivery_details',
+                // MoR (Dodo): the licence + a link to the provider invoice (Faza 8). Raw tags for custom
+                // templates; `mor_delivery` is a composed, gracefully-empty block for the default body
+                // (like delivery_details) — empty for a non-MoR / no-licence order, so no dangling label.
+                'license_key' => 'email.order_confirmation.tag.license_key',
+                'invoice_url' => 'email.order_confirmation.tag.invoice_url',
+                'mor_delivery' => 'email.order_confirmation.tag.mor_delivery',
                 'site_name' => 'email.order_confirmation.tag.site_name',
             ],
             requiredTags: [],
@@ -54,6 +60,10 @@ class FormBuilderEmailTypeProvider implements EmailTypeProviderInterface
                 'variant' => 'email.order_admin.tag.variant',
                 'shipping' => 'email.order_admin.tag.shipping',
                 'delivery_details' => 'email.order_admin.tag.delivery_details',
+                // MoR (Dodo): licence + provider invoice for the admin too (Faza 8).
+                'license_key' => 'email.order_admin.tag.license_key',
+                'invoice_url' => 'email.order_admin.tag.invoice_url',
+                'mor_delivery' => 'email.order_admin.tag.mor_delivery',
                 'customer_email' => 'email.order_admin.tag.customer_email',
                 'form_data' => 'email.order_admin.tag.form_data',
                 'submission_summary' => 'email.order_admin.tag.submission_summary',

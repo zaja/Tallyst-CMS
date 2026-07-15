@@ -10,6 +10,8 @@ email:
             Delivery address:
             %address%
         tax_incl: 'Includes %tax_name% (%tax_rate%%): %tax_amount%'
+        license_line: 'Licence key: %license_key%'
+        invoice_line: 'Invoice: %invoice_url%'
     order_confirmation:
         label: Order confirmation (to the customer)
         subject: 'Order confirmation #{order_id}'
@@ -20,6 +22,7 @@ email:
             Amount: {amount} {currency}<br>
             Status: paid</p>
             <pre>{delivery_details}</pre>
+            <pre>{mor_delivery}</pre>
             <p>{site_name}</p>
         tag:
             order_id: Order number.
@@ -33,6 +36,9 @@ email:
             variant: Selected variant (empty if none).
             shipping: Chosen delivery method and amount (— if none).
             delivery_details: Delivery breakdown + address block (empty for a digital order).
+            license_key: 'Licence key (Dodo/MoR order; empty otherwise).'
+            invoice_url: 'Link to the provider invoice (Dodo/MoR; empty otherwise).'
+            mor_delivery: 'Licence + invoice block (empty for a non-MoR / no-licence order).'
             site_name: The site name.
     order_admin:
         label: New order (to the admin)
@@ -44,6 +50,7 @@ email:
             Amount: {amount} {currency}<br>
             Customer: {customer_email}</p>
             <pre>{delivery_details}</pre>
+            <pre>{mor_delivery}</pre>
             <p><strong>Buyer details (for fulfilment):</strong></p>
             <pre>{form_data}</pre>
         tag:
@@ -58,6 +65,9 @@ email:
             variant: Selected variant (empty if none).
             shipping: Chosen delivery method and amount (— if none).
             delivery_details: Delivery breakdown + address block (empty for a digital order).
+            license_key: 'Licence key (Dodo/MoR order; empty otherwise).'
+            invoice_url: 'Link to the provider invoice (Dodo/MoR; empty otherwise).'
+            mor_delivery: 'Licence + invoice block (empty for a non-MoR / no-licence order).'
             customer_email: Customer e-mail.
             form_data: The buyer's other submitted fields (delivery address excluded — shown above).
             submission_summary: The buyer's submitted fields on one dump (incl. the address).
