@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-07-15
+
 ### Added
 
 - **DodoPayments as a third payment provider — a Merchant-of-Record.** Configure it in
@@ -22,9 +24,9 @@ core-API change is a MAJOR (flagged ⚠).
   so Tallyst's own inclusive tax is never applied to a Dodo order (no double tax). Webhooks
   are verified with the Standard Webhooks signature (HMAC-SHA256 + a replay window), and the
   order is matched back by its id carried in the checkout metadata. Refunds are issued from
-  the order screen like the other providers. Price variants are not covered yet (a later step).
-  _Note: the refund API call is proven; a fully completed refund is to be verified in live mode
-  (a sandbox merchant wallet has no funds)._
+  the order screen like the other providers.
+  _Note: the refund path is wired but has NOT been run live yet — a completed refund is a final
+  live-mode check (a sandbox merchant wallet has no funds to return). See the **Notes** below._
 - **Dodo orders capture the buyer and tax details Dodo reports.** After a Dodo purchase the
   order shows the buyer's name and phone, a link to the Dodo invoice, and — in a new **Merchant
   of Record** panel — the tax and settlement amounts Dodo calculated, collected and remits as the
@@ -43,6 +45,52 @@ core-API change is a MAJOR (flagged ⚠).
   builder, the storefront and checkout can't drift. Regular Stripe/PayPal forms are unchanged. Settings
   and the readiness "webhook check" now cover every payment provider automatically (Dodo included), so
   future providers need no wiring there.
+- **Sell physical products — delivery methods, address & shipping countries.** A paid form can now
+  sell shipped goods. Define named delivery methods with a price in **Settings → Shipping**, then
+  choose per form which to offer; if there is more than one the buyer picks at checkout, where a
+  delivery address is now collected. Delivery is added to the total and taxed at the product's rate,
+  and a form can restrict which countries it ships to. Digital and message forms are unaffected.
+- **Named tax rates.** Instead of a single global rate, define a catalog of named rates (e.g. VAT
+  25 %, reduced 13 %) in **Settings → Tax**, with one marked as the default. Each product form picks
+  its rate (or "no tax"); a new form starts on the default. Tax stays **inclusive** in the price — the
+  charged amount never changes — and every order records the rate that applied, for your export.
+- **Explicit form types + a create-form wizard.** A form now remembers *what it is* — a message form,
+  a physical product, a digital product, or a Merchant-of-Record product — instead of guessing from the
+  price. New forms start with a short wizard that sets this up, and the builder only shows the options
+  that apply to the chosen type. Switching a digital form to or from Merchant-of-Record is allowed and
+  never loses your price, shipping or tax settings; the other types are fixed once created. Existing
+  forms were migrated to keep behaving exactly as before.
+- **Merchant-of-Record is a remembered choice, with a safer product picker.** Which MoR provider a form
+  uses is now stored explicitly (today: Dodo) rather than inferred. Pick the product from your Dodo
+  catalogue — it prefills the name, description, price and currency — and Tallyst only ever offers
+  fixed-price one-time products: subscriptions, usage-based and pay-what-you-want products are refused,
+  both when picking from the list and when saving a hand-typed product id.
+- **A Merchant-of-Record form can offer several options.** Instead of one product, a MoR form can list
+  several sellable units (e.g. Personal / Team / Pro). The buyer sees the choices with a price each and
+  is sent to the provider's checkout for the chosen one; the provider charges its own configured price
+  (the shown price is a display value). A single-option form behaves exactly as before.
+- **Import a whole collection at once.** Rather than adding MoR options one by one, import an entire Dodo
+  product collection into a form in a single step — it fills the form name, description and the whole
+  option list. A preview shows exactly what will change and lists any products it skipped (with the
+  reason, e.g. a subscription), so nothing unsupported is imported by accident. It's a one-time prefill:
+  nothing about the collection is stored or kept in sync.
+- **Merchant-of-Record purchase e-mail + an honest price note.** For a MoR purchase the order-confirmation
+  e-mail now includes the licence key and a link to the invoice. The licence is included even though the
+  provider delivers it in a separate event that can arrive shortly after the payment — the e-mail waits a
+  short grace window so it isn't sent without the key, and is still sent (with the invoice) if the product
+  grants no licence. On the storefront a small, unobtrusive note tells the buyer how tax is handled —
+  "included in the price", "added at checkout", or "included; may adjust to your region" — without ever
+  promising an exact amount (the provider sets the final price).
+
+### Notes
+
+- **Merchant-of-Record (Dodo) is feature-complete and proven end-to-end in TEST mode.** Real test
+  purchases, licence capture, the checkout money path, webhook verification and order correlation were
+  all verified against the live Dodo API. Two things are, by their nature, confirmed only once a real
+  production merchant exists: **the buyer-facing charge in live mode**, and **a fully completed refund**
+  (the refund is issued from the order screen, but a sandbox merchant wallet has no funds to return).
+  These are the expected final production checks, not open defects — everything else on the Dodo money
+  path is proven.
 
 ## [1.6.3] — 2026-07-07
 
