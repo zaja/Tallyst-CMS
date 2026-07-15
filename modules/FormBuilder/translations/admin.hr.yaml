@@ -57,6 +57,14 @@ admin:
             refunded: 'Narudžba #%id% je refundirana.'
             already_refunded: 'Narudžba #%id% je već refundirana.'
     form:
+        index:
+            title: Forme
+            new: + Nova forma
+            none: 'Još nema formi. Kreirajte prvu pa je ubacite u stranicu shortcodeom [form id=N].'
+            col: { name: Naziv, status: Status, shortcode: Shortcode, fields: Polja }
+            status: { published: Objavljeno, draft: Skica }
+            delete: Obriši
+            delete_confirm: Obrisati formu?
         flash:
             deleted: Forma je obrisana.
             saved: Forma je spremljena.
@@ -97,11 +105,6 @@ admin:
             q3_mor_disabled: 'Prvo konfiguriraj Merchant-of-Record provajder (npr. Dodo) u Postavkama.'
             q4: Koji provajder?
             q4_unconfigured: 'Konfiguriraj %provider% u Postavkama da bi ga koristio.'
-            none: 'Još nema formi. Kreirajte prvu pa je ubacite u stranicu shortcodeom [form id=N].'
-            col: { name: Naziv, status: Status, shortcode: Shortcode, fields: Polja }
-            status: { published: Objavljeno, draft: Skica }
-            delete: Obriši
-            delete_confirm: Obrisati formu?
         builder:
             new_title: Nova forma
             edit_title: Uredi formu

@@ -3,6 +3,7 @@
 namespace App\Tests\Functional;
 
 use App\Entity\Page;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -13,6 +14,20 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 class PageHideTitleTest extends WebTestCase
 {
+    /** @var int[] Pages created by this test — deleted in tearDown so the test DB doesn't accumulate. */
+    private array $pageIds = [];
+
+    protected function tearDown(): void
+    {
+        /** @var Connection $conn */
+        $conn = static::getContainer()->get(Connection::class);
+        foreach ($this->pageIds as $id) {
+            $conn->executeStatement('DELETE FROM page WHERE id = ?', [$id]);
+        }
+        $this->pageIds = [];
+        parent::tearDown();
+    }
+
     public function testHiddenTitleDropsTheH1ButKeepsTheDocumentTitle(): void
     {
         $client = static::createClient();
@@ -28,6 +43,7 @@ class PageHideTitleTest extends WebTestCase
             ->setContent('<h1>Vlastiti naslov u sadržaju</h1><p>Landing tekst.</p>');
         $em->persist($page);
         $em->flush();
+        $this->pageIds[] = $page->getId();
 
         $client->request('GET', '/'.$slug);
         self::assertResponseIsSuccessful();
@@ -54,6 +70,7 @@ class PageHideTitleTest extends WebTestCase
             ->setContent('<p>Obican sadrzaj.</p>');
         $em->persist($page);
         $em->flush();
+        $this->pageIds[] = $page->getId();
 
         $client->request('GET', '/'.$slug);
         self::assertResponseIsSuccessful();

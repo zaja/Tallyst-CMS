@@ -6,7 +6,10 @@ when@dev:
     monolog:
         handlers:
             main:
-                type: stream
+                # rotating_file (not a bare stream): one dated file per day, keep 7 → dev.log can no longer
+                # grow unbounded (it had reached ~590 MB). Dev-only; the prod handler (stderr) is untouched.
+                type: rotating_file
+                max_files: 7
                 path: "%kernel.logs_dir%/%kernel.environment%.log"
                 level: debug
                 channels: ["!event"]

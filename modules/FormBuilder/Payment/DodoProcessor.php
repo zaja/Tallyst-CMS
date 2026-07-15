@@ -23,18 +23,19 @@ use Tallyst\FormBuilder\Entity\Order;
  * Mode is EXPLICIT (test/live) from the dodo_mode setting: Dodo keys carry no test/live marker and
  * the API host differs per mode.
  *
- * ⚠ VERIFY (Dodo API reference / a real test account) — every path/field below marked "VERIFY" is an
- * assumption from the brief, NOT confirmed against the live API. Correct before go-live:
- *   - the checkout / refund endpoints + request shapes,
- *   - the amount/currency fields for dynamic pricing over a single product,
- *   - the refund event type,
- *   - that payment.succeeded carries metadata.order_id back (correlation key),
- *   - the webhook secret encoding (raw vs whsec_/base64),
- *   - whether the hosted checkout auto-captures (finalizeReturn no-op) or needs a capture call.
+ * ✅ LIVE-PROVEN (Faza 6–8: real test purchases orders 33–46 + API probes 2026-07-13/15) — the money path
+ * below is confirmed against the LIVE Dodo API, not just the brief: the checkout endpoint + request shape,
+ * that Dodo ignores product_cart[].amount for a fixed-price product, the `type` + metadata.order_id
+ * correlation, the webhook secret encoding, the hosted-checkout auto-capture (finalizeReturn is a no-op),
+ * the entitlement/licence path (entitlement_grant.created → data.license_key.key), and the product
+ * LIST envelope + price shapes.
+ * ⚠ STILL UNVERIFIED — the REFUND path ONLY: the `refund.succeeded` event type and the `/refunds`
+ * endpoint/body are still assumptions from the brief (no live Dodo refund has ever been run). Verify these
+ * before relying on refunds; everything else on the money path is proven.
  */
 class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterface
 {
-    // ⚠ VERIFY host scheme — the brief gives test.dodopayments.com / live.dodopayments.com.
+    // ✅ Live-proven (Faza 6–8): real test purchases went through these hosts (test/live per dodo_mode).
     private const HOST_TEST = 'https://test.dodopayments.com';
     private const HOST_LIVE = 'https://live.dodopayments.com';
 
@@ -84,8 +85,9 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
         // The events the admin must subscribe in the Dodo dashboard. We ACT on payment.succeeded
         // (paid) + the refund event + entitlement_grant.created (licence capture, Phase 2);
         // payment.failed is subscribed for visibility (logged only).
-        // ⚠ VERIFY the exact refund + entitlement event types (assumed 'refund.succeeded' /
-        // 'entitlement_grant.created').
+        // entitlement_grant.created: ✅ live-proven (Faza 8 K0 — carried data.license_key.key on real orders).
+        // payment.succeeded/payment.failed: ✅ live-proven (real orders reached paid via the webhook).
+        // refund.succeeded: ⚠ still assumed — no live Dodo refund has been run; verify the exact type.
         return ['payment.succeeded', 'payment.failed', 'refund.succeeded', 'entitlement_grant.created'];
     }
 
@@ -111,8 +113,8 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
             throw new \RuntimeException('This order has no linked Dodo product.');
         }
 
-        // ⚠ VERIFY endpoint + shape. Brief: checkoutSessions.create(product_cart, metadata) → returns
-        // a hosted checkout_url + a session id.
+        // ✅ Live-proven (Faza 6–8): POST /checkouts with product_cart + metadata returns a hosted
+        // checkout_url (+ a session id); real purchases completed against it.
         //
         // MONEY-SAFETY (Faza 6 §12) — LIVE-PROVEN: `product_cart[].amount` is Dodo's PAY-WHAT-YOU-WANT
         // override, honored ONLY for a product whose one_time_price.pay_what_you_want is TRUE. For a
@@ -151,8 +153,8 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
 
     /**
      * Hosted checkout auto-captures (like Stripe Checkout) → no capture step on return. The webhook
-     * stays the sole source of truth for `paid`. ⚠ VERIFY: if Dodo needs a capture-on-return call
-     * (like PayPal), implement it here (idempotent, MUST NOT set paid).
+     * stays the sole source of truth for `paid`. ✅ Live-proven (Faza 6–8): real orders reached `paid`
+     * via the webhook with this method a no-op — Dodo needs no capture-on-return call.
      */
     public function finalizeReturn(Order $order): void
     {
@@ -163,7 +165,7 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
         $this->verifyWebhook($payload, $headers);
 
         $event = json_decode($payload, true) ?: [];
-        // ⚠ VERIFY event key name (brief payload uses `type`; some providers use `event_type`).
+        // ✅ Live-proven (Faza 6–8): Dodo webhooks use `type` (the `event_type` fallback is belt-and-braces).
         $type = (string) ($event['type'] ?? $event['event_type'] ?? '');
         $data = is_array($event['data'] ?? null) ? $event['data'] : [];
 
@@ -172,23 +174,24 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
         }
 
         $isPaid = 'payment.succeeded' === $type;
-        // ⚠ VERIFY refund + entitlement event types.
+        // entitlement_grant.created: ✅ live-proven (Faza 8 K0). refund.succeeded: ⚠ still assumed (no live refund run).
         $isRefund = 'refund.succeeded' === $type;
         $isEntitlement = 'entitlement_grant.created' === $type;
 
         // Correlation: metadata.order_id we sent at checkout, echoed back by Dodo. Look in data.metadata
-        // first, then a top-level metadata, then a top-level order_id — whichever Dodo uses. ⚠ VERIFY.
+        // first, then a top-level metadata, then a top-level order_id. ✅ Live-proven (Faza 6–8): Dodo
+        // echoes it in data.metadata.order_id — every paid order correlated correctly.
         // (Entitlement events carry empty metadata → orderId stays null; they correlate by payment_id.)
         $metadata = is_array($data['metadata'] ?? null) ? $data['metadata']
             : (is_array($event['metadata'] ?? null) ? $event['metadata'] : []);
         $orderId = $metadata['order_id'] ?? $event['metadata']['order_id'] ?? null;
 
-        // payment_id is the bridge to the order for BOTH paid and entitlement events. ⚠ VERIFY path.
+        // payment_id is the bridge to the order for BOTH paid and entitlement events. ✅ Live-proven (Faza 8 K0).
         $paymentId = $data['payment_id'] ?? null;
         $email = $data['customer']['email'] ?? null;
 
         // Phase 2 passive capture. Payment fields (customer/finance) live on payment.succeeded; the
-        // licence key lives on entitlement_grant.created (data.license_key.key). ⚠ VERIFY every path.
+        // licence key lives on entitlement_grant.created (data.license_key.key). ✅ Live-proven (Faza 8 K0).
         $licenseKey = $isEntitlement ? ($data['license_key']['key'] ?? null) : null;
         $intOrNull = static fn (mixed $v): ?int => is_numeric($v) ? (int) $v : null;
 
@@ -219,7 +222,8 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
             throw new \RuntimeException('Order has no Dodo payment to refund.');
         }
 
-        // ⚠ VERIFY refund endpoint + body. Full refund (v1 = full only, like Stripe/PayPal).
+        // ⚠ NOT yet live-proven: the /refunds endpoint + body are still brief assumptions — no live Dodo
+        // refund has ever been run. Verify before relying on refunds. Full refund (v1 = full only, like Stripe/PayPal).
         $response = $this->request('POST', '/refunds', ['json' => ['payment_id' => $paymentId]]);
         if ($response->getStatusCode() >= 300) {
             throw new \RuntimeException('Dodo refund failed: '.$response->getContent(false));
@@ -240,7 +244,7 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
      *
      * Query keys (page_size ≤ 100, page_number, recurring, archived) + the item fields (product_id, name,
      * description, price [minor units], currency, is_recurring, price_detail) are per the Dodo API reference.
-     * ⚠ VERIFY only the LIST envelope key (assumed `items`; some APIs return `data` or a bare array).
+     * ✅ Live-proven (probed 2026-07-15): the LIST envelope key is `items` (the `data`/bare-array fallbacks are belt-and-braces).
      *
      * Faza 6 K2: implements MerchantOfRecordInterface::listUnits() — a Dodo "sellable unit" is a product.
      *
@@ -270,7 +274,7 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
                 }
 
                 $data = $response->toArray(false);
-                // ⚠ VERIFY items key (assumed `items`; some APIs return a bare array or `data`).
+                // ✅ Live-proven (probed 2026-07-15): `items` (the data/bare-array fallbacks are belt-and-braces).
                 $items = $data['items'] ?? $data['data'] ?? (array_is_list($data) ? $data : []);
                 if (!is_array($items) || [] === $items) {
                     break;
@@ -656,9 +660,10 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
 
     /**
      * Best-effort structured price from a product item: minor units + currency + a display label.
-     * ⚠ VERIFY price shape (nested {price: {price, currency}} or flat price/currency). MULTI-CURRENCY /
-     * localized pricing is NOT guessed — a list-shaped price returns all null, and an ambiguous currency
-     * is left null (the prefill then leaves that field untouched: better empty than wrong).
+     * ✅ Live-proven (probed 2026-07-15): LIST returns a scalar `price` + a `price_detail` object; DETAIL
+     * (GET /products/{id}) returns a `price` OBJECT ({price, currency, …}). Both shapes are handled below.
+     * MULTI-CURRENCY / localized pricing is NOT guessed — a list-shaped price returns all null, and an
+     * ambiguous currency is left null (the prefill then leaves that field untouched: better empty than wrong).
      *
      * @return array{minor: ?int, currency: ?string, label: ?string}
      */
@@ -739,7 +744,7 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
 
     /**
      * The raw HMAC key. Standard Webhooks secrets are often "whsec_<base64>" → strip the prefix and
-     * base64-decode to the raw bytes. ⚠ VERIFY Dodo's encoding (raw string vs whsec_/base64).
+     * base64-decode to the raw bytes. ✅ Live-proven (Faza 6–8): real Dodo webhooks verified with this whsec_/base64 handling.
      */
     private function webhookSecretKey(): string
     {

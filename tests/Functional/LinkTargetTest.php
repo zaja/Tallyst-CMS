@@ -5,6 +5,7 @@ namespace App\Tests\Functional;
 use App\Entity\Page;
 use App\Entity\Post;
 use App\Entity\User;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -15,6 +16,30 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  */
 class LinkTargetTest extends WebTestCase
 {
+    /** @var int[] Entities created by this test — deleted in tearDown so the test DB doesn't accumulate. */
+    private array $pageIds = [];
+    /** @var int[] */
+    private array $postIds = [];
+    /** @var int[] */
+    private array $userIds = [];
+
+    protected function tearDown(): void
+    {
+        /** @var Connection $conn */
+        $conn = static::getContainer()->get(Connection::class);
+        foreach ($this->postIds as $id) {
+            $conn->executeStatement('DELETE FROM post WHERE id = ?', [$id]);
+        }
+        foreach ($this->pageIds as $id) {
+            $conn->executeStatement('DELETE FROM page WHERE id = ?', [$id]);
+        }
+        foreach ($this->userIds as $id) {
+            $conn->executeStatement('DELETE FROM `user` WHERE id = ?', [$id]);
+        }
+        $this->pageIds = $this->postIds = $this->userIds = [];
+        parent::tearDown();
+    }
+
     public function testListsPublishedPagesAndPostsWithResolvedUrls(): void
     {
         $client = static::createClient();
@@ -38,10 +63,18 @@ class LinkTargetTest extends WebTestCase
         $em->persist($post);
         $em->persist($draftPost);
 
+        // Only track (and later delete) the home page if THIS test created it — never a fixture home.
+        $home = null;
         if (null === $em->getRepository(Page::class)->findOneBy(['slug' => 'home'])) {
-            $em->persist((new Page('Naslovnica', 'home'))->setStatus(Page::STATUS_PUBLISHED));
+            $home = (new Page('Naslovnica', 'home'))->setStatus(Page::STATUS_PUBLISHED);
+            $em->persist($home);
         }
         $em->flush();
+        $this->pageIds = [$pub->getId(), $draft->getId()];
+        if (null !== $home) {
+            $this->pageIds[] = $home->getId();
+        }
+        $this->postIds = [$post->getId(), $draftPost->getId()];
 
         $client->loginUser($this->makeEditor($em, $container->get(UserPasswordHasherInterface::class)));
         $client->request('GET', '/admin/link-targets');
@@ -91,6 +124,7 @@ class LinkTargetTest extends WebTestCase
         $user->setPassword($hasher->hashPassword($user, 'password123'));
         $em->persist($user);
         $em->flush();
+        $this->userIds[] = $user->getId();
 
         return $user;
     }

@@ -4,6 +4,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\Page;
 use App\Entity\User;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -15,6 +16,25 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  */
 class PageHeroLayoutTest extends WebTestCase
 {
+    /** @var int[] Pages created by this test — deleted in tearDown so the test DB doesn't accumulate. */
+    private array $pageIds = [];
+    /** @var int[] Users created by this test. */
+    private array $userIds = [];
+
+    protected function tearDown(): void
+    {
+        /** @var Connection $conn */
+        $conn = static::getContainer()->get(Connection::class);
+        foreach ($this->pageIds as $id) {
+            $conn->executeStatement('DELETE FROM page WHERE id = ?', [$id]);
+        }
+        foreach ($this->userIds as $id) {
+            $conn->executeStatement('DELETE FROM `user` WHERE id = ?', [$id]);
+        }
+        $this->pageIds = $this->userIds = [];
+        parent::tearDown();
+    }
+
     public function testDefaultsPreserveCurrentBehaviour(): void
     {
         self::bootKernel();
@@ -25,6 +45,7 @@ class PageHeroLayoutTest extends WebTestCase
         $em->persist($page);
         $em->flush();
         $id = $page->getId();
+        $this->pageIds[] = $id;
         $em->clear();
 
         $reloaded = $em->getRepository(Page::class)->find($id);
@@ -45,6 +66,7 @@ class PageHeroLayoutTest extends WebTestCase
         $em->persist($page);
         $em->flush();
         $id = $page->getId();
+        $this->pageIds[] = $id;
         $em->clear();
 
         $reloaded = $em->getRepository(Page::class)->find($id);
@@ -67,6 +89,7 @@ class PageHeroLayoutTest extends WebTestCase
         // No heroImage → overlay still renders (text present); page-hero--no-image.
         $em->persist($page);
         $em->flush();
+        $this->pageIds[] = $page->getId();
 
         $client->request('GET', '/'.$slug);
         self::assertResponseIsSuccessful();
@@ -90,6 +113,7 @@ class PageHeroLayoutTest extends WebTestCase
         $admin->setPassword($hasher->hashPassword($admin, 'password123'));
         $em->persist($admin);
         $em->flush();
+        $this->userIds[] = $admin->getId();
 
         $client->loginUser($admin);
         $client->request('GET', '/admin/page/new');
