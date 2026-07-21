@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.7.1] — 2026-07-21
+
 ### Fixed
 
 - **`bin/tallyst-upgrade` could crash mid-upgrade and leave the site on new code with a
