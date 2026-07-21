@@ -26,10 +26,16 @@ detect_php
 detect_composer
 echo "==> Using PHP: $PHP    Composer: $COMPOSER"
 
+# --no-scripts: skip Symfony Flex's implicit post-install cache:clear/assets:install/
+# importmap:install (@auto-scripts) — .env.local doesn't exist yet at this point (app:install
+# writes it next), and app:install's own "Asset fallback" section below already runs
+# importmap:install + asset-map:compile + app:theme:assets:install + cache:clear itself, with
+# loud failure surfacing. Symmetric with bin/tallyst-upgrade (see its comment for the upgrade-
+# side crash this avoids: a stale prod container loaded against just-checked-out new code).
 echo "==> Installing dependencies…"
 # Word-split $COMPOSER on purpose (it may be "php composer.phar").
 # shellcheck disable=SC2086
-$COMPOSER install --no-interaction --no-dev --optimize-autoloader
+$COMPOSER install --no-interaction --no-dev --optimize-autoloader --no-scripts
 
 echo "==> Starting the interactive installer…"
 "$PHP" bin/console app:install

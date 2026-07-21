@@ -10,6 +10,15 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`bin/tallyst-upgrade` could crash mid-upgrade and leave the site on new code with a
+  broken container and unmigrated database.** A stale compiled cache from before the
+  upgrade was being reused against the just-updated code; the upgrade now clears it
+  before installing dependencies, so this can't happen again. If you hit this during an
+  upgrade, recover with: `rm -rf var/cache/prod/*`, then `bin/console cache:clear`, then
+  `bin/console app:upgrade:finalize`.
+
 ## [1.7.0] — 2026-07-15
 
 ### Added

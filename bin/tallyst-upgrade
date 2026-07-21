@@ -63,13 +63,33 @@ if ! git -c advice.detachedHead=false checkout "$TAG"; then
     exit 1
 fi
 
-# 4) Dependencies (deterministic from the lock file; the only step that touches vendor/).
+# 4) Wipe the stale prod container BEFORE anything can boot against it (the actual fix).
+#    In prod (debug=false), Symfony's Kernel::boot() reuses an EXISTING var/cache/prod/
+#    container WITHOUT a freshness check — the compiled container from the PRE-upgrade code
+#    is happily loaded even though the checkout above just replaced the source files. If a
+#    service's constructor signature changed (e.g. gained a new dependency), that stale
+#    container's generated factory calls the constructor with the OLD arg count against the
+#    NEW class -> ArgumentCountError. This crashes on the FIRST bin/console invocation that
+#    follows the checkout, whatever it is (Composer's own implicit cache:clear below, or even
+#    our own explicit one in app:upgrade:finalize) — hit in production on the v1.7.0 upgrade,
+#    reproduced with a plain `cache:clear` even run by hand afterwards. Deleting it here means
+#    every subsequent bin/console call in this script compiles fully fresh from the new code.
+echo "==> Clearing the stale container…"
+rm -rf var/cache/prod
+
+# 5) Dependencies (deterministic from the lock file; the only step that touches vendor/).
+#    --no-scripts: Symfony Flex's post-install-cmd (@auto-scripts) would otherwise ALSO run an
+#    implicit cache:clear/assets:install/importmap:install here. Harmless now that the stale
+#    container is gone (it would just compile fresh), but skipped anyway to keep cache/asset
+#    handling under our OWN explicit, ordered control — step 6's app:upgrade:finalize already
+#    does cache:clear (before migrate) + importmap:install + asset-map:compile +
+#    app:theme:assets:install, a strict superset of the auto-scripts.
 echo "==> Installing dependencies…"
 # Word-split $COMPOSER on purpose (it may be "php composer.phar").
 # shellcheck disable=SC2086
-$COMPOSER install --no-interaction --no-dev --optimize-autoloader
+$COMPOSER install --no-interaction --no-dev --optimize-autoloader --no-scripts
 
-# 5) Finalize: backup -> cache:clear -> migrate -> assets -> cache (fresh kernel each).
+# 6) Finalize: backup -> cache:clear -> migrate -> assets -> cache (fresh kernel each).
 #    Pass through any extra args after the tag (e.g. --no-backup).
 echo "==> Finalizing upgrade…"
 "$PHP" bin/console app:upgrade:finalize "${@:2}"
