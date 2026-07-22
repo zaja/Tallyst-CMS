@@ -61,7 +61,7 @@ admin:
             title: Forme
             new: + Nova forma
             none: 'Još nema formi. Kreirajte prvu pa je ubacite u stranicu shortcodeom [form id=N].'
-            col: { name: Naziv, status: Status, shortcode: Shortcode, fields: Polja }
+            col: { name: Naziv, status: Status, type: Vrsta, shortcode: Shortcode, fields: Polja }
             status: { published: Objavljeno, draft: Skica }
             delete: Obriši
             delete_confirm: Obrisati formu?

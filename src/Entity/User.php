@@ -242,8 +242,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
         return hash('sha256', $code);
     }
 
+    /**
+     * Used by EasyAdmin's default AssociationField display (e.g. Post's Author column) — the
+     * nickname is the display name; email is the fallback for a user who hasn't set one. Same
+     * logic as PostCrudController's author choice_label (kept in sync, don't duplicate/diverge).
+     */
     public function __toString(): string
     {
-        return $this->email;
+        return $this->nickname ?: $this->email;
     }
 }

@@ -98,7 +98,7 @@ admin:
             author: Author
             featured_image: Featured image
             published_at: Published
-            updated_at: Modified
+            updated_at: Last modified
             excerpt: Excerpt
             content: Content
         status: { draft: Draft, published: Published }

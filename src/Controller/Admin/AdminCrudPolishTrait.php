@@ -37,7 +37,7 @@ trait AdminCrudPolishTrait
 
         return $actions
             ->update(Crud::PAGE_INDEX, Action::EDIT, static fn (Action $a): Action => $a
-                ->setIcon('fa-solid fa-pen')->setLabel(false)
+                ->setIcon('fa-solid fa-pen')->setLabel(false)->asTextLink()
                 ->setHtmlAttributes(['title' => $edit, 'aria-label' => $edit]))
             ->update(Crud::PAGE_INDEX, Action::DELETE, static fn (Action $a): Action => $a
                 ->setIcon('fa-solid fa-trash')->setLabel(false)
@@ -72,6 +72,7 @@ trait AdminCrudPolishTrait
 
         $indexPreview = Action::new('preview', 'admin.action.preview', 'fa-solid fa-eye')
             ->setLabel(false)
+            ->asTextLink()
             ->linkToUrl($url)
             ->setHtmlAttributes(['target' => '_blank', 'rel' => 'noopener', 'title' => $title, 'aria-label' => $title]);
 

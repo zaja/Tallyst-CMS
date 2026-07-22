@@ -74,10 +74,33 @@ class PageCrudController extends AbstractCrudController
         // (dormant) + renders null-safe in page.html.twig, so existing pages aren't affected.
         yield TiptapField::new('content', 'admin.page.field.content')->hideOnIndex();
 
+        // Hero fieldset starts OPEN when the page already has a hero (so it's immediately visible
+        // on edit), CLOSED otherwise (incl. every New page) — INITIAL render state only; EA's
+        // renderCollapsed() just sets the starting class, a later manual open/close by the admin
+        // isn't touched by this. $page is null on Index/New-before-createEntity; createEntity()
+        // has already run by the time configureFields() builds the New form, so a fresh Page (all
+        // hero fields at their defaults) correctly evaluates to "closed" without special-casing.
+        $page = $this->getContext()?->getEntity()?->getInstance();
+        $page = $page instanceof Page ? $page : null;
+        $heroTitle = $page?->getHeroTitle();
+        $pageHasHero = null !== $page && (
+            $page->isHeroEnabled()
+            || null !== $page->getHeroImage()
+            || (null !== $heroTitle && '' !== $heroTitle)
+        );
+
         // Hero stays in the MAIN column — its image picker + rich-text fields need the width.
-        yield FormField::addFieldset('admin.page.fieldset.hero')->setIcon('panorama')->collapsible()
+        // addCssClass scopes the chevron-spacing fix below (layout.html.twig) to just this
+        // fieldset — the only addFieldset() in the app that pairs a collapsible chevron with a
+        // custom icon, so nothing else is affected.
+        yield FormField::addFieldset('admin.page.fieldset.hero')->setIcon('panorama')
+            ->addCssClass('page-hero-fieldset')
+            ->renderCollapsed(!$pageHasHero)
             ->setHelp('admin.page.help.hero');
-        yield BooleanField::new('heroEnabled', 'admin.page.field.hero_enabled')->hideOnIndex();
+        // Plain checkbox, not EA's default switch (v1.7.2) — an ordinary form setting, not a
+        // master switch / inline list-toggle. See CLAUDE.md "on/off controls" convention.
+        yield BooleanField::new('heroEnabled', 'admin.page.field.hero_enabled')->hideOnIndex()
+            ->renderAsSwitch(false);
         yield MediaPickerField::new('heroImage', 'admin.page.field.hero_image')->hideOnIndex();
         yield ChoiceField::new('heroPosition', 'admin.page.field.hero_position')->hideOnIndex()
             ->setChoices(['admin.page.hero_position.left' => 'left', 'admin.page.hero_position.right' => 'right'])
@@ -105,7 +128,9 @@ class PageCrudController extends AbstractCrudController
         // read-only (TimestampableTrait has no setter) — EA must not try to bind it on the form.
         yield DateTimeField::new('updatedAt', 'admin.page.field.updated_at')->hideOnForm();
         yield IntegerField::new('position', 'admin.page.field.position')->hideOnIndex();
+        // Plain checkbox, not EA's default switch (v1.7.2) — same reasoning as heroEnabled above.
         yield BooleanField::new('hideTitle', 'admin.page.field.hide_title')->hideOnIndex()
+            ->renderAsSwitch(false)
             ->setHelp('admin.page.help.hide_title');
         yield TextField::new('template', 'admin.page.field.template')->hideOnIndex()
             ->setHelp('admin.page.help.template');

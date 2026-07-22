@@ -10,6 +10,16 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.7.2] — 2026-07-23
+
+### Changed
+
+- **Admin lists are cleaner and more consistent.** Row action icons (edit, preview, delete) now share one flat icon style across every list, sit on a single line, and are spaced more tightly.
+- **Posts list is more useful at a glance.** Each post now shows its featured-image thumbnail, a "Published" date column (replacing "Modified"), and the author's display name instead of their e-mail. Long titles and slugs are shortened with an ellipsis — hover to see the full text. The edit screen now shows when a post was last modified.
+- **Forms list shows each form's type** (message, physical, digital, or Merchant-of-Record) in a new column.
+- **On/off controls look consistent.** Ordinary settings now render as plain checkboxes; the toggle switch is reserved for a true master switch (e.g. "Apply tax"). The page editor's "Hero enabled" and "Hide page title" options were switched to checkboxes to match.
+- **The page editor's Hero section starts collapsed** when a page has no hero set, and expands automatically when it does.
+
 ## [1.7.1] — 2026-07-21
 
 ### Fixed

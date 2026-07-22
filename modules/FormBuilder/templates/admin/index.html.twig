@@ -17,7 +17,7 @@
     {% else %}
         <table class="table table-hover">
             <thead>
-                <tr><th>{{ 'admin.form.index.col.name'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.status'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.shortcode'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.fields'|trans({}, 'admin') }}</th><th class="text-end"></th></tr>
+                <tr><th>{{ 'admin.form.index.col.name'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.status'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.type'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.shortcode'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.fields'|trans({}, 'admin') }}</th><th class="text-end"></th></tr>
             </thead>
             <tbody>
                 {% for f in forms %}
@@ -27,6 +27,7 @@
                             {% if f.published %}<span class="badge badge-success">{{ 'admin.form.index.status.published'|trans({}, 'admin') }}</span>
                             {% else %}<span class="badge badge-secondary">{{ 'admin.form.index.status.draft'|trans({}, 'admin') }}</span>{% endif %}
                         </td>
+                        <td>{{ ('admin.form.def.form_type_option.' ~ f.formType.value)|trans({}, 'admin') }}</td>
                         <td><code>[form id={{ f.id }}]</code></td>
                         <td>{{ f.fields|length }}</td>
                         <td class="text-end">
@@ -34,7 +35,7 @@
                                trash, `btn`/`btn-danger btn-invisible` + `.btn-icon`, no label span).
                                title + aria-label are mandatory (a11y — no visible text). Behaviour
                                unchanged: Edit → the builder, Delete → CSRF form POST + confirm. #}
-                            <a class="btn btn-secondary action-edit" href="{{ path('form_builder_admin_edit', {id: f.id}) }}"
+                            <a class="btn btn-secondary btn-invisible action-edit" href="{{ path('form_builder_admin_edit', {id: f.id}) }}"
                                title="{{ 'admin.action.edit'|trans({}, 'admin') }}" aria-label="{{ 'admin.action.edit'|trans({}, 'admin') }}">
                                 <span class="icon btn-icon"><i class="fa-solid fa-pen"></i></span>
                             </a>

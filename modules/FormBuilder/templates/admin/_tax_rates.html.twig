@@ -8,10 +8,19 @@
    shared radio group so exactly one rate is the default. #}
 {% set rates = tax_rates() %}
 
-{# Master switch — moved out of the scalar schema so it saves together with the rate list on one button. #}
-<div class="form-check form-switch mb-2">
+{# Master switch — moved out of the scalar schema so it saves together with the rate list on one button.
+   ⚠ This markup is rendered OUTSIDE Symfony Form / EA's form_theme (no ".form-widget" wrapper), so it
+   doesn't get EA's own ".form-widget .form-check { padding:0 }" reset that every other admin checkbox/
+   switch gets for free — Bootstrap's default ".form-switch { padding-left: 2.5em }" (reserved space for
+   the switch track) is left standing, pushing the whole control ~2.5em right of the rest of the panel
+   (the help text below, the "Name" labels elsewhere). Zeroed here explicitly (padding-left on the row +
+   the matching negative margin-left Bootstrap would otherwise apply to the input) so the switch's left
+   edge lines up with the surrounding content — switch-to-label spacing (label's own padding-inline-start)
+   is untouched. #}
+<div class="form-check form-switch mb-2" style="padding-left: 0;">
     <input type="checkbox" class="form-check-input" role="switch" id="tax_enabled"
-           name="tax_enabled" value="1" form="settings-tax"{{ setting('tax_enabled') ? ' checked' : '' }}>
+           name="tax_enabled" value="1" form="settings-tax"{{ setting('tax_enabled') ? ' checked' : '' }}
+           style="margin-left: 0;">
     <label class="form-check-label fw-semibold" for="tax_enabled">
         {{ 'admin.settings.tax.tax_enabled.label'|trans({}, 'admin') }}
     </label>

@@ -1,0 +1,13 @@
+{# Published date+time for the Posts list. Mirrors EA's own crud/field/datetime.html.twig
+   (same <time> markup, same field.formattedValue — EA's locale-aware IntlFormatter output,
+   computed by DateTimeConfigurator regardless of which template renders it), but adds an
+   explicit null guard: publishedAt is nullable (drafts have none), and Twig's `date` filter
+   treats a null value as "now" — the default template would silently print today's date on
+   a draft. A custom templatePath also opts this field OUT of EA's own null→"Null"-badge
+   auto-swap (CommonPostConfigurator only swaps @EasyAdmin/-namespaced templates), so we own
+   the empty case here instead. #}
+{% if field.value %}
+    <time datetime="{{ field.value|date('c') }}" title="{{ field.value|date('r') }}">{{ field.formattedValue }}</time>
+{% else %}
+    <span class="text-muted">—</span>
+{% endif %}

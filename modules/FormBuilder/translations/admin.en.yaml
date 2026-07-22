@@ -102,7 +102,7 @@ admin:
             title: Forms
             new: + New form
             none: 'No forms yet. Create the first one, then embed it in a page with the [form id=N] shortcode.'
-            col: { name: Name, status: Status, shortcode: Shortcode, fields: Fields }
+            col: { name: Name, status: Status, type: Type, shortcode: Shortcode, fields: Fields }
             status: { published: Published, draft: Draft }
             delete: Delete
             delete_confirm: Delete this form?

@@ -86,6 +86,75 @@
            10px = EA's sm token (8px) + a touch of air, without matching the 12px full buttons.
            Only DevTools (Computed) catches this — a static grep misses it (var, not literal 0). */
         .btn-sm:not(:has(.btn-label)) { padding-inline: 10px; }
+        /* Row-action icons (Edit/Preview/Delete) sat far apart. Measured via the compiled EA CSS
+           (vendor/easycorp/easyadmin-bundle/public/app.*.css), not guessed: each ghost button keeps
+           EA's full "md" horizontal padding (--button-padding-x, falls back to the root
+           --button-padding-x-md: 12px) even icon-only, AND EA separately adds
+           `margin-inline-start:10px` between two consecutive row-action <a>s and around the delete
+           <form> (`.datagrid td.actions a:not(.dropdown-item)+a:not(.dropdown-item)` /
+           `…:not(.actions-as-dropdown) form`) — so two adjacent icons end up ~34px apart
+           (12 + 10 + 12). It's a COMBINATION, not either alone. Fix tightens both, scoped to
+           row-action buttons only — `.btn-invisible` + `.action-edit`/`-delete`/`-preview` is used
+           ONLY by list-row actions (EA-native lists via AdminCrudPolishTrait + the two hand-mirrored
+           custom lists, Forms/E-mail templates) — never touches labelled buttons (Save/Back/+ New)
+           or interacts with the .btn-sm fix above (different selector, different buttons). Sets
+           `--button-padding-x` directly (not the root `-md` fallback), so only these buttons shrink,
+           not every button on the page. The two margin rules reuse EA's own selectors verbatim so
+           the identical-specificity/later-in-cascade rule (same pattern as the .btn-sm fix) applies
+           cleanly; they're no-ops on the custom lists (no .datagrid ancestor there), where the
+           tightened button padding alone is enough. */
+        .action-edit.btn-invisible,
+        .action-delete.btn-invisible,
+        .action-preview.btn-invisible {
+            --button-padding-x: 6px;
+        }
+        .datagrid td.actions a:not(.dropdown-item)+a:not(.dropdown-item) {
+            margin-inline-start: 4px;
+        }
+        .datagrid td.actions:not(.actions-as-dropdown) form {
+            margin-inline-start: 4px;
+            margin-inline-end: 4px;
+        }
+        /* Posts-list thumbnail column (admin/post/thumb.html.twig). media_img() emits a bare
+           <img class="media-img">, unstyled here since the admin never loads the front theme
+           CSS (no --button-* token conflict; .media-img has no admin-side rule otherwise).
+           Narrower than Media's own list thumb (120×64) — this column was squeezing the rest
+           of the Posts table (Author wrapping to two lines); object-fit:cover keeps the crop
+           sane at the smaller size. */
+        .post-thumb img {
+            max-height: 56px;
+            max-width: 72px;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+        /* Page edit "Hero section" fieldset — chevron↔title gap was too wide. Measured from the
+           compiled EA CSS: the collapse chevron carries `margin: 0 10px 0 2px` (10px trailing)
+           AND the fieldset's own custom icon (panorama) carries `margin-inline-end: 10px` — the
+           two stack because Hero is the only addFieldset() in the app that pairs a collapsible
+           chevron with a `.setIcon()`, so nobody hit this before. Scoped to `.page-hero-fieldset`
+           (set via addCssClass in PageCrudController) — doesn't touch chevrons/icons on any other
+           (currently nonexistent) collapsible fieldset. */
+        .page-hero-fieldset .form-fieldset-collapse-marker {
+            margin-inline-end: 4px;
+        }
+        /* EA's own rule is `.form-fieldset-header .form-fieldset-title .form-fieldset-icon`
+           (3 classes) — this override MUST match that specificity (3 classes) or it silently
+           loses regardless of cascade order. */
+        .page-hero-fieldset .form-fieldset-title .form-fieldset-icon {
+            margin-inline-end: 6px;
+        }
+        /* Keep row-action icons (Edit/Preview/Delete) on ONE line — a wide column elsewhere in
+           the row (e.g. the Posts thumbnail) can squeeze the actions cell narrow enough that the
+           browser wraps the icons onto a second line. table-layout stays "auto" (unchanged), so
+           nowrap just lets this cell claim the width it needs instead of wrapping.
+           `.datagrid td.actions` covers every EA-native CRUD list (AdminCrudPolishTrait).
+           `td.text-end:has(.btn-invisible)` covers the two hand-built lists (Forms, E-mail
+           templates) — scoped to actual action cells only (via the btn-invisible signal), not
+           every `.text-end` cell in the admin (settings/other tables use that class too). */
+        .datagrid td.actions,
+        td.text-end:has(.btn-invisible) {
+            white-space: nowrap;
+        }
     </style>
     {{ parent() }}
     <div class="tallyst-version text-muted small px-3 py-2 mt-auto" style="opacity: .65;">

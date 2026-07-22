@@ -1,0 +1,10 @@
+{# Featured-image thumbnail for the Posts list (index only). field.value = the Post's
+   featuredImage (Media entity, or null). media_img() is already null-safe (returns '' for
+   a null Media AND for one whose file can't resolve a URL), so both cases fall through to
+   the same placeholder — same pattern as @Media/admin/field/thumb.html.twig. #}
+{% set thumb = field.value ? media_img(field.value, 'thumb') : '' %}
+{% if thumb %}
+    <span class="post-thumb">{{ thumb|raw }}</span>
+{% else %}
+    <span class="text-muted">—</span>
+{% endif %}

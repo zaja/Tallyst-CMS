@@ -98,7 +98,7 @@ admin:
             author: Autor
             featured_image: Naslovna slika
             published_at: Objavljeno
-            updated_at: Izmijenjeno
+            updated_at: Zadnja izmjena
             excerpt: Sažetak
             content: Sadržaj
         status: { draft: Skica, published: Objavljeno }
