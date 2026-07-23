@@ -1,0 +1,16 @@
+{# Small "Izreži" button + status readout, rendered as the imageFile field's `help` content
+   (MediaCrudController::configureFields, via renderView — the raw HTML lands directly in
+   EA's own field-help slot, right below the Vich preview, in the SAME form-widget block).
+   Reuses the media--crop-existing Stimulus controller (media_crop_existing_controller.js). #}
+<span data-controller="media--crop-existing"
+      data-media--crop-existing-source-url-value="{{ vich_uploader_asset(media, 'imageFile') }}"
+      data-media--crop-existing-replace-url-value="{{ path('media_crop_replace', {id: media.id}) }}"
+      data-media--crop-existing-save-new-url-value="{{ path('media_crop_save_new', {id: media.id}) }}"
+      data-media--crop-existing-csrf-token-value="{{ csrf_token('media_crop') }}"
+      data-media--crop-existing-replace-warning-value="{{ 'admin.media.crop_existing.replace_confirm'|trans({}, 'admin') }}"
+      data-media--crop-existing-saving-value="{{ 'admin.media.crop_existing.saving'|trans({}, 'admin') }}">
+    <button type="button" class="btn btn-secondary btn-sm mt-1" data-action="media--crop-existing#open">
+        {{ 'admin.media.crop_existing.button'|trans({}, 'admin') }}
+    </button>
+    <span class="small ms-2" data-media--crop-existing-target="status"></span>
+</span>

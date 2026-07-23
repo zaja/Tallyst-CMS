@@ -57,7 +57,7 @@ class MediaCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         // Upload field (forms only) — VichImageType handles the actual upload + preview.
-        yield TextField::new('imageFile', 'admin.media.field.image')
+        $imageField = TextField::new('imageFile', 'admin.media.field.image')
             ->setFormType(VichImageType::class)
             ->setFormTypeOptions([
                 'allow_delete' => false,
@@ -66,6 +66,20 @@ class MediaCrudController extends AbstractCrudController
                 'required' => Crud::PAGE_NEW === $pageName,
             ])
             ->onlyOnForms();
+
+        // "Izreži" (crop an existing image) — rendered as this field's `help` content, which
+        // EA prints raw right after the Vich preview widget, in the SAME form-widget block
+        // (crud/form_theme.html.twig's `field.help|raw`) — visually right below the preview,
+        // not a separate full-width card. Only on Edit, once the entity + its stored file are
+        // known (NEW has no file yet — there's nothing to crop before the first upload).
+        if (Crud::PAGE_EDIT === $pageName) {
+            $media = $this->getContext()?->getEntity()?->getInstance();
+            if ($media instanceof Media && $media->getImageName()) {
+                $imageField->setHelp($this->renderView('@Media/admin/form/_crop_help.html.twig', ['media' => $media]));
+            }
+        }
+
+        yield $imageField;
 
         // Thumbnail (Liip "thumb") for index/detail.
         yield ImageField::new('imageName', 'admin.media.field.preview')
