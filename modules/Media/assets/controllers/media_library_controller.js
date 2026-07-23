@@ -168,14 +168,71 @@ export default class extends Controller {
 
     /**
      * Fires once the WHOLE drop/selection has settled (every file cropped/uploaded, skipped/
-     * uploaded, or cancelled) — re-fetch the grid so new images show, then clear the pond.
-     * Not per-file: a file can sit on its own crop overlay for as long as the admin takes, so
-     * this must wait for all of them, not debounce off the first one to finish.
+     * uploaded, or cancelled) — refresh the grid so new images show. Not per-file: a file can
+     * sit on its own crop overlay for as long as the admin takes, so this must wait for all of
+     * them, not debounce off the first one to finish.
+     *
+     * ⚠ No pond.removeFiles() here — that would wipe EVERY tile including a failed upload's
+     * error message. Cleanup is selective and lives in filepond_factory.js instead: a
+     * successful file removes its own tile the moment it succeeds (it's already visible in
+     * the grid below), a cancelled file is already removed on its own path, and an error tile
+     * is deliberately left for the admin to see and dismiss themselves.
      */
     onUploadQueueSettled() {
-        this.reload();
-        if (this.pond) {
-            this.pond.removeFiles();
+        this.refreshAfterUpload();
+    }
+
+    /**
+     * Refresh the grid content in place after an upload batch settles.
+     *
+     * ⚠ Deliberately NOT this.reload() — that resets to page 1 and wipes the grid before
+     * refetching, which would forget any "load more" pages the admin had already browsed
+     * and reset the modal's own scroll to the top. Instead this re-fetches every page
+     * already loaded (1..this.page) so the same amount of content reappears (now including
+     * the new upload(s)), and restores the modal's scroll position afterwards. A refresh
+     * with nothing new (e.g. every file was cancelled) is harmless — it just redraws the
+     * same items.
+     */
+    async refreshAfterUpload() {
+        const pagesLoaded = this.page;
+        const savedScrollTop = this.hasModalTarget ? this.modalTarget.scrollTop : 0;
+
+        this.setStatus(this.loadingValue);
+        this.toggleMore(false);
+
+        const items = [];
+        let hasMore = false;
+        try {
+            for (let p = 1; p <= pagesLoaded; p += 1) {
+                const url = new URL(this.libraryUrlValue, window.location.origin);
+                url.searchParams.set('page', String(p));
+                if (this.query) {
+                    url.searchParams.set('q', this.query);
+                }
+                const res = await fetch(url, { headers: { Accept: 'application/json' } });
+                if (!res.ok) {
+                    throw new Error('HTTP ' + res.status);
+                }
+                const data = await res.json();
+                items.push(...data.items);
+                hasMore = Boolean(data.hasMore);
+            }
+        } catch (e) {
+            this.setStatus(this.loadErrorValue);
+            return;
+        }
+
+        this.loaded = true;
+        this.page = pagesLoaded;
+        this.gridTarget.innerHTML = '';
+        for (const item of items) {
+            this.gridTarget.appendChild(this.renderItem(item));
+        }
+        this.setStatus(items.length === 0 ? this.emptyValue : '');
+        this.toggleMore(hasMore);
+
+        if (this.hasModalTarget) {
+            this.modalTarget.scrollTop = savedScrollTop;
         }
     }
 

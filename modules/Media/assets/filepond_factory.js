@@ -173,6 +173,12 @@ export function createMediaFilePond(input, { uploadUrl, csrfToken, onQueueSettle
                         if (xhr.status >= 200 && xhr.status < 300) {
                             // Server returns the new Media id as plain text → becomes serverId.
                             load(xhr.responseText);
+                            // A successful file doesn't need to linger in the upload zone — the
+                            // new image is already visible in the list/grid below. Remove ONLY
+                            // on success: an error tile is left alone (the admin must still see
+                            // it failed, never a silent disappearance) and a cancelled file is
+                            // already removed on its own path above.
+                            pond.removeFile(file.id);
                         } else {
                             error(xhr.responseText || `HTTP ${xhr.status}`);
                         }
