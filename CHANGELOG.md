@@ -10,6 +10,18 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-07-23
+
+### Added
+
+- **Crop images in the Media library.** When you upload an image, you can now frame it before it's saved — pick a ratio (16:9, square, or free), drag the crop box, and confirm. You can also upload without cropping, and when adding several images at once you'll be asked about each one in turn.
+- **Crop images you've already uploaded.** Open any image from the Media library and use *Crop* to reframe it. You can either save the result as a new image (the original stays untouched) or replace the existing one — replacing warns you first, since the new version will appear everywhere that image is used.
+- **New maintenance command `app:media:cache:clean`** removes leftover thumbnail files that no longer belong to any image. It only reports what it would delete unless you pass `--force`, and refuses to run if the numbers look wrong.
+
+### Fixed
+
+- **Old thumbnails are now cleaned up automatically.** Replacing or deleting an image used to leave its generated thumbnails behind on disk forever. On sites with a lot of media this quietly added up; it no longer does.
+
 ## [1.7.2] — 2026-07-23
 
 ### Changed
