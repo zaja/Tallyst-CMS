@@ -4,7 +4,9 @@ import '../styles/media_library.css';
 
 /*
  * Reusable media-library modal: a grid of thumbnails (Liip "thumb") + search +
- * pagination, with a FilePond upload zone that re-fetches the grid after each upload.
+ * pagination, with a FilePond upload zone that re-fetches the grid once the WHOLE batch of
+ * dropped files has settled (see onUploadQueueSettled — not per file, since cropping can
+ * leave later files waiting on the admin for a while).
  *
  * DECOUPLED BY DESIGN: a click on a thumbnail dispatches a `media-library:select` event
  * carrying { id, name, thumbUrl } — it does NOT touch any hidden field. The featured
@@ -29,13 +31,12 @@ export default class extends Controller {
         this.query = '';
         this.loaded = false;
         this.searchTimer = null;
-        this.refetchTimer = null;
 
         if (this.hasFileInputTarget) {
             this.pond = createMediaFilePond(this.fileInputTarget, {
                 uploadUrl: this.uploadUrlValue,
                 csrfToken: this.csrfTokenValue,
-                onProcessed: (id, file) => this.onUploaded(id, file),
+                onQueueSettled: () => this.onUploadQueueSettled(),
             });
         }
     }
@@ -46,7 +47,6 @@ export default class extends Controller {
             this.pond = null;
         }
         clearTimeout(this.searchTimer);
-        clearTimeout(this.refetchTimer);
     }
 
     open() {
@@ -166,15 +166,17 @@ export default class extends Controller {
         this.close();
     }
 
-    /** After an upload, re-fetch the grid (debounced for bulk drops) so new images show. */
-    onUploaded() {
-        clearTimeout(this.refetchTimer);
-        this.refetchTimer = setTimeout(() => {
-            this.reload();
-            if (this.pond) {
-                this.pond.removeFiles();
-            }
-        }, 400);
+    /**
+     * Fires once the WHOLE drop/selection has settled (every file cropped/uploaded, skipped/
+     * uploaded, or cancelled) — re-fetch the grid so new images show, then clear the pond.
+     * Not per-file: a file can sit on its own crop overlay for as long as the admin takes, so
+     * this must wait for all of them, not debounce off the first one to finish.
+     */
+    onUploadQueueSettled() {
+        this.reload();
+        if (this.pond) {
+            this.pond.removeFiles();
+        }
     }
 
     setStatus(text) {

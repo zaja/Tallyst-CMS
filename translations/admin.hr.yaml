@@ -159,6 +159,14 @@ admin:
             type_not_allowed: Dozvoljene su samo slike (JPG, PNG, WEBP, GIF).
             too_big: Datoteka je prevelika.
             max_size: 'Najveća veličina je {filesize}.'
+        crop:
+            title: Izreži sliku
+            preset_16_9: 16:9 (naslovna)
+            preset_1_1: 1:1 (kvadrat)
+            preset_free: Slobodno
+            confirm: Potvrdi rez
+            skip: Uploadaj bez reza
+            cancel: Odustani
     dashboard:
         welcome: Dobrodošli u Tallyst CMS.
         choose: Odaberite sekciju iz izbornika lijevo.

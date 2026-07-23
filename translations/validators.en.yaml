@@ -11,6 +11,7 @@ validation:
         required: Enter your e-mail.
     media:
         image_only: Only images are allowed (JPG, PNG, WEBP, GIF).
+        crop_failed: Couldn't process the crop — please try again.
     form:
         notify_recipient_required: Enter at least one recipient when notifications are on.
         notify_email_invalid: 'Invalid e-mail address: %email%'

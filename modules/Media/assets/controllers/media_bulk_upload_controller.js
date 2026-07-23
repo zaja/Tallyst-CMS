@@ -3,8 +3,12 @@ import { createMediaFilePond } from '../filepond_factory.js';
 
 /*
  * Bulk-upload drop zone for the Media index (the create path). Creates one Media per
- * dropped image via the shared factory + endpoint, then reloads the list once the batch
- * settles so the new rows (with auto-filled title/alt) appear.
+ * dropped image via the shared factory + endpoint, then reloads the list once the WHOLE
+ * batch has settled (every file cropped/uploaded, skipped/uploaded, or cancelled) so the
+ * new rows (with auto-filled title/alt) appear. Reloading per-file (the previous design)
+ * broke once cropping introduced a human-paced decision per file: a debounced reload timer
+ * armed after file 1 finished could fire the full-page reload while files 2/3 were still
+ * waiting on their own crop overlay, wiping them before they ever uploaded.
  */
 export default class extends Controller {
     static targets = ['fileInput'];
@@ -17,21 +21,14 @@ export default class extends Controller {
         this.pond = createMediaFilePond(this.fileInputTarget, {
             uploadUrl: this.uploadUrlValue,
             csrfToken: this.csrfTokenValue,
-            onProcessed: () => this.scheduleReload(),
+            onQueueSettled: () => window.location.reload(),
         });
     }
 
     disconnect() {
-        clearTimeout(this.reloadTimer);
         if (this.pond) {
             this.pond.destroy();
             this.pond = null;
         }
-    }
-
-    /** Reload after the last upload settles, so a multi-file drop reloads once. */
-    scheduleReload() {
-        clearTimeout(this.reloadTimer);
-        this.reloadTimer = setTimeout(() => window.location.reload(), 1200);
     }
 }

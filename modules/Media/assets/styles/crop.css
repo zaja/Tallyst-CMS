@@ -1,0 +1,66 @@
+/* Image-crop overlay (media_crop.js), opened over a locally-selected file before upload.
+   All selectors scoped under .media-crop / so nothing leaks onto the EasyAdmin theme (admin
+   entrypoint is otherwise CSS-free by design — see CLAUDE.md). Mirrors media_library.css's
+   backdrop/dialog structure for a consistent modal look. */
+
+.media-crop__backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1090;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 3rem 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+}
+
+.media-crop__dialog {
+    width: 100%;
+    max-width: 720px;
+    background: var(--bs-body-bg, #fff);
+    color: var(--bs-body-color, #212529);
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+.media-crop__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.media-crop__presets {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.media-crop__presets button.active {
+    background: var(--bs-primary, #0d6efd);
+    border-color: var(--bs-primary, #0d6efd);
+    color: #fff;
+}
+
+.media-crop__canvas-wrap {
+    max-height: 60vh;
+    overflow: hidden;
+    background: var(--bs-tertiary-bg, #f1f1f1);
+}
+
+.media-crop__image {
+    display: block;
+    max-width: 100%;
+}
+
+.media-crop__footer {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}

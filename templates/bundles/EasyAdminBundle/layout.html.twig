@@ -7,8 +7,8 @@
 {% block flash_messages %}
     {# Inline (non-module) script: runs during HTML parse, BEFORE the deferred importmap module
        (stimulus_bootstrap.js) executes — so the global is set in time for registerEditorExtension.
-       Carries ONLY the form-picker strings; extend this object if more bootstrap-JS strings appear,
-       do NOT grow a general i18n runtime. #}
+       Carries the form-picker + dirty-guard + FilePond + media-crop (media_crop.js) strings; extend
+       this object if more bootstrap-JS strings appear, do NOT grow a general i18n runtime. #}
     <script>
         window.__tallystI18n = {
             formPicker: {
@@ -26,6 +26,15 @@
                 type_not_allowed: {{ 'admin.js.filepond.type_not_allowed'|trans({}, 'admin')|json_encode|raw }},
                 too_big: {{ 'admin.js.filepond.too_big'|trans({}, 'admin')|json_encode|raw }},
                 max_size: {{ 'admin.js.filepond.max_size'|trans({}, 'admin')|json_encode|raw }}
+            },
+            crop: {
+                title: {{ 'admin.js.crop.title'|trans({}, 'admin')|json_encode|raw }},
+                preset16x9: {{ 'admin.js.crop.preset_16_9'|trans({}, 'admin')|json_encode|raw }},
+                preset1x1: {{ 'admin.js.crop.preset_1_1'|trans({}, 'admin')|json_encode|raw }},
+                presetFree: {{ 'admin.js.crop.preset_free'|trans({}, 'admin')|json_encode|raw }},
+                confirm: {{ 'admin.js.crop.confirm'|trans({}, 'admin')|json_encode|raw }},
+                skip: {{ 'admin.js.crop.skip'|trans({}, 'admin')|json_encode|raw }},
+                cancel: {{ 'admin.js.crop.cancel'|trans({}, 'admin')|json_encode|raw }}
             }
         };
     </script>

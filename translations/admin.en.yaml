@@ -160,6 +160,14 @@ admin:
             type_not_allowed: Only images are allowed (JPG, PNG, WEBP, GIF).
             too_big: The file is too large.
             max_size: 'Maximum size is {filesize}.'
+        crop:
+            title: Crop image
+            preset_16_9: 16:9 (Featured)
+            preset_1_1: 1:1 (Square)
+            preset_free: Free
+            confirm: Confirm crop
+            skip: Upload without crop
+            cancel: Cancel
     dashboard:
         welcome: Welcome to Tallyst CMS.
         choose: Choose a section from the menu on the left.

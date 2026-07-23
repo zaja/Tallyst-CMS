@@ -89,7 +89,7 @@ class MediaLibraryController extends AbstractController
         }
 
         try {
-            $media = $this->uploader->upload($file);
+            $media = $this->uploader->upload($file, $this->extractCropRect($request, $file));
         } catch (MediaUploadException $e) {
             // 422 → FilePond shows the message as the item error.
             return new Response($e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -115,5 +115,58 @@ class MediaLibraryController extends AbstractController
         }
 
         return null;
+    }
+
+    /**
+     * Reads the optional crop_x/crop_y/crop_w/crop_h fields sent alongside the file (only
+     * present when the admin confirmed a crop in the client-side overlay — "Upload without
+     * crop" sends none). Returns null ("no crop") unless ALL FOUR are present AND valid:
+     * clean non-negative integers, width/height > 0, and the rect fits inside the UPLOADED
+     * file's REAL pixel dimensions (read server-side via getimagesize — the client's numbers
+     * are never trusted as-is). Cropping is an offer, not a requirement, so anything invalid
+     * or partial silently degrades to an uncropped upload rather than rejecting the request —
+     * but an out-of-range or malformed rect is NEVER passed through to the cropper.
+     *
+     * @return null|array{x:int,y:int,width:int,height:int}
+     */
+    private function extractCropRect(Request $request, UploadedFile $file): ?array
+    {
+        $raw = [
+            'x' => $request->request->get('crop_x'),
+            'y' => $request->request->get('crop_y'),
+            'w' => $request->request->get('crop_w'),
+            'h' => $request->request->get('crop_h'),
+        ];
+
+        if (\in_array(null, $raw, true) || \in_array('', $raw, true)) {
+            return null;
+        }
+
+        foreach ($raw as $value) {
+            if (!\is_scalar($value) || 1 !== \preg_match('/^\d+$/', (string) $value)) {
+                return null;
+            }
+        }
+
+        $x = (int) $raw['x'];
+        $y = (int) $raw['y'];
+        $width = (int) $raw['w'];
+        $height = (int) $raw['h'];
+
+        if ($width < 1 || $height < 1) {
+            return null;
+        }
+
+        $dimensions = @getimagesize($file->getPathname());
+        if (false === $dimensions) {
+            return null; // not a readable image — let the normal Assert\Image path reject it
+        }
+        [$naturalWidth, $naturalHeight] = $dimensions;
+
+        if ($x + $width > $naturalWidth || $y + $height > $naturalHeight) {
+            return null;
+        }
+
+        return ['x' => $x, 'y' => $y, 'width' => $width, 'height' => $height];
     }
 }
