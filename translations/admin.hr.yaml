@@ -167,6 +167,8 @@ admin:
             confirm: Potvrdi rez
             skip: Uploadaj bez reza
             cancel: Odustani
+            save_new: Spremi kao novu sliku
+            replace: Zamijeni ovu sliku
     dashboard:
         welcome: Dobrodošli u Tallyst CMS.
         choose: Odaberite sekciju iz izbornika lijevo.

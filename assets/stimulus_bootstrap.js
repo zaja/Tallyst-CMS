@@ -21,6 +21,7 @@ import WebhookCheckController from '../modules/FormBuilder/assets/controllers/we
 import MediaLibraryController from '../modules/Media/assets/controllers/media_library_controller.js';
 import MediaPickerController from '../modules/Media/assets/controllers/media_picker_controller.js';
 import MediaBulkUploadController from '../modules/Media/assets/controllers/media_bulk_upload_controller.js';
+import MediaCropExistingController from '../modules/Media/assets/controllers/media_crop_existing_controller.js';
 import MediaTiptapController from '../modules/Media/assets/controllers/tiptap_controller.js';
 import EmailEditorController from './admin/email_editor_controller.js';
 import MenuCollapseController from './admin/menu_collapse_controller.js';
@@ -65,6 +66,7 @@ app.register('formbuilder--webhook-check', WebhookCheckController);
 app.register('media--library', MediaLibraryController);
 app.register('media--picker', MediaPickerController);
 app.register('media--bulk-upload', MediaBulkUploadController);
+app.register('media--crop-existing', MediaCropExistingController);
 app.register('media--tiptap', MediaTiptapController);
 
 // App-level: Tiptap-lite editor for email template bodies (Pass 2). Raw HTML, no converter.

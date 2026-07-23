@@ -11,6 +11,8 @@ validation:
     media:
         image_only: Dozvoljene su samo slike (JPG, PNG, WEBP, GIF).
         crop_failed: Rez nije uspio — pokušaj ponovno.
+        source_missing: Izvorna slikovna datoteka nije pronađena.
+        crop_out_of_bounds: Područje reza ne stane unutar slike.
     form:
         notify_recipient_required: Unesi barem jednog primatelja kad je notifikacija uključena.
         notify_email_invalid: 'Neispravna e-mail adresa: %email%'

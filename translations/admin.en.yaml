@@ -168,6 +168,8 @@ admin:
             confirm: Confirm crop
             skip: Upload without crop
             cancel: Cancel
+            save_new: Save as new image
+            replace: Replace this image
     dashboard:
         welcome: Welcome to Tallyst CMS.
         choose: Choose a section from the menu on the left.

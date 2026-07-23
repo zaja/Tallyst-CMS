@@ -17,6 +17,17 @@ admin:
         help: { shortcode: 'Kopiraj u sadržaj stranice/objave.' }
         bulk:
             help: 'Povuci slike ovdje (ili klikni) za dodavanje — može više odjednom. Naslov i alt se automatski popune (IPTC/EXIF ili naziv datoteke).'
+        crop_existing:
+            button: Izreži
+            saving: Spremanje…
+            replace_confirm: 'Ova slika bit će zamijenjena izrezanom verzijom. Ako se koristi negdje na stranicama, promjena će se vidjeti svugdje. Nastaviti?'
+            new_title: '%title% (izrezano)'
+            error_csrf: Neispravan CSRF token.
+            error_not_found: Ova slika više ne postoji.
+            error_invalid_rect: Odabir reza nije ispravan.
+            flash:
+                replaced: Slika zamijenjena izrezanom verzijom.
+                saved_new: Izrezana kopija spremljena kao nova slika.
         library:
             search_placeholder: Pretraži po nazivu / alt tekstu…
             close: Zatvori

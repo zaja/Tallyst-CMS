@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\Media\Entity\Media;
+use Vich\UploaderBundle\Storage\StorageInterface;
 
 /**
  * Programmatic upload path for a single image, used by the FilePond endpoint (process
@@ -42,6 +43,7 @@ class MediaUploader
         private readonly MediaMetadataExtractor $metadata,
         private readonly FilterManager $filterManager,
         private readonly TranslatorInterface $translator,
+        private readonly StorageInterface $storage,
     ) {
     }
 
@@ -150,5 +152,149 @@ class MediaUploader
         $newFile = new UploadedFile($tempPath, $file->getClientOriginalName(), $cropped->getMimeType(), null, true);
 
         return [$newFile, $tempPath];
+    }
+
+    /**
+     * "Zamijeni ovu sliku" — crops $media's CURRENT stored file and assigns the result back
+     * onto the SAME entity. This goes through the identical Vich inject mechanism the Edit
+     * form's own file-replace already uses: SmartUniqueNamer gives the cropped result a
+     * brand-new imageName on flush, so nothing is ever overwritten in place under the OLD
+     * name — deliberately avoiding the trap where a same-name overwrite would leave stale
+     * Liip thumbnails served forever (isStored() would find them already cached under the
+     * unchanged name). MediaThumbnailListener's postUpdate hook warms fresh thumbnails
+     * under the new name automatically. The entity's id/title/alt are untouched.
+     *
+     * @param array{x:int,y:int,width:int,height:int} $requestedRect already parsed as clean
+     *   positive integers by the caller; bounds-checked here against the REAL current image
+     *
+     * @throws MediaUploadException on a missing/unreadable source file, an out-of-bounds
+     *   rect, or a validation failure on the cropped result
+     */
+    public function replaceWithCrop(Media $media, array $requestedRect): void
+    {
+        $sourcePath = $this->resolveStoredPath($media);
+        $rect = $this->boundedRect($requestedRect, $sourcePath);
+        $sourceFile = $this->wrapStoredFile($sourcePath, $media->getOriginalName());
+        $cropTempPath = null;
+
+        try {
+            [$file, $cropTempPath] = $this->cropToTempFile($sourceFile, $rect);
+            $media->setImageFile($file);
+
+            $violations = $this->validator->validate($media);
+            if (\count($violations) > 0) {
+                throw new MediaUploadException($violations->get(0)->getMessage());
+            }
+
+            // Dimensions are factual, not user input (see MediaMetadataExtractor), so they
+            // MUST be refreshed to the cropped size — unlike title/alt (only-if-empty, so
+            // this call leaves them untouched here since an existing Media already has
+            // them set).
+            $this->metadata->applyToMedia($media, $file->getPathname(), $media->getOriginalName());
+
+            $this->em->flush();
+            $cropTempPath = null;
+        } finally {
+            if (null !== $cropTempPath && is_file($cropTempPath)) {
+                @unlink($cropTempPath);
+            }
+        }
+    }
+
+    /**
+     * "Spremi kao novu sliku" — crops $source's CURRENT stored file into a brand-new Media
+     * row via the existing upload() path (same crop mechanism, same auto-fill). Title/alt
+     * are then copied from $source — a crop is a derivative of the same image, so reusing
+     * upload()'s own metadata-extractor auto-fill would re-derive them from the filename
+     * and silently discard whatever the admin had typed on the original. The title gets a
+     * translated "(crop)" suffix so the two rows are told apart in the list; when the
+     * source has neither title nor alt, upload()'s own auto-fill is left as-is.
+     *
+     * @param array{x:int,y:int,width:int,height:int} $requestedRect already parsed as clean
+     *   positive integers by the caller; bounds-checked here against the REAL current image
+     *
+     * @throws MediaUploadException on a missing/unreadable source file, an out-of-bounds
+     *   rect, or a validation failure on the cropped result
+     */
+    public function saveAsNewFromCrop(Media $source, array $requestedRect): Media
+    {
+        $sourcePath = $this->resolveStoredPath($source);
+        $rect = $this->boundedRect($requestedRect, $sourcePath);
+        $sourceFile = $this->wrapStoredFile($sourcePath, $source->getOriginalName());
+
+        $media = $this->upload($sourceFile, $rect);
+
+        $needsFlush = false;
+        if ($source->getTitle()) {
+            $media->setTitle($this->translator->trans('admin.media.crop_existing.new_title', ['%title%' => $source->getTitle()], 'admin'));
+            $needsFlush = true;
+        }
+        if ($source->getAlt()) {
+            $media->setAlt($source->getAlt());
+            $needsFlush = true;
+        }
+        if ($needsFlush) {
+            $this->em->flush();
+        }
+
+        return $media;
+    }
+
+    /**
+     * Absolute filesystem path of $media's CURRENTLY stored file, resolved through Vich's
+     * own StorageInterface (the same config-driven mechanism `vich_uploader_asset()` uses
+     * for the public URL) — never a hand-built '/media/uploads/…' path, so a future change
+     * to the upload mapping can't silently diverge from where we actually read.
+     */
+    private function resolveStoredPath(Media $media): string
+    {
+        $path = $this->storage->resolvePath($media, 'imageFile');
+        if (null === $path || !is_file($path)) {
+            throw new MediaUploadException($this->translator->trans('validation.media.source_missing', [], 'validators'));
+        }
+
+        return $path;
+    }
+
+    /**
+     * Bounds-checks a structurally-valid rect against the REAL pixel dimensions of $path
+     * (read via getimagesize — never trusted from the client), mirroring
+     * MediaLibraryController::extractCropRect's upload-time check. Unlike that upload path
+     * (where an invalid rect silently degrades to "no crop"), cropping an existing image
+     * IS the entire point of this action, so an invalid rect is a hard error here.
+     *
+     * @param array{x:int,y:int,width:int,height:int} $rect
+     *
+     * @return array{x:int,y:int,width:int,height:int}
+     */
+    private function boundedRect(array $rect, string $path): array
+    {
+        if ($rect['width'] < 1 || $rect['height'] < 1) {
+            throw new MediaUploadException($this->translator->trans('validation.media.crop_out_of_bounds', [], 'validators'));
+        }
+
+        $dimensions = @getimagesize($path);
+        if (false === $dimensions) {
+            throw new MediaUploadException($this->translator->trans('validation.media.image_only', [], 'validators'));
+        }
+        [$naturalWidth, $naturalHeight] = $dimensions;
+
+        if ($rect['x'] + $rect['width'] > $naturalWidth || $rect['y'] + $rect['height'] > $naturalHeight) {
+            throw new MediaUploadException($this->translator->trans('validation.media.crop_out_of_bounds', [], 'validators'));
+        }
+
+        return $rect;
+    }
+
+    /**
+     * Wraps an on-disk file as an UploadedFile ($test = true — a programmatically-built
+     * file, not a real HTTP upload) so it can flow through cropToTempFile()/upload() exactly
+     * like a freshly-selected one. getMimeType() always real-sniffs from the file's actual
+     * content regardless of what's passed here (Symfony File behaviour, unaffected by the
+     * constructor's $mimeType arg — that only feeds getClientMimeType()).
+     */
+    private function wrapStoredFile(string $path, ?string $originalName): UploadedFile
+    {
+        return new UploadedFile($path, $originalName ?? basename($path), null, null, true);
     }
 }

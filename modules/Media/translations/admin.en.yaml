@@ -17,6 +17,17 @@ admin:
         help: { shortcode: 'Copy into page/post content.' }
         bulk:
             help: 'Drag images here (or click) to add — several at once. Title and alt fill in automatically (IPTC/EXIF or filename).'
+        crop_existing:
+            button: Crop
+            saving: Saving…
+            replace_confirm: 'This image will be replaced with the cropped version. If it''s used anywhere on the site, the change will show everywhere. Continue?'
+            new_title: '%title% (crop)'
+            error_csrf: Invalid CSRF token.
+            error_not_found: This image no longer exists.
+            error_invalid_rect: The crop selection is invalid.
+            flash:
+                replaced: Image replaced with the cropped version.
+                saved_new: Cropped copy saved as a new image.
         library:
             search_placeholder: Search by name / alt text…
             close: Close

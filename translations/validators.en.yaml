@@ -12,6 +12,8 @@ validation:
     media:
         image_only: Only images are allowed (JPG, PNG, WEBP, GIF).
         crop_failed: Couldn't process the crop — please try again.
+        source_missing: The original image file could not be found.
+        crop_out_of_bounds: The crop area doesn't fit within the image.
     form:
         notify_recipient_required: Enter at least one recipient when notifications are on.
         notify_email_invalid: 'Invalid e-mail address: %email%'
