@@ -3,16 +3,22 @@ import { createMediaFilePond } from '../filepond_factory.js';
 
 /*
  * Bulk-upload drop zone for the Media index (the create path). Creates one Media per
- * dropped image via the shared factory + endpoint, then refreshes the list IN PLACE
- * once the WHOLE batch has settled (every file cropped/uploaded, skipped/uploaded, or
- * cancelled) so the new rows (with auto-filled title/alt) appear.
+ * dropped image via the shared factory + endpoint, then reloads the list once the WHOLE
+ * batch has settled (every file cropped/uploaded, skipped/uploaded, or cancelled) so the
+ * new rows (with auto-filled title/alt) appear.
  *
- * ⚠ In place, NOT window.location.reload() (the previous design): a full reload jumped
- * the admin back to the top of the page and briefly blanked the screen — jarring after
- * a multi-file crop session. Instead this re-fetches the SAME admin URL (so the current
- * page/sort/filter querystring is respected — never bounced back to page 1) and swaps
- * ONLY the <table class="datagrid"> + its pagination footer, leaving this upload card —
- * and any FilePond error still shown on a failed file — completely untouched.
+ * ⚠ A previous pass replaced this reload with an in-place AJAX table swap (no navigation,
+ * kept scroll position). Reverted: that swap inserted freshly server-rendered rows that
+ * never went through EasyAdmin's own one-time page-load JS init (row-click-to-edit, the
+ * Delete confirmation modal), and safely re-wiring those without duplicating/breaking EA's
+ * own behaviour turned into re-implementing a meaningful slice of EA's internal JS — too
+ * much ongoing risk for what it bought. Plain reload, kept simple.
+ *
+ * ⚠ Reload is driven ONLY by onQueueSettled (the whole batch settling), NEVER a per-file
+ * debounce — that was the real, previously-fixed bug: a debounce timer armed after file 1
+ * finished could fire while files 2/3 were still waiting on their own crop overlay (a
+ * human-paced decision, not bounded by a timer), wiping them before they ever uploaded.
+ * That fix stays; only the "swap vs. reload" question changed.
  */
 export default class extends Controller {
     static targets = ['fileInput'];
@@ -25,7 +31,15 @@ export default class extends Controller {
         this.pond = createMediaFilePond(this.fileInputTarget, {
             uploadUrl: this.uploadUrlValue,
             csrfToken: this.csrfTokenValue,
-            onQueueSettled: () => this.refreshList(),
+            // hadError → at least one tile is still sitting in the pond unresolved (see
+            // filepond_factory.js) — reloading would wipe that error from view before the
+            // admin ever saw it, so skip the reload in that case. Successful + cancelled
+            // files still reload normally (their tiles already self-removed).
+            onQueueSettled: (hadError) => {
+                if (!hadError) {
+                    window.location.reload();
+                }
+            },
         });
     }
 
@@ -33,51 +47,6 @@ export default class extends Controller {
         if (this.pond) {
             this.pond.destroy();
             this.pond = null;
-        }
-    }
-
-    /**
-     * Re-fetch this same admin URL and swap in only the fresh datagrid table + its
-     * pagination footer. Default sort is id DESC, so a new upload lands at the top of
-     * page 1 — exactly where an admin dropping files here already is; a page further
-     * along the list is left alone rather than forced back to page 1. Network failure
-     * is a silent no-op: the list just keeps showing its pre-upload state, which is
-     * harmless (the uploaded files themselves already succeeded or FilePond is already
-     * showing their error).
-     */
-    async refreshList() {
-        let html;
-        try {
-            const res = await fetch(window.location.href, {
-                headers: { Accept: 'text/html' },
-                credentials: 'same-origin',
-            });
-            if (!res.ok) {
-                return;
-            }
-            html = await res.text();
-        } catch (e) {
-            return;
-        }
-
-        const fresh = new DOMParser().parseFromString(html, 'text/html');
-        const freshTable = fresh.querySelector('table.datagrid');
-        const liveTable = document.querySelector('table.datagrid');
-        if (!freshTable || !liveTable) {
-            return;
-        }
-
-        const freshFooter = fresh.querySelector('.content-panel-footer');
-        const liveFooter = document.querySelector('.content-panel-footer');
-
-        liveTable.replaceWith(freshTable);
-
-        if (freshFooter && liveFooter) {
-            liveFooter.replaceWith(freshFooter);
-        } else if (freshFooter && !liveFooter) {
-            freshTable.insertAdjacentElement('afterend', freshFooter);
-        } else if (!freshFooter && liveFooter) {
-            liveFooter.remove();
         }
     }
 }

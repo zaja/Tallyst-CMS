@@ -33,6 +33,17 @@ import { openCropper } from './media_crop.js';
  * trusting FilePond's own 'processfiles'/DID_COMPLETE_ITEM_PROCESSING_ALL event, which is
  * keyed to its PROCESSING_COMPLETE status and wouldn't reliably include our cancel path
  * (cancel goes through error() + removeFile(), not a normal completion).
+ *
+ * onQueueSettled(hadError): a successful or cancelled file always removes its own tile
+ * (below), so by settlement time the ONLY tiles still sitting in the pond are ones that
+ * ended in an error — either a server-side failure (our own error() call) or a CLIENT-side
+ * validation rejection (wrong type / too big) that never reaches server.process() at all,
+ * so it's invisible to our own pendingCount bookkeeping. Rather than guess at FilePond's
+ * internal error-event shape to tell those apart from an intentional cancel, we just ask
+ * FilePond itself, via its own getFiles(), "is anything still here" — deferred one tick
+ * (setTimeout 0) so a just-called removeFile() (which may run a short internal removal
+ * animation) has finished before we check. Consumers use hadError to decide whether a
+ * reload/refresh is safe — see media_bulk_upload_controller.js.
  */
 
 // Mirror of the entity's Assert\Image mimeTypes + maxSize.
@@ -66,8 +77,10 @@ function registerPluginsOnce() {
  * @param {object}           opts
  * @param {string}           opts.uploadUrl   POST target (media_upload)
  * @param {string}           opts.csrfToken   token sent as X-CSRF-Token
- * @param {() => void} [opts.onQueueSettled]  called ONCE, when every file added to this
- *        pond instance has fully settled (uploaded, cancelled, or errored) — never per file.
+ * @param {(hadError: boolean) => void} [opts.onQueueSettled]  called ONCE, when every file
+ *        added to this pond instance has fully settled (uploaded, cancelled, or errored) —
+ *        never per file. `hadError` is true when at least one tile is still sitting in the
+ *        pond unresolved (an error, client- or server-side) — see the note above.
  * @returns {object} the FilePond instance
  */
 export function createMediaFilePond(input, { uploadUrl, csrfToken, onQueueSettled }) {
@@ -121,7 +134,9 @@ export function createMediaFilePond(input, { uploadUrl, csrfToken, onQueueSettle
                     settledForCount = true;
                     pendingCount -= 1;
                     if (pendingCount === 0 && typeof onQueueSettled === 'function') {
-                        onQueueSettled();
+                        setTimeout(() => {
+                            onQueueSettled(pond.getFiles().length > 0);
+                        }, 0);
                     }
                 };
 
