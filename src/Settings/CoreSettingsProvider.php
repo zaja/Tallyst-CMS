@@ -3,6 +3,7 @@
 namespace App\Settings;
 
 use App\Icon\IconRegistry;
+use App\Mailer\MailProviderRegistry;
 use App\Repository\MenuRepository;
 
 /**
@@ -20,6 +21,7 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
         private readonly MenuRepository $menus,
         private readonly IconRegistry $icons,
         private readonly \App\Font\FontRegistry $fonts,
+        private readonly MailProviderRegistry $mailProviders,
     ) {
     }
 
@@ -66,11 +68,23 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
             new SettingDefinition('app_date_format', SettingType::STRING, 'admin.settings.localization.app_date_format.label', 'admin.settings.localization.app_date_format.help', 'd.m.Y.'),
         ]);
 
-        yield new SettingsSection('email', 'admin.settings.email.title', 'fa-envelope', [
+        // Split into two sections (grouped under one "Email" tab via SettingsRegistry::GROUPS):
+        // "Sender" (who's sending — untouched keys/labels/defaults) and "Delivery" (how it's
+        // sent — the provider picker + its fields). Switching providers in Delivery never
+        // touches Sender, and vice versa.
+        yield new SettingsSection('email', 'admin.settings.email.sender_title', 'fa-envelope', [
             new SettingDefinition('mail_from_name', SettingType::STRING, 'admin.settings.email.mail_from_name.label', 'admin.settings.email.mail_from_name.help', 'Tallyst'),
             new SettingDefinition('mail_from_email', SettingType::EMAIL, 'admin.settings.email.mail_from_email.label', 'admin.settings.email.mail_from_email.help', ''),
             new SettingDefinition('mail_reply_to', SettingType::EMAIL, 'admin.settings.email.mail_reply_to.label', 'admin.settings.email.mail_reply_to.help', ''),
             new SettingDefinition('order_admin_email', SettingType::EMAIL, 'admin.settings.email.order_admin_email.label', 'admin.settings.email.order_admin_email.help', ''),
+        ]);
+
+        yield new SettingsSection('email_delivery', 'admin.settings.email_delivery.title', 'fa-paper-plane', [
+            // Choices come from MailProviderRegistry (single source of truth — see the
+            // "vodeće načelo" in that class): adding a provider there is enough, this CHOICE
+            // never needs a manual edit. Labels are literal brand/protocol names (not
+            // translated), same convention as app_locale's language names above.
+            new SettingDefinition('mail_provider', SettingType::CHOICE, 'admin.settings.email_delivery.mail_provider.label', 'admin.settings.email_delivery.mail_provider.help', 'smtp', $this->mailProviders->choices()),
             new SettingDefinition('smtp_host', SettingType::STRING, 'admin.settings.email.smtp_host.label', 'admin.settings.email.smtp_host.help', ''),
             new SettingDefinition('smtp_port', SettingType::INT, 'admin.settings.email.smtp_port.label', 'admin.settings.email.smtp_port.help', 587),
             new SettingDefinition('smtp_username', SettingType::STRING, 'admin.settings.email.smtp_username.label', '', ''),
@@ -80,6 +94,15 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
                 'admin.settings.email.smtp_encryption.choice.ssl' => 'ssl',
                 'admin.settings.email.smtp_encryption.choice.none' => 'none',
             ]),
+            new SettingDefinition('resend_api_key', SettingType::PASSWORD, 'admin.settings.email_delivery.resend_api_key.label', 'admin.settings.email_delivery.resend_api_key.help', null, [], true),
+            new SettingDefinition('mailgun_api_key', SettingType::PASSWORD, 'admin.settings.email_delivery.mailgun_api_key.label', 'admin.settings.email_delivery.mailgun_api_key.help', null, [], true),
+            new SettingDefinition('mailgun_domain', SettingType::STRING, 'admin.settings.email_delivery.mailgun_domain.label', 'admin.settings.email_delivery.mailgun_domain.help', ''),
+            new SettingDefinition('mailgun_region', SettingType::CHOICE, 'admin.settings.email_delivery.mailgun_region.label', '', 'us', [
+                'admin.settings.email_delivery.mailgun_region.choice.us' => 'us',
+                'admin.settings.email_delivery.mailgun_region.choice.eu' => 'eu',
+            ]),
+            new SettingDefinition('postmark_server_token', SettingType::PASSWORD, 'admin.settings.email_delivery.postmark_server_token.label', 'admin.settings.email_delivery.postmark_server_token.help', null, [], true),
+            new SettingDefinition('brevo_api_key', SettingType::PASSWORD, 'admin.settings.email_delivery.brevo_api_key.label', 'admin.settings.email_delivery.brevo_api_key.help', null, [], true),
         ]);
 
         // Footer: 1–4 columns, each a menu (its name is the heading) OR rich text — the type is

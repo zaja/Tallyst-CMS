@@ -25,6 +25,7 @@ import MediaCropExistingController from '../modules/Media/assets/controllers/med
 import MediaTiptapController from '../modules/Media/assets/controllers/tiptap_controller.js';
 import EmailEditorController from './admin/email_editor_controller.js';
 import MenuCollapseController from './admin/menu_collapse_controller.js';
+import MailProviderController from './admin/mail_provider_controller.js';
 import { registerEditorExtension } from '../modules/Media/assets/tiptap_extensions.js';
 import { FormEmbed } from '../modules/FormBuilder/assets/tiptap_form_node.js';
 import { openFormPicker } from '../modules/FormBuilder/assets/form_picker.js';
@@ -74,3 +75,6 @@ app.register('email-editor', EmailEditorController);
 
 // Admin: collapsible SYSTEM sidebar section (default collapsed, state in localStorage).
 app.register('admin--menu-collapse', MenuCollapseController);
+
+// Admin: Postavke → Email → Delivery provider-field reveal (data-driven, see the controller).
+app.register('admin--mail-provider', MailProviderController);

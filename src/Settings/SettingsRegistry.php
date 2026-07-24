@@ -14,14 +14,13 @@ class SettingsRegistry
      * Tab grouping (A2): a tab key => the section keys (in order) it consolidates, plus its
      * own label/icon. A grouped tab renders each contained section as a labelled sub-section.
      *
-     * ⚠ The fallback is the IoC contract: a section NOT listed here (email/stripe/paypal/
-     * tax/orders today, and any dynamically contributed module section) is never lost — it
-     * always gets its own 1:1 tab (see getTabs()). Grouping is opt-in; ungrouped is the safe
-     * default. 13 sections → 8 tabs (3 grouped + 5 standalone).
+     * ⚠ The fallback is the IoC contract: a section NOT listed here (stripe/paypal/tax/orders
+     * today, and any dynamically contributed module section) is never lost — it always gets
+     * its own 1:1 tab (see getTabs()). Grouping is opt-in; ungrouped is the safe default.
      *
-     * ⚠ A tab key MAY equal a contained section key (e.g. 'general', 'branding') — harmless:
-     * getTab() matches tab keys, tabKeyForSection() matches section membership; the two
-     * lookups never mix. 'header_footer' is a distinct key (no same-named section).
+     * ⚠ A tab key MAY equal a contained section key (e.g. 'general', 'branding', 'email') —
+     * harmless: getTab() matches tab keys, tabKeyForSection() matches section membership; the
+     * two lookups never mix. 'header_footer' is a distinct key (no same-named section).
      *
      * @var array<string, array{label: string, icon: string, sections: string[]}>
      */
@@ -40,6 +39,14 @@ class SettingsRegistry
             'label' => 'admin.settings.header_footer.title',
             'icon' => 'fa-window-maximize',
             'sections' => ['topbar', 'footer'],
+        ],
+        // "Email" tab: the Sender identity (email section, untouched) + the Delivery provider
+        // picker (email_delivery — mail_provider + its fields). Same tab key as before the
+        // split ('email'), so /admin/settings/email keeps working unchanged.
+        'email' => [
+            'label' => 'admin.settings.email.title',
+            'icon' => 'fa-envelope',
+            'sections' => ['email', 'email_delivery'],
         ],
     ];
 

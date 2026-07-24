@@ -189,6 +189,7 @@ admin:
             placeholder: email@primjer.hr
             send: Pošalji
             note: 'Šalje preko trenutne konfiguracije; rezultat javlja koji je transport korišten.'
+            current_transport: 'Trenutno se šalje preko: %transport%'
             subject: Tallyst — test e-pošte
             body: 'Ovo je test poruka iz Tallyst Postavki. Ako je vidiš, SMTP konfiguracija radi.'
         header_footer:
@@ -219,6 +220,7 @@ admin:
             app_date_format: { label: Format datuma, help: 'PHP date() format, npr. d.m.Y.' }
         email:
             title: Email
+            sender_title: Pošiljatelj
             mail_from_name: { label: Pošiljatelj (ime), help: Ime u polju From odlaznih mailova. }
             mail_from_email: { label: Pošiljatelj (email), help: Adresa u polju From. }
             mail_reply_to: { label: Reply-To, help: Neobavezno; odgovori idu na ovu adresu. }
@@ -230,6 +232,17 @@ admin:
             smtp_encryption:
                 label: Enkripcija
                 choice: { tls: STARTTLS (tls), ssl: SSL/TLS (ssl), none: Bez enkripcije }
+        email_delivery:
+            title: Isporuka
+            mail_provider: { label: Pružatelj e-pošte, help: 'Odaberi kako se odlazna pošta šalje. Prebacivanje pružatelja čuva spremljena polja svih pružatelja — ništa se ne briše.' }
+            resend_api_key: { label: API ključ, help: Tvoj Resend API ključ. Šifrirano. Ostavi prazno da zadržiš trenutni. }
+            mailgun_api_key: { label: API ključ, help: Tvoj Mailgun API ključ. Šifrirano. Ostavi prazno da zadržiš trenutni. }
+            mailgun_domain: { label: Domena, help: 'Slanja domena postavljena u tvom Mailgun računu, npr. mg.primjer.hr.' }
+            mailgun_region:
+                label: Regija
+                choice: { us: 'SAD (zadano)', eu: EU }
+            postmark_server_token: { label: Server API token, help: Tvoj Postmark Server API token. Šifrirano. Ostavi prazno da zadržiš trenutni. }
+            brevo_api_key: { label: API ključ, help: Tvoj Brevo API ključ. Šifrirano. Ostavi prazno da zadržiš trenutni. }
         footer:
             title: Footer
             footer_columns:
@@ -291,7 +304,7 @@ admin:
             detail: { empty: 'Prazan — CSRF tokeni i potpisani URL-ovi nisu sigurni.', ok: Postavljen. }
             fix: 'app:install ga generira u .env.local; ili ručno postavi APP_SECRET na 32+ nasumičnih znakova.'
         enc_key:
-            detail: { bad: 'Nedostaje ili nije ispravan (treba base64 od 32 bajta) — enkripcija postavki (SMTP lozinka) ne radi.', ok: 'Postavljen (32 bajta).' }
+            detail: { bad: 'Nedostaje ili nije ispravan (treba base64 od 32 bajta) — enkripcija postavki (npr. tajni podatak pružatelja pošte) ne radi.', ok: 'Postavljen (32 bajta).' }
             fix: "Pokreni app:install, ili: php8.5 -r 'echo base64_encode(random_bytes(32));' → upiši u .env.local."
         https:
             detail: { ok: 'DEFAULT_URI koristi https. (Ne potvrđuje stvarni TLS na serveru — to provjeri u pregledniku.)', warn: 'DEFAULT_URI nije https — produkcija bi trebala posluživati preko HTTPS-a.' }
@@ -306,13 +319,13 @@ admin:
                 ok: 'Postavljen: %uri%'
             fix: { invalid: 'Postavi DEFAULT_URI na pravi javni URL (npr. https://tvoja-domena.hr) u .env.local.', localhost: 'Za produkciju postavi DEFAULT_URI na pravu javnu domenu.' }
         mailer:
-            label: Pošta (SMTP)
-            detail: { db: 'DB SMTP konfiguriran (%host%).', env: Koristi MAILER_DSN iz okoline., unconfigured: 'Nije konfigurirana — reset lozinke i mailovi narudžbi neće se slati.' }
-            fix: 'Postavke → Email: upiši SMTP host/korisnika/lozinku (ili postavi MAILER_DSN u .env.local).'
-        smtp_password:
-            label: SMTP lozinka
-            detail: 'Nije moguće dekriptirati (ključ rotiran/izgubljen) — mailer pada na env fallback.'
-            fix: 'Postavke → Email: ponovno upiši SMTP lozinku (re-enkriptira se trenutnim ključem).'
+            label: Pošta
+            detail: { db: 'Konfigurirano preko %provider% (Postavke → Email → Isporuka).', env: Koristi MAILER_DSN iz okoline., unconfigured: '%provider% je odabran ali nije potpuno konfiguriran — reset lozinke i mailovi narudžbi neće se slati.' }
+            fix: 'Postavke → Email → Isporuka: upiši polja odabranog pružatelja (ili postavi MAILER_DSN u .env.local).'
+        mail_secret:
+            label: Tajni podatak pružatelja pošte
+            detail: '%provider%-ov spremljeni tajni podatak nije moguće dekriptirati (ključ rotiran/izgubljen) — mailer pada na env fallback.'
+            fix: 'Postavke → Email → Isporuka: ponovno upiši %provider%-ovo tajno polje (re-enkriptira se trenutnim ključem).'
         mail_from:
             label: Adresa pošiljatelja
             detail: { warn: 'mail_from_email nije postavljen — pravi SMTP serveri odbijaju mail bez ispravnog From-a (553).', ok: 'Postavljena: %from%' }
@@ -410,6 +423,7 @@ admin:
                 clear: Očisti formatiranje
     flash:
         settings_saved: Postavke su spremljene.
+        mail_settings_changed_restart_worker: 'Postavke pošte su promijenjene. Ako pošta ide preko dugotrajnog worker procesa, restartaj ga sad da koristi novu konfiguraciju.'
         test_mail_recipient: 'Upiši adresu primatelja (ili postavi "Pošiljatelj (email)").'
         test_mail_invalid: '"%email%" nije ispravna email adresa.'
         test_mail_sent: Poslano na %to% preko %via%.

@@ -34,9 +34,9 @@ class SettingsTabTest extends WebTestCase
         'site_name', 'site_tagline', 'search_enabled', 'blog_posts_per_page',
         'app_locale', 'app_timezone', 'app_date_format',
         'maintenance_enabled', 'maintenance_message',
-        // Email tab.
+        // Email tab (Sender + Delivery).
         'mail_from_name', 'mail_from_email', 'mail_reply_to', 'order_admin_email',
-        'smtp_host', 'smtp_port', 'smtp_username', 'smtp_encryption',
+        'mail_provider', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_encryption', 'resend_api_key',
     ];
 
     public function testSavingOneTabDoesNotWipeAnotherTabsSecrets(): void

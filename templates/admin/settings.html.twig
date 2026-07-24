@@ -34,8 +34,12 @@
     <div class="card">
         <div class="card-body">
             {% for section in current.sections %}
-                {# id = anchor target for deep-links, e.g. /admin/settings/general#maintenance. #}
-                <div id="{{ section.key }}"{{ multi and not loop.first ? ' class="mt-4 pt-3 border-top"' : '' }}>
+                {# id = anchor target for deep-links, e.g. /admin/settings/general#maintenance.
+                   email_delivery additionally carries the provider-reveal controller (its
+                   select + every provider's fields all live inside this one section). #}
+                <div id="{{ section.key }}"
+                     class="{{ multi and not loop.first ? 'mt-4 pt-3 border-top' : '' }}"
+                     {% if section.key == 'email_delivery' %}data-controller="admin--mail-provider"{% endif %}>
                 {% if multi %}
                     <h2 class="h5 fw-semibold mb-3">
                         <i class="fa {{ section.icon }} text-muted me-1"></i>{{ section.label|trans({}, 'admin') }}
@@ -46,10 +50,10 @@
                     {{ form_row(form[def.key]) }}
                 {% endfor %}
 
-                {% if section.key == 'email' %}
-                    {# Test-mail controls live in the Email tab. The inputs belong to a
-                       separate <form> (rendered after the main form via the HTML5 form=
-                       attribute) so we don't nest forms. #}
+                {% if section.key == 'email_delivery' %}
+                    {# Test-mail controls live at the bottom of the Email tab (after Sender AND
+                       Delivery). The inputs belong to a separate <form> (rendered after the
+                       main form via the HTML5 form= attribute) so we don't nest forms. #}
                     <hr>
                     <label for="test_to" class="form-label fw-semibold">{{ 'admin.settings.test_mail.label'|trans({}, 'admin') }}</label>
                     <div class="input-group">
@@ -61,6 +65,11 @@
                         </button>
                     </div>
                     <small class="text-muted d-block mt-1">{{ 'admin.settings.test_mail.note'|trans({}, 'admin') }}</small>
+                    {% if active_transport %}
+                        <small class="text-muted d-block mt-1">
+                            {{ 'admin.settings.test_mail.current_transport'|trans({'%transport%': active_transport}, 'admin') }}
+                        </small>
+                    {% endif %}
                 {% endif %}
 
                 {# Payment sections: mode badge + webhook setup guide (FormBuilder-owned partial).

@@ -190,6 +190,7 @@ admin:
             placeholder: name@example.com
             send: Send
             note: 'Sends via the current configuration; the result reports which transport was used.'
+            current_transport: 'Currently sending via: %transport%'
             subject: Tallyst — test e-mail
             body: 'This is a test message from Tallyst Settings. If you can see it, the SMTP configuration works.'
         header_footer:
@@ -220,6 +221,7 @@ admin:
             app_date_format: { label: Date format, help: 'PHP date() format, e.g. d.m.Y.' }
         email:
             title: Email
+            sender_title: Sender
             mail_from_name: { label: From (name), help: The name in the From field of outgoing mail. }
             mail_from_email: { label: From (e-mail), help: The address in the From field. }
             mail_reply_to: { label: Reply-To, help: Optional; replies go to this address. }
@@ -231,6 +233,17 @@ admin:
             smtp_encryption:
                 label: Encryption
                 choice: { tls: STARTTLS (tls), ssl: SSL/TLS (ssl), none: No encryption }
+        email_delivery:
+            title: Delivery
+            mail_provider: { label: Mail provider, help: 'Choose how outgoing mail is sent. Switching providers keeps every provider''s saved fields — nothing is cleared.' }
+            resend_api_key: { label: API key, help: Your Resend API key. Encrypted. Leave empty to keep the current one. }
+            mailgun_api_key: { label: API key, help: Your Mailgun API key. Encrypted. Leave empty to keep the current one. }
+            mailgun_domain: { label: Domain, help: 'The sending domain configured in your Mailgun account, e.g. mg.example.com.' }
+            mailgun_region:
+                label: Region
+                choice: { us: 'US (default)', eu: EU }
+            postmark_server_token: { label: Server API token, help: Your Postmark Server API token. Encrypted. Leave empty to keep the current one. }
+            brevo_api_key: { label: API key, help: Your Brevo API key. Encrypted. Leave empty to keep the current one. }
         footer:
             title: Footer
             footer_columns:
@@ -292,7 +305,7 @@ admin:
             detail: { empty: 'Empty — CSRF tokens and signed URLs are unsafe.', ok: Set. }
             fix: 'app:install generates it in .env.local; or set APP_SECRET manually to 32+ random characters.'
         enc_key:
-            detail: { bad: 'Missing or invalid (needs base64 of 32 bytes) — settings encryption (the SMTP password) does not work.', ok: 'Set (32 bytes).' }
+            detail: { bad: 'Missing or invalid (needs base64 of 32 bytes) — settings encryption (e.g. the mail provider secret) does not work.', ok: 'Set (32 bytes).' }
             fix: "Run app:install, or: php8.5 -r 'echo base64_encode(random_bytes(32));' → put it in .env.local."
         https:
             detail: { ok: 'DEFAULT_URI uses https. (This does not confirm real TLS on the server — check that in the browser.)', warn: 'DEFAULT_URI is not https — production should serve over HTTPS.' }
@@ -307,13 +320,13 @@ admin:
                 ok: 'Set: %uri%'
             fix: { invalid: 'Set DEFAULT_URI to the real public URL (e.g. https://your-domain.com) in .env.local.', localhost: 'For production set DEFAULT_URI to the real public domain.' }
         mailer:
-            label: Mail (SMTP)
-            detail: { db: 'DB SMTP configured (%host%).', env: Using MAILER_DSN from the environment., unconfigured: 'Not configured — password resets and order mail will not be sent.' }
-            fix: 'Settings → Email: enter the SMTP host/user/password (or set MAILER_DSN in .env.local).'
-        smtp_password:
-            label: SMTP password
-            detail: 'Cannot be decrypted (the key was rotated/lost) — the mailer falls back to the env.'
-            fix: 'Settings → Email: re-enter the SMTP password (it is re-encrypted with the current key).'
+            label: Mail
+            detail: { db: 'Configured via %provider% (Settings → Email → Delivery).', env: Using MAILER_DSN from the environment., unconfigured: '%provider% is selected but not fully configured — password resets and order mail will not be sent.' }
+            fix: 'Settings → Email → Delivery: fill in the selected provider''s fields (or set MAILER_DSN in .env.local).'
+        mail_secret:
+            label: Mail provider secret
+            detail: '%provider%''s saved secret cannot be decrypted (the encryption key was rotated/lost) — the mailer falls back to the env.'
+            fix: 'Settings → Email → Delivery: re-enter %provider%''s secret field (it is re-encrypted with the current key).'
         mail_from:
             label: From address
             detail: { warn: 'mail_from_email is not set — real SMTP servers reject mail without a valid From (553).', ok: 'Set: %from%' }
@@ -411,6 +424,7 @@ admin:
                 clear: Clear formatting
     flash:
         settings_saved: Settings saved.
+        mail_settings_changed_restart_worker: 'Mail settings changed. If you run mail through a long-lived worker process, restart it now so it uses the new configuration.'
         test_mail_recipient: 'Enter a recipient address (or set "Sender (e-mail)").'
         test_mail_invalid: '"%email%" is not a valid e-mail address.'
         test_mail_sent: Sent to %to% via %via%.

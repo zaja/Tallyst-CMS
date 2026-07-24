@@ -3,6 +3,7 @@
 namespace App\Tests\Settings;
 
 use App\Icon\IconRegistry;
+use App\Mailer\MailProviderRegistry;
 use App\Repository\MenuRepository;
 use App\Settings\CoreSettingsProvider;
 use App\Settings\SettingType;
@@ -21,7 +22,7 @@ class FooterSettingsTest extends TestCase
     {
         $menus = $this->createStub(MenuRepository::class);
         $menus->method('findAll')->willReturn([]);
-        $provider = new CoreSettingsProvider($menus, new IconRegistry(), new \App\Font\FontRegistry());
+        $provider = new CoreSettingsProvider($menus, new IconRegistry(), new \App\Font\FontRegistry(), new MailProviderRegistry());
 
         foreach ($provider->getSettingsSections() as $section) {
             if ('footer' === $section->key) {

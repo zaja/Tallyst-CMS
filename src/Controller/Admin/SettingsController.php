@@ -2,6 +2,7 @@
 
 namespace App\Controller\Admin;
 
+use App\Mailer\MailProviderRegistry;
 use App\Mailer\SettingsMailerTransport;
 use App\Settings\SettingDefinition;
 use App\Settings\SettingsManager;
@@ -42,6 +43,7 @@ class SettingsController extends AbstractController
         private readonly SettingsRegistry $registry,
         private readonly SettingsManager $settings,
         private readonly TranslatorInterface $translator,
+        private readonly MailProviderRegistry $mailProviders,
     ) {
     }
 
@@ -72,7 +74,7 @@ class SettingsController extends AbstractController
      * Declared AFTER the /test-email route so that path isn't captured as {tab}.
      */
     #[Route('/{tab}', name: 'admin_settings_tab', requirements: ['tab' => '[a-z0-9_-]+'], methods: ['GET', 'POST'])]
-    public function tab(string $tab, Request $request): Response
+    public function tab(string $tab, Request $request, SettingsMailerTransport $transport): Response
     {
         $current = $this->registry->getTab($tab);
         if (null === $current) {
@@ -83,8 +85,23 @@ class SettingsController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->settings->setMany($form->getData());
+            $newData = $form->getData();
+            // Captured BEFORE setMany() persists — compares the submitted mail-delivery keys
+            // against what's currently stored, so the "restart your worker" notice only fires
+            // when a save actually touches the provider/its fields (a save of an unrelated
+            // field on the same tab, e.g. Sender, stays silent).
+            $mailChanged = $this->mailDeliveryChanged($newData);
+
+            $this->settings->setMany($newData);
             $this->addFlash('success', $this->translator->trans('admin.flash.settings_saved', [], 'admin'));
+
+            if ($mailChanged) {
+                // Honest, not alarmist — same tone as the readiness panel's worker-helper
+                // notice ("example, depends on your server"). resolveTransport() already reads
+                // fresh on every send (see SettingsMailerTransport), so this is a belt-and-
+                // suspenders reminder, not a claim that mail is currently broken.
+                $this->addFlash('warning', $this->translator->trans('admin.flash.mail_settings_changed_restart_worker', [], 'admin'));
+            }
 
             return $this->redirectToRoute('admin_settings_tab', ['tab' => $current->key]);
         }
@@ -97,7 +114,45 @@ class SettingsController extends AbstractController
             // Warn (and let the admin re-enter the password) when a stored SMTP password can
             // no longer be decrypted — mail silently falls back to env until it's fixed.
             'smtp_password_unreadable' => !$this->settings->isEncryptedValueReadable('smtp_password'),
+            // Only meaningful on the Email tab (the status line lives next to the test-mail
+            // form there) — computed elsewhere too is harmless but pointless, so gate it.
+            'active_transport' => $current->hasSection('email') ? $transport->activeTransportLabel() : null,
         ]);
+    }
+
+    /**
+     * Whether the submitted data touches `mail_provider` or any provider-owned field. A
+     * password/encrypted field is "changed" only when submitted NON-empty (write-only: an
+     * empty submit is a no-op that keeps the stored secret, so it's not a real change);
+     * every other field is changed when its (stringified) value differs from what's stored.
+     * A tab that doesn't carry these keys at all (any tab but Email) naturally returns false —
+     * the keys are simply absent from $newData.
+     *
+     * @param array<string, mixed> $newData
+     */
+    private function mailDeliveryChanged(array $newData): bool
+    {
+        $keys = ['mail_provider', ...$this->mailProviders->allFieldKeys()];
+
+        foreach ($keys as $key) {
+            if (!\array_key_exists($key, $newData)) {
+                continue;
+            }
+
+            $def = $this->registry->getDefinition($key);
+            if ($def?->type->isSecret()) {
+                if ('' !== (string) ($newData[$key] ?? '')) {
+                    return true;
+                }
+                continue;
+            }
+
+            if ((string) ($newData[$key] ?? '') !== (string) $this->settings->get($key)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // priority 10 ensures this concrete path is matched BEFORE the /{tab} catch-all below
@@ -261,6 +316,37 @@ class SettingsController extends AbstractController
             $options['attr'] = [
                 'placeholder' => $this->translator->trans('admin.settings.secret_unchanged', [], 'admin'),
                 'autocomplete' => 'new-password',
+            ];
+        }
+
+        // Delivery tab reveal: the provider picker gets a narrower row + drives the
+        // admin--mail-provider controller; every field a provider owns (SMTP's 5 fields,
+        // Resend's 1, …) is tagged with that provider's key so the SAME generic JS shows only
+        // the active provider's fields — driven entirely by MailProviderRegistry data, no
+        // per-provider branch here or in the controller.
+        //
+        // ⚠ Stimulus targets are ALWAYS `data-<full-controller-identifier>-target` — for
+        // `admin--mail-provider` that's `data-admin--mail-provider-target`, NOT
+        // `data-mail-provider-target` (a plain "-provider" prefix silently matches nothing,
+        // so apply() runs but finds zero targets and does nothing — every field then just sits
+        // in its default, fully-visible server-rendered state, whichever provider is picked).
+        // Same convention as the working FormBuilder precedent
+        // (`data-formbuilder--formtype-target`, form_type_controller.js).
+        if ('mail_provider' === $def->key) {
+            // The select TARGET (its .value is read on change) must sit on the actual <select>
+            // element — `attr`, not `row_attr` (a row_attr div has no .value; that mismatch was
+            // the second half of this bug). The narrow-width class stays on the row.
+            $options['row_attr'] = ['class' => 'settings-field-narrow'];
+            $options['attr'] = [
+                'data-admin--mail-provider-target' => 'select',
+                'data-action' => 'change->admin--mail-provider#apply',
+            ];
+        } elseif (null !== ($providerKey = $this->mailProviders->providerKeyForField($def->key))) {
+            // Field targets correctly stay on row_attr — hiding the WHOLE row (label + widget +
+            // help), not just the input.
+            $options['row_attr'] = [
+                'data-admin--mail-provider-target' => 'field',
+                'data-mail-provider-field' => $providerKey,
             ];
         }
 

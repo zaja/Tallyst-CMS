@@ -2,6 +2,7 @@
 
 namespace App\Readiness;
 
+use App\Mailer\SettingsMailerTransport;
 use App\Settings\SettingsManager;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -36,6 +37,7 @@ class ConfigReadinessProvider implements ReadinessCheckProviderInterface
         private readonly string $orderAdminEnv,
         private readonly SettingsManager $settings,
         private readonly TranslatorInterface $translator,
+        private readonly SettingsMailerTransport $mailer,
     ) {
     }
 
@@ -53,7 +55,7 @@ class ConfigReadinessProvider implements ReadinessCheckProviderInterface
         yield $this->checkAppEnv();
         yield $this->checkDefaultUri();
         yield $this->checkMailer();
-        if (null !== $c = $this->checkSmtpDecryptable()) {
+        if (null !== $c = $this->checkMailSecretDecryptable()) {
             yield $c;
         }
         yield $this->checkMailFrom();
@@ -129,34 +131,47 @@ class ConfigReadinessProvider implements ReadinessCheckProviderInterface
         return Check::ok($g, 'DEFAULT_URI', $this->t('admin.readiness.default_uri.detail.ok', ['%uri%' => $uri]));
     }
 
+    /**
+     * Reports on whichever provider is ACTIVE (mail_provider) — reuses
+     * SettingsMailerTransport's own "is it configured" criterion (isActiveProviderConfigured())
+     * rather than re-deriving it, so this can never drift from what the transport actually does.
+     * Was hardcoded to "DB SMTP" before providers existed; a Resend/Mailgun/… admin used to see
+     * an incorrectly-red "SMTP not configured" here even though mail worked fine.
+     */
     private function checkMailer(): Check
     {
         $g = $this->t(self::G_MAIL);
         $label = $this->t('admin.readiness.mailer.label');
-        if ('' !== (string) $this->settings->get('smtp_host')) {
-            return Check::ok($g, $label, $this->t('admin.readiness.mailer.detail.db', ['%host%' => (string) $this->settings->get('smtp_host')]));
+        $provider = $this->mailer->activeProviderLabel();
+
+        if ($this->mailer->isActiveProviderConfigured()) {
+            return Check::ok($g, $label, $this->t('admin.readiness.mailer.detail.db', ['%provider%' => $provider]));
         }
         if ('' !== trim($this->mailerDsn) && 'null://null' !== trim($this->mailerDsn)) {
             return Check::ok($g, $label, $this->t('admin.readiness.mailer.detail.env'));
         }
 
         return Check::warning($g, $label,
-            $this->t('admin.readiness.mailer.detail.unconfigured'),
+            $this->t('admin.readiness.mailer.detail.unconfigured', ['%provider%' => $provider]),
             $this->t('admin.readiness.mailer.fix'));
     }
 
-    private function checkSmtpDecryptable(): ?Check
+    /**
+     * Same generalisation as checkMailer(): a stored-but-undecryptable secret (lost/rotated
+     * encryption key) for whichever provider is active — worse than "unconfigured", its own
+     * PROBLEM. Reuses SettingsMailerTransport::activeProviderSecretUndecryptable(), which is
+     * itself fully generic over MailProviderRegistry (smtp included) — nothing provider-specific
+     * lives here.
+     */
+    private function checkMailSecretDecryptable(): ?Check
     {
-        if ('' === (string) $this->settings->get('smtp_host')) {
-            return null; // no DB SMTP → nothing to decrypt
-        }
-        if ($this->settings->isEncryptedValueReadable('smtp_password')) {
+        if (!$this->mailer->activeProviderSecretUndecryptable()) {
             return null;
         }
 
-        return Check::problem($this->t(self::G_MAIL), $this->t('admin.readiness.smtp_password.label'),
-            $this->t('admin.readiness.smtp_password.detail'),
-            $this->t('admin.readiness.smtp_password.fix'));
+        return Check::problem($this->t(self::G_MAIL), $this->t('admin.readiness.mail_secret.label'),
+            $this->t('admin.readiness.mail_secret.detail', ['%provider%' => $this->mailer->activeProviderLabel()]),
+            $this->t('admin.readiness.mail_secret.fix'));
     }
 
     private function checkMailFrom(): Check

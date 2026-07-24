@@ -2,11 +2,17 @@
 
 namespace App\Tests\Readiness;
 
+use App\Mailer\MailProviderRegistry;
+use App\Mailer\SettingsMailerTransport;
 use App\Readiness\Check;
 use App\Readiness\ConfigReadinessProvider;
 use App\Readiness\Status;
 use App\Settings\SettingsManager;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ConfigReadinessProviderTest extends TestCase
@@ -21,11 +27,28 @@ class ConfigReadinessProviderTest extends TestCase
         $sm->method('get')->willReturnCallback(static fn (string $k): string => $settings[$k] ?? '');
         $sm->method('isEncryptedValueReadable')->willReturn($smtpReadable);
 
-        // Passthrough translator (returns the key) — env-var LABELS stay literal (APP_SECRET…), while
-        // group + descriptive label/detail/fix surface as their `admin` keys. The tests assert STATUS
-        // (the logic) + the key, not localised text.
+        // Passthrough translator (returns the key, with any %param% VALUES appended) — env-var
+        // LABELS stay literal (APP_SECRET…), while group + descriptive label/detail/fix surface
+        // as their `admin` keys. Tests assert STATUS + the key (not localised text), except
+        // where a test explicitly wants to confirm a parameter (e.g. the active provider name)
+        // was actually passed through — the appended values make that checkable too.
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(
+            static fn (string $id, array $parameters = []): string => $id.($parameters ? ' '.implode(' ', $parameters) : ''),
+        );
+
+        // A REAL SettingsMailerTransport, sharing the SAME SettingsManager stub, so the
+        // readiness check and the transport agree on the exact same "is it configured" answer
+        // (the whole point of Part B: reuse, not re-derive). None of its other dependencies
+        // (inner/factory/em/dispatcher/logger) are exercised by the 3 methods this test uses.
+        $mailer = new SettingsMailerTransport(
+            $this->createStub(TransportInterface::class),
+            $sm,
+            new EventDispatcher(),
+            new MailProviderRegistry(),
+            new Transport([]),
+            $this->createStub(EntityManagerInterface::class),
+        );
 
         return new ConfigReadinessProvider(
             $env['appEnv'] ?? 'prod',
@@ -36,6 +59,7 @@ class ConfigReadinessProviderTest extends TestCase
             $env['orderEnv'] ?? '',
             $sm,
             $translator,
+            $mailer,
         );
     }
 
@@ -109,13 +133,46 @@ class ConfigReadinessProviderTest extends TestCase
     public function testUndecryptableSmtpPasswordIsProblem(): void
     {
         $checks = $this->byLabel($this->provider(settings: ['smtp_host' => 'smtp.example.com'], smtpReadable: false));
-        self::assertArrayHasKey('admin.readiness.smtp_password.label', $checks);
-        self::assertSame(Status::PROBLEM, $checks['admin.readiness.smtp_password.label']->status);
+        self::assertArrayHasKey('admin.readiness.mail_secret.label', $checks);
+        self::assertSame(Status::PROBLEM, $checks['admin.readiness.mail_secret.label']->status);
     }
 
-    public function testSmtpDecryptCheckIsSkippedWhenNoDbSmtp(): void
+    public function testSmtpDecryptCheckIsSkippedWhenEverythingIsReadable(): void
     {
-        // No smtp_host → the decrypt check should not even appear.
-        self::assertArrayNotHasKey('admin.readiness.smtp_password.label', $this->byLabel($this->provider()));
+        self::assertArrayNotHasKey('admin.readiness.mail_secret.label', $this->byLabel($this->provider()));
+    }
+
+    public function testMailerReportsTheActiveProviderNotHardcodedSmtp(): void
+    {
+        // ⚠ Part B: an admin on Resend must see an accurate OK, not an incorrect "SMTP not
+        // configured" warning — the whole reason this check was generalised.
+        $checks = $this->byLabel($this->provider(
+            settings: ['mail_provider' => 'resend', 'resend_api_key' => 're_live_abc'],
+        ));
+
+        self::assertSame(Status::OK, $checks['admin.readiness.mailer.label']->status);
+        self::assertStringContainsString('Resend', $checks['admin.readiness.mailer.label']->detail);
+    }
+
+    public function testMailerWarnsWhenActiveProviderSelectedButNotConfigured(): void
+    {
+        $checks = $this->byLabel($this->provider(
+            env: ['mailerDsn' => 'null://null'],
+            settings: ['mail_provider' => 'mailgun', 'mailgun_api_key' => '', 'mailgun_domain' => ''],
+        ));
+
+        self::assertSame(Status::WARNING, $checks['admin.readiness.mailer.label']->status);
+        self::assertStringContainsString('Mailgun', $checks['admin.readiness.mailer.label']->detail);
+    }
+
+    public function testUndecryptableSecretIsProblemForANonSmtpProviderToo(): void
+    {
+        $checks = $this->byLabel($this->provider(
+            settings: ['mail_provider' => 'postmark', 'postmark_server_token' => 'stale-ciphertext'],
+            smtpReadable: false,
+        ));
+
+        self::assertSame(Status::PROBLEM, $checks['admin.readiness.mail_secret.label']->status);
+        self::assertStringContainsString('Postmark', $checks['admin.readiness.mail_secret.label']->detail);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Tests\Settings;
 
 use App\Controller\Admin\SettingsController;
+use App\Mailer\MailProviderRegistry;
 use App\Settings\SettingsManager;
 use App\Settings\SettingsRegistry;
 use PHPUnit\Framework\TestCase;
@@ -25,7 +26,7 @@ class SettingsControllerTest extends TestCase
         $manager = $this->createStub(SettingsManager::class);
         $manager->method('get')->willReturnCallback(fn (string $key) => $settings[$key] ?? null);
 
-        return new class($this->createStub(SettingsRegistry::class), $manager, $this->createStub(TranslatorInterface::class)) extends SettingsController {
+        return new class($this->createStub(SettingsRegistry::class), $manager, $this->createStub(TranslatorInterface::class), new MailProviderRegistry()) extends SettingsController {
             public function buildTestEmailPublic(string $to): Email
             {
                 return $this->buildTestEmail($to);
