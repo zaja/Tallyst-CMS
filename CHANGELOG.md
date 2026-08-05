@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.10.0] — 2026-08-05
+
 ### Added
 
 - **The forms list now shows how many orders each form has.** You can see which forms have
