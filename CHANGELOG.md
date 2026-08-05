@@ -10,6 +10,16 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-07-31
+
+### Added
+
+- **Choose how your e-mail is sent.** Under Settings → Email you can now pick a mail
+  provider — your own SMTP server, or Resend, Mailgun, Postmark, or Brevo — and just paste
+  in an API key instead of wrestling with SMTP hosts and ports. Only the fields for the
+  provider you pick are shown; switching providers keeps everything you've already entered.
+  The "Send a test mail" button tells you exactly which provider the mail went through.
+
 ## [1.8.0] — 2026-07-23
 
 ### Added
