@@ -1,0 +1,16 @@
+# ICU MessageFormat katalog (spaja se u `admin` domenu preko +intl-icu sufiksa).
+# Ovdje su samo poruke koje BROJE — hrvatski traži tri oblika množine
+# (1 / 2-4 / 5+), što stara sintaksa s crticom ne može ispravno izraziti.
+# ⚠ Izbjegavaj apostrofe u ovim vrijednostima: ICU tretira ' kao escape znak.
+admin:
+    form:
+        guard:
+            has_orders: >-
+                Ovu formu nije moguće obrisati jer ima {count, plural, one {# narudžbu} few {# narudžbe} other {# narudžbi}}.
+                Brisanjem forme trajno bi se izgubila i ta evidencija narudžbi.
+                Ako je želite maknuti sa sajta, postavite joj status na Skica.
+        index:
+            delete_blocked: >-
+                Nije moguće obrisati: forma ima {count, plural, one {# narudžbu} few {# narudžbe} other {# narudžbi}}.
+                Postavite je na Skica da je maknete sa sajta.
+            delete_confirm_messages: "Ova forma ima {count, plural, one {# poruku} few {# poruke} other {# poruka}}.\nBrisanjem forme trajno se brišu i {count, plural, one {ta poruka} few {te poruke} other {te poruke}} — nigdje drugdje nisu pohranjene.\nAko formu samo želite maknuti sa sajta, odustanite i postavite joj status na Skica."

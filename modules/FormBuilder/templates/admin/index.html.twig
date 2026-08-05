@@ -17,10 +17,14 @@
     {% else %}
         <table class="table table-hover">
             <thead>
-                <tr><th>{{ 'admin.form.index.col.name'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.status'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.type'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.shortcode'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.fields'|trans({}, 'admin') }}</th><th class="text-end"></th></tr>
+                <tr><th>{{ 'admin.form.index.col.name'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.status'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.type'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.shortcode'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.fields'|trans({}, 'admin') }}</th><th>{{ 'admin.form.index.col.orders'|trans({}, 'admin') }}</th><th class="text-end"></th></tr>
             </thead>
             <tbody>
                 {% for f in forms %}
+                    {# Counts come from two GROUP BY queries done once in the controller (never a
+                       per-row count). A form absent from the map has none. #}
+                    {% set order_count = order_counts[f.id]|default(0) %}
+                    {% set message_count = message_counts[f.id]|default(0) %}
                     <tr>
                         <td><a href="{{ path('form_builder_admin_edit', {id: f.id}) }}">{{ f.name }}</a></td>
                         <td>
@@ -30,6 +34,10 @@
                         <td>{{ ('admin.form.def.form_type_option.' ~ f.formType.value)|trans({}, 'admin') }}</td>
                         <td><code>[form id={{ f.id }}]</code></td>
                         <td>{{ f.fields|length }}</td>
+                        {# The orders count is the VISIBLE reason the delete button may be disabled —
+                           it must be readable without hovering (the tooltip is only an extra, and
+                           there is no hover on a touch screen). #}
+                        <td>{% if order_count > 0 %}<strong>{{ order_count }}</strong>{% else %}<span class="text-muted">0</span>{% endif %}</td>
                         <td class="text-end">
                             {# Icon-only row actions, matching the EA CRUD lists (Edit pen + Delete
                                trash, `btn`/`btn-danger btn-invisible` + `.btn-icon`, no label span).
@@ -39,14 +47,37 @@
                                title="{{ 'admin.action.edit'|trans({}, 'admin') }}" aria-label="{{ 'admin.action.edit'|trans({}, 'admin') }}">
                                 <span class="icon btn-icon"><i class="fa-solid fa-pen"></i></span>
                             </a>
-                            <form method="post" action="{{ path('form_builder_admin_delete', {id: f.id}) }}" class="d-inline"
-                                  onsubmit="return confirm('{{ 'admin.form.index.delete_confirm'|trans({}, 'admin')|e('js') }}');">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete_form_' ~ f.id) }}">
-                                <button class="btn btn-danger btn-invisible action-delete" type="submit"
-                                        title="{{ 'admin.action.delete'|trans({}, 'admin') }}" aria-label="{{ 'admin.action.delete'|trans({}, 'admin') }}">
-                                    <span class="icon btn-icon"><i class="fa-solid fa-trash"></i></span>
-                                </button>
-                            </form>
+                            {% if order_count > 0 %}
+                                {# A form with orders can NEVER be deleted (fb_order.form_id is ON DELETE
+                                   CASCADE — the database would take the order history with it), so no
+                                   form/CSRF token is emitted at all. This is a courtesy only: the real
+                                   gate is FormDeletionGuard, checked server-side on the route.
+                                   The title sits on the WRAPPER because `.btn:disabled` is
+                                   `pointer-events: none` — a title on the button itself would never
+                                   appear on hover. `opacity-50` guarantees the dimming is visible
+                                   regardless of how EA resolves its own button variables. #}
+                                <span class="d-inline-block" title="{{ 'admin.form.index.delete_blocked'|trans({'%count%': order_count}, 'admin') }}">
+                                    <button class="btn btn-danger btn-invisible action-delete opacity-50" type="button" disabled
+                                            aria-label="{{ 'admin.action.delete'|trans({}, 'admin') }}">
+                                        <span class="icon btn-icon"><i class="fa-solid fa-trash"></i></span>
+                                    </button>
+                                </span>
+                            {% else %}
+                                {# No orders → deletable. The confirmation names the exact number of
+                                   messages that go with it (they have no other home in the admin), or
+                                   stays the short question when the form is empty. #}
+                                {% set delete_confirm = message_count > 0
+                                    ? 'admin.form.index.delete_confirm_messages'|trans({'%count%': message_count}, 'admin')
+                                    : 'admin.form.index.delete_confirm'|trans({}, 'admin') %}
+                                <form method="post" action="{{ path('form_builder_admin_delete', {id: f.id}) }}" class="d-inline"
+                                      onsubmit="return confirm('{{ delete_confirm|e('js') }}');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_form_' ~ f.id) }}">
+                                    <button class="btn btn-danger btn-invisible action-delete" type="submit"
+                                            title="{{ 'admin.action.delete'|trans({}, 'admin') }}" aria-label="{{ 'admin.action.delete'|trans({}, 'admin') }}">
+                                        <span class="icon btn-icon"><i class="fa-solid fa-trash"></i></span>
+                                    </button>
+                                </form>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

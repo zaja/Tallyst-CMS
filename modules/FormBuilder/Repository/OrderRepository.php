@@ -4,6 +4,7 @@ namespace Tallyst\FormBuilder\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Tallyst\FormBuilder\Entity\FormDefinition;
 use Tallyst\FormBuilder\Entity\Order;
 
 /**
@@ -46,6 +47,43 @@ class OrderRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    /** Orders placed through one form — the deletion guard's decision input (ANY status counts). */
+    public function countForForm(FormDefinition $form): int
+    {
+        return (int) $this->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.form = :form')
+            ->setParameter('form', $form)
+            ->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Order counts for MANY forms in ONE query (the forms list) — never a per-row count (N+1).
+     * Forms with no orders are absent from the result; the caller defaults them to 0.
+     *
+     * @param list<int> $formIds
+     *
+     * @return array<int, int> formId => order count
+     */
+    public function countByFormIds(array $formIds): array
+    {
+        if ([] === $formIds) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($this->createQueryBuilder('o')
+            ->select('IDENTITY(o.form) AS formId, COUNT(o.id) AS c')
+            ->where('o.form IN (:ids)')
+            ->setParameter('ids', $formIds)
+            ->groupBy('o.form')
+            ->getQuery()->getResult() as $row) {
+            $out[(int) $row['formId']] = (int) $row['c'];
+        }
+
+        return $out;
     }
 
     // --- Dashboard aggregation (revenue = paid + fulfilled; refunded EXCLUDED — money returned) ---

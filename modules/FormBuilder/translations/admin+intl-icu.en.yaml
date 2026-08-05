@@ -1,0 +1,16 @@
+# ICU MessageFormat catalog (merged into the `admin` domain by the +intl-icu suffix).
+# Only messages that COUNT things live here — Croatian needs three plural forms
+# (1 / 2-4 / 5+), which the legacy pipe syntax cannot express correctly.
+# ⚠ Avoid apostrophes in these values: ICU treats ' as an escape character.
+admin:
+    form:
+        guard:
+            has_orders: >-
+                This form cannot be deleted because it has {count, plural, one {# order} other {# orders}}.
+                Deleting the form would permanently delete that order history too.
+                To take the form off your site instead, set its status to Draft.
+        index:
+            delete_blocked: >-
+                Cannot be deleted: this form has {count, plural, one {# order} other {# orders}}.
+                Set it to Draft to take it off your site.
+            delete_confirm_messages: "This form has {count, plural, one {# message} other {# messages}}.\nDeleting the form permanently deletes {count, plural, one {that message} other {those messages}} as well — they are not stored anywhere else.\nIf you only want to take the form off your site, cancel and set its status to Draft instead."

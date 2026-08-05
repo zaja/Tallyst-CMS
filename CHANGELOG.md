@@ -10,7 +10,32 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
-## [1.9.0] — 2026-07-31
+### Added
+
+- **The forms list now shows how many orders each form has.** You can see which forms have
+  actually made sales before you touch anything.
+
+### Changed
+
+- **Deleting a form with messages now tells you how many will be lost.** Messages sent through
+  a contact form live only inside that form, so the confirmation now names the exact number and
+  warns that they go with it. A form with no orders and no messages is deleted exactly as before.
+
+### Fixed
+
+- **A form that has orders can no longer be deleted.** Until now, deleting a form also quietly
+  deleted every order ever placed through it — the sales record for that product, gone with one
+  click and no warning. Tallyst now refuses, tells you how many orders the form has, and suggests
+  setting the form to Draft instead, which takes it off your site while keeping its history.
+- **Demo images no longer appear broken after you delete and re-import the demo content.** The
+  pictures were being saved correctly, but the small preview versions Tallyst generates for them
+  were removed again moments later, so pages and the Media library showed empty picture frames.
+  Your uploaded originals were never at risk — only those generated previews were missing, and
+  they are now created and kept as expected. This affected anyone who re-imported the demo
+  content on version 1.8.0 or later. If you already have pictures showing as broken, you can
+  bring them back at any time with `php bin/console app:media:thumbnails:warm`.
+
+## [1.9.0] — 2026-08-05
 
 ### Added
 
@@ -32,7 +57,7 @@ core-API change is a MAJOR (flagged ⚠).
 
 - **Old thumbnails are now cleaned up automatically.** Replacing or deleting an image used to leave its generated thumbnails behind on disk forever. On sites with a lot of media this quietly added up; it no longer does.
 
-## [1.7.2] — 2026-07-23
+## [1.7.2] — 2026-07-22
 
 ### Changed
 

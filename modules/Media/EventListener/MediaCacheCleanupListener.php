@@ -8,8 +8,10 @@ use Doctrine\ORM\Event\PreRemoveEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Tallyst\Media\Entity\Media;
 use Tallyst\Media\Service\ThumbnailCleaner;
+use Vich\UploaderBundle\FileAbstraction\ReplacingFile;
 
 /**
  * Cleans up a Media's Liip cache files when its stored image is replaced or the Media
@@ -45,10 +47,28 @@ use Tallyst\Media\Service\ThumbnailCleaner;
  * FIX: run at a HIGHER priority (100) than Vich's CleanListener (50) so this listener's
  * preUpdate fires FIRST, before any Vich listener has touched imageName — at that point
  * the entity's plain PHP property still holds the true old name, read directly rather
- * than through Doctrine's changeset bookkeeping. The signal for "a replacement is
- * happening" is the same one Vich's own UploadHandler::hasUploadedFile() uses: a new
- * File was set on the transient $imageFile property (via setImageFile()) — imageFile
- * isn't a mapped column, so it never appears in any Doctrine changeset at all.
+ * than through Doctrine's changeset bookkeeping. imageFile isn't a mapped column, so it
+ * never appears in any Doctrine changeset at all.
+ *
+ * ⚠ THE "IS THIS A REPLACEMENT?" PREDICATE MUST STAY EXACTLY VICH'S OWN — `instanceof
+ * UploadedFile || instanceof ReplacingFile` — NOT the broader `instanceof File`.
+ * Vich uses this exact pair everywhere it decides whether a new file is being stored:
+ * UploadHandler::hasUploadedFile() (:120), AbstractStorage::upload()/remove() (:32, :53,
+ * :62), FileExtensionTrait (:31, :45), FileRequiredValidator (:34, :39). Crucially
+ * AbstractStorage::upload() RETURNS EARLY for anything else — so if this predicate says
+ * "not a replacement", Vich has stored nothing either, the file on disk is unchanged, and
+ * its thumbnails are still valid. The two are the SAME decision made with the SAME test,
+ * which is why a narrower check here can never miss a genuine replacement.
+ *
+ * ⚠ WHY `instanceof File` WAS WRONG (the v1.8.0 regression this replaced): after a
+ * successful upload Vich's FileInjector (:25) sets `new File($storedPath, false)` BACK
+ * onto $imageFile. That injected File is the signal "I just stored this", not "a new file
+ * is coming" — but it satisfies `instanceof File`. So ANY later update of that same Media
+ * in the SAME request (e.g. DemoSeedCommand's upload() → setTitle/setAlt/setIsDemo →
+ * flush) was read as a replacement and deleted the thumbnails MediaThumbnailListener had
+ * just warmed. Result: rows + originals intact, every thumbnail gone, no error anywhere.
+ * Both real replacement paths set an UploadedFile (MediaUploader::upload() :77 and
+ * replaceWithCrop() :182, the latter via cropToTempFile()), so both stay covered.
  */
 #[AsDoctrineListener(event: Events::preRemove)]
 #[AsDoctrineListener(event: Events::preUpdate, priority: 100)]
@@ -74,14 +94,24 @@ class MediaCacheCleanupListener
     public function preUpdate(PreUpdateEventArgs $args): void
     {
         $entity = $args->getObject();
-        if (!$entity instanceof Media || !$entity->getImageFile() instanceof File) {
-            return; // no new file being set on this update — nothing to clean up
+        if (!$entity instanceof Media || !$this->isReplacement($entity->getImageFile())) {
+            return; // no new file being stored on this update — nothing to clean up
         }
 
         $old = $entity->getImageName();
         if (\is_string($old) && '' !== $old) {
             $this->pendingCleanup[] = $old;
         }
+    }
+
+    /**
+     * Vich's own "a new file is being stored" test, mirrored exactly (see the class docblock).
+     * Deliberately NOT `instanceof File`: Vich injects a plain File back onto the property
+     * AFTER a successful upload, which means "already stored", not "replacing".
+     */
+    private function isReplacement(?File $file): bool
+    {
+        return $file instanceof UploadedFile || $file instanceof ReplacingFile;
     }
 
     public function postFlush(PostFlushEventArgs $args): void

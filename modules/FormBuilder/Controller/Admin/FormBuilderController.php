@@ -17,6 +17,9 @@ use Tallyst\FormBuilder\Form\Type\FormDefinitionType;
 use Tallyst\FormBuilder\Payment\MerchantOfRecordInterface;
 use Tallyst\FormBuilder\Payment\PaymentProcessorRegistry;
 use Tallyst\FormBuilder\Repository\FormDefinitionRepository;
+use Tallyst\FormBuilder\Repository\FormSubmissionRepository;
+use Tallyst\FormBuilder\Repository\OrderRepository;
+use Tallyst\FormBuilder\Service\FormDeletionGuard;
 
 /**
  * Admin builder UI. Lives under /admin (so the ROLE_ADMIN access control applies)
@@ -37,14 +40,25 @@ class FormBuilderController extends AbstractController
         private readonly SluggerInterface $slugger,
         private readonly TranslatorInterface $translator,
         private readonly PaymentProcessorRegistry $payments,
+        private readonly FormDeletionGuard $deletionGuard,
+        private readonly OrderRepository $orders,
+        private readonly FormSubmissionRepository $submissions,
     ) {
     }
 
     #[Route('', name: 'form_builder_admin_index', methods: ['GET'])]
     public function index(): Response
     {
+        $forms = $this->forms->findBy([], ['id' => 'DESC']);
+        $ids = array_values(array_filter(array_map(static fn (FormDefinition $f): ?int => $f->getId(), $forms)));
+
+        // Two GROUP BY queries for the WHOLE list — never one count per row (N+1). The template
+        // defaults a missing id to 0. Order counts drive both the new column and the disabled
+        // delete button; message counts fill in the delete confirmation.
         return $this->render('@FormBuilder/admin/index.html.twig', [
-            'forms' => $this->forms->findBy([], ['id' => 'DESC']),
+            'forms' => $forms,
+            'order_counts' => $this->orders->countByFormIds($ids),
+            'message_counts' => $this->submissions->countByFormIds($ids),
         ]);
     }
 
@@ -313,10 +327,23 @@ class FormBuilderController extends AbstractController
         return $this->edit($request, $form);
     }
 
+    /**
+     * Deleting a form CASCADES to its orders and messages in the database, so a form that carries
+     * order history must never be deletable. The guard is enforced HERE, server-side: the list also
+     * disables the button, but that is only a courtesy — a hand-crafted POST hits this same check.
+     */
     #[Route('/{id}/delete', name: 'form_builder_admin_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, FormDefinition $form): Response
     {
         if ($this->isCsrfTokenValid('delete_form_'.$form->getId(), (string) $request->request->get('_token'))) {
+            // Server-side gate (mirrors what the list disables). A blocked delete is a flash +
+            // redirect — never a 500, and never the deletion.
+            if (null !== ($blocked = $this->deletionGuard->blockDelete($form))) {
+                $this->addFlash('danger', $blocked);
+
+                return $this->redirectToRoute('form_builder_admin_index');
+            }
+
             $this->forms->remove($form);
             $this->addFlash('success', $this->translator->trans('admin.form.flash.deleted', [], 'admin'));
         }
