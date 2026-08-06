@@ -13,7 +13,7 @@ use Tallyst\FormBuilder\Service\FormDeletionGuard;
  * Stops order history from being destroyed: a form with ANY order can't be deleted, because
  * `fb_order.form_id` is ON DELETE CASCADE and the database would silently take the orders with it.
  *
- * Pure decision logic (same shape as ThemeDeletionGuardTest / AdminLockoutGuardTest) — the
+ * Pure decision logic (same shape as AdminLockoutGuardTest) — the
  * route-level enforcement is locked separately by tests/Functional/FormDeleteGuardTest.
  */
 class FormDeletionGuardTest extends TestCase

@@ -9,8 +9,8 @@ use Tallyst\FormBuilder\Repository\OrderRepository;
 
 /**
  * Server-side guard that stops a form's ORDER HISTORY from being destroyed by deleting the form.
- * Pure decision logic (like AdminLockoutGuard / ThemeDeletionGuard): returns a human message when
- * the delete must be blocked, or null when it's allowed.
+ * Pure decision logic (like AdminLockoutGuard): returns a human message when the delete must be
+ * blocked, or null when it's allowed.
  *
  * WHY this exists: `fb_order.form_id` is `ON DELETE CASCADE` (migration Version20260620213521),
  * so deleting a form makes the DATABASE silently delete every order placed through it — financial
