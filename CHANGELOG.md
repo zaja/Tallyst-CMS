@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.11.0] — 2026-08-07
+
 ### Added
 
 - **Your orders now remember what they sold.** Each order keeps its own copy of the product name and
