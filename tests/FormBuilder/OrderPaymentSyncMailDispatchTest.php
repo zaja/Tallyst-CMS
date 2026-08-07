@@ -76,10 +76,12 @@ class OrderPaymentSyncMailDispatchTest extends TestCase
         return false;
     }
 
+    /** A real MoR order carries the snapshot written at checkout — that flag, not the form, is what is read. */
     private function morOrder(bool $withLicense): Order
     {
         $order = (new Order())
             ->setForm((new FormDefinition())->setFormType(FormType::DIGITAL_MOR)->setMorProvider('dodo'))
+            ->setIsMerchantOfRecord(true)
             ->setStatus(Order::STATUS_PENDING);
         if ($withLicense) {
             $order->setLicenseKey('LIC-123');
@@ -114,6 +116,36 @@ class OrderPaymentSyncMailDispatchTest extends TestCase
 
         self::assertSame(1, $this->dispatchCount);
         self::assertFalse($this->hasDelay(), 'non-MoR (Stripe/PayPal) → immediate, unchanged');
+    }
+
+    /**
+     * The snapshot is read ALONE — a `false` on the order wins even when the form now says MoR.
+     *
+     * This is the case a fallback to the live form would get wrong: the flag is a plain bool, so a
+     * fallback makes `false` unable to ever win, and "this was not a MoR purchase" turns back into a
+     * question asked of the form. Here a self-billed (Stripe) sale is followed by the shop owner
+     * switching that form over to a Merchant-of-Record provider; the already-paid order must still be
+     * treated as what it was, and its mail must go out immediately instead of waiting out a licence
+     * grace period for a licence that is never coming.
+     */
+    public function testFalseSnapshotWinsOverAFormLaterSwitchedToMoR(): void
+    {
+        $form = (new FormDefinition())->setFormType(FormType::DIGITAL);
+        $order = (new Order())
+            ->setForm($form)
+            ->setIsMerchantOfRecord(false) // measured at checkout: this was a self-billed sale
+            ->setStatus(Order::STATUS_PENDING);
+
+        // Afterwards the owner converts the product to sell through a Merchant of Record.
+        $form->setFormType(FormType::DIGITAL_MOR)->setMorProvider('dodo');
+
+        $this->sync($order)->apply($this->paidResult());
+
+        self::assertSame(1, $this->dispatchCount);
+        self::assertFalse(
+            $this->hasDelay(),
+            'the order was not a MoR purchase, so its mail must go out now — not sit through a grace delay'
+        );
     }
 
     public function testEntitlementOnPaidOrderDispatchesImmediately(): void

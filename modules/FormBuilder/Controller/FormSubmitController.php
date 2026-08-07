@@ -294,6 +294,16 @@ class FormSubmitController extends AbstractController
         $order = (new Order())
             ->setForm($form)
             ->setSubmission($submission)
+            // Historical snapshots, written ONCE here and never refreshed — the order must stay a complete
+            // record after the form is renamed or deleted (both FKs are SET NULL, and the submission is
+            // CASCADE-deleted with the form). The submission payload is copied verbatim, ship_* address
+            // keys included, because that is the buyer's data for invoicing and manual fulfilment.
+            // ⚠ The MoR flag snapshots the FORM TYPE (is someone else the legal seller for this product),
+            // NOT $isMerchantOfRecord above — that one is the per-PAYMENT check on the chosen processor,
+            // which stays the gate for the tax split and the unit resolution.
+            ->setProductName($form->getName())
+            ->setSubmissionData($submission->getData())
+            ->setIsMerchantOfRecord($form->getFormType()->isMerchantOfRecord())
             ->setAmountMinor($amountMinor)
             ->setCurrency($form->getCurrency() ?: 'eur')
             ->setProvider($chosen)

@@ -32,7 +32,7 @@ email:
             net_amount: Net amount (excl. tax).
             tax_rate: Tax rate (%).
             tax_name: Tax name.
-            form_name: Form/product name.
+            form_name: 'The product name as it was when the order was placed (renaming the form later does not change it).'
             variant: Selected variant (empty if none).
             shipping: Chosen delivery method and amount (— if none).
             delivery_details: Delivery breakdown + address block (empty for a digital order).
@@ -61,7 +61,7 @@ email:
             net_amount: Net amount (excl. tax).
             tax_rate: Tax rate (%).
             tax_name: Tax name.
-            form_name: Form/product name.
+            form_name: 'The product name as it was when the order was placed (renaming the form later does not change it).'
             variant: Selected variant (empty if none).
             shipping: Chosen delivery method and amount (— if none).
             delivery_details: Delivery breakdown + address block (empty for a digital order).
@@ -83,7 +83,7 @@ email:
             <p>{site_name}</p>
         tag:
             order_id: Order number.
-            form_name: Form/product name.
+            form_name: 'The product name as it was when the order was placed (renaming the form later does not change it).'
             variant: Selected variant (empty if none).
             site_name: The site name.
     order_refunded:
@@ -99,7 +99,7 @@ email:
         tag:
             order_id: Order number.
             amount: Amount (formatted).
-            form_name: Form/product name.
+            form_name: 'The product name as it was when the order was placed (renaming the form later does not change it).'
             variant: Selected variant (empty if none).
             site_name: The site name.
     form_notification:

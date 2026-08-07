@@ -104,7 +104,13 @@ class OrderPaymentSync
             //    product (K0 order 43: no licence entitlement EVER) or a very slow one; if a licence-bearing
             //    entitlement lands first, applyEntitlement dispatches immediately and this delayed message
             //    becomes a no-op (handler idempotency via confirmationSentAt).
-            $isMoR = $order->getForm()?->getFormType()->isMerchantOfRecord() ?? false;
+            // ONLY the order's own snapshot of the form type at purchase time — deliberately with NO
+            // fallback to the live form. The flag is a plain bool with no third state, so a fallback
+            // would mean `false` can never win: "this was not a MoR purchase" would silently turn back
+            // into asking the form again, which is exactly what this work removes. There is no row
+            // without a snapshot to protect — migration Version20260807081500 backfilled every existing
+            // order (measured: 13/13) and checkout has written it since.
+            $isMoR = $order->isMerchantOfRecord();
             $waitForLicense = $isMoR && null === $order->getLicenseKey();
 
             $stamps = $waitForLicense ? [new DelayStamp(self::MOR_MAIL_GRACE_MS)] : [];

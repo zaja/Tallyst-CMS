@@ -7,6 +7,7 @@ admin:
         title: { detail: 'Narudžba #%id%' }
         field:
             created_at: Datum
+            product: Proizvod
             form: Forma
             amount: Iznos
             status: Status
@@ -28,6 +29,8 @@ admin:
             invoice: Račun
             license_key: Licencni ključ
             submission: Podaci forme
+        help:
+            source_form: 'Forma kroz koju je narudžba zaprimljena. Piše „—" ako je ta forma u međuvremenu obrisana — narudžba je i tada potpuna.'
         panel:
             shipping: Dostava
             tax: Porez

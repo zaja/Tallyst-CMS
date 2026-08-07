@@ -11,7 +11,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Factory\FilterFactory;
-use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
@@ -136,7 +135,16 @@ class OrderCrudController extends AbstractCrudController
     {
         yield IdField::new('id', '#');
         yield DateTimeField::new('createdAt', 'admin.order.field.created_at');
-        yield AssociationField::new('form', 'admin.order.field.form');
+        // WHAT WAS SOLD — the order's own snapshot, on the index and the detail. This used to be an
+        // AssociationField reading the live form, which meant renaming a form silently rewrote every
+        // past order and deleting one blanked the column.
+        yield TextField::new('productLabel', 'admin.order.field.product');
+        // WHERE IT CAME FROM — detail only, and deliberately allowed to read "—" once the form is gone.
+        // That is a normal end state now (the order survives its form), not a broken record, so it gets
+        // a help tooltip saying so rather than an empty cell the admin has to interpret.
+        yield TextField::new('sourceFormLabel', 'admin.order.field.form')
+            ->setHelp('admin.order.help.source_form')
+            ->onlyOnDetail();
         yield TextField::new('amountFormatted', 'admin.order.field.amount');
         // Badge semantics: paid = awaiting delivery (a to-do), fulfilled = delivered.
         yield ChoiceField::new('status', 'admin.order.field.status')
@@ -248,13 +256,19 @@ class OrderCrudController extends AbstractCrudController
             // CSV headers are FIXED ENGLISH (never localised, NOT through trans) — a data export is a
             // global, predictable format for accountants / external systems / re-import, independent of
             // the admin's UI language. Deterministic regardless of app_locale.
-            fputcsv($out, ['ID', 'Date', 'Gross', 'Net', 'Tax', 'Rate', 'Tax name', 'Currency', 'Provider', 'Mode', 'Status', 'E-mail', 'Variant', 'Shipping method', 'Shipping', 'Customer data'], ',', '"', '');
+            // 'Product' sits third, so the first four columns already answer the whole question a sales
+            // export is opened to answer: which order, when, WHAT, for how much — no scrolling past the
+            // money and payment block to find out what was actually sold.
+            fputcsv($out, ['ID', 'Date', 'Product', 'Gross', 'Net', 'Tax', 'Rate', 'Tax name', 'Currency', 'Provider', 'Mode', 'Status', 'E-mail', 'Variant', 'Shipping method', 'Shipping', 'Customer data'], ',', '"', '');
             foreach ($orders as $o) {
                 // Form data on one CSV line: flatten the summary's newlines (fputcsv handles commas/quotes).
                 $customerData = str_replace(["\r\n", "\n", "\r"], '; ', $o->getSubmissionSummary());
                 fputcsv($out, [
                     $o->getId(),
                     $o->getCreatedAt()?->format('Y-m-d H:i'),
+                    // The snapshot taken at checkout — a sales record must keep saying what was sold even
+                    // after the form is renamed or deleted.
+                    $o->getProductLabel(),
                     $money($o->getAmountMinor()),
                     $money($o->getNetAmountMinor()),
                     $money($o->getTaxAmountMinor()),

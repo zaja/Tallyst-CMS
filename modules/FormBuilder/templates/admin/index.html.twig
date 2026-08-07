@@ -48,10 +48,12 @@
                                 <span class="icon btn-icon"><i class="fa-solid fa-pen"></i></span>
                             </a>
                             {% if order_count > 0 %}
-                                {# A form with orders can NEVER be deleted (fb_order.form_id is ON DELETE
-                                   CASCADE — the database would take the order history with it), so no
-                                   form/CSRF token is emitted at all. This is a courtesy only: the real
-                                   gate is FormDeletionGuard, checked server-side on the route.
+                                {# A form with orders can NEVER be deleted, so no form/CSRF token is
+                                   emitted at all. The orders themselves are safe either way (since
+                                   migration Version20260807081500 they survive on their own snapshots);
+                                   what deletion would destroy for good is the LINK between each sale and
+                                   the form it came from. This is a courtesy only: the real gate is
+                                   FormDeletionGuard, checked server-side on the route.
                                    The title sits on the WRAPPER because `.btn:disabled` is
                                    `pointer-events: none` — a title on the button itself would never
                                    appear on hover. `opacity-50` guarantees the dimming is visible

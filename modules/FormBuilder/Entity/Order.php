@@ -33,13 +33,56 @@ class Order
     #[ORM\Column(options: ['default' => false])]
     private bool $isDemo = false;
 
+    /**
+     * The form this order was placed through — kept as "where it came from", NOT as the source of the
+     * order's own facts (those are the snapshot columns below). NULLABLE + ON DELETE SET NULL: a deleted
+     * form must never take the financial record with it. (The admin delete action is additionally blocked
+     * by FormDeletionGuard; this is the database-level belt behind that suspender, and it also covers the
+     * paths the guard deliberately does not — the demo uninstaller and any direct em->remove().)
+     */
     #[ORM\ManyToOne(targetEntity: FormDefinition::class)]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?FormDefinition $form = null;
 
     #[ORM\ManyToOne(targetEntity: FormSubmission::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?FormSubmission $submission = null;
+
+    // --- Historical snapshots taken ONCE, at checkout. Same rule as variantLabel/shippingLabel/taxName/
+    //     taxRate: what was true when the money moved, written once and never refreshed afterwards. They
+    //     exist so an order stays a complete record after the form (or the submission) is gone or edited.
+    //     ⚠ Written at checkout; nothing READS them yet — the read sites still go through the live form.
+
+    /**
+     * SNAPSHOT of the form's name at purchase time — the product the buyer actually bought. Written once
+     * at checkout and never refreshed, so renaming (or deleting) the form can never rewrite history on an
+     * order that is already paid. Null only for rows created before this column existed and whose form was
+     * already gone at migration time.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $productName = null;
+
+    /**
+     * SNAPSHOT of the whole submission payload at purchase time (FormSubmission::$data verbatim, INCLUDING
+     * the ship_* delivery-address keys). Written once at checkout and never refreshed. Exists because the
+     * submission is reachable only through a nullable FK (SET NULL) and is itself CASCADE-deleted with the
+     * form — without this copy, deleting a form silently empties the buyer's details on every order it ever
+     * took. Null = no snapshot (pre-column row with no surviving submission); an empty array is a real,
+     * meaningful value (a form with no fields).
+     *
+     * @var array<string, mixed>|null
+     */
+    #[ORM\Column(name: 'submission_data', type: 'json', nullable: true)]
+    private ?array $submissionData = null;
+
+    /**
+     * SNAPSHOT of whether this purchase went through a Merchant-of-Record form (form type `digital_mor`) —
+     * i.e. whether someone else was the legal seller. Written once at checkout, exactly like paymentMode
+     * records test/live: a historical fact about this payment, not a lookup of how the form is configured
+     * today. Defaults to false so an ordinary self-billed order needs no special handling.
+     */
+    #[ORM\Column(name: 'is_merchant_of_record', options: ['default' => false])]
+    private bool $isMerchantOfRecord = false;
 
     #[ORM\Column]
     private int $amountMinor = 0;
@@ -55,8 +98,8 @@ class Order
      * The Merchant-of-Record sellable-unit id the buyer chose (Faza 6) — the provider's own id (Dodo
      * product_id today; a GENERIC name so Paddle/LS reuse). Set at checkout from the chosen sellable unit;
      * DodoProcessor::createCheckout reads it (falling back to the form's legacy single dodoProductId) so the
-     * right unit is charged. Null for self-billed / legacy orders. ⚠ KOMAD 1: column added, DORMANT — nobody
-     * sets or reads it yet (the checkout wiring is KOMAD 4).
+     * right unit is charged. Null for self-billed / legacy orders. LIVE: written by
+     * FormSubmitController::startCheckout from the buyer's chosen unit, read by DodoProcessor::createCheckout.
      */
     #[ORM\Column(name: 'provider_unit_id', length: 191, nullable: true)]
     private ?string $providerUnitId = null;
@@ -207,6 +250,44 @@ class Order
     public function setSubmission(?FormSubmission $submission): static
     {
         $this->submission = $submission;
+
+        return $this;
+    }
+
+    public function getProductName(): ?string
+    {
+        return $this->productName;
+    }
+
+    public function setProductName(?string $productName): static
+    {
+        $this->productName = $productName;
+
+        return $this;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function getSubmissionData(): ?array
+    {
+        return $this->submissionData;
+    }
+
+    /** @param array<string, mixed>|null $submissionData */
+    public function setSubmissionData(?array $submissionData): static
+    {
+        $this->submissionData = $submissionData;
+
+        return $this;
+    }
+
+    public function isMerchantOfRecord(): bool
+    {
+        return $this->isMerchantOfRecord;
+    }
+
+    public function setIsMerchantOfRecord(bool $isMerchantOfRecord): static
+    {
+        $this->isMerchantOfRecord = $isMerchantOfRecord;
 
         return $this;
     }
@@ -629,10 +710,62 @@ class Order
         return null !== $this->dodoSettlementCurrency ? $amount.' '.$this->dodoSettlementCurrency : $amount;
     }
 
+    /**
+     * The product this order is FOR, as shown to a human (admin screens, order e-mails).
+     *
+     * Reads the snapshot first, so renaming or deleting the form can never rewrite what an already-paid
+     * order says it sold. The live form is only a fallback for a row whose snapshot is missing — in
+     * practice only an order that had already lost its form before the snapshot column existed (the
+     * backfill filled every row that still had one), which is why the last resort is '-'.
+     *
+     * ⚠ This is the DISPLAY resolver. getProductName() is the raw snapshot and stays that way; use this
+     * one wherever a name is rendered or mailed, so the fallback chain lives in exactly one place.
+     */
+    public function getProductLabel(): string
+    {
+        $snapshot = $this->productName;
+        if (null !== $snapshot && '' !== $snapshot) {
+            return $snapshot;
+        }
+
+        $live = $this->form?->getName();
+
+        return (null !== $live && '' !== $live) ? $live : '-';
+    }
+
+    /**
+     * The form this order came from, for the admin's "where did this come from" line — NOT the source of
+     * the order's own facts. An em-dash (the class's existing "not applicable" marker, as in
+     * getNetFormatted/getShippingFormatted) when the form has since been deleted: the order is intact,
+     * only its origin is gone, and that is a normal state rather than an error.
+     */
+    public function getSourceFormLabel(): string
+    {
+        $name = $this->form?->getName();
+
+        return (null !== $name && '' !== $name) ? $name : '—';
+    }
+
+    /**
+     * The buyer's submitted values as this order recorded them.
+     *
+     * Snapshot first, live submission as a fallback, empty as the last resort. ⚠ `??` is deliberate: an
+     * EMPTY snapshot array is a real answer ("this form had no fields / nothing was filled in") and must
+     * NOT fall through to the submission — only a NULL snapshot (never taken) does. The fallback matters
+     * because the submission hangs off a nullable FK and is CASCADE-deleted with the form, so without the
+     * snapshot a deleted form silently empties the buyer's details on every order it ever took.
+     *
+     * @return array<string, mixed>
+     */
+    private function submittedValues(): array
+    {
+        return $this->submissionData ?? $this->submission?->getData() ?? [];
+    }
+
     /** Human-readable dump of the submitted form data (ALL keys, incl. ship_*), for the CSV export. */
     public function getSubmissionSummary(): string
     {
-        $data = $this->submission?->getData() ?? [];
+        $data = $this->submittedValues();
         $lines = [];
         foreach ($data as $key => $value) {
             $lines[] = $key.': '.(is_array($value) ? implode(', ', $value) : (string) $value);
@@ -648,7 +781,7 @@ class Order
      */
     public function getFormDataSummary(): string
     {
-        $data = $this->submission?->getData() ?? [];
+        $data = $this->submittedValues();
         $shipKeys = array_keys(ShippingAddress::FIELDS);
         $lines = [];
         foreach ($data as $key => $value) {
@@ -668,7 +801,7 @@ class Order
      */
     public function getShippingAddressFormatted(): string
     {
-        $data = $this->submission?->getData() ?? [];
+        $data = $this->submittedValues();
         $get = static fn (string $key): string => trim((string) ($data[$key] ?? ''));
 
         $cityLine = trim($get('ship_postal').' '.$get('ship_city'));

@@ -54,9 +54,10 @@ class FormDefinition
 
     /**
      * The EXPLICIT "what is this form" decision (Faza 4) — the remembered type set by the create wizard,
-     * replacing the old guessing. ⚠ KOMAD 1: stored but NOT yet consumed (isProduct()/isMerchantOfRecordForm()
-     * still guess from price/Dodo). Wiring consumers to read this is KOMAD 2. Defaults to MESSAGES (a free
-     * form) so a bare `new FormDefinition()` is inert. See PLAN-FAZA-4-WIZARD.md §2.
+     * replacing the old guessing. LIVE and authoritative: isProduct()/isProductType() and
+     * isMerchantOfRecordType() read it directly, the builder's type-driven reveal keys on it, and
+     * FormSubmitController gates shipping on isPhysical(). Defaults to MESSAGES (a free form) so a bare
+     * `new FormDefinition()` is inert. See PLAN-FAZA-4-WIZARD.md §2.
      */
     #[ORM\Column(length: 16, enumType: FormType::class, options: ['default' => FormType::MESSAGES->value])]
     private FormType $formType = FormType::MESSAGES;
@@ -120,7 +121,9 @@ class FormDefinition
      * The Dodo (Merchant-of-Record) product this form sells against. Per-form so each product maps to
      * its own Dodo product (with its own tax category / entitlement config in the Dodo dashboard).
      * NULL = no Dodo product linked → a Dodo checkout for this form is refused (never a dead checkout).
-     * Set via SQL for now — the edit-form UI is Phase 3.
+     * ⚠ LEGACY since Faza 6: $morUnits is the source of truth and sellableUnits() only falls back here for
+     * a not-yet-migrated single-product form. The builder still mirrors the first unit's id into it
+     * (transitional); a later cleanup drops the column. Edited through the MoR unit picker, not SQL.
      */
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $dodoProductId = null;
@@ -131,8 +134,10 @@ class FormDefinition
      * providers live in the plugin registry (dynamic) — same shape as `Order.provider`/`allowedPaymentMethods`.
      * Meaningful ONLY on a `digital_mor` form: there it must be a registered MoR provider; on any other type
      * it MUST be null. Replaces deriving "which MoR" from `dodoProductId` (which stays the Dodo PRODUCT id,
-     * no longer a provider proxy). ⚠ KOMAD 1: stored (wizard + backfill set it) but NOT yet consumed —
-     * offeredMethods/the picker still treat Dodo as the sole MoR until KOMAD 2. See PLAN-FAZA-5-MOR-PROVIDER.md.
+     * no longer a provider proxy). LIVE: FormPaymentResolver::offeredMethods returns `[morProvider]` for a
+     * MoR form, the builder's unit picker / container import resolve the provider through
+     * PaymentProcessorRegistry::merchantOfRecord($morProvider), and MorProviderMatchesType enforces the
+     * invariant on save. See PLAN-FAZA-5-MOR-PROVIDER.md.
      */
     #[ORM\Column(length: 32, nullable: true)]
     private ?string $morProvider = null;
@@ -161,8 +166,9 @@ class FormDefinition
      * `unitId` is the provider's own sellable-unit id (Dodo product_id today; a GENERIC name so Paddle
      * (price_id) / Lemon Squeezy (variant_id) reuse it). A form is self-billed XOR MoR (by formType), so
      * only ONE of $variants/$morUnits is ever populated — but they are SEPARATE columns with SEPARATE
-     * semantics. See sellableUnits() for the read path (falls back to the single dodoProductId).
-     * ⚠ KOMAD 1: stored + backfilled, but NOT yet consumed (nobody reads it) → zero behaviour change.
+     * semantics. LIVE: sellableUnits() is the read path (falling back to the single dodoProductId) and
+     * feeds the front's unit choice, FormSubmitController's index→unit resolution, and the per-unit save
+     * guard.
      *
      * @var array<int, array{label: string, unitId: string, priceMinor?: int|null, currency?: string|null}>|null
      */

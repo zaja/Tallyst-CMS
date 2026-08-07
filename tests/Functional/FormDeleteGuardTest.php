@@ -14,8 +14,9 @@ use Tallyst\FormBuilder\Entity\Order;
 /**
  * Proves the protection lives on the ROUTE, not in the template: a form that carries orders cannot
  * be deleted even by a hand-crafted POST with a VALID CSRF token (the list no longer renders that
- * button at all). Without this, `fb_order.form_id ON DELETE CASCADE` would let one click wipe the
- * order history.
+ * button at all). When this was written, `fb_order.form_id ON DELETE CASCADE` meant one click would
+ * wipe the order history; migration Version20260807081500 made the orders survive on their own, so
+ * the rule now guards the link between a sale and its form rather than the sale itself.
  *
  * Needs the test DB (see AdminAccessTest): doctrine:database:create --env=test +
  * doctrine:migrations:migrate --env=test.
@@ -61,7 +62,7 @@ class FormDeleteGuardTest extends WebTestCase
         );
         self::assertNotNull(
             $em->getRepository(Order::class)->find($orderId),
-            'the order must survive — the CASCADE must never have been reached'
+            'the order must survive, still attached to its form — the delete never went through'
         );
         self::assertStringContainsString('cannot be deleted', $client->getResponse()->getContent());
     }
@@ -275,7 +276,8 @@ class FormDeleteGuardTest extends WebTestCase
         $em = static::getContainer()->get(EntityManagerInterface::class);
         $em->clear();
 
-        // Child-first so no FK blocks the delete; the form itself CASCADEs the rest anyway.
+        // Child-first, and the ORDERS must go explicitly: deleting the form only CASCADEs its messages
+        // now, so orders would otherwise be left behind with form_id set to NULL (SET NULL).
         foreach ($this->formIds as $id) {
             $form = $em->getRepository(FormDefinition::class)->find($id);
             if (null === $form) {

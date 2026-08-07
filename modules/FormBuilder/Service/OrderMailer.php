@@ -87,7 +87,11 @@ class OrderMailer
             'order_id' => (string) $order->getId(),
             'amount' => number_format($order->getAmountMinor() / 100, 2, ',', '.'),
             'currency' => strtoupper($order->getCurrency()),
-            'form_name' => $order->getForm()?->getName() ?? '-',
+            // The product NAME AS SOLD, from the order's own snapshot (getProductLabel falls back to the
+            // live form, then '-'). ⚠ Never read the live form here: these tags feed the refund and
+            // "delivered" mails too, which go out long after the purchase — a renamed or deleted form
+            // would otherwise rewrite what a months-old order says the customer bought.
+            'form_name' => $order->getProductLabel(),
             'variant' => $order->getVariantLabel() ?? '',
             'tax_amount' => null === $tax ? '' : number_format($tax / 100, 2, ',', '.'),
             'net_amount' => null === $net ? '' : number_format($net / 100, 2, ',', '.'),

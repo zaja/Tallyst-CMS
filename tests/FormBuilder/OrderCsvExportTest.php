@@ -57,6 +57,74 @@ class OrderCsvExportTest extends WebTestCase
         self::assertStringNotContainsString('paypal@t.local', $stripe, 'paypal orders excluded by the provider filter');
     }
 
+    /**
+     * (a) A sales export has to say what was sold. Until now it did not carry the product at all — the
+     * accountant got amounts, tax and a customer, with no way to tell one product from another.
+     */
+    public function testExportCarriesTheProductNameFromTheSnapshot(): void
+    {
+        $client = static::createClient();
+        $this->seed();
+        $client->loginUser($this->makeAdmin());
+
+        $csv = $this->export($client);
+
+        self::assertStringContainsString('Product', $csv, 'the header column (fixed English, like the other 16)');
+        self::assertStringContainsString(self::SOLD_AS, $csv, 'and the value on the row');
+        // Third column, right after ID and Date — before the money block.
+        self::assertStringContainsString('ID,Date,Product,Gross', $csv, 'product sits third in the header row');
+    }
+
+    /**
+     * (b) The whole point of the snapshot: renaming a product must not rewrite what past sales say they
+     * were. Before the snapshot existed the export had no product column at all, and reading it live off
+     * the form would have re-labelled every historical row on the next export.
+     */
+    public function testRenamingTheFormDoesNotChangeTheExportedProductName(): void
+    {
+        $client = static::createClient();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = $this->seed();
+        $client->loginUser($this->makeAdmin());
+
+        $form->setName('Renamed after the sale');
+        $em->flush();
+        $em->clear();
+
+        $csv = $this->export($client);
+
+        self::assertStringContainsString(self::SOLD_AS, $csv, 'the export keeps the name the order was sold under');
+        self::assertStringNotContainsString('Renamed after the sale', $csv, 'and never picks up the new one');
+    }
+
+    /**
+     * (c) The form is deleted outright — straight through the entity manager, as the demo uninstaller
+     * does, bypassing FormDeletionGuard. The database used to CASCADE the orders away entirely; now the
+     * row is still exported, still naming the product and still carrying the buyer's details (which came
+     * from a submission that DID go with the form).
+     */
+    public function testDeletedFormStillExportsTheRowWithProductAndCustomerData(): void
+    {
+        $client = static::createClient();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $form = $this->seed();
+        $client->loginUser($this->makeAdmin());
+
+        $em->remove($form);
+        $em->flush();
+        $em->clear();
+
+        $csv = $this->export($client);
+
+        self::assertStringContainsString('paid-stripe@t.local', $csv, 'the sale is still in the export');
+        self::assertStringContainsString(self::SOLD_AS, $csv, 'still says what was sold');
+        self::assertStringContainsString(
+            '"ime: Goran Zajec; tvrtka: Sve je dobro, j.d.o.o."',
+            $csv,
+            'and still carries the buyer, from the snapshot — the submission itself went with the form'
+        );
+    }
+
     private function export(KernelBrowser $client, array $filters = []): string
     {
         $params = ['crudControllerFqcn' => OrderCrudController::class, 'crudAction' => 'exportCsv'];
@@ -71,19 +139,23 @@ class OrderCsvExportTest extends WebTestCase
         return (string) $client->getInternalResponse()->getContent();
     }
 
-    private function seed(): void
+    /** The product name the seeded orders were sold under (the checkout snapshot). */
+    private const SOLD_AS = 'Export test';
+
+    private function seed(): FormDefinition
     {
         $em = static::getContainer()->get(EntityManagerInterface::class);
 
-        $form = (new FormDefinition())->setName('Export test')->setSlug('export-test-'.bin2hex(random_bytes(4)));
+        $form = (new FormDefinition())->setName(self::SOLD_AS)->setSlug('export-test-'.bin2hex(random_bytes(4)));
         $em->persist($form);
         $em->flush();
         $this->formId = $form->getId();
 
-        $submission = (new FormSubmission())->setForm($form)->setData([
+        $data = [
             'ime' => 'Goran Zajec',
             'tvrtka' => 'Sve je dobro, j.d.o.o.',
-        ]);
+        ];
+        $submission = (new FormSubmission())->setForm($form)->setData($data);
         $em->persist($submission);
         $em->flush();
         $this->submissionId = $submission->getId();
@@ -97,6 +169,9 @@ class OrderCsvExportTest extends WebTestCase
             $order = (new Order())
                 ->setForm($form)
                 ->setSubmission($sub)
+                // Written at checkout, exactly as FormSubmitController does.
+                ->setProductName(self::SOLD_AS)
+                ->setSubmissionData($sub?->getData())
                 ->setStatus($status)
                 ->setProvider($provider)
                 ->setPaymentMode('test')
@@ -109,6 +184,8 @@ class OrderCsvExportTest extends WebTestCase
             $em->flush();
             $this->orderIds[] = $order->getId();
         }
+
+        return $form;
     }
 
     private function makeAdmin(): User

@@ -328,9 +328,12 @@ class FormBuilderController extends AbstractController
     }
 
     /**
-     * Deleting a form CASCADES to its orders and messages in the database, so a form that carries
-     * order history must never be deletable. The guard is enforced HERE, server-side: the list also
-     * disables the button, but that is only a courtesy — a hand-crafted POST hits this same check.
+     * Deleting a form still CASCADES to its messages, but no longer to its orders — since migration
+     * Version20260807081500 those survive on their own snapshots (`fb_order.form_id` is nullable +
+     * SET NULL). A form that carries order history is nonetheless kept undeletable: severing the link
+     * between a sale and the form it came from is irreversible and should be a deliberate choice, not
+     * a side effect. The guard is enforced HERE, server-side: the list also disables the button, but
+     * that is only a courtesy — a hand-crafted POST hits this same check.
      */
     #[Route('/{id}/delete', name: 'form_builder_admin_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, FormDefinition $form): Response

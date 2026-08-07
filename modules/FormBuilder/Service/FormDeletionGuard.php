@@ -8,14 +8,23 @@ use Tallyst\FormBuilder\Repository\FormSubmissionRepository;
 use Tallyst\FormBuilder\Repository\OrderRepository;
 
 /**
- * Server-side guard that stops a form's ORDER HISTORY from being destroyed by deleting the form.
+ * Server-side guard that keeps a form with sales from being deleted out from under its orders.
  * Pure decision logic (like AdminLockoutGuard): returns a human message when the delete must be
  * blocked, or null when it's allowed.
  *
- * WHY this exists: `fb_order.form_id` is `ON DELETE CASCADE` (migration Version20260620213521),
- * so deleting a form makes the DATABASE silently delete every order placed through it — financial
- * records gone, with no PHP event and no trace. The recommended alternative is offered in the
- * message: set the form to DRAFT to take it off the site while keeping its history.
+ * WHY this exists — ⚠ THE REASON CHANGED, the guard did not. It was written when
+ * `fb_order.form_id` was `ON DELETE CASCADE`, so deleting a form made the DATABASE silently delete
+ * every order placed through it: financial records gone, no PHP event, no trace. Since migration
+ * Version20260807081500 that column is nullable + `ON DELETE SET NULL`, and an order carries its own
+ * snapshots (product name, buyer's submitted data, MoR flag), so deleting a form no longer destroys
+ * anything — the orders survive intact and keep reporting what they sold.
+ *
+ * So this is NO LONGER protection against data loss. What it still protects is the LINK between an
+ * order and the form it came from, and the admin's own record-keeping: once the form is gone that
+ * link is severed for good, the order's origin reads "—", and the form can no longer be inspected to
+ * see what was actually being sold. That is a decision the site owner should make deliberately, not
+ * discover afterwards — so the message still offers the better move: set the form to DRAFT, which
+ * takes it off the site while keeping both the history and the link.
  *
  * ⚠ THE GUARD BELONGS IN THE CONTROLLER, NEVER IN THE REPOSITORY — do NOT "move the check deeper
  * for safety". `FormDefinitionRepository::remove()` MUST stay unguarded because the demo

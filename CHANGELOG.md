@@ -10,6 +10,30 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Added
+
+- **Your orders now remember what they sold.** Each order keeps its own copy of the product name and
+  the details the buyer typed into the form, recorded at the moment of purchase. Renaming a product no
+  longer rewrites your past sales: an order placed last month still shows — and its e-mails still say —
+  the name it was actually sold under. This applies to every order e-mail, including the refund notice,
+  which can go out long after the sale.
+- **An order now survives having its form deleted.** Previously, deleting a form also deleted every
+  order ever placed through it. Now the sale stays: the product name, the amount, and the buyer's
+  details are all still there, and only the link back to the form is gone (shown as "—"). Deleting a
+  form that has orders is still blocked, as before — this is the safety net underneath that, not a
+  replacement for it. Note that messages from contact forms still go with their form, as they always
+  have.
+
+### Changed
+
+- **The orders list now has a "Product" column instead of "Form".** It shows what was sold. The order's
+  detail page shows both: the product, and underneath it the form the order came from.
+- **⚠ The orders CSV export now has 17 columns instead of 16.** A new "Product" column has been added in
+  third place, right after ID and Date, so the first few columns tell you which order, when, what, and
+  for how much without scrolling. **If you feed this file into accounting software or a spreadsheet
+  that expects columns in fixed positions, check that setup after upgrading** — everything from column
+  four onwards has shifted one place to the right. Column headings themselves are unchanged.
+
 ## [1.10.0] — 2026-08-05
 
 ### Added

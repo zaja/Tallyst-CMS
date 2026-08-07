@@ -8,6 +8,7 @@ admin:
         title: { detail: 'Order #%id%' }
         field:
             created_at: Date
+            product: Product
             form: Form
             amount: Amount
             status: Status
@@ -29,6 +30,8 @@ admin:
             invoice: Invoice
             license_key: Licence key
             submission: Form data
+        help:
+            source_form: 'The form this order was placed through. Shows "—" if that form has since been deleted — the order itself is complete either way.'
         panel:
             shipping: Delivery
             tax: Tax
