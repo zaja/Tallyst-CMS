@@ -36,6 +36,25 @@ CLAUDE.md
 /DISPLAY-TYPES-DIAGNOSIS.md
 /FONTS-DIAGNOSIS.md
 /TEMA-V2-INVENTAR.md
+
+# docs/ is PUBLIC and holds USER documentation only — an allowlist, not a blocklist.
+# Internal development notes belong in the private tallyst-docs repository, never here.
+# Why an allowlist: the patterns above are root-anchored (a leading `/`), so anything
+# placed under docs/ slipped past them — which is exactly how a handoff, a plan, the
+# decisions log and the backlog ended up sitting in a public repo, untracked but one
+# `git add -A` away from being published. Anything new in docs/ is ignored unless it is
+# named here on purpose.
+/docs/*
+!/docs/INSTALL.md
+!/docs/images/
+
+# The same families anywhere in the tree, not just at the root (no leading `/`).
+HANDOFF-*.md
+PLAN-*.md
+*-DIAGNOSIS.md
+ROADMAP.md
+decisions.md
+backlog.md
 /demo_content/arca-demo-spec.md
 /demo_content/arca-blog-expanded-1.md
 /demo_content/arca-blog-expanded-2.md
