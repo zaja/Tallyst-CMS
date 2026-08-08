@@ -375,6 +375,106 @@ class FormSubmitShippingTest extends WebTestCase
     }
 
     /**
+     * THE SNAPSHOTS ARE ACTUALLY WRITTEN — by a real purchase, not by a fixture.
+     *
+     * Every other snapshot test builds its Order by hand (setProductName(...)), which proves the READ
+     * path and nothing else: the whole suite stayed green with FormSubmitController's three snapshot
+     * writes deleted. These two tests close that hole, so they are the ones that must fail if anyone
+     * removes or breaks the write.
+     *
+     * The order is re-read after an em->clear(), so every assertion is about what is STORED — a value
+     * that only ever lived on the in-memory object would not survive this.
+     */
+    public function testRealPurchaseSnapshotsTheProductAndTheBuyersDataOnANonMoROrder(): void
+    {
+        $client = static::createClient();
+        $this->clearProviderSettings();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $settings = static::getContainer()->get(SettingsManager::class);
+
+        $settings->set('fake_processor_enabled', '1');
+        $shipKey = $this->seedCatalog($settings, 'Express', 500);
+
+        $slug = $this->seedProductForm($em, [
+            'price' => 2000,
+            'allowed' => [FakeProcessor::NAME],
+            'shipping' => [$shipKey],
+        ]);
+        $formId = end($this->formIds);
+
+        $crawler = $client->request('GET', '/'.$slug);
+        self::assertResponseIsSuccessful();
+        $client->submit($crawler->filter('button.fb-submit')->form([
+            'ship_name' => 'Ana Anić',
+            'ship_address' => 'Ilica 1',
+            'ship_city' => 'Zagreb',
+            'ship_postal' => '10000',
+            'ship_country' => 'HR',
+        ]));
+
+        $orderId = $this->latestOrder($em)?->getId();
+        self::assertNotNull($orderId, 'the purchase created an order');
+
+        // Everything below comes from a FRESH hydration, not from the objects the request left behind.
+        $em->clear();
+        $order = $em->find(Order::class, $orderId);
+        $formName = $em->find(FormDefinition::class, $formId)?->getName();
+
+        self::assertNotNull($formName);
+        self::assertSame($formName, $order->getProductName(), 'the product name was snapshotted from the form');
+
+        $snapshot = $order->getSubmissionData();
+        self::assertIsArray($snapshot, 'the buyer data snapshot was written (null = never written)');
+        self::assertSame('Ana Anić', $snapshot['ship_name'] ?? null);
+        self::assertSame('Ilica 1', $snapshot['ship_address'] ?? null);
+        self::assertSame('Zagreb', $snapshot['ship_city'] ?? null);
+        self::assertSame('10000', $snapshot['ship_postal'] ?? null);
+        self::assertContains($snapshot['ship_country'] ?? null, ['Croatia', 'Hrvatska']);
+        // A faithful copy of what was submitted — not a re-derived subset.
+        self::assertSame($order->getSubmission()?->getData(), $snapshot);
+
+        self::assertFalse($order->isMerchantOfRecord(), 'a self-billed sale is recorded as NOT merchant-of-record');
+    }
+
+    /** The other value of the same flag — a genuine Merchant-of-Record purchase records `true`. */
+    public function testRealPurchaseSnapshotsTheMerchantOfRecordFlag(): void
+    {
+        $client = static::createClient();
+        $this->clearProviderSettings();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $settings = static::getContainer()->get(SettingsManager::class);
+
+        $settings->set('fake_processor_enabled', '1');
+
+        $slug = $this->seedProductForm($em, [
+            'price' => 2000,
+            'allowed' => [FakeMoRProcessor::NAME],
+            'dodoProductId' => 'fake_prod_123',
+        ]);
+        $formId = end($this->formIds);
+
+        $crawler = $client->request('GET', '/'.$slug);
+        self::assertResponseIsSuccessful();
+        $client->submit($crawler->filter('button.fb-submit')->form());
+
+        $orderId = $this->latestOrder($em)?->getId();
+        self::assertNotNull($orderId, 'the purchase created an order');
+
+        $em->clear();
+        $order = $em->find(Order::class, $orderId);
+
+        self::assertTrue($order->isMerchantOfRecord(), 'a MoR sale is recorded as merchant-of-record');
+        self::assertSame(
+            $em->find(FormDefinition::class, $formId)?->getName(),
+            $order->getProductName(),
+            'the product name is snapshotted on a MoR purchase too'
+        );
+        // This form has no fields and no delivery address, so nothing was submitted. An EMPTY array is
+        // the correct snapshot; NULL would mean the write never ran at all.
+        self::assertSame([], $order->getSubmissionData(), 'an empty snapshot is still a written snapshot');
+    }
+
+    /**
      * Faza 4 K5: shipping/countries are for PHYSICAL forms only. A DIGITAL form that carries a (stray)
      * shipping method still offers NO delivery on the front — the type gate ignores it.
      */

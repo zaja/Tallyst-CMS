@@ -4,7 +4,6 @@ namespace Tallyst\FormBuilder\Service;
 
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Entity\FormDefinition;
-use Tallyst\FormBuilder\Repository\FormSubmissionRepository;
 use Tallyst\FormBuilder\Repository\OrderRepository;
 
 /**
@@ -32,12 +31,19 @@ use Tallyst\FormBuilder\Repository\OrderRepository;
  * directly through the entity manager, bypassing the controller entirely; a guard down there would
  * break the uninstaller's ability to remove a demo form that has demo orders. The guard protects
  * the ADMIN ACTION, not the persistence layer.
+ *
+ * ⚠ THIS GUARD COUNTS ORDERS ONLY. A `messageCount()` was removed here (with its injected
+ * FormSubmissionRepository) for the same reason ThemeDeletionGuard was deleted: nothing called it,
+ * while two green unit tests read as proof that something was protected. Its docblock even claimed
+ * it was "named exactly in the delete confirmation" — it was not. The forms list and the delete
+ * confirmation get their message counts from `FormSubmissionRepository::countByFormIds()`, one bulk
+ * query in FormBuilderController::index, and always did. Messages have never blocked a delete
+ * (testFormWithMessagesButNoOrdersIsDeleted locks that), so the guard has no reason to count them.
  */
 class FormDeletionGuard
 {
     public function __construct(
         private readonly OrderRepository $orders,
-        private readonly FormSubmissionRepository $submissions,
         private readonly TranslatorInterface $translator,
     ) {
     }
@@ -62,11 +68,5 @@ class FormDeletionGuard
     public function orderCount(FormDefinition $form): int
     {
         return null === $form->getId() ? 0 : $this->orders->countForForm($form);
-    }
-
-    /** Messages received through this form — named exactly in the delete confirmation. */
-    public function messageCount(FormDefinition $form): int
-    {
-        return null === $form->getId() ? 0 : $this->submissions->countForForm($form);
     }
 }
