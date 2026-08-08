@@ -55,6 +55,17 @@ PLAN-*.md
 ROADMAP.md
 decisions.md
 backlog.md
+
+# The project ROOT is an allowlist too — the same reasoning as docs/ above, for the same
+# reason: a name-based blocklist only catches names somebody thought of in advance, and an
+# internal note called NOTES.md or strategija.md matches none of the patterns above. Only
+# the two files that are genuinely public live at the root; anything else ending in .md
+# there is internal by default.
+# ⚠ ROOT ONLY (the leading `/`) — .md files deeper in the tree are untouched, and some of
+# them are tracked on purpose.
+/*.md
+!/README.md
+!/CHANGELOG.md
 /demo_content/arca-demo-spec.md
 /demo_content/arca-blog-expanded-1.md
 /demo_content/arca-blog-expanded-2.md
