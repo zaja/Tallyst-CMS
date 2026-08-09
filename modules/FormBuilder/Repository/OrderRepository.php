@@ -2,6 +2,7 @@
 
 namespace Tallyst\FormBuilder\Repository;
 
+use App\Entity\Customer;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Tallyst\FormBuilder\Entity\FormDefinition;
@@ -36,6 +37,39 @@ class OrderRepository extends ServiceEntityRepository
      *
      * @return Order[]
      */
+    /**
+     * Sales sitting under an address that no account has claimed yet. Matched case-insensitively,
+     * because the same person can reach two payment providers with differently-cased spellings of
+     * one mailbox, and splitting their history over that would be indefensible to them.
+     *
+     * @return list<Order>
+     */
+    public function findUnboundByEmail(string $email): array
+    {
+        return $this->createQueryBuilder('o')
+            ->andWhere('o.customer IS NULL')
+            ->andWhere('LOWER(o.customerEmail) = :email')
+            ->setParameter('email', mb_strtolower(trim($email)))
+            ->orderBy('o.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Everything this account owns, newest first — the customer's own list of purchases.
+     *
+     * @return list<Order>
+     */
+    public function findForCustomer(Customer $customer): array
+    {
+        return $this->createQueryBuilder('o')
+            ->andWhere('o.customer = :customer')
+            ->setParameter('customer', $customer)
+            ->orderBy('o.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findAllOrderedByIdDesc(): array
     {
         return $this->findBy([], ['id' => 'DESC']);

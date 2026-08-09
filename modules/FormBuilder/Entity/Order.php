@@ -2,6 +2,7 @@
 
 namespace Tallyst\FormBuilder\Entity;
 
+use App\Entity\Customer;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tallyst\FormBuilder\Repository\OrderRepository;
@@ -16,6 +17,7 @@ use Tallyst\FormBuilder\Service\ShippingAddress;
  */
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: 'fb_order')]
+#[ORM\Index(name: 'idx_order_customer_email', columns: ['customer_email'])]
 #[ORM\HasLifecycleCallbacks]
 class Order
 {
@@ -47,6 +49,23 @@ class Order
     #[ORM\ManyToOne(targetEntity: FormSubmission::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?FormSubmission $submission = null;
+
+    /**
+     * Which customer account this sale belongs to, once somebody has proven they hold the address.
+     *
+     * ⚠ A HARD link, deliberately, rather than matching on e-mail at display time: the account's
+     * address can change, and a soft match would silently drop every earlier purchase the day it did.
+     *
+     * ⚠ NULL is a normal, expected state, not a defect — it means "nobody has proven this address
+     * yet". The order simply waits, and is found by address the moment someone does.
+     *
+     * ⚠ ON DELETE SET NULL: deleting a customer account must never delete sales records. The order
+     * history is the SITE OWNER's business ledger; a buyer closing their account cannot take it with
+     * them. Same reasoning as the form link above.
+     */
+    #[ORM\ManyToOne(targetEntity: Customer::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Customer $customer = null;
 
     // --- Historical snapshots taken ONCE, at checkout. Same rule as variantLabel/shippingLabel/taxName/
     //     taxRate: what was true when the money moved, written once and never refreshed afterwards. They
@@ -250,6 +269,18 @@ class Order
     public function setSubmission(?FormSubmission $submission): static
     {
         $this->submission = $submission;
+
+        return $this;
+    }
+
+    public function getCustomer(): ?Customer
+    {
+        return $this->customer;
+    }
+
+    public function setCustomer(?Customer $customer): static
+    {
+        $this->customer = $customer;
 
         return $this;
     }

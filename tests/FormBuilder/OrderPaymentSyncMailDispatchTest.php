@@ -2,6 +2,7 @@
 
 namespace App\Tests\FormBuilder;
 
+use App\Repository\CustomerRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -54,9 +55,14 @@ class OrderPaymentSyncMailDispatchTest extends TestCase
         $pending = $this->createStub(DodoPendingLicenseRepository::class);
         $pending->method('findByPaymentId')->willReturn(null);
 
+        // No account for this buyer's address — the ordinary case, and the one that leaves the
+        // order waiting to be adopted at first login rather than bound here.
+        $customers = $this->createStub(CustomerRepository::class);
+        $customers->method('findByEmail')->willReturn(null);
+
         return new OrderPaymentSync(
             $orders, $workflow, $bus, $this->createStub(EntityManagerInterface::class),
-            $this->createStub(OrderMailer::class), new NullLogger(), $pending,
+            $this->createStub(OrderMailer::class), new NullLogger(), $pending, $customers,
         );
     }
 

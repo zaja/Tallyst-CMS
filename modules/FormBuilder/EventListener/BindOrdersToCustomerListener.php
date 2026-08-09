@@ -1,0 +1,46 @@
+<?php
+
+namespace Tallyst\FormBuilder\EventListener;
+
+use App\Customer\CustomerAuthenticatedEvent;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+use Tallyst\FormBuilder\Repository\OrderRepository;
+
+/**
+ * Attaches the sales sitting under an address to the account that has just proven it.
+ *
+ * ⚠ THIS IS THE DEPENDENCY BOUNDARY IN ACTION. Core owns the customer account and the login flow
+ * and knows nothing about orders; the module that owns orders listens for the account event and
+ * does the attaching. Support and subscriptions will hook into the same event rather than teaching
+ * Core about their tables.
+ *
+ * ⚠ It runs on EVERY confirmed login, not only the one that creates the account, and that is what
+ * makes attachment self-healing. An order paid before the account existed, one whose webhook was
+ * blocked when it mattered, or one placed before this feature shipped, is claimed the next time the
+ * buyer logs in — instead of staying orphaned because the single moment that could have claimed it
+ * has passed.
+ */
+#[AsEventListener(event: CustomerAuthenticatedEvent::class)]
+final readonly class BindOrdersToCustomerListener
+{
+    public function __construct(
+        private OrderRepository $orders,
+        private EntityManagerInterface $em,
+    ) {
+    }
+
+    public function __invoke(CustomerAuthenticatedEvent $event): void
+    {
+        $waiting = $this->orders->findUnboundByEmail($event->customer->getEmail());
+        if ([] === $waiting) {
+            return;
+        }
+
+        foreach ($waiting as $order) {
+            $order->setCustomer($event->customer);
+        }
+
+        $this->em->flush();
+    }
+}

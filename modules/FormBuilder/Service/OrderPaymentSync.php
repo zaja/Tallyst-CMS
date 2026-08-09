@@ -2,6 +2,7 @@
 
 namespace Tallyst\FormBuilder\Service;
 
+use App\Repository\CustomerRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Target;
@@ -45,6 +46,7 @@ class OrderPaymentSync
         private readonly OrderMailer $orderMailer,
         private readonly LoggerInterface $logger,
         private readonly DodoPendingLicenseRepository $pendingLicenses,
+        private readonly CustomerRepository $customers,
     ) {
     }
 
@@ -81,6 +83,12 @@ class OrderPaymentSync
             }
             if ($result->customerEmail) {
                 $order->setCustomerEmail($result->customerEmail);
+                // If this buyer already has an account, the sale is theirs straight away, so a
+                // customer who is logged in sees a purchase they just made without signing in
+                // again. When there is no account, nothing happens on purpose — an account is
+                // never created here, only claimed. The order waits, and is adopted the first time
+                // somebody proves that address (BindOrdersToCustomerListener).
+                $order->setCustomer($this->customers->findByEmail($result->customerEmail));
             }
 
             // Phase 2 passive capture (Dodo/MoR). All null for Stripe/PayPal → these are no-ops there.
