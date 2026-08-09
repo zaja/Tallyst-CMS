@@ -4,6 +4,7 @@ namespace App\Readiness;
 
 use App\Mailer\SettingsMailerTransport;
 use App\Settings\SettingsManager;
+use App\Settings\SettingsRegistry;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -38,6 +39,7 @@ class ConfigReadinessProvider implements ReadinessCheckProviderInterface
         private readonly SettingsManager $settings,
         private readonly TranslatorInterface $translator,
         private readonly SettingsMailerTransport $mailer,
+        private readonly SettingsRegistry $registry,
     ) {
     }
 
@@ -55,7 +57,7 @@ class ConfigReadinessProvider implements ReadinessCheckProviderInterface
         yield $this->checkAppEnv();
         yield $this->checkDefaultUri();
         yield $this->checkMailer();
-        if (null !== $c = $this->checkMailSecretDecryptable()) {
+        if (null !== $c = $this->checkEncryptedSettingsReadable()) {
             yield $c;
         }
         yield $this->checkMailFrom();
@@ -157,21 +159,41 @@ class ConfigReadinessProvider implements ReadinessCheckProviderInterface
     }
 
     /**
-     * Same generalisation as checkMailer(): a stored-but-undecryptable secret (lost/rotated
-     * encryption key) for whichever provider is active — worse than "unconfigured", its own
-     * PROBLEM. Reuses SettingsMailerTransport::activeProviderSecretUndecryptable(), which is
-     * itself fully generic over MailProviderRegistry (smtp included) — nothing provider-specific
-     * lives here.
+     * Stored-but-undecryptable secrets — the encryption key was lost, rotated or corrupted.
+     *
+     * ⚠ WHY THIS IS A PROBLEM AND NOT A WARNING, and why it covers EVERY encrypted setting rather
+     * than just the mail one it replaced: decrypt failure is deliberately graceful (an unreadable
+     * secret is treated as unset and falls back to the schema default or env). That was harmless
+     * when only the SMTP password was encrypted. Ten settings are encrypted now and five of them
+     * are PAYMENT credentials (Stripe/PayPal/Dodo), so a lost key silently un-configures the
+     * payment providers: the site keeps serving pages and the payments stop, with no error
+     * anywhere. This check is the only place that failure becomes visible.
+     *
+     * A lost key makes every secret unreadable at once, so this deliberately reports ALL of them
+     * and NAMES them — "Stripe secret key" tells the owner what broke; "an encrypted setting"
+     * does not. Returns null when everything is readable (isEncryptedValueReadable() is true when
+     * nothing is stored, so a site with no secrets yet is silent here, not red).
      */
-    private function checkMailSecretDecryptable(): ?Check
+    private function checkEncryptedSettingsReadable(): ?Check
     {
-        if (!$this->mailer->activeProviderSecretUndecryptable()) {
+        $broken = [];
+        foreach ($this->registry->allDefinitions() as $def) {
+            if ($def->encrypted && !$this->settings->isEncryptedValueReadable($def->key)) {
+                $broken[] = $this->t($def->label);
+            }
+        }
+
+        if ([] === $broken) {
             return null;
         }
 
-        return Check::problem($this->t(self::G_MAIL), $this->t('admin.readiness.mail_secret.label'),
-            $this->t('admin.readiness.mail_secret.detail', ['%provider%' => $this->mailer->activeProviderLabel()]),
-            $this->t('admin.readiness.mail_secret.fix'));
+        return Check::problem($this->t(self::G_SECURITY),
+            $this->t('admin.readiness.encrypted_settings.label'),
+            $this->t('admin.readiness.encrypted_settings.detail', [
+                '%count%' => \count($broken),
+                '%settings%' => implode(', ', $broken),
+            ]),
+            $this->t('admin.readiness.encrypted_settings.fix'));
     }
 
     private function checkMailFrom(): Check

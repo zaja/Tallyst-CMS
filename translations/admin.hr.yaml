@@ -304,7 +304,7 @@ admin:
             detail: { empty: 'Prazan — CSRF tokeni i potpisani URL-ovi nisu sigurni.', ok: Postavljen. }
             fix: 'app:install ga generira u .env.local; ili ručno postavi APP_SECRET na 32+ nasumičnih znakova.'
         enc_key:
-            detail: { bad: 'Nedostaje ili nije ispravan (treba base64 od 32 bajta) — enkripcija postavki (npr. tajni podatak pružatelja pošte) ne radi.', ok: 'Postavljen (32 bajta).' }
+            detail: { bad: 'Nedostaje ili nije ispravan (treba base64 od 32 bajta) — enkripcija postavki ne radi: spremljeni podaci za naplatu i poštu ne mogu se pročitati.', ok: 'Postavljen (32 bajta). Čuvaj .env.local u sigurnosnoj kopiji — bez tog ključa spremljeni podaci za naplatu i poštu ne mogu se vratiti.' }
             fix: "Pokreni app:install, ili: php8.5 -r 'echo base64_encode(random_bytes(32));' → upiši u .env.local."
         https:
             detail: { ok: 'DEFAULT_URI koristi https. (Ne potvrđuje stvarni TLS na serveru — to provjeri u pregledniku.)', warn: 'DEFAULT_URI nije https — produkcija bi trebala posluživati preko HTTPS-a.' }
@@ -322,10 +322,10 @@ admin:
             label: Pošta
             detail: { db: 'Konfigurirano preko %provider% (Postavke → Email → Isporuka).', env: Koristi MAILER_DSN iz okoline., unconfigured: '%provider% je odabran ali nije potpuno konfiguriran — reset lozinke i mailovi narudžbi neće se slati.' }
             fix: 'Postavke → Email → Isporuka: upiši polja odabranog pružatelja (ili postavi MAILER_DSN u .env.local).'
-        mail_secret:
-            label: Tajni podatak pružatelja pošte
-            detail: '%provider%-ov spremljeni tajni podatak nije moguće dekriptirati (ključ rotiran/izgubljen) — mailer pada na env fallback.'
-            fix: 'Postavke → Email → Isporuka: ponovno upiši %provider%-ovo tajno polje (re-enkriptira se trenutnim ključem).'
+        encrypted_settings:
+            label: Spremljeni tajni podaci
+            detail: 'Spremljene tajne vrijednosti (%count%) nije moguće dekriptirati — ključ za šifriranje promijenjen je ili izgubljen: %settings%. Sve što o njima ovisi (naplata, pošta) radi kao da nikad nije bilo podešeno.'
+            fix: 'Ako još imaš izvorni .env.local, vrati ga — sve se vraća odjednom. Inače ponovno upiši te vrijednosti u Postavkama; svaka se re-enkriptira trenutnim ključem.'
         mail_from:
             label: Adresa pošiljatelja
             detail: { warn: 'mail_from_email nije postavljen — pravi SMTP serveri odbijaju mail bez ispravnog From-a (553).', ok: 'Postavljena: %from%' }

@@ -305,7 +305,7 @@ admin:
             detail: { empty: 'Empty — CSRF tokens and signed URLs are unsafe.', ok: Set. }
             fix: 'app:install generates it in .env.local; or set APP_SECRET manually to 32+ random characters.'
         enc_key:
-            detail: { bad: 'Missing or invalid (needs base64 of 32 bytes) — settings encryption (e.g. the mail provider secret) does not work.', ok: 'Set (32 bytes).' }
+            detail: { bad: 'Missing or invalid (needs base64 of 32 bytes) — settings encryption does not work: the stored payment and mail secrets cannot be read.', ok: 'Set (32 bytes). Keep .env.local in your backups — without this key the stored payment and mail secrets cannot be recovered.' }
             fix: "Run app:install, or: php8.5 -r 'echo base64_encode(random_bytes(32));' → put it in .env.local."
         https:
             detail: { ok: 'DEFAULT_URI uses https. (This does not confirm real TLS on the server — check that in the browser.)', warn: 'DEFAULT_URI is not https — production should serve over HTTPS.' }
@@ -323,10 +323,10 @@ admin:
             label: Mail
             detail: { db: 'Configured via %provider% (Settings → Email → Delivery).', env: Using MAILER_DSN from the environment., unconfigured: '%provider% is selected but not fully configured — password resets and order mail will not be sent.' }
             fix: 'Settings → Email → Delivery: fill in the selected provider''s fields (or set MAILER_DSN in .env.local).'
-        mail_secret:
-            label: Mail provider secret
-            detail: '%provider%''s saved secret cannot be decrypted (the encryption key was rotated/lost) — the mailer falls back to the env.'
-            fix: 'Settings → Email → Delivery: re-enter %provider%''s secret field (it is re-encrypted with the current key).'
+        encrypted_settings:
+            label: Stored secrets
+            detail: '%count% stored secret(s) cannot be decrypted — the encryption key changed or was lost: %settings%. Anything that depends on them (payments, mail) is running as if it were never configured.'
+            fix: 'If you still have the original .env.local, restore it — everything comes back at once. Otherwise re-enter these values in Settings; each is re-encrypted with the current key.'
         mail_from:
             label: From address
             detail: { warn: 'mail_from_email is not set — real SMTP servers reject mail without a valid From (553).', ok: 'Set: %from%' }

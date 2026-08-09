@@ -10,6 +10,17 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Added
+
+- **The readiness check now tells you when your stored secrets can't be read.** Your payment keys
+  (Stripe, PayPal, Dodo) and mail credentials are stored encrypted, and the key that reads them
+  lives in `.env.local`. If that key is lost or changed — most often by restoring a site from a
+  database backup without it — those secrets become unreadable and Tallyst treats them as *not
+  configured*: the site keeps working and payments quietly stop. **System & Tools → Readiness
+  check** now reports this as a problem and names each affected setting, instead of leaving you to
+  discover it from a customer. The install guide gained a "Backing up your site" section
+  explaining what must be backed up together, and why a database dump alone is not enough.
+
 ## [1.11.0] — 2026-08-07
 
 ### Added

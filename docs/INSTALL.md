@@ -151,6 +151,23 @@ Configure SMTP in **Settings → Email**: host, port, username, password, encryp
 
 The installer sets **`APP_ENV=prod`** by default (neutral error pages, optimized) — keep that for a public site. For local development, set `APP_ENV=dev` in `.env.local` and run `php8.5 bin/console cache:clear`.
 
+### Backing up your site
+
+**⚠️ A database backup on its own is not a backup of your site.** Your Stripe, PayPal and Dodo keys and your mail credentials are stored **encrypted** in the database, and the only key that can read them lives in **`.env.local`** — which is deliberately never in the repository, so it is never in a code backup either.
+
+Back up all four together:
+
+| What | Where | Why |
+|---|---|---|
+| Database | your own dump, or `var/backups/` before an upgrade | content, orders, settings |
+| **`.env.local`** | the project root | **the key that decrypts your payment and mail secrets** |
+| `public/media/` | the project | uploads |
+| `themes/<your-theme>/` | the project | any theme you wrote |
+
+**What happens if you restore without `.env.local`:** the installer finds no key and generates a new one — correctly, since it never overwrites an existing key. But every secret already in the restored database was encrypted with the *old* key, so none of them can be read. Tallyst does not crash: an unreadable secret is treated as *not configured*. The site serves pages normally and **payments simply stop working, with no error message**. The readiness panel (**System & Tools → Readiness check**) is what will tell you this has happened — it reports unreadable secrets by name.
+
+There is no recovery without the original key. Re-entering every key by hand in Settings is the only way back.
+
 ---
 
 ## 5. Upgrading
@@ -177,7 +194,7 @@ bin/tallyst-upgrade v1.5.1
 
 `app:upgrade:finalize` dumps the **database** automatically, but can't back up what lives outside it. Back these up yourself:
 
-- **`.env.local`** — ⚠️ especially `SETTINGS_ENCRYPTION_KEY`. Losing it permanently kills your stored SMTP password (it can't be decrypted).
+- **`.env.local`** — ⚠️ especially `SETTINGS_ENCRYPTION_KEY`. It is the only thing that can read your stored secrets: the **Stripe, PayPal and Dodo keys** and your mail credentials. Lose it and none of them can be decrypted — see [Backing up your site](#backing-up-your-site).
 - **`public/media/`** — your uploads (git-ignored, never in the release).
 - **Any custom themes** under `themes/<your-theme>/`.
 
