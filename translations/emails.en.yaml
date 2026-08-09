@@ -14,3 +14,15 @@ email:
         tag:
             reset_url: Link to set a new password (required).
             site_name: The site name.
+    customer_login:
+        label: Customer login link
+        subject: 'Your login link — {site_name}'
+        body: |
+            <p>Hi,</p>
+            <p>Here is your link to see your purchases on {site_name}. Open it and press the button on the page:</p>
+            <p><a href="{login_url}">{login_url}</a></p>
+            <p>The link works once and expires in about half an hour. If you didn't ask for it, you can ignore this e-mail — nothing has been created.</p>
+            <p>{site_name}</p>
+        tag:
+            login_url: Link that signs the customer in (required).
+            site_name: The site name.

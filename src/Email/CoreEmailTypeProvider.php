@@ -23,5 +23,21 @@ class CoreEmailTypeProvider implements EmailTypeProviderInterface
             defaultSubject: 'email.password_reset.subject',
             defaultBody: 'email.password_reset.body',
         );
+
+        // The buyer's login link. Like the reset mail, this one cannot be switched off: it is the
+        // ONLY way a customer can reach their purchases, so a disabled template would lock every
+        // buyer out of the account area with no way back.
+        yield new EmailType(
+            key: 'customer_login',
+            label: 'email.customer_login.label',
+            tags: [
+                'login_url' => 'email.customer_login.tag.login_url',
+                'site_name' => 'email.customer_login.tag.site_name',
+            ],
+            requiredTags: ['login_url'],
+            canDisable: false,
+            defaultSubject: 'email.customer_login.subject',
+            defaultBody: 'email.customer_login.body',
+        );
     }
 }

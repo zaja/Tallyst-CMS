@@ -31,3 +31,21 @@ theme:
         all_posts: All posts
     footer:
         powered_by: Powered by
+    customer:
+        login:
+            title: Your purchases
+            intro: Enter the e-mail address you used when buying, and we will send you a link to your purchases.
+            email_label: E-mail address
+            submit: Send me a link
+            sent: If that address has purchases here, a login link is on its way to it.
+            sent_note: The link works once and expires in about half an hour. Check the spam folder if it does not arrive.
+        link:
+            title: Sign in
+            confirm_intro: Press the button below to open your purchases.
+            confirm: Open my purchases
+            invalid: This link no longer works. Links can be used once and expire after about half an hour.
+            request_new: Ask for a new link
+        account:
+            title: Your purchases
+            logout: Sign out
+            empty: There is nothing to show here yet.

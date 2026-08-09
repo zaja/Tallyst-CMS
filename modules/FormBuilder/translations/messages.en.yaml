@@ -31,3 +31,11 @@ form:
         processing: We have received your order %order%. Payment is still processing — you will get a confirmation e-mail as soon as it completes. You can refresh this page in a moment.
         amount: 'Amount:'
         back_home: Back to home
+    customer:
+        purchases_title: Purchases
+        purchases_none: No purchases on this account yet.
+        state:
+            pending: Awaiting payment confirmation
+            paid: Paid
+            fulfilled: Delivered
+            refunded: Refunded

@@ -1,0 +1,25 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}{{ 'theme.customer.account.title'|trans }} — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block body %}
+    <article class="page-content">
+        <header class="page-header">
+            <h1>{{ 'theme.customer.account.title'|trans }}</h1>
+            <p class="customer-identity">
+                {{ customer.email }} ·
+                <a href="{{ path('customer_logout') }}">{{ 'theme.customer.account.logout'|trans }}</a>
+            </p>
+        </header>
+
+        {# Blocks are contributed by whatever owns the data — purchases come from FormBuilder, and
+           support and subscriptions will slot in the same way. This page never knows what they are. #}
+        {% for block in blocks %}
+            {{ include(block.template, block.data) }}
+        {% else %}
+            <div class="prose"><p>{{ 'theme.customer.account.empty'|trans }}</p></div>
+        {% endfor %}
+    </article>
+{% endblock %}

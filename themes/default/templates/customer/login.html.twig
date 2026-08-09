@@ -1,0 +1,32 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}{{ 'theme.customer.login.title'|trans }} — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block body %}
+    <article class="page-content">
+        <header class="page-header">
+            <h1>{{ 'theme.customer.login.title'|trans }}</h1>
+        </header>
+
+        <div class="prose">
+            {% if sent %}
+                {# ⚠ The SAME message whether or not that address is known here. Saying "no such
+                   account" would turn this form into a way of checking whether somebody bought
+                   something. #}
+                <p>{{ 'theme.customer.login.sent'|trans }}</p>
+                <p class="customer-note">{{ 'theme.customer.login.sent_note'|trans }}</p>
+            {% else %}
+                <p>{{ 'theme.customer.login.intro'|trans }}</p>
+
+                <form method="post" class="customer-form">
+                    <input type="hidden" name="_token" value="{{ csrf_token('customer_login') }}">
+                    <label for="customer-email">{{ 'theme.customer.login.email_label'|trans }}</label>
+                    <input type="email" id="customer-email" name="email" required autocomplete="email" inputmode="email">
+                    <button type="submit" class="tallyst-btn tallyst-btn--primary">{{ 'theme.customer.login.submit'|trans }}</button>
+                </form>
+            {% endif %}
+        </div>
+    </article>
+{% endblock %}

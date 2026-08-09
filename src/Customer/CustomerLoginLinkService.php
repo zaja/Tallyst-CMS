@@ -63,6 +63,9 @@ class CustomerLoginLinkService
         $expiresAt ??= new \DateTimeImmutable(self::LIFETIME);
 
         $this->em->persist(new CustomerLoginRequest($email, $selector, $this->hash($verifier), $expiresAt));
+        // Flushed here, not left to a later one: the mail goes out immediately after this returns,
+        // and a link whose request was never written is a link that is broken the moment it lands.
+        $this->em->flush();
 
         return new LoginLinkResult($email, $selector, $verifier, $expiresAt);
     }

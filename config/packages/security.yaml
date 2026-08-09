@@ -9,6 +9,13 @@ security:
             entity:
                 class: App\Entity\User
                 property: email
+        # Buyers. A SEPARATE provider from staff, deliberately: ^/admin is fail-open, so keeping
+        # the two in one provider would mean a single forgotten lock could put a buyer in the
+        # back-office. Customer has no password — the e-mail link is the credential.
+        customer_provider:
+            entity:
+                class: App\Entity\Customer
+                property: email
 
     # ROLE_ADMIN inherits ROLE_EDITOR: existing admins keep full access automatically.
     role_hierarchy:
@@ -19,6 +26,25 @@ security:
             # Ensure dev tools and static assets are always allowed
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
+        # ⚠ MUST come before `main`, which has no `pattern` and therefore matches everything.
+        # Firewalls are matched in order, so declaring this second would mean it never runs.
+        #
+        # No form_login and no logout password check: there is no customer password anywhere in the
+        # system. Authentication happens in CustomerAccountController, which confirms an e-mail link
+        # and then logs the customer in programmatically.
+        customer:
+            pattern: ^/account
+            lazy: true
+            provider: customer_provider
+            # A separate context, so a customer session and a staff session can never be mistaken
+            # for one another in either direction.
+            context: customer
+            custom_authenticators:
+                - App\Security\CustomerLoginLinkAuthenticator
+            entry_point: App\Security\CustomerLoginLinkAuthenticator
+            logout:
+                path: customer_logout
+                target: customer_login
         main:
             lazy: true
             provider: app_user_provider
@@ -49,6 +75,11 @@ security:
     # (editor=content, admin=everything) is enforced on each controller via #[IsGranted]
     # — NOT here and NOT by hiding the menu. See CLAUDE.md "Roles & access".
     access_control:
+        # The customer's own pages. The login page must be reachable by someone who is not logged
+        # in — that is its entire purpose — so it comes first, and the rest of /account demands a
+        # proven buyer. ROLE_CUSTOMER is flat and inherits nothing, so it can never resolve to staff.
+        - { path: ^/account/(login|link), roles: PUBLIC_ACCESS }
+        - { path: ^/account, roles: ROLE_CUSTOMER }
         - { path: ^/admin/login, roles: PUBLIC_ACCESS }
         # Forgot-password flow must be reachable by someone who CAN'T log in — so PUBLIC,
         # and it MUST come before ^/admin (first-match) or it would demand ROLE_EDITOR.
