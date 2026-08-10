@@ -1,7 +1,19 @@
 # admin domain (hr) — FormBuilder back-office (Orders).
 admin:
-    menu: { forms: Forme, orders: Narudžbe }
+    menu: { forms: Forme, orders: Narudžbe, order_assignment: Nepripisane narudžbe }
     module: { desc: { form_builder: 'Gradnja formi s uvjetnom logikom; [form id=N] pretvara sadržaj stranice u formu.' } }
+    order_assignment:
+        title: Pripiši narudžbu računu
+        intro: 'Ove narudžbe ne pripadaju nijednom računu. To se dogodi kad kupac krivo upiše adresu kod pružatelja plaćanja, ili kad izgubi pristup sandučiću pa se ne može prijaviti — ovo mu je jedini put natrag.'
+        search: Nađi račun
+        search_placeholder: Traži račune po e-mailu…
+        search_first: Prvo potraži račun
+        no_accounts: 'Nijedan račun ne odgovara pojmu „%q%".'
+        none: Sve narudžbe pripadaju nekom računu.
+        assign: Pripiši
+        confirm: Pripisati ovu narudžbu odabranom računu?
+        col: { order: Narudžba, product: Proizvod, paid_address: Plaćeno s, assign_to: Pripiši računu }
+        flash: { assigned: 'Narudžba #%order% sada pripada računu %email%.', not_found: 'Ta narudžba ili račun više ne postoji.' }
     order:
         entity: { singular: Narudžba, plural: Narudžbe }
         title: { detail: 'Narudžba #%id%' }

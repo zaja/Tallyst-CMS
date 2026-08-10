@@ -33,11 +33,6 @@ class OrderRepository extends ServiceEntityRepository
     }
 
     /**
-     * All orders, newest first — for the accountant CSV export.
-     *
-     * @return Order[]
-     */
-    /**
      * Sales sitting under an address that no account has claimed yet. Matched case-insensitively,
      * because the same person can reach two payment providers with differently-cased spellings of
      * one mailbox, and splitting their history over that would be indefensible to them.
@@ -51,6 +46,21 @@ class OrderRepository extends ServiceEntityRepository
             ->andWhere('LOWER(o.customerEmail) = :email')
             ->setParameter('email', mb_strtolower(trim($email)))
             ->orderBy('o.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Sales that belong to no account at all — the working list for the manual-assignment screen.
+     *
+     * @return list<Order>
+     */
+    public function findUnassigned(int $limit = 100): array
+    {
+        return $this->createQueryBuilder('o')
+            ->andWhere('o.customer IS NULL')
+            ->orderBy('o.id', 'DESC')
+            ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
     }
@@ -70,6 +80,11 @@ class OrderRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * All orders, newest first — for the accountant CSV export.
+     *
+     * @return Order[]
+     */
     public function findAllOrderedByIdDesc(): array
     {
         return $this->findBy([], ['id' => 'DESC']);

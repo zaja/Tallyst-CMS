@@ -1,0 +1,80 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}{{ 'admin.order_assignment.title'|trans({}, 'admin') }}{% endblock %}
+
+{% block main %}
+    <div class="content-panel">
+        <div class="content-panel-body">
+            <p>{{ 'admin.order_assignment.intro'|trans({}, 'admin') }}</p>
+
+            {# Searched on demand only: listing every account by default would put the shop's whole
+               customer list on a screen whose job is to fix one order. #}
+            {# ⚠ The action is EXPLICIT and must stay that way. EasyAdmin's sidebar links here as
+               `/admin?routeName=form_builder_order_assignment` — the dashboard path — and renders
+               this screen there. A form without an action submits to the CURRENT path, which means
+               the search would go to /admin and land the admin back on the dashboard. #}
+            <form method="get" action="{{ path('form_builder_order_assignment') }}" class="mb-4">
+                <div class="input-group">
+                    <input type="search" name="q" value="{{ q }}" class="form-control"
+                           placeholder="{{ 'admin.order_assignment.search_placeholder'|trans({}, 'admin') }}">
+                    <button type="submit" class="btn btn-secondary">{{ 'admin.order_assignment.search'|trans({}, 'admin') }}</button>
+                </div>
+            </form>
+
+            {% if q is not empty and matches is empty %}
+                <p class="text-muted">{{ 'admin.order_assignment.no_accounts'|trans({'%q%': q}, 'admin') }}</p>
+            {% endif %}
+
+            {% if orders is empty %}
+                <p class="text-muted">{{ 'admin.order_assignment.none'|trans({}, 'admin') }}</p>
+            {% else %}
+                <table class="table datagrid">
+                    <thead>
+                        <tr>
+                            <th>{{ 'admin.order_assignment.col.order'|trans({}, 'admin') }}</th>
+                            <th>{{ 'admin.order_assignment.col.product'|trans({}, 'admin') }}</th>
+                            <th>{{ 'admin.order_assignment.col.paid_address'|trans({}, 'admin') }}</th>
+                            <th>{{ 'admin.order_assignment.col.assign_to'|trans({}, 'admin') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>
+                                    {{ order.productLabel }}<br>
+                                    <small class="text-muted">
+                                        {{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}
+                                        · {{ order.status }}
+                                    </small>
+                                </td>
+                                {# The address the sale was PAID with. It never changes, whoever the
+                                   order ends up assigned to — it is part of the record of the sale. #}
+                                <td><small>{{ order.customerEmail ?: '—' }}</small></td>
+                                <td>
+                                    {% if matches is empty %}
+                                        <small class="text-muted">{{ 'admin.order_assignment.search_first'|trans({}, 'admin') }}</small>
+                                    {% else %}
+                                        <form method="post" action="{{ path('form_builder_order_assign') }}" class="d-flex gap-2">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('order_assign') }}">
+                                            <input type="hidden" name="order" value="{{ order.id }}">
+                                            <select name="customer" class="form-select form-select-sm">
+                                                {% for c in matches %}
+                                                    <option value="{{ c.id }}">{{ c.email }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn btn-primary btn-sm"
+                                                    onclick="return confirm('{{ 'admin.order_assignment.confirm'|trans({}, 'admin')|e('js') }}')">
+                                                <span class="btn-label">{{ 'admin.order_assignment.assign'|trans({}, 'admin') }}</span>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

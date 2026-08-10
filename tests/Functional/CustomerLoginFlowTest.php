@@ -16,6 +16,19 @@ class CustomerLoginFlowTest extends WebTestCase
 {
     use MailerAssertionsTrait;
 
+    /**
+     * ⚠ Rows created here must not survive the run. Nothing counts customers today, but leaving
+     * them behind is exactly how this suite's order tests broke earlier in this feature: a test
+     * that counts a whole table is one stray row away from failing for reasons nobody can see.
+     */
+    protected function tearDown(): void
+    {
+        $conn = self::getContainer()->get(EntityManagerInterface::class)->getConnection();
+        $conn->executeStatement("DELETE FROM customer_login_request WHERE email LIKE 'buyer.%@example.com'");
+        $conn->executeStatement("DELETE FROM customer WHERE email LIKE 'buyer.%@example.com'");
+        parent::tearDown();
+    }
+
     private function uniqueEmail(): string
     {
         return 'buyer.'.uniqid().'@example.com';

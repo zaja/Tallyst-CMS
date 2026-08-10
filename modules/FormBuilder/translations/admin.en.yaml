@@ -1,8 +1,20 @@
 # admin domain (en) — FormBuilder back-office (Orders). Auto-discovered via the bundle.
 admin:
     # Sidebar items the module contributes via getAdminMenuItems() (merge into core admin.menu.*).
-    menu: { forms: Forms, orders: Orders }
+    menu: { forms: Forms, orders: Orders, order_assignment: Unassigned orders }
     module: { desc: { form_builder: 'Build forms with conditional logic; [form id=N] turns page content into a form.' } }
+    order_assignment:
+        title: Assign an order to an account
+        intro: 'Orders here belong to no account. That happens when a buyer mistyped their address at the payment provider, or when they have lost access to their mailbox and cannot sign in — this is the only way back for them.'
+        search: Find account
+        search_placeholder: Search accounts by e-mail…
+        search_first: Search for an account first
+        no_accounts: 'No account matches "%q%".'
+        none: Every order belongs to an account.
+        assign: Assign
+        confirm: Assign this order to the selected account?
+        col: { order: Order, product: Product, paid_address: Paid with, assign_to: Assign to }
+        flash: { assigned: 'Order #%order% now belongs to %email%.', not_found: 'That order or account no longer exists.' }
     order:
         entity: { singular: Order, plural: Orders }
         title: { detail: 'Order #%id%' }

@@ -31,6 +31,8 @@ form:
         processing: We have received your order %order%. Payment is still processing — you will get a confirmation e-mail as soon as it completes. You can refresh this page in a moment.
         amount: 'Amount:'
         back_home: Back to home
+        account_cta: Send me a link to all my purchases
+        account_sent: Check your inbox — a link to your purchases is on its way.
     customer:
         purchases_title: Purchases
         purchases_none: No purchases on this account yet.

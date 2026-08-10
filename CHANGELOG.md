@@ -12,6 +12,18 @@ core-API change is a MAJOR (flagged ⚠).
 
 ### Added
 
+- **Customer accounts.** Buyers can now see everything they have bought. There are no passwords:
+  they enter their e-mail address, receive a link, and press a button on the page it opens — that
+  button is what signs them in, so a link fetched by a corporate mail filter before the customer
+  sees it is not wasted. An account is created only when somebody proves they hold the address,
+  never at purchase, and older orders placed under that address are attached the first time they
+  sign in. Buyers are kept entirely separate from your staff accounts and cannot reach the
+  back-office. The thank-you page now shows the purchase and its state immediately, without waiting
+  for any e-mail, and offers to send a link to the address already on the order. A new **Sales →
+  Unassigned orders** screen lets you attach an order to an account by hand — the way back for a
+  customer who mistyped their address, or who has lost access to their mailbox and would otherwise
+  be locked out for good.
+
 - **The readiness check now tells you when your stored secrets can't be read.** Your payment keys
   (Stripe, PayPal, Dodo) and mail credentials are stored encrypted, and the key that reads them
   lives in `.env.local`. If that key is lost or changed — most often by restoring a site from a

@@ -2,6 +2,9 @@
 
 namespace Tallyst\FormBuilder\Controller;
 
+use App\Customer\CustomerLoginLinkService;
+use App\Email\EmailSender;
+use App\Settings\SettingsManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -188,7 +191,57 @@ class FormSubmitController extends AbstractController
             $this->logger->warning('Payment finalize-return failed.', ['order' => $order->getId(), 'error' => $e->getMessage()]);
         }
 
-        return $this->render('@FormBuilder/form/thank_you.html.twig', ['order' => $order]);
+        return $this->render('@FormBuilder/form/thank_you.html.twig', [
+            'order' => $order,
+            // Offered only when there is somewhere to send it. Right after checkout the webhook may
+            // not have landed yet, so the order can legitimately have no address — in that case the
+            // buyer still sees their purchase, just without the offer.
+            'can_offer_account' => '' !== (string) $order->getCustomerEmail(),
+            'sent' => $request->query->getBoolean('sent'),
+        ]);
+    }
+
+    /**
+     * Sends the buyer a link to their account, using the address already on the order — they have
+     * just typed it at the payment provider and must not be asked for it again.
+     *
+     * ⚠ Guarded by the SAME order token as the thank-you page. Without that, anyone could make the
+     * site send mail to the address on any order by guessing sequential ids.
+     *
+     * ⚠ This does NOT create an account, and must not: paying proves a card works, not that the
+     * buyer holds the mailbox. The account appears only when they follow the link and confirm it.
+     */
+    #[Route('/form/order/{id}/account-link', name: 'form_builder_order_account_link', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function requestAccountLink(Order $order, Request $request, CustomerLoginLinkService $links, EmailSender $emails, SettingsManager $settings): Response
+    {
+        $token = $order->getThankYouToken();
+        if (null === $token || !hash_equals($token, (string) $request->request->get('t', ''))) {
+            throw $this->createNotFoundException();
+        }
+
+        $email = (string) $order->getCustomerEmail();
+        if ('' !== $email && $links->isAllowedToRequest($email)) {
+            try {
+                $link = $links->issue($email);
+                $emails->send('customer_login', [
+                    'login_url' => $this->generateUrl('customer_login_link', [
+                        'selector' => $link->selector,
+                        'v' => $link->verifier,
+                    ], UrlGeneratorInterface::ABSOLUTE_URL),
+                    'site_name' => (string) $settings->get('site_name'),
+                ], $link->email);
+            } catch (\Throwable $e) {
+                $this->logger->error('Account link from thank-you page failed.', ['order' => $order->getId(), 'exception' => $e]);
+            }
+        }
+
+        // Redirect, not a rendered response: the front runs Turbo, which refuses to render a 200
+        // answer to a form submission, and the buyer would see nothing happen.
+        return $this->redirectToRoute('form_builder_order_thankyou', [
+            'id' => $order->getId(),
+            't' => $token,
+            'sent' => 1,
+        ]);
     }
 
     private function startCheckout(FormDefinition $form, FormSubmission $submission, Request $request, string $return): Response

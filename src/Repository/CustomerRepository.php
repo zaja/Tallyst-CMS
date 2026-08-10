@@ -30,6 +30,28 @@ class CustomerRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * Accounts matching a fragment of an address — how an admin finds the right one when assigning
+     * an order by hand. Capped, because this is a picker and not a report.
+     *
+     * @return list<Customer>
+     */
+    public function search(string $term, int $limit = 20): array
+    {
+        $term = trim($term);
+        if ('' === $term) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('c')
+            ->andWhere('LOWER(c.email) LIKE :term')
+            ->setParameter('term', '%'.self::normalise($term).'%')
+            ->orderBy('c.email', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
     public static function normalise(string $email): string
     {
         return mb_strtolower(trim($email));

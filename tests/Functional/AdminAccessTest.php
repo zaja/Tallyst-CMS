@@ -28,6 +28,7 @@ class AdminAccessTest extends WebTestCase
         '/admin/settings', '/admin/modules', '/admin/user', '/admin/order',
         '/admin/themes', '/admin/menu', '/admin/menu-item', '/admin/setting',
         '/admin/forms', '/admin/email', '/admin/readiness', '/admin/demo',
+        '/admin/order-assignment',
         // Settings tabs are routed pages now — a representative set (consolidated + standalone
         // + module tabs), each guarded by the same class-level ROLE_ADMIN as /admin/settings.
         '/admin/settings/general', '/admin/settings/branding', '/admin/settings/header_footer',

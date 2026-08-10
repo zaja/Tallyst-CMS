@@ -51,6 +51,7 @@ class FormBuilderModule implements AdminModuleInterface
             ],
             AdminModuleInterface::SECTION_SALES => [
                 MenuItem::linkTo(OrderCrudController::class, 'admin.menu.orders', 'fa fa-receipt')->setPermission('ROLE_ADMIN'),
+                MenuItem::linkToRoute('admin.menu.order_assignment', 'fa fa-user-plus', 'form_builder_order_assignment')->setPermission('ROLE_ADMIN'),
             ],
         ];
     }

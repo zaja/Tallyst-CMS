@@ -31,6 +31,8 @@ form:
         processing: Zaprimili smo vašu narudžbu %order%. Plaćanje se još obrađuje — potvrdu ćete dobiti e-mailom čim bude dovršeno. Možete osvježiti ovu stranicu za nekoliko trenutaka.
         amount: 'Iznos:'
         back_home: Natrag na početnu
+        account_cta: Pošalji mi poveznicu na sve moje kupnje
+        account_sent: Provjeri sandučić — poveznica na tvoje kupnje je na putu.
     customer:
         purchases_title: Kupnje
         purchases_none: Na ovom računu još nema kupnji.

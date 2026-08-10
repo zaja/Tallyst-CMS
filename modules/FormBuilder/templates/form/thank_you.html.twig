@@ -16,10 +16,29 @@
             <p>{{ 'form.thankyou.processing'|trans({'%order%': order_ref})|raw }}</p>
         {% endif %}
 
-        <p>
-            {{ 'form.thankyou.amount'|trans }}
-            <strong>{{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}</strong>
+        {# ⚠ WHAT they bought and its state, right here, WITHOUT waiting for any mail. The buyer has
+           just paid and is unsure whether it worked; our mail goes out asynchronously through a
+           worker, so a page that only promised an e-mail would leave them with nothing when that
+           worker is stopped or behind. The order's own token already proves they are the person who
+           completed this checkout, which is enough to show this one purchase. #}
+        <p class="fb-thankyou-product">
+            <strong>{{ order.productLabel }}</strong>
+            — {{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}
         </p>
+        <p class="fb-thankyou-state">{{ ('form.customer.state.' ~ order.status)|trans }}</p>
+
+        {% if sent %}
+            <p class="fb-thankyou-account">{{ 'form.thankyou.account_sent'|trans }}</p>
+        {% elseif can_offer_account %}
+            {# The address is already on the order — asking the buyer to type it again would be
+               asking for something they just gave the payment provider. Offered, never taken:
+               paying proves a card works, not that they hold the mailbox, so no account is created
+               until they follow the link and confirm it. #}
+            <form method="post" action="{{ path('form_builder_order_account_link', {id: order.id}) }}" class="fb-thankyou-account">
+                <input type="hidden" name="t" value="{{ order.thankYouToken }}">
+                <button type="submit" class="tallyst-btn tallyst-btn--secondary">{{ 'form.thankyou.account_cta'|trans }}</button>
+            </form>
+        {% endif %}
 
         <p><a href="{{ path('home') }}">{{ icon('arrow-left') }} {{ 'form.thankyou.back_home'|trans }}</a></p>
     </article>
