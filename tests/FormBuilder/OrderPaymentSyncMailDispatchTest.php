@@ -2,7 +2,7 @@
 
 namespace App\Tests\FormBuilder;
 
-use App\Repository\CustomerRepository;
+use App\Repository\MemberRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -57,12 +57,12 @@ class OrderPaymentSyncMailDispatchTest extends TestCase
 
         // No account for this buyer's address — the ordinary case, and the one that leaves the
         // order waiting to be adopted at first login rather than bound here.
-        $customers = $this->createStub(CustomerRepository::class);
-        $customers->method('findByEmail')->willReturn(null);
+        $members = $this->createStub(MemberRepository::class);
+        $members->method('findByEmail')->willReturn(null);
 
         return new OrderPaymentSync(
             $orders, $workflow, $bus, $this->createStub(EntityManagerInterface::class),
-            $this->createStub(OrderMailer::class), new NullLogger(), $pending, $customers,
+            $this->createStub(OrderMailer::class), new NullLogger(), $pending, $members,
         );
     }
 

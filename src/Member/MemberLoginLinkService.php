@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Customer;
+namespace App\Member;
 
-use App\Entity\Customer;
-use App\Entity\CustomerLoginRequest;
-use App\Repository\CustomerLoginRequestRepository;
-use App\Repository\CustomerRepository;
+use App\Entity\Member;
+use App\Entity\MemberLoginRequest;
+use App\Repository\MemberLoginRequestRepository;
+use App\Repository\MemberRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
- * Issues and verifies the e-mail login link — the only credential a customer has.
+ * Issues and verifies the e-mail login link — the only credential a member has.
  *
  * ⚠ RESOLVE AND CONFIRM ARE TWO DIFFERENT THINGS, AND THE SPLIT IS THE POINT. `resolve()` answers
  * "is this link valid?" and changes nothing; `confirm()` spends it. Opening the link only resolves,
  * and a button press confirms. Corporate mail filters and some clients fetch every URL in a message
- * before a human sees it — if opening spent the token, those customers would hit "this link has
+ * before a human sees it — if opening spent the token, those members would hit "this link has
  * expired" every time, reproducibly, and it would look like our fault. The same split stops a link
  * from signing in somebody who clicked without meaning to.
  *
@@ -25,7 +25,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * reused because its request row requires an existing User, and ours is issued to an address that
  * usually has no account at all.
  */
-class CustomerLoginLinkService
+class MemberLoginLinkService
 {
     /** Long enough that a link survives a slow inbox, short enough that a forwarded mail goes stale. */
     public const LIFETIME = '+30 minutes';
@@ -35,8 +35,8 @@ class CustomerLoginLinkService
     public const THROTTLE_WINDOW = '-1 hour';
 
     public function __construct(
-        private readonly CustomerLoginRequestRepository $requests,
-        private readonly CustomerRepository $customers,
+        private readonly MemberLoginRequestRepository $requests,
+        private readonly MemberRepository $members,
         private readonly EntityManagerInterface $em,
         private readonly EventDispatcherInterface $events,
     ) {
@@ -57,12 +57,12 @@ class CustomerLoginLinkService
      */
     public function issue(string $email, ?\DateTimeImmutable $expiresAt = null): LoginLinkResult
     {
-        $email = CustomerRepository::normalise($email);
+        $email = MemberRepository::normalise($email);
         $selector = bin2hex(random_bytes(16));
         $verifier = bin2hex(random_bytes(32));
         $expiresAt ??= new \DateTimeImmutable(self::LIFETIME);
 
-        $this->em->persist(new CustomerLoginRequest($email, $selector, $this->hash($verifier), $expiresAt));
+        $this->em->persist(new MemberLoginRequest($email, $selector, $this->hash($verifier), $expiresAt));
         // Flushed here, not left to a later one: the mail goes out immediately after this returns,
         // and a link whose request was never written is a link that is broken the moment it lands.
         $this->em->flush();
@@ -74,7 +74,7 @@ class CustomerLoginLinkService
      * Validates without spending. Returns null for anything wrong — unknown selector, bad verifier,
      * expired — with no distinction between them, so a caller cannot learn which.
      */
-    public function resolve(string $selector, string $verifier): ?CustomerLoginRequest
+    public function resolve(string $selector, string $verifier): ?MemberLoginRequest
     {
         $request = $this->requests->findBySelector($selector);
         if (null === $request || $request->isExpired()) {
@@ -96,7 +96,7 @@ class CustomerLoginLinkService
      * existed have to be indistinguishable, or the difference itself reveals that an address is in
      * use. Returns null on any failure, again without saying which.
      */
-    public function confirm(string $selector, string $verifier): ?Customer
+    public function confirm(string $selector, string $verifier): ?Member
     {
         $request = $this->resolve($selector, $verifier);
         if (null === $request) {
@@ -105,20 +105,20 @@ class CustomerLoginLinkService
 
         $this->em->remove($request);
 
-        $customer = $this->customers->findByEmail($request->getEmail());
-        $created = null === $customer;
+        $member = $this->members->findByEmail($request->getEmail());
+        $created = null === $member;
         if ($created) {
-            $customer = new Customer($request->getEmail());
-            $this->em->persist($customer);
+            $member = new Member($request->getEmail());
+            $this->em->persist($member);
         }
 
-        $customer->touchLastLogin();
+        $member->touchLastLogin();
         $this->em->flush();
 
-        // After the flush, so a listener attaching sales is working with a customer that has an id.
-        $this->events->dispatch(new CustomerAuthenticatedEvent($customer, $created));
+        // After the flush, so a listener attaching sales is working with a member that has an id.
+        $this->events->dispatch(new MemberAuthenticatedEvent($member, $created));
 
-        return $customer;
+        return $member;
     }
 
     private function hash(string $verifier): string

@@ -2,7 +2,7 @@
 
 namespace Tallyst\FormBuilder\EventListener;
 
-use App\Customer\CustomerAuthenticatedEvent;
+use App\Member\MemberAuthenticatedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Tallyst\FormBuilder\Repository\OrderRepository;
@@ -10,7 +10,7 @@ use Tallyst\FormBuilder\Repository\OrderRepository;
 /**
  * Attaches the sales sitting under an address to the account that has just proven it.
  *
- * ⚠ THIS IS THE DEPENDENCY BOUNDARY IN ACTION. Core owns the customer account and the login flow
+ * ⚠ THIS IS THE DEPENDENCY BOUNDARY IN ACTION. Core owns the member account and the login flow
  * and knows nothing about orders; the module that owns orders listens for the account event and
  * does the attaching. Support and subscriptions will hook into the same event rather than teaching
  * Core about their tables.
@@ -21,8 +21,8 @@ use Tallyst\FormBuilder\Repository\OrderRepository;
  * buyer logs in — instead of staying orphaned because the single moment that could have claimed it
  * has passed.
  */
-#[AsEventListener(event: CustomerAuthenticatedEvent::class)]
-final readonly class BindOrdersToCustomerListener
+#[AsEventListener(event: MemberAuthenticatedEvent::class)]
+final readonly class BindOrdersToMemberListener
 {
     public function __construct(
         private OrderRepository $orders,
@@ -30,15 +30,15 @@ final readonly class BindOrdersToCustomerListener
     ) {
     }
 
-    public function __invoke(CustomerAuthenticatedEvent $event): void
+    public function __invoke(MemberAuthenticatedEvent $event): void
     {
-        $waiting = $this->orders->findUnboundByEmail($event->customer->getEmail());
+        $waiting = $this->orders->findUnboundByEmail($event->member->getEmail());
         if ([] === $waiting) {
             return;
         }
 
         foreach ($waiting as $order) {
-            $order->setCustomer($event->customer);
+            $order->setMember($event->member);
         }
 
         $this->em->flush();

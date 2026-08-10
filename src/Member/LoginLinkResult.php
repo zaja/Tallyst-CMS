@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Customer;
+namespace App\Member;
 
 /**
  * A freshly issued login link, as the caller needs it: the two token halves in the clear, so the

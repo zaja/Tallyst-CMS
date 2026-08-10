@@ -2,7 +2,7 @@
 
 namespace App\Tests\Functional;
 
-use App\Entity\Customer;
+use App\Entity\Member;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -28,7 +28,7 @@ class OrderAssignmentTest extends WebTestCase
         foreach ($this->orderIds as $id) {
             $conn->executeStatement('DELETE FROM fb_order WHERE id = ?', [$id]);
         }
-        $conn->executeStatement("DELETE FROM customer WHERE email LIKE 'assign.%@example.com'");
+        $conn->executeStatement("DELETE FROM `member` WHERE email LIKE 'assign.%@example.com'");
         $this->orderIds = [];
         parent::tearDown();
     }
@@ -43,7 +43,7 @@ class OrderAssignmentTest extends WebTestCase
         $client->loginUser($admin);
     }
 
-    private function order(?Customer $customer = null, ?string $email = null): Order
+    private function order(?Member $member = null, ?string $email = null): Order
     {
         $em = self::getContainer()->get(EntityManagerInterface::class);
         $order = (new Order())
@@ -52,7 +52,7 @@ class OrderAssignmentTest extends WebTestCase
             ->setCurrency('eur')
             ->setProductName('Unclaimed thing')
             ->setCustomerEmail($email)
-            ->setCustomer($customer);
+            ->setMember($member);
         $em->persist($order);
         $em->flush();
         $this->orderIds[] = (int) $order->getId();
@@ -60,10 +60,10 @@ class OrderAssignmentTest extends WebTestCase
         return $order;
     }
 
-    private function customer(): Customer
+    private function customer(): Member
     {
         $em = self::getContainer()->get(EntityManagerInterface::class);
-        $c = new Customer('assign.'.uniqid().'@example.com');
+        $c = new Member('assign.'.uniqid().'@example.com');
         $em->persist($c);
         $em->flush();
 
@@ -102,11 +102,11 @@ class OrderAssignmentTest extends WebTestCase
         $client = static::createClient();
         $this->admin($client);
         $order = $this->order();
-        $customer = $this->customer();
+        $member = $this->customer();
 
         // Submit the real form from the real page — the way an admin does it, and the only way to
         // get a CSRF token that the same session will accept.
-        $client->request('GET', '/admin/order-assignment?q='.urlencode($customer->getEmail()));
+        $client->request('GET', '/admin/order-assignment?q='.urlencode($member->getEmail()));
         $form = $client->getCrawler()->filter('form[method="post"]')->form();
         $form['order'] = (string) $order->getId();
         $client->submit($form);
@@ -116,7 +116,7 @@ class OrderAssignmentTest extends WebTestCase
         $em = self::getContainer()->get(EntityManagerInterface::class);
         $em->clear();
         $fresh = $em->getRepository(Order::class)->find($order->getId());
-        self::assertSame($customer->getId(), $fresh?->getCustomer()?->getId());
+        self::assertSame($member->getId(), $fresh?->getMember()?->getId());
     }
 
     /** ⚠ Without CSRF, a link in an e-mail could move somebody's purchase to a stranger's account. */
@@ -125,17 +125,17 @@ class OrderAssignmentTest extends WebTestCase
         $client = static::createClient();
         $this->admin($client);
         $order = $this->order();
-        $customer = $this->customer();
+        $member = $this->customer();
 
         $client->request('POST', '/admin/order-assignment/assign', [
             'order' => $order->getId(),
-            'customer' => $customer->getId(),
+            'member' => $member->getId(),
             '_token' => 'not-a-token',
         ]);
 
         $em = self::getContainer()->get(EntityManagerInterface::class);
         $em->clear();
-        self::assertNull($em->getRepository(Order::class)->find($order->getId())?->getCustomer());
+        self::assertNull($em->getRepository(Order::class)->find($order->getId())?->getMember());
     }
 
     /**
@@ -169,10 +169,10 @@ class OrderAssignmentTest extends WebTestCase
     {
         $client = static::createClient();
         $this->admin($client);
-        $customer = $this->customer();
+        $member = $this->customer();
 
-        $client->request('GET', '/admin/order-assignment?q='.urlencode($customer->getEmail()));
+        $client->request('GET', '/admin/order-assignment?q='.urlencode($member->getEmail()));
 
-        self::assertStringContainsString($customer->getEmail(), (string) $client->getResponse()->getContent());
+        self::assertStringContainsString($member->getEmail(), (string) $client->getResponse()->getContent());
     }
 }

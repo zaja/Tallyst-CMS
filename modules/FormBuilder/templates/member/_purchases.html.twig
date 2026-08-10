@@ -4,25 +4,25 @@
    ⚠ EVERY order is listed, whatever its state — including ones that never completed. Somebody
    unsure whether their payment went through is exactly who opens this page, and hiding an
    unfinished attempt would leave them with no answer at all. #}
-<section class="customer-block">
-    <h2>{{ 'form.customer.purchases_title'|trans }}</h2>
+<section class="member-block">
+    <h2>{{ 'form.member.purchases_title'|trans }}</h2>
 
     {% if orders is empty %}
-        <p class="customer-note">{{ 'form.customer.purchases_none'|trans }}</p>
+        <p class="member-note">{{ 'form.member.purchases_none'|trans }}</p>
     {% else %}
-        <ul class="customer-orders">
+        <ul class="member-orders">
             {% for order in orders %}
-                <li class="customer-order">
-                    <span class="customer-order__name">{{ order.productLabel }}</span>
-                    <span class="customer-order__amount">
+                <li class="member-order">
+                    <span class="member-order__name">{{ order.productLabel }}</span>
+                    <span class="member-order__amount">
                         {{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}
                     </span>
                     {# Calm wording on purpose: a provider's confirmation can legitimately lag, and a
                        buyer reading "failed" a minute after paying would contact support over nothing. #}
-                    <span class="customer-order__state customer-order__state--{{ order.status }}">
-                        {{ ('form.customer.state.' ~ order.status)|trans }}
+                    <span class="member-order__state member-order__state--{{ order.status }}">
+                        {{ ('form.member.state.' ~ order.status)|trans }}
                     </span>
-                    <span class="customer-order__date">{{ app_date(order.createdAt) }}</span>
+                    <span class="member-order__date">{{ app_date(order.createdAt) }}</span>
                 </li>
             {% endfor %}
         </ul>

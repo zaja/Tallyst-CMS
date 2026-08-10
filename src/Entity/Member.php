@@ -2,29 +2,31 @@
 
 namespace App\Entity;
 
-use App\Repository\CustomerRepository;
+use App\Repository\MemberRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
- * A buyer who has PROVEN they hold their e-mail address, by following a login link.
+ * A member of the site: somebody who has PROVEN they hold their e-mail address, by following a
+ * login link. A member is NOT necessarily a buyer — anyone can sign up, and purchases are one of
+ * the things a site may show them, not the reason the account exists.
  *
- * ⚠ A Customer is a CLAIM OF IDENTITY, and that is why one is never created at purchase time —
+ * ⚠ A Member is a CLAIM OF IDENTITY, and that is why one is never created at purchase time —
  * only when someone confirms a login link sent to that address. A record created without that
  * proof would mean "account" no longer implies "somebody proved this", and everything later hung
  * off it (delivery, licence keys, support) would inherit a guarantee it does not have.
  *
- * ⚠ A Customer is NOT a User. Users are staff and live behind the ^/admin firewall, which is
+ * ⚠ A Member is NOT a User. Users are staff and live behind the ^/admin firewall, which is
  * fail-open: any new admin screen is reachable by an editor unless someone remembers to lock it.
- * Keeping buyers in a separate entity, provider and firewall means one forgotten lock can never
- * let a buyer into the back-office. Deliberately implements UserInterface WITHOUT
- * PasswordAuthenticatedUserInterface — there is no customer password anywhere in the system.
+ * Keeping members in a separate entity, provider and firewall means one forgotten lock can never
+ * let a member into the back-office. Deliberately implements UserInterface WITHOUT
+ * PasswordAuthenticatedUserInterface — there is no member password anywhere in the system.
  */
-#[ORM\Entity(repositoryClass: CustomerRepository::class)]
-#[ORM\Table(name: 'customer')]
-class Customer implements UserInterface
+#[ORM\Entity(repositoryClass: MemberRepository::class)]
+#[ORM\Table(name: 'member')]
+class Member implements UserInterface
 {
-    public const ROLE = 'ROLE_CUSTOMER';
+    public const ROLE = 'ROLE_MEMBER';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -84,7 +86,7 @@ class Customer implements UserInterface
     /** @return list<string> */
     public function getRoles(): array
     {
-        // Flat and fixed: a customer is a customer. No hierarchy, and nothing that could ever
+        // Flat and fixed: a member is a member. No hierarchy, and nothing that could ever
         // resolve to an admin role.
         return [self::ROLE];
     }

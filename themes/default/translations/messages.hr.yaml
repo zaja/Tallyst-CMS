@@ -31,21 +31,21 @@ theme:
         all_posts: Sve objave
     footer:
         powered_by: Pokreće
-    customer:
+    member:
         login:
-            title: Tvoje kupnje
-            intro: Upiši e-mail adresu s kojom si kupovao/la i poslat ćemo ti poveznicu na tvoje kupnje.
+            title: Tvoj račun
+            intro: Upiši svoju e-mail adresu i poslat ćemo ti poveznicu za prijavu.
             email_label: E-mail adresa
             submit: Pošalji mi poveznicu
-            sent: Ako ta adresa ovdje ima kupnje, poveznica za prijavu je na putu prema njoj.
+            sent: Provjeri sandučić — poslali smo ti poveznicu za prijavu.
             sent_note: Poveznica vrijedi jednom i istječe za otprilike pola sata. Ako ne stigne, provjeri neželjenu poštu.
         link:
             title: Prijava
-            confirm_intro: Pritisni gumb ispod da otvoriš svoje kupnje.
-            confirm: Otvori moje kupnje
+            confirm_intro: Pritisni gumb ispod za prijavu.
+            confirm: Prijavi me
             invalid: Ova poveznica više ne radi. Poveznice vrijede jednom i istječu nakon otprilike pola sata.
             request_new: Zatraži novu poveznicu
         account:
-            title: Tvoje kupnje
+            title: Tvoj račun
             logout: Odjava
-            empty: Ovdje još nema ničega za prikazati.
+            empty: "Prijavljen/a si. Ovdje će se pojavljivati sve što kupiš ili na što se pretplatiš na ovom sajtu."

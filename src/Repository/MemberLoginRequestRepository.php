@@ -2,21 +2,21 @@
 
 namespace App\Repository;
 
-use App\Entity\CustomerLoginRequest;
+use App\Entity\MemberLoginRequest;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<CustomerLoginRequest>
+ * @extends ServiceEntityRepository<MemberLoginRequest>
  */
-class CustomerLoginRequestRepository extends ServiceEntityRepository
+class MemberLoginRequestRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, CustomerLoginRequest::class);
+        parent::__construct($registry, MemberLoginRequest::class);
     }
 
-    public function findBySelector(string $selector): ?CustomerLoginRequest
+    public function findBySelector(string $selector): ?MemberLoginRequest
     {
         return $this->findOneBy(['selector' => $selector]);
     }
@@ -32,7 +32,7 @@ class CustomerLoginRequestRepository extends ServiceEntityRepository
             ->select('COUNT(r.id)')
             ->andWhere('LOWER(r.email) = :email')
             ->andWhere('r.requestedAt >= :since')
-            ->setParameter('email', CustomerRepository::normalise($email))
+            ->setParameter('email', MemberRepository::normalise($email))
             ->setParameter('since', $since)
             ->getQuery()
             ->getSingleScalarResult();

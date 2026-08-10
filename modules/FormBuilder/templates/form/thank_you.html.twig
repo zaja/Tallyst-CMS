@@ -25,7 +25,7 @@
             <strong>{{ order.productLabel }}</strong>
             — {{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}
         </p>
-        <p class="fb-thankyou-state">{{ ('form.customer.state.' ~ order.status)|trans }}</p>
+        <p class="fb-thankyou-state">{{ ('form.member.state.' ~ order.status)|trans }}</p>
 
         {% if sent %}
             <p class="fb-thankyou-account">{{ 'form.thankyou.account_sent'|trans }}</p>

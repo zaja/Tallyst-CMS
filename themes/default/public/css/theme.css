@@ -900,9 +900,9 @@ th { font-weight: 650; }
    --------------------------------------------------------------------------- */
 
 /* Sign-in / confirm forms: label above field, comfortable target sizes. */
-.customer-form { margin: var(--s-5) 0 0; max-width: 26rem; }
-.customer-form label { display: block; margin-bottom: var(--s-2); font-weight: 600; }
-.customer-form input[type="email"] {
+.member-form { margin: var(--s-5) 0 0; max-width: 26rem; }
+.member-form label { display: block; margin-bottom: var(--s-2); font-weight: 600; }
+.member-form input[type="email"] {
     width: 100%;
     padding: var(--s-3);
     margin-bottom: var(--s-4);
@@ -912,18 +912,18 @@ th { font-weight: 650; }
     background: #fff;
     color: var(--ink);
 }
-.customer-form input[type="email"]:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.member-form input[type="email"]:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
 /* Secondary lines: the address + sign-out row, and the "link expires" notes. */
-.customer-identity,
-.customer-note { color: var(--muted); font-size: var(--fs-sm); }
+.member-identity,
+.member-note { color: var(--muted); font-size: var(--fs-sm); }
 
-.customer-block { margin-top: var(--s-6); }
-.customer-block h2 { margin-bottom: var(--s-4); }
+.member-block { margin-top: var(--s-6); }
+.member-block h2 { margin-bottom: var(--s-4); }
 
 /* Purchases. One row per order; four values that must not run together. */
-.customer-orders { list-style: none; margin: 0; padding: 0; }
-.customer-order {
+.member-orders { list-style: none; margin: 0; padding: 0; }
+.member-order {
     display: grid;
     grid-template-columns: 1fr auto;
     gap: var(--s-1) var(--s-4);
@@ -931,20 +931,20 @@ th { font-weight: 650; }
     padding: var(--s-4) 0;
     border-top: 1px solid var(--line);
 }
-.customer-order:last-child { border-bottom: 1px solid var(--line); }
-.customer-order__name { font-weight: 600; }
-.customer-order__amount { text-align: right; white-space: nowrap; }
+.member-order:last-child { border-bottom: 1px solid var(--line); }
+.member-order__name { font-weight: 600; }
+.member-order__amount { text-align: right; white-space: nowrap; }
 
 /* State stays a plain muted word, deliberately. A buyer whose payment is still
    being confirmed must not be shown something that reads like a warning —
    providers legitimately take their time, and an alarmed customer writes in. */
-.customer-order__state,
-.customer-order__date { color: var(--muted); font-size: var(--fs-sm); }
-.customer-order__date { text-align: right; white-space: nowrap; }
-.customer-order__state--refunded { color: var(--ink); }
+.member-order__state,
+.member-order__date { color: var(--muted); font-size: var(--fs-sm); }
+.member-order__date { text-align: right; white-space: nowrap; }
+.member-order__state--refunded { color: var(--ink); }
 
 @media (max-width: 32rem) {
-    .customer-order { grid-template-columns: 1fr; }
-    .customer-order__amount,
-    .customer-order__date { text-align: left; }
+    .member-order { grid-template-columns: 1fr; }
+    .member-order__amount,
+    .member-order__date { text-align: left; }
 }

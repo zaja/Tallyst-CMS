@@ -2,7 +2,7 @@
 
 namespace Tallyst\FormBuilder\Repository;
 
-use App\Entity\Customer;
+use App\Entity\Member;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Tallyst\FormBuilder\Entity\FormDefinition;
@@ -42,7 +42,7 @@ class OrderRepository extends ServiceEntityRepository
     public function findUnboundByEmail(string $email): array
     {
         return $this->createQueryBuilder('o')
-            ->andWhere('o.customer IS NULL')
+            ->andWhere('o.member IS NULL')
             ->andWhere('LOWER(o.customerEmail) = :email')
             ->setParameter('email', mb_strtolower(trim($email)))
             ->orderBy('o.id', 'DESC')
@@ -58,7 +58,7 @@ class OrderRepository extends ServiceEntityRepository
     public function findUnassigned(int $limit = 100): array
     {
         return $this->createQueryBuilder('o')
-            ->andWhere('o.customer IS NULL')
+            ->andWhere('o.member IS NULL')
             ->orderBy('o.id', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
@@ -66,15 +66,15 @@ class OrderRepository extends ServiceEntityRepository
     }
 
     /**
-     * Everything this account owns, newest first — the customer's own list of purchases.
+     * Everything this account owns, newest first — the member's own list of purchases.
      *
      * @return list<Order>
      */
-    public function findForCustomer(Customer $customer): array
+    public function findForMember(Member $member): array
     {
         return $this->createQueryBuilder('o')
-            ->andWhere('o.customer = :customer')
-            ->setParameter('customer', $customer)
+            ->andWhere('o.member = :member')
+            ->setParameter('member', $member)
             ->orderBy('o.id', 'DESC')
             ->getQuery()
             ->getResult();

@@ -2,11 +2,11 @@
 
 namespace App\Tests\FormBuilder;
 
-use App\Customer\CustomerAuthenticatedEvent;
-use App\Entity\Customer;
+use App\Member\MemberAuthenticatedEvent;
+use App\Entity\Member;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Tallyst\FormBuilder\EventListener\BindOrdersToCustomerListener;
+use Tallyst\FormBuilder\EventListener\BindOrdersToMemberListener;
 use Tallyst\FormBuilder\Entity\Order;
 use Tallyst\FormBuilder\Repository\OrderRepository;
 
@@ -15,15 +15,15 @@ use Tallyst\FormBuilder\Repository\OrderRepository;
  * This runs on EVERY login, not only the first, so an order that missed its moment is picked up
  * the next time the customer comes back rather than staying orphaned for good.
  */
-class BindOrdersToCustomerListenerTest extends TestCase
+class BindOrdersToMemberListenerTest extends TestCase
 {
     /** @param list<Order> $unbound */
-    private function listener(array $unbound): BindOrdersToCustomerListener
+    private function listener(array $unbound): BindOrdersToMemberListener
     {
         $orders = $this->createStub(OrderRepository::class);
         $orders->method('findUnboundByEmail')->willReturn($unbound);
 
-        return new BindOrdersToCustomerListener($orders, $this->createStub(EntityManagerInterface::class));
+        return new BindOrdersToMemberListener($orders, $this->createStub(EntityManagerInterface::class));
     }
 
     private function order(): Order
@@ -35,12 +35,12 @@ class BindOrdersToCustomerListenerTest extends TestCase
     {
         $a = $this->order();
         $b = $this->order();
-        $customer = new Customer('pero@example.com');
+        $member = new Member('pero@example.com');
 
-        $this->listener([$a, $b])(new CustomerAuthenticatedEvent($customer, accountWasJustCreated: true));
+        $this->listener([$a, $b])(new MemberAuthenticatedEvent($member, accountWasJustCreated: true));
 
-        self::assertSame($customer, $a->getCustomer());
-        self::assertSame($customer, $b->getCustomer());
+        self::assertSame($member, $a->getMember());
+        self::assertSame($member, $b->getMember());
     }
 
     /**
@@ -51,14 +51,14 @@ class BindOrdersToCustomerListenerTest extends TestCase
     {
         $stray = $this->order();
 
-        $this->listener([$stray])(new CustomerAuthenticatedEvent(new Customer('pero@example.com'), accountWasJustCreated: false));
+        $this->listener([$stray])(new MemberAuthenticatedEvent(new Member('pero@example.com'), accountWasJustCreated: false));
 
-        self::assertNotNull($stray->getCustomer(), 'a returning login must still adopt stray orders');
+        self::assertNotNull($stray->getMember(), 'a returning login must still adopt stray orders');
     }
 
     public function testNothingToClaimIsHarmless(): void
     {
-        $this->listener([])(new CustomerAuthenticatedEvent(new Customer('pero@example.com'), accountWasJustCreated: true));
+        $this->listener([])(new MemberAuthenticatedEvent(new Member('pero@example.com'), accountWasJustCreated: true));
 
         $this->expectNotToPerformAssertions();
     }

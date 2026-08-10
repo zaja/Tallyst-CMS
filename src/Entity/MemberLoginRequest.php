@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Repository\CustomerLoginRequestRepository;
+use App\Repository\MemberLoginRequestRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -23,10 +23,10 @@ use Doctrine\ORM\Mapping as ORM;
  * existed must be indistinguishable, or the difference itself tells an attacker that an address is
  * in use. Unconfirmed requests expire and are swept for the same reason.
  */
-#[ORM\Entity(repositoryClass: CustomerLoginRequestRepository::class)]
-#[ORM\Table(name: 'customer_login_request')]
-#[ORM\Index(name: 'idx_clr_email', columns: ['email'])]
-class CustomerLoginRequest
+#[ORM\Entity(repositoryClass: MemberLoginRequestRepository::class)]
+#[ORM\Table(name: 'member_login_request')]
+#[ORM\Index(name: 'idx_mlr_email', columns: ['email'])]
+class MemberLoginRequest
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -40,8 +40,8 @@ class CustomerLoginRequest
     private string $hashedToken;
 
     /**
-     * The address this was issued for. NOT a Customer relation — at issue time there is usually no
-     * Customer, and creating one here would be exactly the thing the founding rule forbids.
+     * The address this was issued for. NOT a Member relation — at issue time there is usually no
+     * Member, and creating one here would be exactly the thing the founding rule forbids.
      */
     #[ORM\Column(length: 191)]
     private string $email;

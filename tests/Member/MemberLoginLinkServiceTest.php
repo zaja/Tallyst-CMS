@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Tests\Customer;
+namespace App\Tests\Member;
 
-use App\Customer\CustomerLoginLinkService;
-use App\Customer\LoginLinkResult;
-use App\Entity\CustomerLoginRequest;
-use App\Repository\CustomerLoginRequestRepository;
-use App\Repository\CustomerRepository;
+use App\Member\MemberLoginLinkService;
+use App\Member\LoginLinkResult;
+use App\Entity\MemberLoginRequest;
+use App\Repository\MemberLoginRequestRepository;
+use App\Repository\MemberRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -15,29 +15,29 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * The login link is the ONLY credential a customer has, so these tests are about what the link
  * must and must not allow. The one that matters most is the first: opening a link cannot spend it.
  */
-class CustomerLoginLinkServiceTest extends TestCase
+class MemberLoginLinkServiceTest extends TestCase
 {
-    /** @var list<CustomerLoginRequest> */
+    /** @var list<MemberLoginRequest> */
     private array $stored = [];
     /** @var list<object> */
     private array $removed = [];
 
-    private function service(int $recentRequests = 0): CustomerLoginLinkService
+    private function service(int $recentRequests = 0): MemberLoginLinkService
     {
-        $requests = $this->createStub(CustomerLoginRequestRepository::class);
+        $requests = $this->createStub(MemberLoginRequestRepository::class);
         $requests->method('countSince')->willReturn($recentRequests);
         $requests->method('findBySelector')->willReturnCallback(
-            fn (string $s): ?CustomerLoginRequest => array_values(array_filter(
-                $this->stored, static fn (CustomerLoginRequest $r): bool => $r->getSelector() === $s,
+            fn (string $s): ?MemberLoginRequest => array_values(array_filter(
+                $this->stored, static fn (MemberLoginRequest $r): bool => $r->getSelector() === $s,
             ))[0] ?? null,
         );
 
-        $customers = $this->createStub(CustomerRepository::class);
-        $customers->method('findByEmail')->willReturn(null);
+        $members = $this->createStub(MemberRepository::class);
+        $members->method('findByEmail')->willReturn(null);
 
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('persist')->willReturnCallback(function (object $e): void {
-            if ($e instanceof CustomerLoginRequest) {
+            if ($e instanceof MemberLoginRequest) {
                 $this->stored[] = $e;
             }
         });
@@ -46,9 +46,9 @@ class CustomerLoginLinkServiceTest extends TestCase
             $this->stored = array_values(array_filter($this->stored, static fn ($r): bool => $r !== $e));
         });
 
-        return new CustomerLoginLinkService(
+        return new MemberLoginLinkService(
             $requests,
-            $customers,
+            $members,
             $em,
             $this->createStub(EventDispatcherInterface::class),
         );

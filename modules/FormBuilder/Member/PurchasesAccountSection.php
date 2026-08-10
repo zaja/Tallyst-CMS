@@ -1,13 +1,13 @@
 <?php
 
-namespace Tallyst\FormBuilder\Customer;
+namespace Tallyst\FormBuilder\Member;
 
-use App\Customer\CustomerAccountSectionInterface;
-use App\Entity\Customer;
+use App\Member\MemberAccountSectionInterface;
+use App\Entity\Member;
 use Tallyst\FormBuilder\Repository\OrderRepository;
 
 /**
- * The "your purchases" block on the customer's account page.
+ * The "your purchases" block on a member's account page.
  *
  * Lives in FormBuilder because FormBuilder owns orders; Core renders whatever blocks are tagged
  * and never learns what an Order is.
@@ -17,7 +17,7 @@ use Tallyst\FormBuilder\Repository\OrderRepository;
  * hiding an unfinished attempt would leave them with no answer at all. The state wording is
  * deliberately calm rather than alarming: a provider's confirmation can legitimately lag.
  */
-final readonly class PurchasesAccountSection implements CustomerAccountSectionInterface
+final readonly class PurchasesAccountSection implements MemberAccountSectionInterface
 {
     public function __construct(private OrderRepository $orders)
     {
@@ -30,11 +30,11 @@ final readonly class PurchasesAccountSection implements CustomerAccountSectionIn
 
     public function getTemplate(): string
     {
-        return '@FormBuilder/customer/_purchases.html.twig';
+        return '@FormBuilder/member/_purchases.html.twig';
     }
 
-    public function getData(Customer $customer): array
+    public function getData(Member $member): array
     {
-        return ['orders' => $this->orders->findForCustomer($customer)];
+        return ['orders' => $this->orders->findForMember($member)];
     }
 }

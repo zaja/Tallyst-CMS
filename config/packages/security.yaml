@@ -9,12 +9,12 @@ security:
             entity:
                 class: App\Entity\User
                 property: email
-        # Buyers. A SEPARATE provider from staff, deliberately: ^/admin is fail-open, so keeping
-        # the two in one provider would mean a single forgotten lock could put a buyer in the
-        # back-office. Customer has no password — the e-mail link is the credential.
-        customer_provider:
+        # Members. A SEPARATE provider from staff, deliberately: ^/admin is fail-open, so keeping
+        # the two in one provider would mean a single forgotten lock could put a member in the
+        # back-office. Member has no password — the e-mail link is the credential.
+        member_provider:
             entity:
-                class: App\Entity\Customer
+                class: App\Entity\Member
                 property: email
 
     # ROLE_ADMIN inherits ROLE_EDITOR: existing admins keep full access automatically.
@@ -29,22 +29,39 @@ security:
         # ⚠ MUST come before `main`, which has no `pattern` and therefore matches everything.
         # Firewalls are matched in order, so declaring this second would mean it never runs.
         #
-        # No form_login and no logout password check: there is no customer password anywhere in the
-        # system. Authentication happens in CustomerAccountController, which confirms an e-mail link
-        # and then logs the customer in programmatically.
-        customer:
+        # No form_login and no logout password check: there is no member password anywhere in the
+        # system. Authentication happens in MemberAccountController, which confirms an e-mail link
+        # and then logs the member in programmatically.
+        member:
             pattern: ^/account
             lazy: true
-            provider: customer_provider
-            # A separate context, so a customer session and a staff session can never be mistaken
+            provider: member_provider
+            # A separate context, so a member session and a staff session can never be mistaken
             # for one another in either direction.
-            context: customer
+            context: member
             custom_authenticators:
-                - App\Security\CustomerLoginLinkAuthenticator
-            entry_point: App\Security\CustomerLoginLinkAuthenticator
+                - App\Security\MemberLoginLinkAuthenticator
+            entry_point: App\Security\MemberLoginLinkAuthenticator
+            # ⚠ 90 DAYS FROM LAST USE, not from sign-in. Symfony refreshes the token on every
+            # request that uses it, so somebody who comes back weekly stays signed in and somebody
+            # who disappears for three months asks for a new link. A member who comments or reads
+            # regularly must not be sent to their inbox every visit.
+            #
+            # ⚠ The LINK stays short-lived (30 minutes) — that is a different thing. Long is the
+            # SESSION; stretching the link would weaken the one credential there is.
+            #
+            # `always_remember_me`: there is no "remember me" checkbox to tick. Proving the address
+            # IS the sign-in, and it would be a strange question to ask after an e-mail round trip.
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 7776000
+                path: /account
+                always_remember_me: true
+                token_provider:
+                    service: App\Security\MemberSessionTokenProvider
             logout:
-                path: customer_logout
-                target: customer_login
+                path: member_logout
+                target: member_login
         main:
             lazy: true
             provider: app_user_provider
@@ -75,11 +92,11 @@ security:
     # (editor=content, admin=everything) is enforced on each controller via #[IsGranted]
     # — NOT here and NOT by hiding the menu. See CLAUDE.md "Roles & access".
     access_control:
-        # The customer's own pages. The login page must be reachable by someone who is not logged
+        # A member's own pages. The login page must be reachable by someone who is not logged
         # in — that is its entire purpose — so it comes first, and the rest of /account demands a
-        # proven buyer. ROLE_CUSTOMER is flat and inherits nothing, so it can never resolve to staff.
+        # proven member. ROLE_MEMBER is flat and inherits nothing, so it can never resolve to staff.
         - { path: ^/account/(login|link), roles: PUBLIC_ACCESS }
-        - { path: ^/account, roles: ROLE_CUSTOMER }
+        - { path: ^/account, roles: ROLE_MEMBER }
         - { path: ^/admin/login, roles: PUBLIC_ACCESS }
         # Forgot-password flow must be reachable by someone who CAN'T log in — so PUBLIC,
         # and it MUST come before ^/admin (first-match) or it would demand ROLE_EDITOR.

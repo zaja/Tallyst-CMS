@@ -2,26 +2,26 @@
 
 namespace App\Repository;
 
-use App\Entity\Customer;
+use App\Entity\Member;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Customer>
+ * @extends ServiceEntityRepository<Member>
  */
-class CustomerRepository extends ServiceEntityRepository
+class MemberRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Customer::class);
+        parent::__construct($registry, Member::class);
     }
 
     /**
-     * Addresses are matched case-insensitively and without surrounding space: a buyer who typed
+     * Addresses are matched case-insensitively and without surrounding space: somebody who typed
      * "Pero@Example.com " at one provider and "pero@example.com" at another is one person, and two
      * accounts for one mailbox would split their purchase history for no reason they could see.
      */
-    public function findByEmail(string $email): ?Customer
+    public function findByEmail(string $email): ?Member
     {
         return $this->createQueryBuilder('c')
             ->andWhere('LOWER(c.email) = :email')
@@ -34,7 +34,7 @@ class CustomerRepository extends ServiceEntityRepository
      * Accounts matching a fragment of an address — how an admin finds the right one when assigning
      * an order by hand. Capped, because this is a picker and not a report.
      *
-     * @return list<Customer>
+     * @return list<Member>
      */
     public function search(string $term, int $limit = 20): array
     {

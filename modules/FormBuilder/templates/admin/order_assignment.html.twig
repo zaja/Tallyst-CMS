@@ -58,7 +58,7 @@
                                         <form method="post" action="{{ path('form_builder_order_assign') }}" class="d-flex gap-2">
                                             <input type="hidden" name="_token" value="{{ csrf_token('order_assign') }}">
                                             <input type="hidden" name="order" value="{{ order.id }}">
-                                            <select name="customer" class="form-select form-select-sm">
+                                            <select name="member" class="form-select form-select-sm">
                                                 {% for c in matches %}
                                                     <option value="{{ c.id }}">{{ c.email }}</option>
                                                 {% endfor %}

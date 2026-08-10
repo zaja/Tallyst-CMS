@@ -1,31 +1,31 @@
 {% extends 'layout.html.twig' %}
 
-{% block title %}{{ 'theme.customer.link.title'|trans }} — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
+{% block title %}{{ 'theme.member.link.title'|trans }} — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
 
 {% block meta %}<meta name="robots" content="noindex">{% endblock %}
 
 {% block body %}
     <article class="page-content">
         <header class="page-header">
-            <h1>{{ 'theme.customer.link.title'|trans }}</h1>
+            <h1>{{ 'theme.member.link.title'|trans }}</h1>
         </header>
 
         <div class="prose">
             {% if valid %}
-                <p>{{ 'theme.customer.link.confirm_intro'|trans }}</p>
+                <p>{{ 'theme.member.link.confirm_intro'|trans }}</p>
 
                 {# ⚠ The button is the whole point. Opening this page changed nothing: mail filters
                    fetch every link in a message before a person sees it, so if arriving here were
                    enough, those customers would find the link already used every single time. #}
-                <form method="post" class="customer-form">
-                    <input type="hidden" name="_token" value="{{ csrf_token('customer_link') }}">
+                <form method="post" class="member-form">
+                    <input type="hidden" name="_token" value="{{ csrf_token('member_link') }}">
                     <input type="hidden" name="v" value="{{ verifier }}">
-                    <button type="submit" class="tallyst-btn tallyst-btn--primary">{{ 'theme.customer.link.confirm'|trans }}</button>
+                    <button type="submit" class="tallyst-btn tallyst-btn--primary">{{ 'theme.member.link.confirm'|trans }}</button>
                 </form>
             {% else %}
                 {# One wording for every cause — expired, already used, or never existed. #}
-                <p>{{ 'theme.customer.link.invalid'|trans }}</p>
-                <p><a href="{{ path('customer_login') }}">{{ 'theme.customer.link.request_new'|trans }}</a></p>
+                <p>{{ 'theme.member.link.invalid'|trans }}</p>
+                <p><a href="{{ path('member_login') }}">{{ 'theme.member.link.request_new'|trans }}</a></p>
             {% endif %}
         </div>
     </article>

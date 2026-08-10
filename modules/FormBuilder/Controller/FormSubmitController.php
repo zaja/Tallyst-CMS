@@ -2,7 +2,7 @@
 
 namespace Tallyst\FormBuilder\Controller;
 
-use App\Customer\CustomerLoginLinkService;
+use App\Member\MemberLoginLinkService;
 use App\Email\EmailSender;
 use App\Settings\SettingsManager;
 use Psr\Log\LoggerInterface;
@@ -212,7 +212,7 @@ class FormSubmitController extends AbstractController
      * buyer holds the mailbox. The account appears only when they follow the link and confirm it.
      */
     #[Route('/form/order/{id}/account-link', name: 'form_builder_order_account_link', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function requestAccountLink(Order $order, Request $request, CustomerLoginLinkService $links, EmailSender $emails, SettingsManager $settings): Response
+    public function requestAccountLink(Order $order, Request $request, MemberLoginLinkService $links, EmailSender $emails, SettingsManager $settings): Response
     {
         $token = $order->getThankYouToken();
         if (null === $token || !hash_equals($token, (string) $request->request->get('t', ''))) {
@@ -223,8 +223,8 @@ class FormSubmitController extends AbstractController
         if ('' !== $email && $links->isAllowedToRequest($email)) {
             try {
                 $link = $links->issue($email);
-                $emails->send('customer_login', [
-                    'login_url' => $this->generateUrl('customer_login_link', [
+                $emails->send('member_login', [
+                    'login_url' => $this->generateUrl('member_login_link', [
                         'selector' => $link->selector,
                         'v' => $link->verifier,
                     ], UrlGeneratorInterface::ABSOLUTE_URL),

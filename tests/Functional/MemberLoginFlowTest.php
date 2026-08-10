@@ -2,8 +2,9 @@
 
 namespace App\Tests\Functional;
 
-use App\Entity\Customer;
-use App\Repository\CustomerRepository;
+use App\Entity\Member;
+use App\Repository\MemberRepository;
+use App\Repository\MemberSessionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -12,7 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * The whole way in, end to end: ask for a link, receive it, open it, press the button, arrive at
  * your purchases. The unit tests prove each piece; this one proves they are actually connected.
  */
-class CustomerLoginFlowTest extends WebTestCase
+class MemberLoginFlowTest extends WebTestCase
 {
     use MailerAssertionsTrait;
 
@@ -24,8 +25,9 @@ class CustomerLoginFlowTest extends WebTestCase
     protected function tearDown(): void
     {
         $conn = self::getContainer()->get(EntityManagerInterface::class)->getConnection();
-        $conn->executeStatement("DELETE FROM customer_login_request WHERE email LIKE 'buyer.%@example.com'");
-        $conn->executeStatement("DELETE FROM customer WHERE email LIKE 'buyer.%@example.com'");
+        $conn->executeStatement("DELETE FROM member_login_request WHERE email LIKE 'buyer.%@example.com'");
+        $conn->executeStatement("DELETE FROM member_session WHERE user_identifier LIKE 'buyer.%@example.com'");
+        $conn->executeStatement("DELETE FROM `member` WHERE email LIKE 'buyer.%@example.com'");
         parent::tearDown();
     }
 
@@ -49,7 +51,7 @@ class CustomerLoginFlowTest extends WebTestCase
     /**
      * ⚠ Twig prints an unresolved translation key as itself, so a page can be completely broken for
      * a human while every functional test stays green — which is exactly what happened here: the
-     * strings were nested one level too deep and the visitor saw "theme.customer.login.title".
+     * strings were nested one level too deep and the visitor saw "theme.member.login.title".
      * Response codes prove nothing about whether a page is readable.
      */
     private function assertNoRawTranslationKeys(string $html, string $where): void
@@ -118,9 +120,9 @@ class CustomerLoginFlowTest extends WebTestCase
         $client->request('GET', $url);
         self::assertResponseIsSuccessful();
 
-        /** @var CustomerRepository $customers */
-        $customers = $client->getContainer()->get(CustomerRepository::class);
-        self::assertNull($customers->findByEmail($email), 'opening the link must not create the account');
+        /** @var MemberRepository $members */
+        $members = $client->getContainer()->get(MemberRepository::class);
+        self::assertNull($members->findByEmail($email), 'opening the link must not create the account');
 
         // 3. Press the button. Only now does anything happen.
         $crawler = $client->getCrawler();
@@ -129,7 +131,43 @@ class CustomerLoginFlowTest extends WebTestCase
 
         $client->followRedirect();
         self::assertResponseIsSuccessful();
-        self::assertNotNull($customers->findByEmail($email), 'confirming creates the account');
+        self::assertNotNull($members->findByEmail($email), 'confirming creates the account');
+    }
+
+    /**
+     * ⚠ Signing in must OUTLIVE the browser session, and signing out must really end it.
+     *
+     * A member who comments or reads weekly cannot be sent to their inbox on every visit, so the
+     * sign-in is remembered for 90 days from last use. The other half matters more: signing out has
+     * to delete the remembered sign-in, not merely drop the cookie. A cookie that still matches a
+     * live row is a working sign-in for anyone holding it.
+     */
+    public function testSigningInIsRememberedAndSigningOutReallyEndsIt(): void
+    {
+        $client = static::createClient();
+
+        $crawler = $client->request('GET', '/account/login');
+        $client->submit($crawler->filter('form')->form(['email' => $this->uniqueEmail()]));
+        $url = $this->linkFromMail();
+        $client->followRedirect();
+
+        $client->request('GET', $url);
+        $client->submit($client->getCrawler()->filter('form')->form());
+
+        $sessions = $client->getContainer()->get(MemberSessionRepository::class);
+        self::assertCount(1, $sessions->findAll(), 'confirming records the sign-in as its own row');
+
+        // The remembered sign-in survives losing the session cookie — that is what "stay signed in"
+        // means, and a plain session would fail here.
+        $client->getCookieJar()->expire('MOCKSESSID');
+        $client->request('GET', '/account');
+        self::assertResponseIsSuccessful('the remembered sign-in must survive the browser session');
+
+        $client->request('GET', '/account/logout');
+        self::assertCount(0, $sessions->findAll(), 'signing out must DELETE the row, not just the cookie');
+
+        $client->request('GET', '/account');
+        self::assertResponseRedirects();
     }
 
     /**
@@ -143,7 +181,7 @@ class CustomerLoginFlowTest extends WebTestCase
         $known = $this->uniqueEmail();
         /** @var EntityManagerInterface $em */
         $em = $client->getContainer()->get(EntityManagerInterface::class);
-        $em->persist(new Customer($known));
+        $em->persist(new Member($known));
         $em->flush();
 
         $crawler = $client->request('GET', '/account/login');

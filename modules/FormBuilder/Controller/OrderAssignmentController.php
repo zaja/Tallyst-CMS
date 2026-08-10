@@ -2,7 +2,7 @@
 
 namespace Tallyst\FormBuilder\Controller;
 
-use App\Repository\CustomerRepository;
+use App\Repository\MemberRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,7 +13,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Repository\OrderRepository;
 
 /**
- * Attaches an order to a customer account by hand.
+ * Attaches an order to a member account by hand.
  *
  * ⚠ THIS IS A RECOVERY PATH, NOT A CONVENIENCE, and it is why it shipped in the first version
  * rather than later. Two things bring an admin here, and the second is the heavier one:
@@ -34,7 +34,7 @@ class OrderAssignmentController extends AbstractController
 {
     public function __construct(
         private readonly OrderRepository $orders,
-        private readonly CustomerRepository $customers,
+        private readonly MemberRepository $members,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
     ) {
@@ -49,8 +49,8 @@ class OrderAssignmentController extends AbstractController
             'orders' => $this->orders->findUnassigned(),
             'q' => $q,
             // Only searched on demand: showing every account by default would be a list of the
-            // shop's customers on a screen that exists to fix one order.
-            'matches' => '' === $q ? [] : $this->customers->search($q),
+            // site's members on a screen that exists to fix one order.
+            'matches' => '' === $q ? [] : $this->members->search($q),
         ]);
     }
 
@@ -66,20 +66,20 @@ class OrderAssignmentController extends AbstractController
         }
 
         $order = $this->orders->find((int) $request->request->get('order'));
-        $customer = $this->customers->find((int) $request->request->get('customer'));
+        $member = $this->members->find((int) $request->request->get('member'));
 
-        if (null === $order || null === $customer) {
+        if (null === $order || null === $member) {
             $this->addFlash('danger', $this->translator->trans('admin.order_assignment.flash.not_found', [], 'admin'));
 
             return $this->redirectToRoute('form_builder_order_assignment');
         }
 
-        $order->setCustomer($customer);
+        $order->setMember($member);
         $this->em->flush();
 
         $this->addFlash('success', $this->translator->trans('admin.order_assignment.flash.assigned', [
             '%order%' => (string) $order->getId(),
-            '%email%' => $customer->getEmail(),
+            '%email%' => $member->getEmail(),
         ], 'admin'));
 
         return $this->redirectToRoute('form_builder_order_assignment');

@@ -2,7 +2,7 @@
 
 namespace App\Tests\Functional;
 
-use App\Entity\Customer;
+use App\Entity\Member;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -15,7 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * that must never happen is a buyer session counting as staff. These assertions are what stops a
  * future change to the firewalls from quietly opening that door.
  */
-class CustomerAccountAccessTest extends WebTestCase
+class MemberAccountAccessTest extends WebTestCase
 {
     /**
      * ⚠ Rows created here must not survive the run. Nothing counts customers today, but leaving
@@ -25,20 +25,41 @@ class CustomerAccountAccessTest extends WebTestCase
     protected function tearDown(): void
     {
         $conn = self::getContainer()->get(EntityManagerInterface::class)->getConnection();
-        $conn->executeStatement("DELETE FROM customer_login_request WHERE email LIKE 'buyer%@example.com'");
-        $conn->executeStatement("DELETE FROM customer WHERE email LIKE 'buyer%@example.com'");
+        $conn->executeStatement("DELETE FROM member_login_request WHERE email LIKE 'buyer%@example.com'");
+        $conn->executeStatement("DELETE FROM `member` WHERE email LIKE 'buyer%@example.com'");
         parent::tearDown();
     }
 
-    private function customer(KernelBrowser $client, string $email = 'buyer@example.com'): Customer
+    private function member(KernelBrowser $client, string $email = 'buyer@example.com'): Member
     {
         /** @var EntityManagerInterface $em */
         $em = $client->getContainer()->get(EntityManagerInterface::class);
-        $customer = new Customer($email.'.'.uniqid().'@example.com');
-        $em->persist($customer);
+        $member = new Member($email.'.'.uniqid().'@example.com');
+        $em->persist($member);
         $em->flush();
 
-        return $customer;
+        return $member;
+    }
+
+    /**
+     * ⚠ A member who has never bought anything must not be shown an empty purchases list. Today that
+     * is MOST new members: anyone can sign up, and buying is one thing a site may offer, not the
+     * reason the account exists. A block with nothing in it is not rendered at all — the page says
+     * they are signed in and what will appear here instead.
+     */
+    public function testAMemberWithNothingSeesTheEmptyStateNotAnEmptyBlock(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->member($client), 'member');
+
+        $client->request('GET', '/account');
+        $html = (string) $client->getResponse()->getContent();
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('member-orders', $html, 'no empty purchases block');
+        // Matched without the apostrophe: Twig escapes it to &#039;, and asserting on the raw
+        // character would fail for a reason that has nothing to do with the page being right.
+        self::assertStringContainsString('signed in', $html, 'the empty state must say they are in');
     }
 
     public function testAnonymousVisitorIsSentToTheLoginPageNotAnError(): void
@@ -61,7 +82,7 @@ class CustomerAccountAccessTest extends WebTestCase
     public function testALoggedInCustomerSeesTheirAccount(): void
     {
         $client = static::createClient();
-        $client->loginUser($this->customer($client), 'customer');
+        $client->loginUser($this->member($client), 'member');
 
         $client->request('GET', '/account');
 
@@ -72,7 +93,7 @@ class CustomerAccountAccessTest extends WebTestCase
     public function testACustomerCannotReachTheAdmin(): void
     {
         $client = static::createClient();
-        $client->loginUser($this->customer($client), 'customer');
+        $client->loginUser($this->member($client), 'member');
 
         $client->request('GET', '/admin');
 
@@ -83,7 +104,7 @@ class CustomerAccountAccessTest extends WebTestCase
     public function testACustomerCannotReachAnAdminOnlyScreenEither(): void
     {
         $client = static::createClient();
-        $client->loginUser($this->customer($client), 'customer');
+        $client->loginUser($this->member($client), 'member');
 
         $client->request('GET', '/admin/settings');
 

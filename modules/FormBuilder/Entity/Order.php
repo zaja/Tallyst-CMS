@@ -2,7 +2,7 @@
 
 namespace Tallyst\FormBuilder\Entity;
 
-use App\Entity\Customer;
+use App\Entity\Member;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tallyst\FormBuilder\Repository\OrderRepository;
@@ -63,9 +63,9 @@ class Order
      * history is the SITE OWNER's business ledger; a buyer closing their account cannot take it with
      * them. Same reasoning as the form link above.
      */
-    #[ORM\ManyToOne(targetEntity: Customer::class)]
+    #[ORM\ManyToOne(targetEntity: Member::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
-    private ?Customer $customer = null;
+    private ?Member $member = null;
 
     // --- Historical snapshots taken ONCE, at checkout. Same rule as variantLabel/shippingLabel/taxName/
     //     taxRate: what was true when the money moved, written once and never refreshed afterwards. They
@@ -273,14 +273,14 @@ class Order
         return $this;
     }
 
-    public function getCustomer(): ?Customer
+    public function getMember(): ?Member
     {
-        return $this->customer;
+        return $this->member;
     }
 
-    public function setCustomer(?Customer $customer): static
+    public function setMember(?Member $member): static
     {
-        $this->customer = $customer;
+        $this->member = $member;
 
         return $this;
     }

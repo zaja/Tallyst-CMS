@@ -12,15 +12,15 @@ email:
         tag:
             reset_url: Poveznica za postavljanje nove lozinke (obavezno).
             site_name: Naziv sajta.
-    customer_login:
-        label: Poveznica za prijavu kupca
-        subject: 'Tvoja poveznica za prijavu — {site_name}'
+    member_login:
+        label: Poveznica za prijavu člana
+        subject: 'Prijava na {site_name}'
         body: |
             <p>Bok,</p>
-            <p>Evo poveznice za pregled tvojih kupnji na {site_name}. Otvori je i pritisni gumb na stranici:</p>
+            <p>Evo poveznice za prijavu na {site_name}. Otvori je i pritisni gumb na stranici:</p>
             <p><a href="{login_url}">{login_url}</a></p>
             <p>Poveznica vrijedi jednom i istječe za otprilike pola sata. Ako je nisi tražio/la, slobodno zanemari ovaj e-mail — ništa nije stvoreno.</p>
             <p>{site_name}</p>
         tag:
-            login_url: Poveznica koja prijavljuje kupca (obavezno).
+            login_url: Poveznica koja prijavljuje člana (obavezno).
             site_name: Naziv sajta.
