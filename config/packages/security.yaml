@@ -50,6 +50,11 @@ security:
             # ⚠ The LINK stays short-lived (30 minutes) — that is a different thing. Long is the
             # SESSION; stretching the link would weaken the one credential there is.
             #
+            # ⚠ 7776000 = 90 days, and MemberPruneCommand::SESSION_DAYS must say the same. The
+            # command deletes the rows behind these sign-ins; set it shorter and members are signed
+            # out early with nothing to explain it, set it longer and rows outlive what this
+            # firewall will accept.
+            #
             # `always_remember_me`: there is no "remember me" checkbox to tick. Proving the address
             # IS the sign-in, and it would be a strange question to ask after an e-mail round trip.
             remember_me:

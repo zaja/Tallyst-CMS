@@ -5,3 +5,42 @@ framework:
             policy: sliding_window
             limit: 10
             interval: '1 minute'
+
+        # ⚠ The login link is the ONLY way an unknown visitor can make this site send mail, and the
+        # damage is not in the database — it is the site owner's standing with their mail provider.
+        # A flood of invented addresses produces a high hard-bounce rate, which is exactly what gets
+        # a sending account frozen, and a frozen account stops ORDER CONFIRMATIONS too: the shop
+        # keeps selling and the buyer hears nothing.
+        #
+        # The per-ADDRESS limit (5/hour, MemberLoginLinkService) defends one mailbox from being
+        # buried. It cannot help here, because in this attack every address is a new one. This is the
+        # other axis, not a replacement.
+        #
+        # ⚠ TOKEN BUCKET, NOT A DELAY. Making the request WAIT (the obvious "progressive slowdown")
+        # is wrong on PHP-FPM — see the ⚠ rule in CLAUDE.md before proposing it again. A bucket gives
+        # the same soft edge without holding a worker: the first 20 pass instantly, then one a
+        # minute, and a refused request is answered exactly like a granted one.
+        #
+        # Burst 20 is sized on the worst REAL case, not on the attacker: an office being onboarded
+        # at once, all behind one address. An ordinary member needs exactly one (a sign-in lasts 90
+        # days). It cuts a script from a measured ~72,000/hour to ~80.
+        member_login:
+            policy: token_bucket
+            limit: 20
+            rate: { interval: '1 minute', amount: 1 }
+
+        # ⚠ THE CEILING FOR THE WHOLE SITE, and it is the one that actually saves the sending
+        # account. The per-client bucket above cuts the RATE; it sets no total, so a patient attacker
+        # with a handful of addresses still gets thousands of mails a day out of the site.
+        #
+        # Sized so that nothing normal comes near it: a sign-in lasts 90 days, so even a site with
+        # 5,000 members sends single-figure login mails a day in steady state. 200 in an hour is not
+        # a busy day, it is a machine.
+        #
+        # ⚠ The cost is real and accepted: on a launch day where 300 people sign in within one hour,
+        # the last 100 get nothing and must try later. That is recoverable. A frozen sending account
+        # is not — and it takes order confirmations down with it.
+        member_login_site:
+            policy: sliding_window
+            limit: 200
+            interval: '1 hour'

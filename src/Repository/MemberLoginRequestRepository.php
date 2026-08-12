@@ -42,6 +42,17 @@ class MemberLoginRequestRepository extends ServiceEntityRepository
      * Sweeps requests nobody ever confirmed. Set-based, so it costs the same shape of work whatever
      * the table size. Confirmed requests are already gone — they are deleted when spent.
      */
+    /** What deleteExpired() would remove — for the prune command's --dry-run. */
+    public function countExpired(?\DateTimeImmutable $now = null): int
+    {
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->andWhere('r.expiresAt < :now')
+            ->setParameter('now', $now ?? new \DateTimeImmutable())
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function deleteExpired(?\DateTimeImmutable $now = null): int
     {
         return (int) $this->createQueryBuilder('r')

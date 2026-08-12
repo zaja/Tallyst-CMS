@@ -27,6 +27,24 @@ core-API change is a MAJOR (flagged ⚠).
   you attach an order to an account by hand — the way back for a customer who mistyped their
   address, or who has lost access to their mailbox and would otherwise be locked out for good.
 
+- **Protection against someone using your sign-in form to send mail in your name.** The sign-in form
+  is the only place an unknown visitor can make your site send an e-mail, and before this it would
+  send one for every address typed into it — a script could get tens of thousands of messages an hour
+  out of your site, almost all to invented addresses. That is not a nuisance: your mail provider
+  judges you by how many of your messages bounce, and a frozen sending account stops your **order
+  confirmations** as well, so the shop keeps selling while buyers hear nothing. Your site now limits
+  how fast one visitor can request links and how many it will send in total in an hour. An ordinary
+  visitor is unaffected — a sign-in lasts 90 days, so almost nobody asks twice — and a whole office
+  behind one connection can still sign in together. Requests that are turned away look exactly like
+  ones that went through, so the form still cannot be used to find out which addresses your site
+  knows. If it ever happens, **System & Tools → Readiness check** tells you: how many were refused
+  and when, that you were protected rather than damaged, and it clears itself after a quiet week.
+
+- **A cleanup command for expired sign-in records.** `php bin/console app:member:prune` removes
+  sign-in links that have already expired and sign-ins nobody has used for 90 days. Nothing breaks if
+  you never run it — the records simply accumulate — but the install guide now shows how to run it
+  nightly. Add `--dry-run` to see what it would remove without removing anything.
+
 - **The readiness check now tells you when your stored secrets can't be read.** Your payment keys
   (Stripe, PayPal, Dodo) and mail credentials are stored encrypted, and the key that reads them
   lives in `.env.local`. If that key is lost or changed — most often by restoring a site from a

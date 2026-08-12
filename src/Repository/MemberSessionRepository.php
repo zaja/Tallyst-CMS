@@ -36,6 +36,17 @@ class MemberSessionRepository extends ServiceEntityRepository
      * Drops sign-ins nobody has used inside the window. Set-based, so it costs the same shape of
      * work whatever the table size.
      */
+    /** What deleteExpired() would remove — for the prune command's --dry-run. */
+    public function countExpired(\DateTimeImmutable $notUsedSince): int
+    {
+        return (int) $this->createQueryBuilder('s')
+            ->select('COUNT(s.series)')
+            ->andWhere('s.lastUsedAt < :cutoff')
+            ->setParameter('cutoff', $notUsedSince)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function deleteExpired(\DateTimeImmutable $notUsedSince): int
     {
         return (int) $this->createQueryBuilder('s')

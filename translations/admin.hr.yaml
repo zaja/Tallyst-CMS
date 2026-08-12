@@ -300,6 +300,10 @@ admin:
         fix: 'Popravak:'
         status: { ok: OK, warning: Upozorenje, problem: Problem, manual: Provjeri ručno }
         group: { security: Sigurnost, config: Konfiguracija, mail: Pošta, assets: Asseti, fs: Datotečni sustav, db: Baza podataka, worker: Pozadinski procesi }
+        login_flood:
+            label: 'Zahtjevi za poveznicom za prijavu'
+            detail: 'Sajt je %count% put prestao slati poveznice za prijavu jer ih je u jednom satu zatraženo previše. Zadnji put %last%.|Sajt je %count% puta prestao slati poveznice za prijavu jer ih je u jednom satu zatraženo previše. Prvi put %since%, zadnji put %last%.|Sajt je %count% puta prestao slati poveznice za prijavu jer ih je u jednom satu zatraženo previše. Prvi put %since%, zadnji put %last%.'
+            fix: 'Obično netko upisuje izmišljene adrese u obrazac za prijavu. Ograničenje te je već zaštitilo: te poruke nikad nisu poslane, pa se ne mogu odbiti ni naškoditi tvom ugledu kod pružatelja pošte. Ništa nije pokvareno i nema se što isključivati. Ako su ti se u to vrijeme javljali stvarni posjetitelji da nisu dobili poveznicu, neka pokušaju ponovno. Ova se obavijest sama briše nakon sedam mirnih dana.'
         app_secret:
             detail: { empty: 'Prazan — CSRF tokeni i potpisani URL-ovi nisu sigurni.', ok: Postavljen. }
             fix: 'app:install ga generira u .env.local; ili ručno postavi APP_SECRET na 32+ nasumičnih znakova.'

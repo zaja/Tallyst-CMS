@@ -301,6 +301,10 @@ admin:
         fix: 'Fix:'
         status: { ok: OK, warning: Warning, problem: Problem, manual: Check manually }
         group: { security: Security, config: Configuration, mail: Mail, assets: Assets, fs: Filesystem, db: Database, worker: Background processes }
+        login_flood:
+            label: 'Sign-in link requests'
+            detail: 'The site stopped sending sign-in links once, on %last%, because too many were requested within one hour.|The site stopped sending sign-in links %count% times because too many were requested within one hour. First on %since%, most recently on %last%.'
+            fix: "Usually someone feeding invented addresses into the sign-in form. The limit already protected you: those messages were never sent, so they can't bounce and can't harm your standing with your mail provider. Nothing is broken and there is nothing to switch off. If real visitors reported not receiving their link at those times, tell them to try again. This notice clears itself after seven quiet days."
         app_secret:
             detail: { empty: 'Empty — CSRF tokens and signed URLs are unsafe.', ok: Set. }
             fix: 'app:install generates it in .env.local; or set APP_SECRET manually to 32+ random characters.'

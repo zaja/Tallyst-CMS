@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Member\LoginFloodMonitor;
 use App\Member\MemberAccountSectionInterface;
 use App\Member\MemberLoginLinkService;
 use App\Email\EmailSender;
@@ -9,8 +10,10 @@ use App\Entity\Member;
 use App\Settings\SettingsManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -33,6 +36,11 @@ class MemberAccountController extends AbstractController
         private readonly EmailSender $emails,
         private readonly SettingsManager $settings,
         private readonly LoggerInterface $logger,
+        #[Autowire(service: 'limiter.member_login')]
+        private readonly RateLimiterFactory $loginLimiter,
+        #[Autowire(service: 'limiter.member_login_site')]
+        private readonly RateLimiterFactory $siteLimiter,
+        private readonly LoginFloodMonitor $flood,
         #[AutowireIterator('app.member_account_section')]
         private readonly iterable $sections = [],
     ) {
@@ -132,10 +140,34 @@ class MemberAccountController extends AbstractController
     /**
      * Issues and mails a link. Everything in here fails quietly: the caller must not be able to
      * tell an unknown address, a throttled one and a mail problem apart.
+     *
+     * ⚠ THE RATE LIMITER IS BORROWED FROM THE FORM-SUBMIT GUARD, THE RESPONSE IS NOT. That one
+     * answers a refusal with 429. Here a refusal must be indistinguishable from a send, or the page
+     * becomes the address-checking tool the identical-answer rule exists to prevent — you would just
+     * read the status code instead of the text. So every path in here returns quietly and the caller
+     * redirects to the same confirmation either way.
      */
     private function issueLink(string $email, Request $request): void
     {
         try {
+            // ⚠ Per-CLIENT, and it must come first: the per-address limit below cannot see this
+            // attack, because every address in it is a new one. Refused silently — see below for
+            // why this does NOT throw a 429 the way the form-submit limiter does.
+            if (!$this->loginLimiter->create($request->getClientIp() ?? 'unknown')->consume(1)->isAccepted()) {
+                return;
+            }
+
+            // ⚠ The ceiling for the whole site. The per-client bucket above caps the RATE but sets no
+            // total, so a patient attacker spread across addresses still gets thousands of mails a
+            // day out. This is the one that keeps the owner's sending account alive — and because
+            // refusing has to stay invisible to the visitor, it is recorded for the readiness panel
+            // instead, which is the only place the owner can find out in time.
+            if (!$this->siteLimiter->create('site')->consume(1)->isAccepted()) {
+                $this->flood->recordRefusal();
+
+                return;
+            }
+
             if (!$this->links->isAllowedToRequest($email)) {
                 return;
             }

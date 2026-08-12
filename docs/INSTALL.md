@@ -125,6 +125,20 @@ If your host uses [Supervisor](http://supervisord.org/), point a program at `php
 
 > Confirm the worker is actually running from the admin **readiness panel** (below) — it reports the worker heartbeat and the queue.
 
+### Nightly cleanup (recommended, not required)
+
+Sign-in links expire after 30 minutes and stop working on their own, but their records stay in the database, as do sign-ins nobody has used in months. Nothing breaks if you never clear them — the tables simply keep growing, and a burst of automated sign-in requests can leave a lot behind at once.
+
+Run it once a night from cron:
+
+```cron
+17 4 * * * cd /home/USER/htdocs/my-site && /usr/bin/php8.5 bin/console app:member:prune >/dev/null 2>&1
+```
+
+Replace the path and the `php8.5` binary with yours. To see what it would remove without removing anything, run it by hand with `--dry-run`.
+
+It only ever deletes links that have already expired and sign-ins unused for 90 days — the same 90 days after which a member would be asked for a new link anyway, so nobody is signed out early.
+
 ### Stripe / PayPal
 
 Enter your keys in the admin under **Settings → Stripe** and **Settings → PayPal**. Each section shows the exact **webhook URL** to paste into the provider's dashboard and the required events:
