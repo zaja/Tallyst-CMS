@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.12.0] — 2026-08-12
+
 ### Added
 
 - **Member accounts.** Visitors can now have an account on your site. There are no passwords: they
