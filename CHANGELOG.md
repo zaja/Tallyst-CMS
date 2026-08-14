@@ -10,6 +10,26 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.12.1] — 2026-08-14
+
+### Fixed
+
+- **⚠ Sales made through Stripe or Dodo were not being recorded. Upgrade from 1.12.0 immediately.**
+  On 1.12.0 only, a successful payment through **Stripe** or **Dodo** was taken by the payment
+  provider but never recorded by your site: the order stayed on **"Processing"** for ever, the
+  customer got **no confirmation e-mail**, no licence key was delivered, and the sale never appeared
+  as paid. The money reached your account; nothing else happened. Retries by the payment provider
+  could not fix it, and the affected orders do not repair themselves. **PayPal was not affected.**
+
+  **How to tell whether this hit you:** look in **Sales → Orders** for orders still marked
+  *Processing* that were placed while you were running 1.12.0, and check whether the payment actually
+  went through in your Stripe or Dodo dashboard. Any that did are real sales your site did not
+  record — you will need to deliver them by hand, and you can use **Resend confirmation** once the
+  order is marked as paid.
+
+  Upgrading fixes all future payments. It cannot retroactively record the ones that were lost, since
+  the payment provider has already stopped retrying them.
+
 ## [1.12.0] — 2026-08-12
 
 ### Added
