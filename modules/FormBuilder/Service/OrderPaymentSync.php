@@ -88,7 +88,7 @@ class OrderPaymentSync
                 // again. When there is no account, nothing happens on purpose — an account is
                 // never created here, only claimed. The order waits, and is adopted the first time
                 // somebody proves that address (BindOrdersToMemberListener).
-                $order->setMember($this->customers->findByEmail($result->customerEmail));
+                $order->setMember($this->members->findByEmail($result->customerEmail));
             }
 
             // Phase 2 passive capture (Dodo/MoR). All null for Stripe/PayPal → these are no-ops there.
