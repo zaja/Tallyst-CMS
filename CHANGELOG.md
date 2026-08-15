@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.13.0] — 2026-08-15
+
 ### Added
 
 - **Customers can open a purchase and see its details.** Until now their account showed only a list,
