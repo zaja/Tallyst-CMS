@@ -45,6 +45,29 @@ core-API change is a MAJOR (flagged ⚠).
   subscribe the events now listed under **Settings → Stripe / PayPal** — the 24-hour deadline works
   without them either way.
 
+### Fixed
+
+- **⚠ Conditional form fields did not work on your public forms — v1.5.1 through v1.12.1.** If any of
+  your forms hides a field until a particular answer is given, that field was shown to **everyone**
+  since 5 July. Worse, if it was marked required, visitors could not send the form without filling in
+  a question that did not apply to them — some will simply have given up and left.
+
+  **⚠ What you cannot see for yourself: whatever they typed into such a field never reached the
+  order.** It was not lost in transit and it is not sitting anywhere waiting to be recovered — your
+  site correctly decided the field should not have existed for that answer and discarded the value,
+  which is the same thing it has always done. So if you look at submissions from this period and
+  wonder where a detail went: it was never recorded, and it cannot be reconstructed. Only the answers
+  to fields that were genuinely supposed to be visible are complete.
+
+  **How to tell whether this affected you:** open **Sales → Forms** and look for a field with
+  conditional display ("show this when…"). No such field on any form means nothing was wrong for your
+  visitors. If you do have one, test the form on your public site — the field should now appear and
+  disappear as the answers change.
+
+  Nothing about the orders you already have needs correcting: amounts, products and buyers were always
+  right, because the fault was only in what the visitor's browser displayed. Upgrading fixes the forms
+  from now on.
+
 ## [1.12.1] — 2026-08-14
 
 ### Fixed
