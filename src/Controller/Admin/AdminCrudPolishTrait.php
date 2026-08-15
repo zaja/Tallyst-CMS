@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -88,5 +89,29 @@ trait AdminCrudPolishTrait
         return $actions
             ->add(Crud::PAGE_INDEX, $indexPreview)
             ->add(Crud::PAGE_EDIT, $editPreview);
+    }
+
+    /**
+     * A ChoiceFilter whose CHOICE LABELS are translated in the `admin` domain.
+     *
+     * ⚠ USE THIS INSTEAD OF ChoiceFilter::new() WHENEVER THE CHOICE LABELS ARE TRANSLATION KEYS.
+     * EasyAdmin's own `ChoiceFilter::new()` hardcodes `translation_domain => 'EasyAdminBundle'` on
+     * the filter form, so an `admin.*` key handed to it is looked up in EA's catalogue, is not found,
+     * and is printed VERBATIM — the filter dropdown shows "admin.order.status.paid" instead of
+     * "Awaiting delivery". Nothing errors and the list itself keeps rendering its badges correctly,
+     * which is why this survived unnoticed: the damage is only visible inside the filter panel.
+     *
+     * ⚠ It sets the domain on the VALUE field only (`value_type_options`), never on the filter as a
+     * whole. The filter also renders EA's own comparison operators ("equals", "not equals") from the
+     * EasyAdminBundle catalogue — switching the whole form to `admin` would fix our labels and break
+     * those instead.
+     *
+     * @param array<string, mixed> $choices label key => stored value
+     */
+    private function translatedChoiceFilter(string $property, string $label, array $choices): ChoiceFilter
+    {
+        return ChoiceFilter::new($property, $label)
+            ->setChoices($choices)
+            ->setFormTypeOption('value_type_options.choice_translation_domain', 'admin');
     }
 }

@@ -1,0 +1,13 @@
+{# Core's default help affordance: one sentence, one link to whatever contact page the owner set.
+
+   ⚠ This is a PLACE HELD OPEN. A support module contributes its own provider and replaces this with
+   a button that opens a request already linked to the subject — see MemberHelpProviderInterface.
+   Do not hardcode this sentence into a page; ask for it with member_help().
+
+   ⚠ Deliberately NOT a refund or cancellation affordance. A refund is a conversation, not a button.
+
+   Theme-overridable: drop templates/member/_help.html.twig into a theme to restyle it. #}
+<p class="member-help">
+    {{ 'member.help.question'|trans }}
+    <a href="{{ url }}">{{ 'member.help.link'|trans }}</a>
+</p>

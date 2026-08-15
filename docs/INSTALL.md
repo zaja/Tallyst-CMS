@@ -91,7 +91,7 @@ Description=Tallyst messenger worker
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/php8.5 /home/USER/htdocs/my-site/bin/console messenger:consume async --time-limit=3600
+ExecStart=/usr/bin/php8.5 /home/USER/htdocs/my-site/bin/console messenger:consume async scheduler_order_maintenance --time-limit=3600
 Restart=always
 RestartSec=5
 
@@ -114,16 +114,18 @@ Check it with `systemctl --user status tallyst-messenger`. After a deploy (a cac
 If your host has no systemd (typical shared hosting), run the worker from cron. It starts a short-lived worker every minute; `--time-limit=60` makes each one exit before the next starts, so processing is effectively continuous. Add to your crontab (`crontab -e`):
 
 ```cron
-* * * * * cd /home/USER/htdocs/my-site && /usr/bin/php8.5 bin/console messenger:consume async --time-limit=60 --limit=10 >/dev/null 2>&1
+* * * * * cd /home/USER/htdocs/my-site && /usr/bin/php8.5 bin/console messenger:consume async scheduler_order_maintenance --time-limit=60 --limit=10 >/dev/null 2>&1
 ```
 
 Replace the path and the `php8.5` binary with yours (`which php8.5`). No restart step is needed after a deploy — the next minute's run picks up the new code.
 
 #### Option C — supervisor
 
-If your host uses [Supervisor](http://supervisord.org/), point a program at `php8.5 bin/console messenger:consume async --time-limit=3600` with `autostart=true`, `autorestart=true`, and restart it (`supervisorctl restart tallyst-messenger`) after a deploy.
+If your host uses [Supervisor](http://supervisord.org/), point a program at `php8.5 bin/console messenger:consume async scheduler_order_maintenance --time-limit=3600` with `autostart=true`, `autorestart=true`, and restart it (`supervisorctl restart tallyst-messenger`) after a deploy.
 
 > Confirm the worker is actually running from the admin **readiness panel** (below) — it reports the worker heartbeat and the queue.
+
+> ⚠ **Upgrading from 1.12.x?** The worker command gained a second queue name — `scheduler_order_maintenance`. Update your service, cron entry or supervisor program to match the lines above and restart it. Without it, e-mail keeps working but checkouts that were never completed are never closed, and the **readiness panel** will tell you so.
 
 ### Nightly cleanup (recommended, not required)
 

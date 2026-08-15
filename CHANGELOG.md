@@ -10,6 +10,41 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Added
+
+- **Customers can open a purchase and see its details.** Until now their account showed only a list,
+  so somebody who had lost the confirmation e-mail had no way back to their licence key or invoice —
+  which is the only reason that screen gets opened. Each purchase now has its own page: what was
+  bought, when, for how much, its state, the details they entered, the delivery address for physical
+  goods, a link to the invoice, and — for purchases through Dodo — the licence key with a button to
+  copy it. Companies get a small tax breakdown at the bottom. There is a quiet "need help with this
+  purchase?" line linking to whatever contact page you set under **Settings → General → Support /
+  contact page**; leave that empty and no line is shown.
+
+- **⚠ Payments that were never completed now close by themselves, instead of waiting for ever.** A
+  customer who closes the window at the payment page, or whose card is refused, used to leave an order
+  sitting on **"Processing"** permanently — indistinguishable from a payment genuinely still going
+  through, and the thank-you page kept promising them a confirmation e-mail that was never coming. On
+  the test database a *third* of all orders were in that state, none younger than a month.
+
+  Such an order is now marked **"Not completed"** — 24 hours after it was started, or sooner if the
+  payment provider says outright that it failed. **The orders are kept, never deleted**, so you can
+  see how many people drop out. If the payment turns out to have gone through after all (a bank
+  transfer settling late), the order becomes paid as normal and still shows that it had been
+  abandoned.
+
+  The customer gets one e-mail offering to finish, with a link back to the page they were on and
+  their details already filled in. **Nobody is written to about a purchase abandoned before you
+  upgraded**, however old it is. Pressing "try again" starts a new purchase and leaves the old order
+  recorded as lost, so your figures stay honest.
+
+  **⚠ Two things need your attention after upgrading.** Your background worker command has gained a
+  queue name — see [INSTALL.md](docs/INSTALL.md#background-worker-required-for-e-mail); without it
+  nothing closes and **System & Tools → Readiness check** will tell you so. And if you want the
+  fastest possible answer from Stripe or PayPal, open your existing webhook in their dashboard and
+  subscribe the events now listed under **Settings → Stripe / PayPal** — the 24-hour deadline works
+  without them either way.
+
 ## [1.12.1] — 2026-08-14
 
 ### Fixed

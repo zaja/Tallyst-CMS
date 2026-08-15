@@ -244,6 +244,46 @@ class FormSubmitController extends AbstractController
         ]);
     }
 
+    /**
+     * Sends a buyer back to an unfinished checkout, with what they typed already in the form.
+     *
+     * ⚠ IT CREATES NOTHING AND CHANGES NO ORDER. Pressing this is not evidence of payment, so the old
+     * order stays exactly as it is — closed, and counted among the ones this shop lost. Finishing the
+     * form makes a NEW order. That separation is the whole reason a late provider confirmation may
+     * reopen an order while a buyer's click never can: status follows what the PROVIDER asserts.
+     *
+     * ⚠ GUARDED BY THE ORDER'S OWN TOKEN, like the thank-you page and the account link. Without it,
+     * walking the ids would let anyone load a stranger's submitted details into their own form —
+     * name, address, VAT number — which is the same enumeration hole the thank-you page closed.
+     *
+     * ⚠ GET, and safe as GET: mail scanners fetch every link in a message before a human sees it, and
+     * all this one does is put the buyer's own values back in their own session. Nothing is spent.
+     */
+    #[Route('/form/order/{id}/retry', name: 'form_builder_order_retry', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function retry(Order $order, Request $request): Response
+    {
+        $token = $order->getThankYouToken();
+        if (null === $token || !hash_equals($token, (string) $request->query->get('t', ''))) {
+            throw $this->createNotFoundException();
+        }
+
+        $form = $order->getForm();
+        $return = $order->getReturnPath();
+
+        // The page it came from, or the form itself, may be gone — an order outlives both by design.
+        // Nothing to resume then, so the buyer goes to the front page rather than to an error.
+        if (null === $form || null === $return) {
+            return $this->redirect('/');
+        }
+
+        // Reuses the SAME channel the form already uses to repopulate itself after a validation
+        // error, so nothing new had to be invented and the form needs no special case: it simply
+        // finds values waiting for it, exactly as it would after a failed submit.
+        $request->getSession()->getFlashBag()->add('fb_old_'.$form->getId(), $order->getSubmittedFields());
+
+        return $this->redirect($return);
+    }
+
     private function startCheckout(FormDefinition $form, FormSubmission $submission, Request $request, string $return): Response
     {
         // Provider = the buyer's choice ∩ what the form actually offers (MoR-aware: a Dodo form offers
@@ -356,6 +396,9 @@ class FormSubmitController extends AbstractController
             // which stays the gate for the tax split and the unit resolution.
             ->setProductName($form->getName())
             ->setSubmissionData($submission->getData())
+            // Where to send them back to if this checkout is never finished. A form has no URL of its
+            // own — it is embedded in a page — so this is the only record of which page that was.
+            ->setReturnPath($return)
             ->setIsMerchantOfRecord($form->getFormType()->isMerchantOfRecord())
             ->setAmountMinor($amountMinor)
             ->setCurrency($form->getCurrency() ?: 'eur')
@@ -367,6 +410,13 @@ class FormSubmitController extends AbstractController
             ->setShippingLabel($shippingLabel)
             ->setShippingAmountMinor($shippingAmount)
             ->setCustomerCountry($customerCountry)
+            // ⚠ THE BUYER'S ADDRESS, TAKEN FROM THE FORM AT CHECKOUT — not only from the payment.
+            // Measured 2026-08-15: customerEmail was written ONLY by the paid webhook, so a checkout
+            // that was never completed had no address at all, and the "your purchase wasn't
+            // completed" mail could never reach anybody. The provider's address still wins later
+            // (OrderPaymentSync overwrites it), because whoever actually paid is the authority on
+            // who bought; this is what makes the unfinished case reachable in the first place.
+            ->setCustomerEmail($this->emailFromSubmission($form, $submission))
             // An order through a demo form inherits the demo flag (so the uninstaller removes it too);
             // through a real form it stays false — derived from the form, never hardcoded.
             ->setIsDemo($form->isDemo())
@@ -404,6 +454,31 @@ class FormSubmitController extends AbstractController
         $this->orders->save($order); // persist the provider session id set during checkout
 
         return $this->redirect($checkoutUrl, Response::HTTP_SEE_OTHER);
+    }
+
+    /**
+     * The first e-mail the buyer typed into this form, if it asked for one.
+     *
+     * ⚠ Returns null rather than guessing. A form is not obliged to ask for an address — plenty of
+     * product forms only take a name — and inventing one from a text field that happens to look like
+     * an e-mail would put mail in front of an address nobody offered.
+     */
+    private function emailFromSubmission(FormDefinition $form, FormSubmission $submission): ?string
+    {
+        $data = $submission->getData();
+
+        foreach ($form->getFields() as $field) {
+            if (FormField::TYPE_EMAIL !== $field->getType()) {
+                continue;
+            }
+
+            $value = $data[$field->getKey()] ?? null;
+            if (is_string($value) && '' !== trim($value)) {
+                return trim($value);
+            }
+        }
+
+        return null;
     }
 
     private function readValue(Request $request, FormField $field): mixed

@@ -70,6 +70,43 @@ class OrderRepository extends ServiceEntityRepository
      *
      * @return list<Order>
      */
+    /**
+     * Checkouts that have been waiting longer than the deadline and were never resolved.
+     *
+     * ⚠ `pending` ONLY. An order the provider has already closed is not swept again, and a paid or
+     * refunded one is never a candidate — the deadline decides nothing that the money has decided.
+     *
+     * Ordered oldest first so a large first run works through the backlog in a predictable order,
+     * and limited so one pass can never load an unbounded number of rows on a busy shop.
+     *
+     * @return Order[]
+     */
+    public function findAbandonedSince(\DateTimeImmutable $cutoff, int $limit = 200): array
+    {
+        return $this->createQueryBuilder('o')
+            ->andWhere('o.status = :pending')
+            ->andWhere('o.createdAt < :cutoff')
+            ->setParameter('pending', Order::STATUS_PENDING)
+            ->setParameter('cutoff', $cutoff)
+            ->orderBy('o.createdAt', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** How many checkouts are still waiting past the deadline — for the readiness panel. */
+    public function countAbandonedSince(\DateTimeImmutable $cutoff): int
+    {
+        return (int) $this->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->andWhere('o.status = :pending')
+            ->andWhere('o.createdAt < :cutoff')
+            ->setParameter('pending', Order::STATUS_PENDING)
+            ->setParameter('cutoff', $cutoff)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function findForMember(Member $member): array
     {
         return $this->createQueryBuilder('o')

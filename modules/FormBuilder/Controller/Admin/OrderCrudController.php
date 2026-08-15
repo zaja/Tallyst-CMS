@@ -27,6 +27,7 @@ use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Controller\Admin\AdminCrudPolishTrait;
 use Symfony\Component\Workflow\WorkflowInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Tallyst\FormBuilder\Entity\Order;
@@ -44,6 +45,10 @@ use Tallyst\FormBuilder\Service\OrderMailer;
 #[IsGranted('ROLE_ADMIN')]
 class OrderCrudController extends AbstractCrudController
 {
+    // Shared admin-list conventions from Core (modules depend on Core, so the App trait is
+    // reachable). Used here for translatedChoiceFilter() — see the helper for why EA needs it.
+    use AdminCrudPolishTrait;
+
     public function __construct(
         #[Target('orderStateMachine')]
         private readonly WorkflowInterface $orderStateMachine,
@@ -72,14 +77,19 @@ class OrderCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            ->add(ChoiceFilter::new('status', 'admin.order.field.status')->setChoices([
+            // ⚠ translatedChoiceFilter(), not ChoiceFilter::new() — EA pins the filter form to its
+            // OWN catalogue, so an admin.* key would be printed verbatim in the dropdown. See the
+            // helper for the full reason.
+            ->add($this->translatedChoiceFilter('status', 'admin.order.field.status', [
                 'admin.order.status.pending' => Order::STATUS_PENDING,
                 'admin.order.status.paid' => Order::STATUS_PAID,
                 'admin.order.status.fulfilled' => Order::STATUS_FULFILLED,
                 'admin.order.status.refunded' => Order::STATUS_REFUNDED,
+                'admin.order.status.failed' => Order::STATUS_FAILED,
             ]))
+            // Provider names are proper nouns — literal on purpose, never translation keys.
             ->add(ChoiceFilter::new('provider', 'admin.order.field.provider')->setChoices(['Stripe' => 'stripe', 'PayPal' => 'paypal', 'Dodo' => 'dodo']))
-            ->add(ChoiceFilter::new('paymentMode', 'admin.order.field.mode')->setChoices(['admin.order.mode.test' => 'test', 'admin.order.mode.live' => 'live']))
+            ->add($this->translatedChoiceFilter('paymentMode', 'admin.order.field.mode', ['admin.order.mode.test' => 'test', 'admin.order.mode.live' => 'live']))
             // Date RANGE: clean date-only pickers; pick "između" in the comparison for od/do.
             // (Defaulting to "između" is unsafe — EA throws if BETWEEN is applied with empty dates.)
             ->add(DateTimeFilter::new('createdAt', 'admin.order.field.created_at')
@@ -153,12 +163,16 @@ class OrderCrudController extends AbstractCrudController
                 'admin.order.status.paid' => Order::STATUS_PAID,
                 'admin.order.status.fulfilled' => Order::STATUS_FULFILLED,
                 'admin.order.status.refunded' => Order::STATUS_REFUNDED,
+                'admin.order.status.failed' => Order::STATUS_FAILED,
             ])
             ->renderAsBadges([
                 Order::STATUS_PENDING => 'secondary',
                 Order::STATUS_PAID => 'warning',
                 Order::STATUS_FULFILLED => 'success',
                 Order::STATUS_REFUNDED => 'info',
+                // Neutral, not 'danger': an abandoned basket is a fact about the shop, not a fault
+                // to be alarmed by, and the owner sees plenty of them.
+                Order::STATUS_FAILED => 'dark',
             ]);
         // Provider at a glance in the list (badge, like status).
         yield ChoiceField::new('provider', 'admin.order.field.provider')

@@ -1,5 +1,14 @@
 # admin domain (en) — FormBuilder back-office (Orders). Auto-discovered via the bundle.
 admin:
+    readiness:
+        order_sweep:
+            label: Unfinished checkouts
+            detail:
+                never: '%count% checkout(s) have been waiting past the 24-hour deadline and nothing has closed them. The background worker is probably running an older command that does not include the scheduler queue.'
+                nothing_yet: 'Nothing waiting. The deadline has had nothing to do yet.'
+                stale: 'Checkouts were last reviewed on %when%, which is longer ago than expected. The background worker may be stopped, or running an older command.'
+                ok: 'Working. Last reviewed %when%.'
+            fix: 'Your worker command needs the scheduler queue: messenger:consume async scheduler_order_maintenance. Update the service, cron entry or supervisor program shown in docs/INSTALL.md and restart it. To clear the backlog immediately: bin/console app:order:sweep-abandoned'
     # Sidebar items the module contributes via getAdminMenuItems() (merge into core admin.menu.*).
     menu: { forms: Forms, orders: Orders, order_assignment: Unassigned orders }
     module: { desc: { form_builder: 'Build forms with conditional logic; [form id=N] turns page content into a form.' } }
@@ -51,7 +60,7 @@ admin:
             form_data: Form data
             mor: Merchant of Record (Dodo)
             mor_help: 'Tax is calculated, collected and remitted by Dodo as the seller of record — Tallyst''s own tax figures above stay empty for these orders.'
-        status: { pending: Processing, paid: Awaiting delivery, fulfilled: Delivered, refunded: Refunded }
+        status: { pending: Processing, paid: Awaiting delivery, fulfilled: Delivered, refunded: Refunded, failed: Not completed }
         mode: { test: Test, live: Live }
         action:
             mark_fulfilled: Mark delivered
@@ -265,6 +274,7 @@ admin:
             webhook_url_label: 'Webhook URL (paste into %dashboard%):'
             events_label: 'Required events:'
             guide: '%dashboard% dashboard → Webhooks → Add endpoint → paste the URL → choose events. Test/sandbox and live have SEPARATE endpoints (each with its own keys/secret).'
+            guide_existing: 'Already set this up? Open your existing endpoint and check it has ALL of the events above — the list grows between releases, and an event you have not subscribed simply never arrives.'
         webhook_check:
             header: Payments — webhook (basic-auth trap)
             intro: 'The most common go-live trap: if the webhook route sits behind basic auth, payment succeeds but the order stays "Processing" (the webhook returns 401 before the app, with no e-mails). The test sends an unsigned request to your own webhook URL — the real logic does NOT run (the signature fails with 400). 401 = a problem. Runs on demand (it doesn''t slow the admin).'

@@ -35,3 +35,7 @@ maintenance:
     title_suffix: maintenance
 search:
     type: { page: Page, post: Post, category: Category }
+member:
+    help:
+        question: Need help with this purchase?
+        link: Contact us

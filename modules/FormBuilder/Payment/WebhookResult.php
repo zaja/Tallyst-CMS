@@ -18,6 +18,19 @@ final class WebhookResult
         /** True only for a confirmed FULL refund (partial refunds are ignored — v1 = full only). */
         public readonly bool $isRefund = false,
         /**
+         * True when the provider says this checkout will NOT be paid — a declined capture, or a
+         * session it has given up on.
+         *
+         * ⚠ IT IS NOT THE OPPOSITE OF isPaid. Most unpaid checkouts produce no event at all: a buyer
+         * who closes the window tells nobody, and Stripe reports nothing when a card is declined
+         * inside Checkout because the buyer is still standing there able to try another card. This
+         * flag means "the provider volunteered that it failed", which is the fast path; the 24-hour
+         * deadline is the floor that catches everything else and needs no provider co-operation.
+         */
+        public readonly bool $isFailed = false,
+        /** Why, when the provider says — for the log only; nothing is stored on the order. */
+        public readonly ?string $failureReason = null,
+        /**
          * Our internal Order id, echoed back by the provider from the checkout metadata. Additive:
          * Stripe/PayPal leave it null and OrderPaymentSync keeps matching them by session/payment-intent;
          * Dodo (MoR) carries it (metadata.order_id) as its primary correlation key, since the Dodo

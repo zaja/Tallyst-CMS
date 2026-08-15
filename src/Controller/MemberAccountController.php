@@ -3,11 +3,13 @@
 namespace App\Controller;
 
 use App\Member\LoginFloodMonitor;
+use App\Member\MemberAccountViewedEvent;
 use App\Member\MemberAccountSectionInterface;
 use App\Member\MemberLoginLinkService;
 use App\Email\EmailSender;
 use App\Entity\Member;
 use App\Settings\SettingsManager;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -41,6 +43,7 @@ class MemberAccountController extends AbstractController
         #[Autowire(service: 'limiter.member_login_site')]
         private readonly RateLimiterFactory $siteLimiter,
         private readonly LoginFloodMonitor $flood,
+        private readonly EventDispatcherInterface $events,
         #[AutowireIterator('app.member_account_section')]
         private readonly iterable $sections = [],
     ) {
@@ -51,6 +54,15 @@ class MemberAccountController extends AbstractController
     {
         /** @var Member $member */
         $member = $this->getUser();
+
+        // ⚠ BEFORE the blocks are built, because one of them is about to read the result. A sign-in
+        // lasts 90 days, so anything that arrived under this member's address since they last signed
+        // in — a purchase made while already signed in, one whose webhook was late — would otherwise
+        // be invisible to them for months while the shop owner could see it perfectly.
+        //
+        // ⚠ It carries no new proof: this member signed in earlier, and listeners may act only on
+        // that already-proven address. Nothing here may act on an address somebody merely typed.
+        $this->events->dispatch(new MemberAccountViewedEvent($member));
 
         $blocks = [];
         foreach ($this->sections as $section) {

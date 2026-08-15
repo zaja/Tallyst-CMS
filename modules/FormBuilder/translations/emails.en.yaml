@@ -86,6 +86,20 @@ email:
             form_name: 'The product name as it was when the order was placed (renaming the form later does not change it).'
             variant: Selected variant (empty if none).
             site_name: The site name.
+    order_failed:
+        label: Purchase not completed (to the customer)
+        subject: "Your purchase wasn't completed — {site_name}"
+        body: |
+            <p>Hi, your order #{order_id} for {product} wasn't completed, so nothing was charged and nothing is on its way.</p>
+            <p>If you still want it, you can pick up where you left off — your details are already filled in:</p>
+            <p><a href="{retry_url}">Finish your purchase</a></p>
+            <p>If you changed your mind, you can ignore this message.</p>
+            <p>{site_name}</p>
+        tag:
+            order_id: Order number.
+            product: 'The product name as it was when the order was started.'
+            retry_url: 'A link back to the page the purchase started from, with the buyer''s details already filled in.'
+            site_name: Site name.
     order_refunded:
         label: Order refunded (to the customer)
         subject: 'Refund for order #{order_id}'

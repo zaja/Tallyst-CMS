@@ -37,6 +37,10 @@ class CoreSettingsProvider implements SettingsSectionProviderInterface
             // Hide the Demo content link from the sidebar (for production, where the demo tools
             // are no longer needed). Only hides the LINK — the route/page stay reachable directly.
             new SettingDefinition('hide_demo_link', SettingType::BOOL, 'admin.settings.general.hide_demo_link.label', 'admin.settings.general.hide_demo_link.help', false),
+            // Where a member is sent when they need help with something they bought. Empty is a
+            // valid answer: the help line is then not shown at all, because a "need help?" link
+            // with nowhere to go is worse than no line.
+            new SettingDefinition('support_url', SettingType::STRING, 'admin.settings.general.support_url.label', 'admin.settings.general.support_url.help', ''),
         ]);
 
         // Front branding (logo/favicon) + separate ADMIN branding (white-label the back-office):

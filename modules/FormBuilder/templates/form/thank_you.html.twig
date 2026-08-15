@@ -12,6 +12,16 @@
 
         {% if order.paid %}
             <p>{{ 'form.thankyou.paid'|trans({'%order%': order_ref})|raw }}</p>
+        {% elseif order.failed %}
+            {# ⚠ THE PAGE MUST STOP PROMISING A MAIL THAT IS NOT COMING. For a checkout that was
+               declared not completed, "payment is still processing — you will get a confirmation
+               e-mail" is untrue for ever, and it asks the reader to keep refreshing a page that will
+               never change. #}
+            <p>{{ 'form.thankyou.not_completed'|trans({'%order%': order_ref})|raw }}</p>
+            {% if order.returnPath %}
+                <p><a class="tallyst-btn tallyst-btn--primary"
+                      href="{{ path('form_builder_order_retry', {id: order.id, t: order.thankYouToken}) }}">{{ 'form.thankyou.retry'|trans }}</a></p>
+            {% endif %}
         {% else %}
             <p>{{ 'form.thankyou.processing'|trans({'%order%': order_ref})|raw }}</p>
         {% endif %}

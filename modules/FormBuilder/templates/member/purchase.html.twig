@@ -1,0 +1,142 @@
+{% extends 'layout.html.twig' %}
+
+{# One purchase, as the buyer sees it. Contributed by FormBuilder; Core never learns what an order
+   is, it only owns the /account firewall this sits behind.
+
+   ⚠ WHAT IS NOT HERE IS DELIBERATE — payment identifiers, the address the purchase came from, the
+   provider's settlement and fees, a link into the provider's portal, and any cancel/refund button.
+   The reasoning is in MemberPurchaseController's docblock, and MemberPurchasePrivacyTest is what
+   keeps it that way. Do not add to this page without reading both. #}
+
+{% block title %}{{ 'form.member.purchase.order_number'|trans({'%id%': order.id}) }} — {{ setting('site_name')|default('Tallyst') }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block body %}
+    <article class="page-content member-purchase">
+        {# The list of orders lives on the account page today. The wording says "orders" rather than
+           "account" because that is what the reader is going back TO — and because the account will
+           grow subscriptions and comments, at which point this link follows the orders, not the
+           account. #}
+        <p class="member-back">
+            <a href="{{ path('member_account') }}">{{ 'form.member.purchase.back'|trans }}</a>
+        </p>
+
+        {# ⚠ THE HEADING IS THE ORDER NUMBER, NOT THE PRODUCT. This is a page about an order, not
+           about a product: the number is what the buyer quotes to support, and it is the only thing
+           that tells two purchases of the SAME product apart. The product name is a detail below. #}
+        <header class="page-header">
+            <h1>{{ 'form.member.purchase.order_number'|trans({'%id%': order.id}) }}</h1>
+            <p class="member-purchase__amount">
+                {{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}
+            </p>
+        </header>
+
+        <dl class="member-fields member-purchase__meta">
+            <dt>{{ 'form.member.purchase.product'|trans }}</dt>
+            <dd>
+                {{ order.productLabel }}
+                {%- if order.variantLabel %} <span class="member-note">· {{ order.variantLabel }}</span>{% endif %}
+            </dd>
+
+            <dt>{{ 'form.member.purchase.date'|trans }}</dt>
+            <dd>{{ app_date(order.createdAt) }}</dd>
+
+            <dt>{{ 'form.member.purchase.status'|trans }}</dt>
+            {# Calm wording on purpose: a provider's confirmation can legitimately lag, and a buyer
+               reading "failed" a minute after paying would contact support over nothing. #}
+            <dd><span class="member-order__state member-order__state--{{ order.status }}">{{ ('form.member.state.' ~ order.status)|trans }}</span></dd>
+        </dl>
+
+        {% if not order.paid %}
+            {# ⚠ The same page, not a stripped one — but with a single sentence instead of a row of
+               empty boxes. A licence key and an invoice do not exist yet, so neither is rendered
+               blank. It deliberately does NOT claim nothing was charged: we do not know that. #}
+            <p class="member-note member-purchase__unfinished">
+                {{ (order.failed ? 'form.member.purchase.not_completed' : 'form.member.purchase.unfinished')|trans }}
+            </p>
+            {# ⚠ A retry makes a NEW order and never touches this one — a buyer's click is not
+               evidence of payment. Hidden when the page it came from (or the form) is gone: an order
+               outlives both by design, and a dead link is worse than no offer. #}
+            {% if order.failed and order.returnPath %}
+                <p><a class="tallyst-btn tallyst-btn--primary"
+                      href="{{ path('form_builder_order_retry', {id: order.id, t: order.thankYouToken}) }}">{{ 'form.member.purchase.retry'|trans }}</a></p>
+            {% endif %}
+        {% else %}
+            {# ────────────────────────────────────────────────────────────────────────────────
+               DOWNLOAD SLOT — automated delivery is the next piece of work and is NOT built.
+
+               ⚠ It belongs HERE, above the licence key: the header above is orientation ("what,
+               when, how much"), and the moment a file is deliverable, downloading it is the only
+               reason this page gets opened. Anything placed below the tax breakdown would be found
+               second. Leave this comment in place until it is filled.
+               ──────────────────────────────────────────────────────────────────────────────── #}
+
+            {% if order.licenseKey %}
+                <section class="member-block member-licence">
+                    <h2>{{ 'form.member.purchase.licence_title'|trans }}</h2>
+                    <div class="member-licence__row"
+                         data-controller="formbuilder--copy"
+                         data-formbuilder--copy-done-value="{{ 'form.member.purchase.copied'|trans }}">
+                        <code class="member-licence__key" data-formbuilder--copy-target="value">{{ order.licenseKey }}</code>
+                        {# ⚠ No JS, no problem: the key is plain selectable text and the button simply
+                           does nothing until the controller boots. Never hide the key behind it. #}
+                        <button type="button" class="tallyst-btn tallyst-btn--secondary member-licence__copy"
+                                data-formbuilder--copy-target="button"
+                                data-action="formbuilder--copy#copy">{{ 'form.member.purchase.copy'|trans }}</button>
+                    </div>
+                </section>
+            {% endif %}
+
+            {% if order.invoiceUrl %}
+                <p class="member-purchase__invoice">
+                    <a href="{{ order.invoiceUrl }}" rel="noopener">{{ 'form.member.purchase.invoice'|trans }}</a>
+                </p>
+            {% endif %}
+        {% endif %}
+
+        {% if fields is not empty %}
+            <section class="member-block">
+                <h2>{{ 'form.member.purchase.details_title'|trans }}</h2>
+                <dl class="member-fields">
+                    {% for label, value in fields %}
+                        <dt>{{ label }}</dt>
+                        <dd>{{ value }}</dd>
+                    {% endfor %}
+                </dl>
+            </section>
+        {% endif %}
+
+        {% set shipping = order.shippingAddressFormatted %}
+        {% if shipping is not empty %}
+            <section class="member-block">
+                <h2>{{ 'form.member.purchase.shipping_title'|trans }}</h2>
+                <p class="member-address">{{ shipping|nl2br }}</p>
+            </section>
+        {% endif %}
+
+        {# ⚠ Small and last, on purpose. Companies expect a tax breakdown and will look for it;
+           everybody else must not have it in their face on a page they opened to find a licence. #}
+        {% if order.taxAmountMinor is not null %}
+            <section class="member-block member-tax">
+                <h3>{{ 'form.member.purchase.tax_title'|trans }}</h3>
+                <dl class="member-tax__list">
+                    <dt>{{ 'form.member.purchase.tax_net'|trans }}</dt>
+                    <dd>{{ ((order.amountMinor - order.taxAmountMinor) / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}</dd>
+                    <dt>{{ order.taxName ?: 'form.member.purchase.tax_amount'|trans }}{% if order.taxRate %} ({{ order.taxRate }}%){% endif %}</dt>
+                    <dd>{{ order.taxFormatted }} {{ order.currency|upper }}</dd>
+                    <dt>{{ 'form.member.purchase.tax_total'|trans }}</dt>
+                    <dd>{{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}</dd>
+                </dl>
+            </section>
+        {% endif %}
+
+        {# ⚠ ASKED FOR, NOT HARDCODED. Core answers with a sentence pointing at the site's contact
+           page; a support module later contributes a provider that outranks it and turns this into
+           a button opening a request ALREADY LINKED to this purchase — without this page changing.
+           The subject is described generically (type, id, label) so Core never learns what an order
+           is. Nothing is rendered when no contact page is configured. #}
+        {% set help = member_help('order', order.id, order.productLabel) %}
+        {% if help %}{{ include(help.template, help.data) }}{% endif %}
+    </article>
+{% endblock %}

@@ -31,12 +31,34 @@ form:
         processing: We have received your order %order%. Payment is still processing — you will get a confirmation e-mail as soon as it completes. You can refresh this page in a moment.
         amount: 'Amount:'
         back_home: Back to home
+        not_completed: "This purchase wasn't completed. Nothing was charged. If you still want it, you can try again — your details are saved."
+        retry: Try again
         account_cta: Send me a sign-in link
         account_sent: Check your inbox — a link to your purchases is on its way.
     member:
         purchases_title: Purchases
+        purchase:
+            back: Back to your orders
+            order_number: 'Order #%id%'
+            product: Purchased product
+            date: Order date
+            status: Order status
+            licence_title: Your licence key
+            copy: Copy
+            copied: Copied
+            invoice: Download invoice
+            details_title: Your details
+            shipping_title: Delivery address
+            tax_title: Tax breakdown
+            tax_net: Net
+            tax_amount: Tax
+            tax_total: Total
+            not_completed: "This purchase wasn't completed and nothing was charged. Your details are saved, so you can try again if you still want it."
+            retry: Try again
+            unfinished: 'This purchase was never completed, so there is nothing here yet. If payment has just gone through, confirmation can take a few minutes to arrive — check back shortly. If it stays this way, get in touch and we''ll look into it.'
         state:
             pending: Awaiting payment confirmation
             paid: Paid
             fulfilled: Delivered
             refunded: Refunded
+            failed: Not completed

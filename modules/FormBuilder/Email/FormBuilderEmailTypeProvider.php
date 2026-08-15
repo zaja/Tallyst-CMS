@@ -106,6 +106,29 @@ class FormBuilderEmailTypeProvider implements EmailTypeProviderInterface
             defaultBody: 'email.order_refunded.body',
         );
 
+        // ⚠ SENT ONLY BY THE 24-HOUR DEADLINE, never the moment a payment is refused. A declined card
+        // is the most ordinary event in a shop — the buyer is usually reaching for another card as
+        // this would be sending — and only the deadline knows the checkout was finished by NO means.
+        //
+        // ⚠ And only to orders placed after this site started watching (AbandonedOrderSweeper's
+        // activation stamp), so upgrading Tallyst never writes to people who walked away months ago.
+        yield new EmailType(
+            key: 'order_failed',
+            label: 'email.order_failed.label',
+            tags: [
+                'order_id' => 'email.order_failed.tag.order_id',
+                'product' => 'email.order_failed.tag.product',
+                'retry_url' => 'email.order_failed.tag.retry_url',
+                'site_name' => 'email.order_failed.tag.site_name',
+            ],
+            requiredTags: [],
+            // The owner may switch it off entirely: some shops would rather say nothing than remind
+            // somebody they nearly bought something.
+            canDisable: true,
+            defaultSubject: 'email.order_failed.subject',
+            defaultBody: 'email.order_failed.body',
+        );
+
         yield new EmailType(
             key: 'form_notification',
             label: 'email.form_notification.label',

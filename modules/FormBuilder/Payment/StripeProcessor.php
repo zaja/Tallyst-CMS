@@ -40,7 +40,22 @@ class StripeProcessor implements PaymentProcessorInterface
 
     public function getWebhookEvents(): array
     {
-        return ['checkout.session.completed', 'charge.refunded'];
+        // ⚠ THERE IS NO "CARD DECLINED" EVENT TO SUBSCRIBE. Inside Stripe Checkout a declined card
+        // does not end the session — the buyer is still on the page and can try another one — so
+        // Stripe reports nothing, and treating a decline as an outcome would be wrong anyway.
+        // What Stripe DOES report is a session it has given up on (`expired`, roughly 24h) and a
+        // delayed method that failed after the fact (`async_payment_failed`, e.g. SEPA debit).
+        //
+        // ⚠ Both are new here (2026-08-14) and EXISTING INSTALLS WILL NOT RECEIVE THEM until the
+        // owner adds them to the endpoint in Stripe's dashboard — this list only drives what
+        // Settings → Stripe tells them to subscribe. The 24-hour deadline closes those checkouts
+        // regardless, so nothing breaks when they are missing; subscribing only makes it sooner.
+        return [
+            'checkout.session.completed',
+            'charge.refunded',
+            'checkout.session.expired',
+            'checkout.session.async_payment_failed',
+        ];
     }
 
     /** Stripe Checkout auto-captures, so there's nothing to do on return. */
@@ -151,6 +166,9 @@ class StripeProcessor implements PaymentProcessorInterface
 
         // charge.refunded: the object is the Charge (carries payment_intent). Flag a refund ONLY
         // when it's FULL (amount_refunded >= amount) — partial refunds are ignored (v1 = full only).
+        // Stripe has stopped waiting for this checkout, or a delayed method came back refused.
+        $isFailed = in_array($event->type, ['checkout.session.expired', 'checkout.session.async_payment_failed'], true);
+
         $isRefund = false;
         if ('charge.refunded' === $event->type) {
             $amount = $object->amount ?? null;
@@ -165,6 +183,8 @@ class StripeProcessor implements PaymentProcessorInterface
             isPaid: $isPaid,
             customerEmail: is_string($email) ? $email : null,
             isRefund: $isRefund,
+            isFailed: $isFailed,
+            failureReason: $isFailed ? $event->type : null,
         );
     }
 }

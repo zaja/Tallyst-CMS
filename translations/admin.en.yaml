@@ -201,6 +201,7 @@ admin:
             site_tagline: { label: Tagline, help: A short site description (meta description). }
             search_enabled: { label: Show the search box, help: 'A search field in the header. Off (default) = a simple site without search; turn it on if you have a lot of content.' }
             hide_demo_link: { label: Hide the Demo content link in the sidebar, help: 'For production. Hides the link only — the demo page stays reachable directly.' }
+            support_url: { label: Support / contact page, help: 'Where a member is sent when they need help with a purchase — e.g. /contact. Leave empty and no help link is shown.' }
         branding:
             title: Branding
             logo_media_id: { label: Logo, help: Shown in the header. Empty = the site name as text. }

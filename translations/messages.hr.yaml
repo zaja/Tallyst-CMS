@@ -34,3 +34,7 @@ maintenance:
     title_suffix: održavanje
 search:
     type: { page: Stranica, post: Objava, category: Kategorija }
+member:
+    help:
+        question: Trebaš pomoć s ovom kupnjom?
+        link: Javi nam se

@@ -59,8 +59,14 @@ class MemberLoginFlowTest extends WebTestCase
         // Matches the key WITH or WITHOUT its namespace prefix: the failure mode that actually
         // happened was a key that had lost its prefix, so a pattern anchored on "theme." would
         // have sailed straight past it.
+        //
+        // ⚠ THIS PATTERN SAID `customer.` UNTIL 2026-08-14 AND HAD BEEN DEAD SINCE THE RENAME. The
+        // Customer→Member pass renamed every key to `member.*`, and nothing renamed the word inside
+        // this regex — so it went on matching nothing at all, passing on any page, for weeks. A test
+        // that cannot fail is worse than no test: it occupies the place where a real one would go.
+        // Verified when fixed: with the keys deliberately mis-nested again, it goes red.
         self::assertDoesNotMatchRegularExpression(
-            '/(?:theme\.|form\.)?customer\.[a-z_]+\.[a-z_]+/',
+            '/(?:theme\.|form\.)?member\.[a-z_]+\.[a-z_]+/',
             $html,
             $where.' still shows a raw translation key instead of text',
         );

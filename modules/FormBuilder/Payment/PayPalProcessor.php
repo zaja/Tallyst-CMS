@@ -68,7 +68,11 @@ class PayPalProcessor implements PaymentProcessorInterface
 
     public function getWebhookEvents(): array
     {
-        return ['PAYMENT.CAPTURE.COMPLETED', 'PAYMENT.CAPTURE.REFUNDED'];
+        // ⚠ DENIED is new here (2026-08-14) and EXISTING INSTALLS WILL NOT RECEIVE IT until the owner
+        // adds it to the webhook in PayPal's dashboard — this list only drives what Settings → PayPal
+        // tells them to subscribe. The 24-hour deadline closes those checkouts regardless, so nothing
+        // breaks when it is missing; subscribing it only makes the answer arrive sooner.
+        return ['PAYMENT.CAPTURE.COMPLETED', 'PAYMENT.CAPTURE.REFUNDED', 'PAYMENT.CAPTURE.DENIED'];
     }
 
     public function dashboardUrl(Order $order): ?string
@@ -180,12 +184,17 @@ class PayPalProcessor implements PaymentProcessorInterface
 
         $isPaid = 'PAYMENT.CAPTURE.COMPLETED' === $type;
         $isRefund = 'PAYMENT.CAPTURE.REFUNDED' === $type;
+        // ⚠ DENIED only — never PENDING. A pending capture is still on its way and routinely settles;
+        // treating it as a failure would close a checkout that is about to succeed.
+        $isFailed = 'PAYMENT.CAPTURE.DENIED' === $type;
 
         // paid: match the order by the PayPal order id; store the capture id for refunds.
         // refund: match by the capture id (carried in the refund's rel="up" link).
         $sessionId = null;
         $paymentIntentId = null;
-        if ($isPaid) {
+        if ($isPaid || $isFailed) {
+            // A denied capture carries the same related order id as a completed one, which is how
+            // the failure finds the order it belongs to.
             $sessionId = $resource['supplementary_data']['related_ids']['order_id'] ?? null;
             $paymentIntentId = $resource['id'] ?? null;
         } elseif ($isRefund) {
@@ -199,6 +208,8 @@ class PayPalProcessor implements PaymentProcessorInterface
             isPaid: $isPaid,
             customerEmail: null,
             isRefund: $isRefund,
+            isFailed: $isFailed,
+            failureReason: is_string($resource['status_details']['reason'] ?? null) ? $resource['status_details']['reason'] : null,
         );
     }
 

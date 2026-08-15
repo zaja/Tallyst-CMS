@@ -1,5 +1,14 @@
 # admin domain (hr) — FormBuilder back-office (Orders).
 admin:
+    readiness:
+        order_sweep:
+            label: Nedovršene kupnje
+            detail:
+                never: 'Nedovršenih kupnji preko roka od 24 sata: %count%, a ništa ih nije zatvorilo. Pozadinski radnik vjerojatno vrti stariju naredbu koja ne uključuje red rasporeda.'
+                nothing_yet: 'Nema ničega na čekanju. Rok još nije imao što raditi.'
+                stale: 'Kupnje su zadnji put pregledane %when%, što je dulje nego što bi trebalo. Pozadinski radnik je možda ugašen ili vrti stariju naredbu.'
+                ok: 'Radi. Zadnji pregled %when%.'
+            fix: 'Naredbi radnika treba red rasporeda: messenger:consume async scheduler_order_maintenance. Ažuriraj servis, cron ili supervisor iz docs/INSTALL.md i ponovno ga pokreni. Za trenutačno čišćenje zaostatka: bin/console app:order:sweep-abandoned'
     menu: { forms: Forme, orders: Narudžbe, order_assignment: Nepripisane narudžbe }
     module: { desc: { form_builder: 'Gradnja formi s uvjetnom logikom; [form id=N] pretvara sadržaj stranice u formu.' } }
     order_assignment:
@@ -50,7 +59,7 @@ admin:
             form_data: Podaci forme
             mor: Merchant of Record (Dodo)
             mor_help: 'Porez obračunava, naplaćuje i uplaćuje Dodo kao prodavač od zapisa — Tallystovi vlastiti iznosi poreza iznad ostaju prazni za ove narudžbe.'
-        status: { pending: U obradi, paid: Čeka isporuku, fulfilled: Isporučeno, refunded: Refundirano }
+        status: { pending: U obradi, paid: Čeka isporuku, fulfilled: Isporučeno, refunded: Refundirano, failed: Nije dovršeno }
         mode: { test: Test, live: Live }
         action:
             mark_fulfilled: Označi isporučeno
@@ -264,6 +273,7 @@ admin:
             webhook_url_label: 'Webhook URL (zalijepi u %dashboard%):'
             events_label: 'Obavezni eventi:'
             guide: '%dashboard% dashboard → Webhooks → Add endpoint → zalijepi URL → odaberi evente. Test/sandbox i live imaju ODVOJENE endpointe (svaki sa svojim ključevima/secretom).'
+            guide_existing: 'Već si ovo postavio? Otvori postojeći endpoint i provjeri ima li SVE evente s popisa iznad — popis raste između izdanja, a event koji nisi pretplatio jednostavno nikad ne stigne.'
         webhook_check:
             header: Plaćanja — webhook (basic-auth zamka)
             intro: 'Najčešća go-live zamka: ako je webhook ruta iza basic-autha, plaćanje uspije ali narudžba ostane "U obradi" (webhook vrati 401 prije aplikacije, bez mailova). Test šalje nepotpisani zahtjev na vlastiti webhook URL — prava logika se NE pokreće (potpis padne na 400). 401 = problem. Pokreće se na zahtjev (ne usporava admin).'

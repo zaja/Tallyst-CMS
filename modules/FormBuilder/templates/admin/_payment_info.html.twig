@@ -29,8 +29,14 @@
                 <li><code>{{ event }}</code></li>
             {% endfor %}
         </ul>
-        <p class="small text-muted mb-0">
+        <p class="small text-muted mb-1">
             {{ 'admin.form.payment_info.guide'|trans({'%dashboard%': dashboard}, 'admin') }}
+        </p>
+        {# ⚠ The list above is generated from the code, so it GROWS between releases — but an endpoint
+           created on an older version keeps whatever was chosen back then. Nothing detects that from
+           here: an unsubscribed event is indistinguishable from one that simply has not happened. #}
+        <p class="small text-muted mb-0">
+            {{ 'admin.form.payment_info.guide_existing'|trans({}, 'admin') }}
         </p>
     </div>
 </div>

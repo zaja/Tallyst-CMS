@@ -13,11 +13,32 @@ framework:
                 - paid
                 - fulfilled
                 - refunded
+                # A checkout that never completed. It exists because `pending` used to mean both
+                # "going through, wait" and "this never happened", with nothing to tell them apart
+                # and nothing ever closing the second.
+                - failed
             transitions:
-                # 'pay' is applied ONLY by the verified Stripe webhook (money truth).
+                # 'pay' is applied ONLY by a verified provider webhook (money truth).
+                #
+                # ⚠ IT MAY COME FROM `failed`, AND THAT IS NOT A CONTRADICTION OF THE RETRY RULE —
+                # the two are decided by DIFFERENT things. Status changes only on what the PROVIDER
+                # asserts, never on what the buyer clicks. A slow method (bank transfer, SEPA) can
+                # settle after the 24h deadline already closed the order: the provider now says it
+                # holds the money, so the money wins the deadline — it is the SAME purchase, simply
+                # confirmed late. Refusing it would leave the books saying "not completed" for funds
+                # sitting in the account.
+                #
+                # ⚠ A RETRY NEVER TRAVELS THIS EDGE. Pressing "try again" creates a NEW order and
+                # does not touch the old one, because a buyer's click is not evidence of payment.
+                # `abandoned_at` is never cleared, so the owner still sees it was walked away from.
                 pay:
-                    from: pending
+                    from: [pending, failed]
                     to: paid
+                # Applied by the deadline sweep or a provider's own failure event — never by a
+                # visitor action.
+                fail:
+                    from: pending
+                    to: failed
                 # 'fulfill' is applied by the async fulfillment handler, after 'paid'.
                 fulfill:
                     from: paid

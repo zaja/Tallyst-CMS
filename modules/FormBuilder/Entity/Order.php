@@ -26,6 +26,19 @@ class Order
     public const STATUS_FULFILLED = 'fulfilled';
     public const STATUS_REFUNDED = 'refunded';
 
+    /**
+     * A checkout that never completed — a declined card, or a window closed and never returned to.
+     *
+     * ⚠ IT EXISTS BECAUSE `pending` MEANT TWO THINGS AT ONCE: "the payment is going through, wait"
+     * and "this never happened". Nothing told them apart, nothing ever closed the second, and the
+     * thank-you page went on promising a confirmation e-mail that was never coming. Measured on the
+     * dev database before this: a THIRD of all orders were pending, none younger than a month.
+     *
+     * ⚠ THESE ORDERS ARE NEVER DELETED. The owner has to be able to see how many people drop out —
+     * that number is a fact about the shop, not litter.
+     */
+    public const STATUS_FAILED = 'failed';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -224,6 +237,33 @@ class Order
      */
     #[ORM\Column(name: 'confirmation_sent_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $confirmationSentAt = null;
+
+    /**
+     * SNAPSHOT of the page the buyer was on when they started this checkout — a site-relative path.
+     *
+     * ⚠ It is a SNAPSHOT for the same reason as productName, not a convenience. A form has no URL of
+     * its own; it lives embedded in a page through `[form id=N]`, and nothing else records WHICH page.
+     * Without this an unfinished checkout could only ever be offered "go to the home page and find it
+     * again", which is not an offer to finish a purchase.
+     *
+     * ⚠ Site-relative and validated on write (leading `/`, never `//`), because it is later put in an
+     * e-mail as a link — an absolute or protocol-relative value here would be an open redirect posted
+     * to the buyer under the shop's name.
+     */
+    #[ORM\Column(name: 'return_path', length: 255, nullable: true)]
+    private ?string $returnPath = null;
+
+    /**
+     * When this order was declared not completed — and it is NEVER cleared afterwards.
+     *
+     * ⚠ IT SURVIVES A LATE PAYMENT ON PURPOSE. A slow method (bank transfer, SEPA) can settle after
+     * the deadline has already closed the order; the money then wins and the status goes back to
+     * paid, but the fact that the buyer had abandoned it stays visible to the owner. Without this
+     * column that history would vanish the moment the webhook landed, and the owner would lose the
+     * only evidence of how many people leave and how many come back.
+     */
+    #[ORM\Column(name: 'abandoned_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $abandonedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?\DateTimeImmutable $createdAt = null;
@@ -683,6 +723,47 @@ class Order
         return $this;
     }
 
+    public function getReturnPath(): ?string
+    {
+        return $this->returnPath;
+    }
+
+    /** ⚠ Refuses anything that is not a site-relative path — see the property docblock. */
+    public function setReturnPath(?string $returnPath): static
+    {
+        $returnPath = null === $returnPath ? null : trim($returnPath);
+        $safe = null !== $returnPath
+            && str_starts_with($returnPath, '/')
+            && !str_starts_with($returnPath, '//');
+
+        $this->returnPath = $safe ? $returnPath : null;
+
+        return $this;
+    }
+
+    public function getAbandonedAt(): ?\DateTimeImmutable
+    {
+        return $this->abandonedAt;
+    }
+
+    public function setAbandonedAt(?\DateTimeImmutable $abandonedAt): static
+    {
+        $this->abandonedAt = $abandonedAt;
+
+        return $this;
+    }
+
+    /** True once this order has ever been declared not completed — even if it was paid afterwards. */
+    public function wasAbandoned(): bool
+    {
+        return null !== $this->abandonedAt;
+    }
+
+    public function isFailed(): bool
+    {
+        return self::STATUS_FAILED === $this->status;
+    }
+
     public function getConfirmationSentAt(): ?\DateTimeImmutable
     {
         return $this->confirmationSentAt;
@@ -791,6 +872,27 @@ class Order
     private function submittedValues(): array
     {
         return $this->submissionData ?? $this->submission?->getData() ?? [];
+    }
+
+    /**
+     * The buyer's submitted fields as key => value, WITHOUT the ship_* delivery address (which is
+     * rendered on its own, formatted). Structured rather than the flattened string the CSV wants,
+     * because the buyer's own page shows them as a list.
+     *
+     * @return array<string, string>
+     */
+    public function getSubmittedFields(): array
+    {
+        $shipKeys = array_keys(ShippingAddress::FIELDS);
+        $fields = [];
+        foreach ($this->submittedValues() as $key => $value) {
+            if (\in_array($key, $shipKeys, true)) {
+                continue;
+            }
+            $fields[(string) $key] = is_array($value) ? implode(', ', $value) : (string) $value;
+        }
+
+        return $fields;
     }
 
     /** Human-readable dump of the submitted form data (ALL keys, incl. ship_*), for the CSV export. */

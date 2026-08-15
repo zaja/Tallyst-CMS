@@ -127,6 +127,37 @@ class OrderPaymentSync
             return 'OK';
         }
 
+        // The provider says this checkout will not be paid → close it.
+        //
+        // ⚠ NO E-MAIL IS SENT FROM HERE, and that is the whole reason the deadline exists as a
+        // separate step. A declined card is the most ordinary thing in a shop: the buyer is still
+        // standing at the till and usually reaches for another card within the minute. Telling them
+        // "your purchase failed" while they are completing it would be both wrong and alarming. Only
+        // the 24-hour sweep, which knows the checkout was never finished by ANY means, may write.
+        if ($result->isFailed) {
+            $order = $this->locateForFailure($result);
+            if (null === $order) {
+                return 'Unknown order';
+            }
+
+            // ⚠ Idempotent, and deliberately narrow: only a checkout still waiting can be closed.
+            // A late duplicate of a decline must never touch an order that has since been paid —
+            // the provider's later word wins, not its earlier one.
+            if (!$this->orderStateMachine->can($order, 'fail')) {
+                return 'Already resolved';
+            }
+
+            $this->logger->info('Payment failed for order {id}: {reason}', [
+                'id' => $order->getId(),
+                'reason' => $result->failureReason ?? $result->eventType,
+            ]);
+
+            $this->orderStateMachine->apply($order, 'fail');
+            $this->em->flush();
+
+            return 'OK';
+        }
+
         // Full refund (admin-initiated OR done in the provider dashboard) → flip to refunded.
         if ($result->isRefund) {
             // Same correlation rule as the paid branch: explicit order id (Dodo) wins, else the
@@ -249,5 +280,22 @@ class OrderPaymentSync
 
         $order->setLicenseKey($pending->getLicenseKey());
         $this->pendingLicenses->remove($pending);
+    }
+
+    /**
+     * Finds the order a failure event refers to, using the same correlation rules as the paid branch:
+     * an explicit order id (Dodo echoes metadata.order_id) wins, otherwise the provider's session id.
+     */
+    private function locateForFailure(WebhookResult $result): ?Order
+    {
+        if (null !== $result->orderId) {
+            return $this->orders->find((int) $result->orderId);
+        }
+
+        if (null !== $result->sessionId) {
+            return $this->orders->findOneByProviderSessionId($result->sessionId);
+        }
+
+        return null;
     }
 }

@@ -86,6 +86,20 @@ email:
             form_name: 'Naziv proizvoda kakav je bio u trenutku kupnje (kasnije preimenovanje forme ga ne mijenja).'
             variant: Odabrana varijanta (prazno ako nema).
             site_name: Naziv sajta.
+    order_failed:
+        label: Kupnja nije dovršena (kupcu)
+        subject: 'Kupnja nije dovršena — {site_name}'
+        body: |
+            <p>Pozdrav, narudžba #{order_id} za {product} nije dovršena, pa ništa nije naplaćeno niti je išta na putu.</p>
+            <p>Ako je i dalje želiš, možeš nastaviti odande gdje je stalo — podaci su već upisani:</p>
+            <p><a href="{retry_url}">Dovrši kupnju</a></p>
+            <p>Ako ti više ne treba, slobodno zanemari ovu poruku.</p>
+            <p>{site_name}</p>
+        tag:
+            order_id: Broj narudžbe.
+            product: 'Naziv proizvoda kakav je bio kad je kupnja započela.'
+            retry_url: 'Poveznica natrag na stranicu s koje je kupnja krenula, s već upisanim podacima kupca.'
+            site_name: Naziv sajta.
     order_refunded:
         label: Narudžba refundirana (kupcu)
         subject: 'Povrat za narudžbu #{order_id}'

@@ -17,14 +17,20 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  */
 class AdminAccessTest extends WebTestCase
 {
-    /** Reachable by ROLE_EDITOR (content + the editor's media/forms JSON endpoints). */
-    private const EDITOR_OK = [
+    /**
+     * Reachable by ROLE_EDITOR (content + the editor's media/forms JSON endpoints).
+     *
+     * ⚠ PUBLIC because AdminRawTranslationKeyTest reads it. Together with ADMIN_ONLY this is the
+     * inventory of admin screens, and it is maintained here anyway — a second, hand-written copy of
+     * it elsewhere would only ever list the screens somebody happened to remember.
+     */
+    public const EDITOR_OK = [
         '/admin', '/admin/page', '/admin/post', '/admin/category',
         '/admin/media', '/admin/media-library', '/admin/forms-list', '/admin/link-targets',
     ];
 
     /** Admin-only — an editor must get 403 on each (complete set of ROLE_ADMIN routes). */
-    private const ADMIN_ONLY = [
+    public const ADMIN_ONLY = [
         '/admin/settings', '/admin/modules', '/admin/user', '/admin/order',
         '/admin/themes', '/admin/menu', '/admin/menu-item', '/admin/setting',
         '/admin/forms', '/admin/email', '/admin/readiness', '/admin/demo',

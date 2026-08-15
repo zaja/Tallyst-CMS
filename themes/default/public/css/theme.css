@@ -948,3 +948,74 @@ th { font-weight: 650; }
     .member-order__amount,
     .member-order__date { text-align: left; }
 }
+
+/* ── One purchase (the member's own order detail) ─────────────────────────────
+   The page exists for people who lost the confirmation e-mail, so the licence key
+   and the invoice are the only things given visual weight. Everything else is
+   context and is deliberately quiet. */
+.member-back { font-size: var(--fs-sm); margin-bottom: var(--s-2); }
+.member-purchase__amount { font-size: var(--fs-lg); font-weight: 600; margin-top: var(--s-2); }
+/* The three facts under the heading, one per line — a buyer scanning for the order date or
+   the state must not have to pick them out of a run-on line. */
+.member-purchase__meta { margin-top: var(--s-5); }
+.member-purchase__unfinished { max-width: var(--measure); }
+.member-purchase__invoice { margin-top: var(--s-4); }
+
+/* The licence key: the reason this page is open. Monospaced, boxed, selectable —
+   and never hidden behind the copy button, which is an enhancement, not the way in. */
+.member-licence__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-3);
+}
+.member-licence__key {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    padding: var(--s-3) var(--s-4);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: var(--fs-sm);
+    user-select: all;   /* one click selects the whole key */
+}
+.member-licence__copy { flex: 0 0 auto; }
+
+/* What the buyer typed at the till. A definition list so a screen reader pairs
+   label and value; two columns on wide screens, stacked when there is no room. */
+.member-fields {
+    display: grid;
+    grid-template-columns: minmax(8rem, auto) 1fr;
+    gap: var(--s-2) var(--s-4);
+    margin: 0;
+}
+.member-fields dt { color: var(--muted); font-size: var(--fs-sm); }
+.member-fields dd { margin: 0; }
+.member-address { white-space: normal; }
+
+/* ⚠ The tax breakdown is small and last ON PURPOSE. Companies look for it and will
+   find it; nobody else should meet it before the thing they came for. */
+.member-tax { margin-top: var(--s-7); padding-top: var(--s-4); border-top: 1px solid var(--line); }
+.member-tax h3 { font-size: var(--fs-sm); color: var(--muted); margin-bottom: var(--s-2); }
+.member-tax__list {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--s-1) var(--s-4);
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--muted);
+}
+.member-tax__list dd { margin: 0; text-align: right; white-space: nowrap; }
+
+/* The help line — a quiet offer, not a call to action. It must not compete with
+   the licence key, and it is deliberately the only thing resembling support on
+   this page (there is no refund button, by decision). */
+.member-help { margin-top: var(--s-7); color: var(--muted); font-size: var(--fs-sm); }
+
+@media (max-width: 32rem) {
+    .member-fields { grid-template-columns: 1fr; gap: 0 0; }
+    .member-fields dt { margin-top: var(--s-3); }
+    .member-licence__copy { width: 100%; }
+}

@@ -173,6 +173,11 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
             $this->logger->warning('Dodo payment.failed', ['payment_id' => $data['payment_id'] ?? null]);
         }
 
+        // Dodo is the only provider that volunteers a decline; it has done so since Faza 8 and was
+        // logged-only until the order state existed to record it.
+        $isFailed = 'payment.failed' === $type;
+        $failureReason = $isFailed ? (is_string($data['error_message'] ?? null) ? $data['error_message'] : ($data['error_code'] ?? null)) : null;
+
         $isPaid = 'payment.succeeded' === $type;
         // entitlement_grant.created: ✅ live-proven (Faza 8 K0). refund.succeeded: ⚠ still assumed (no live refund run).
         $isRefund = 'refund.succeeded' === $type;
@@ -202,6 +207,8 @@ class DodoProcessor implements PaymentProcessorInterface, MerchantOfRecordInterf
             isPaid: $isPaid,
             customerEmail: is_string($email) ? $email : null,
             isRefund: $isRefund,
+            isFailed: $isFailed,
+            failureReason: is_string($failureReason) ? $failureReason : null,
             orderId: is_scalar($orderId) ? (string) $orderId : null,
             isEntitlement: $isEntitlement,
             licenseKey: is_string($licenseKey) ? $licenseKey : null,

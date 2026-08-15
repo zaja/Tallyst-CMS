@@ -200,6 +200,7 @@ admin:
             site_tagline: { label: Slogan, help: Kratak opis sajta (meta opis). }
             search_enabled: { label: Prikaži tražilicu, help: 'Polje za pretragu u zaglavlju. Isključeno (zadano) = jednostavan sajt bez pretrage; uključi ako imaš puno sadržaja.' }
             hide_demo_link: { label: Sakrij Demo sadržaj link u sidebaru, help: 'Za produkciju. Skriva samo link — demo stranica ostaje dostupna direktno.' }
+            support_url: { label: Stranica za podršku / kontakt, help: 'Kamo se šalje član kojem treba pomoć oko kupnje — npr. /kontakt. Ostavi prazno i poveznica za pomoć se neće prikazivati.' }
         branding:
             title: Branding
             logo_media_id: { label: Logo, help: Prikazuje se u zaglavlju. Prazno = naziv sajta kao tekst. }

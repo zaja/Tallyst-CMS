@@ -13,7 +13,9 @@
         <ul class="member-orders">
             {% for order in orders %}
                 <li class="member-order">
-                    <span class="member-order__name">{{ order.productLabel }}</span>
+                    <span class="member-order__name">
+                        <a href="{{ path('form_builder_member_purchase', {'id': order.id}) }}">{{ order.productLabel }}</a>
+                    </span>
                     <span class="member-order__amount">
                         {{ (order.amountMinor / 100)|number_format(2, ',', '.') }} {{ order.currency|upper }}
                     </span>
