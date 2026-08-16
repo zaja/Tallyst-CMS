@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.14.0] — 2026-08-16
+
 ### Added
 
 - **The readiness check now names the queue your background worker is missing**, instead of staying
