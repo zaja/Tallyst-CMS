@@ -34,6 +34,10 @@ class WorkerHeartbeatSubscriber implements EventSubscriberInterface
             return;
         }
         $this->lastWrite = $now;
-        $this->heartbeat->beat();
+
+        // ⚠ The worker's OWN account of which queues it consumes. Reading it from the running
+        // process is the whole point: the readiness panel can then state a fact rather than infer
+        // one from whether work has piled up, which only ever answers once something is wrong.
+        $this->heartbeat->beat($event->getWorker()->getMetadata()->getTransportNames());
     }
 }

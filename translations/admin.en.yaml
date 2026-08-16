@@ -326,7 +326,7 @@ admin:
             fix: { invalid: 'Set DEFAULT_URI to the real public URL (e.g. https://your-domain.com) in .env.local.', localhost: 'For production set DEFAULT_URI to the real public domain.' }
         mailer:
             label: Mail
-            detail: { db: 'Configured via %provider% (Settings → Email → Delivery).', env: Using MAILER_DSN from the environment., unconfigured: '%provider% is selected but not fully configured — password resets and order mail will not be sent.' }
+            detail: { db: 'Configured via %provider% (Settings → Email → Delivery). ⚠ This confirms the settings are filled in, not that mail is arriving — only a real message can show that.', env: Using MAILER_DSN from the environment., unconfigured: '%provider% is selected but not fully configured — password resets and order mail will not be sent.' }
             fix: 'Settings → Email → Delivery: fill in the selected provider''s fields (or set MAILER_DSN in .env.local).'
         encrypted_settings:
             label: Stored secrets
@@ -362,7 +362,9 @@ admin:
             fix: { error: 'Check the DB connection, then run: php8.5 bin/console doctrine:migrations:migrate', pending: 'Run: php8.5 bin/console doctrine:migrations:migrate' }
         worker:
             label: Messenger worker
-            detail: { active: 'Active — last seen %seconds%s ago (heartbeat).', empty: 'The worker has not reported (heartbeat empty) — it may not be running, or it was just started/restarted and has not beaten yet.', stale: 'The worker last reported %seconds%s ago (stale) — it may have stopped.', suffix: ' Can''t confirm 100% from the app.' }
+            detail: { active: 'Working — last checked %seconds%s ago, watching: %queues%.', missing_queue: 'The worker is running but is NOT watching: %queues%. Anything that depends on those queues is silently not happening — most likely its command was not updated when you upgraded.', queues_unknown: 'Running — last checked %seconds%s ago, but it has not yet reported which queues it watches. This is normal for a minute after an upgrade or a restart; if it persists, the worker is running an older release.', empty: 'The worker has not reported (heartbeat empty) — it may not be running, or it was just started/restarted and has not beaten yet.', stale: 'The worker last reported %seconds%s ago (stale) — it may have stopped.', suffix: ' Can''t confirm 100% from the app.' }
+            fix_missing_queue: 'Open your worker''s service file, cron entry or supervisor program and make its command read: %command% — then restart it. See docs/INSTALL.md → Background worker. A queue name that does not exist is simply ignored, so a typo costs you that job, not the whole worker.'
+            fix_queues_unknown: 'Wait a minute and reload. If it still says this, the worker is running code from before the upgrade — restart it.'
             fix: 'Example — the exact command depends on your server (systemd / supervisor / manual). Check: `systemctl --user status tallyst-messenger`. To run the worker as a persistent service: `systemctl --user restart tallyst-messenger` (user-level systemd unit in ~/.config/systemd/user/ + `loginctl enable-linger`), or run `php8.5 bin/console messenger:consume async` under your process manager. The heartbeat refreshes while the worker runs.'
         queue:
             label: Message queue

@@ -325,7 +325,7 @@ admin:
             fix: { invalid: 'Postavi DEFAULT_URI na pravi javni URL (npr. https://tvoja-domena.hr) u .env.local.', localhost: 'Za produkciju postavi DEFAULT_URI na pravu javnu domenu.' }
         mailer:
             label: Pošta
-            detail: { db: 'Konfigurirano preko %provider% (Postavke → Email → Isporuka).', env: Koristi MAILER_DSN iz okoline., unconfigured: '%provider% je odabran ali nije potpuno konfiguriran — reset lozinke i mailovi narudžbi neće se slati.' }
+            detail: { db: 'Konfigurirano preko %provider% (Postavke → Email → Isporuka). ⚠ Ovo potvrđuje da su podaci upisani, ne da pošta stiže — to može pokazati samo stvarna poruka.', env: Koristi MAILER_DSN iz okoline., unconfigured: '%provider% je odabran ali nije potpuno konfiguriran — reset lozinke i mailovi narudžbi neće se slati.' }
             fix: 'Postavke → Email → Isporuka: upiši polja odabranog pružatelja (ili postavi MAILER_DSN u .env.local).'
         encrypted_settings:
             label: Spremljeni tajni podaci
@@ -361,7 +361,9 @@ admin:
             fix: { error: 'Provjeri DB konekciju, pa pokreni: php8.5 bin/console doctrine:migrations:migrate', pending: 'Pokreni: php8.5 bin/console doctrine:migrations:migrate' }
         worker:
             label: Messenger worker
-            detail: { active: 'Aktivan — zadnji put viđen prije %seconds% s (heartbeat).', empty: 'Worker se nije javio (heartbeat prazan) — možda ne radi, ili je tek pokrenut/restartan i još nije „kucnuo".', stale: 'Worker se zadnji put javio prije %seconds% s (zastarjelo) — možda je stao.', suffix: ' Ne mogu 100% potvrditi iz aplikacije.' }
+            detail: { active: 'Radi — zadnja provjera prije %seconds% s, sluša: %queues%.', missing_queue: 'Radnik radi, ali NE sluša: %queues%. Sve što ovisi o tim redovima tiho se ne događa — najvjerojatnije mu naredba nije ažurirana pri nadogradnji.', queues_unknown: 'Radi — zadnja provjera prije %seconds% s, ali još nije javio koje redove sluša. Normalno je minutu nakon nadogradnje ili ponovnog pokretanja; ako potraje, radnik vrti stariju verziju.', empty: 'Worker se nije javio (heartbeat prazan) — možda ne radi, ili je tek pokrenut/restartan i još nije „kucnuo".', stale: 'Worker se zadnji put javio prije %seconds% s (zastarjelo) — možda je stao.', suffix: ' Ne mogu 100% potvrditi iz aplikacije.' }
+            fix_missing_queue: 'Otvori servisnu datoteku radnika, cron ili supervisor i neka mu naredba glasi: %command% — pa ga ponovno pokreni. Vidi docs/INSTALL.md → Background worker. Nepostojeće ime reda se jednostavno ignorira, pa te tipfeler stoji tog posla, ne cijelog radnika.'
+            fix_queues_unknown: 'Pričekaj minutu i osvježi. Ako i dalje piše ovo, radnik vrti kod od prije nadogradnje — ponovno ga pokreni.'
             fix: 'Primjer — točna naredba ovisi o vašem serveru (systemd / supervisor / ručno). Provjera: `systemctl --user status tallyst-messenger`. Za pokretanje workera kao trajnog servisa: `systemctl --user restart tallyst-messenger` (user-level systemd unit u ~/.config/systemd/user/ + `loginctl enable-linger`), ili pokreni `php8.5 bin/console messenger:consume async` kroz vaš process manager. Heartbeat se osvježava dok worker radi.'
         queue:
             label: Red poruka

@@ -2,6 +2,7 @@
 
 namespace App\Readiness;
 
+use App\Messenger\ConsumableTransports;
 use App\Messenger\WorkerHeartbeat;
 use Doctrine\DBAL\Connection;
 use Doctrine\Migrations\DependencyFactory;
@@ -29,6 +30,7 @@ class InfraReadinessProvider implements ReadinessCheckProviderInterface
         #[Autowire(service: 'doctrine.migrations.dependency_factory')]
         private readonly DependencyFactory $migrations,
         private readonly WorkerHeartbeat $heartbeat,
+        private readonly ConsumableTransports $transports,
         private readonly TranslatorInterface $translator,
     ) {
     }
@@ -131,14 +133,44 @@ class InfraReadinessProvider implements ReadinessCheckProviderInterface
             $this->t('admin.readiness.migrations.fix.pending'));
     }
 
+    /**
+     * ⚠ THIS ANSWERS "IS IT RUNNING" *AND* "IS IT WATCHING EVERYTHING IT SHOULD" — the second half
+     * exists because a worker consuming only some of its queues looks exactly like a healthy one,
+     * and the work it silently is not doing never happens. Since the unfinished-checkout sweep moved
+     * onto the worker, an owner upgrading has to add a queue name by hand, so this is now the only
+     * thing standing between a mistyped service file and a feature that quietly does nothing.
+     *
+     * ⚠ It reads the worker's OWN report of its transports rather than inferring anything from
+     * whether work has piled up. A check that turns amber only once a backlog exists cannot say
+     * anything at all about a quiet shop, which is most of them.
+     */
     private function checkWorker(): Check
     {
         $g = $this->t(self::G_WORKER);
         $label = $this->t('admin.readiness.worker.label');
         $lastSeen = $this->heartbeat->lastSeen();
         if (null !== $lastSeen && $this->heartbeat->isFresh()) {
+            $missing = $this->transports->missingFrom($this->heartbeat->transports());
+            if ([] !== $missing) {
+                return Check::warning($g, $label,
+                    $this->t('admin.readiness.worker.detail.missing_queue', ['%queues%' => implode(', ', $missing)]),
+                    $this->t('admin.readiness.worker.fix_missing_queue', ['%command%' => 'messenger:consume '.implode(' ', $this->transports->expected())]));
+            }
+
+            // ⚠ An empty transport list is "not known yet" — a worker from before this was recorded,
+            // or a cache cleared moments ago, which is exactly when somebody is looking. Saying so is
+            // honest; claiming it is fine would be the failure this check exists to prevent.
+            if ([] === $this->heartbeat->transports()) {
+                return Check::warning($g, $label,
+                    $this->t('admin.readiness.worker.detail.queues_unknown', ['%seconds%' => max(0, time() - $lastSeen)]),
+                    $this->t('admin.readiness.worker.fix_queues_unknown'));
+            }
+
             return Check::ok($g, $label,
-                $this->t('admin.readiness.worker.detail.active', ['%seconds%' => max(0, time() - $lastSeen)]));
+                $this->t('admin.readiness.worker.detail.active', [
+                    '%seconds%' => max(0, time() - $lastSeen),
+                    '%queues%' => implode(', ', $this->heartbeat->transports()),
+                ]));
         }
 
         $detail = null === $lastSeen
