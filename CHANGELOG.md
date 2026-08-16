@@ -10,6 +10,14 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Added
+
+- **The readiness check now names the queue your background worker is missing**, instead of staying
+  quiet until unfinished checkouts pile up — so if you skipped the worker step 1.13.0 asks for by
+  hand, **System & Tools → Readiness check** tells you straight away rather than weeks later. It also
+  states plainly what it can and cannot know about mail: that your delivery settings are filled in,
+  not that messages are arriving.
+
 ## [1.13.0] — 2026-08-15
 
 ### Added
