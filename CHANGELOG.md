@@ -10,6 +10,8 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+## [1.15.0] — 2026-08-19
+
 ### Added
 
 - **Tallyst now writes the background worker's service file for you.** Setting up the worker used to
