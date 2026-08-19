@@ -10,6 +10,11 @@ use App\Install\InstallStateDetector;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Result;
 use PHPUnit\Framework\TestCase;
+use App\Messenger\ConsumableTransports;
+use App\Messenger\WorkerHeartbeat;
+use App\Ops\WorkerServiceUnit;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Console\Tester\CommandTester;
 
 /**
@@ -53,6 +58,12 @@ class UpgradeFinalizeCommandTest extends TestCase
             new DatabaseProber(),
             new ConsoleStepRunner($this->tmpDir),                       // real, but any step in tmpDir fails fast
             new DatabaseBackupService('mysql://u:p@127.0.0.1:3306/db', $this->tmpDir),
+            // The worker collaborators: these tests all stop in pre-flight, long before the closing
+            // message, so an empty heartbeat and an empty transport list are enough — and reading
+            // "no worker" is the honest answer for a throwaway directory anyway.
+            new WorkerHeartbeat(new ArrayAdapter()),
+            new ConsumableTransports(new ServiceLocator([])),
+            new WorkerServiceUnit(new ConsumableTransports(new ServiceLocator([])), $this->tmpDir),
         );
     }
 

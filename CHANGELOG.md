@@ -10,6 +10,25 @@ core-API change is a MAJOR (flagged ⚠).
 
 ## [Unreleased]
 
+### Added
+
+- **Tallyst now writes the background worker's service file for you.** Setting up the worker used to
+  mean copying a template out of the install guide and filling in your own paths — and the worker is
+  what sends every e-mail your site produces, so getting it wrong or skipping it means password
+  resets and order confirmations silently never arrive. `app:install` now writes the file as part of
+  installing, with your site path, the right PHP binary and every queue already filled in, and prints
+  the two commands that start it — including the one that keeps it running after you log out, which
+  is the step most people miss. Run `php bin/console app:worker:install` any time to get it again.
+  ⚠ It never starts anything itself: you run the commands, so nothing begins running on your server
+  without your say-so. On hosts without systemd it writes nothing and prints a ready-made cron line
+  instead.
+
+- **Upgrades now tell you about the worker only when there is something to do.** `bin/tallyst-upgrade`
+  checks it and says one of three things: restart it (it runs the old code until you do), you are
+  missing a queue and here is the one command that fixes it, or there is no worker at all and here is
+  how to set one up. ⚠ Previously every upgrade printed the same setup block whether you needed it or
+  not, which is how people stop reading it and then miss the time it matters.
+
 ## [1.14.0] — 2026-08-16
 
 ### Added

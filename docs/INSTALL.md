@@ -79,53 +79,78 @@ The installer's closing message lists these too. Work through them before going 
 
 ### Background worker (required for e-mail)
 
-E-mails — password reset, order confirmations, admin notifications — are sent **asynchronously** through a Symfony Messenger worker. Without a running worker they queue but never send. How you keep it running depends on your host — pick the option that fits.
+E-mails — password reset, order confirmations, admin notifications — are sent **asynchronously** through a Symfony Messenger worker, and a scheduled job that closes checkouts nobody completed runs on the same worker. Without one running, e-mail queues up and is never sent.
 
-#### Option A — systemd (if your host has it)
+**`app:install` already wrote the service file for you** and printed the two commands that start it. If you missed that, or you are setting this up later, ask for it again:
 
-The best choice on a VPS or a managed host with user systemd (no root needed, survives logout and reboot). Create `~/.config/systemd/user/tallyst-messenger.service`:
+```bash
+php bin/console app:worker:install
+```
+
+It fills in every value for this install — the site path, the right PHP binary, and every queue a worker must consume — and writes `~/.config/systemd/user/tallyst-messenger.service`. **It never starts anything**: it prints the commands and you run them, so nothing begins running on your server without your say-so.
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now tallyst-messenger
+loginctl enable-linger YOUR-USER     # the command prints your actual username
+```
+
+> ⚠ **Do not skip `loginctl enable-linger`.** Without it the worker stops the moment you log out of SSH, and e-mail stops with it — with no error anywhere. It is the one line here whose purpose is not self-evident, which is exactly why it gets skipped.
+
+Check it took, and that it is watching every queue:
+
+```bash
+systemctl --user status tallyst-messenger
+journalctl --user -u tallyst-messenger -n 20 | grep Consuming
+```
+
+That last line should name **every** queue, e.g. `Consuming messages from transports "async, scheduler_order_maintenance"`. A worker consuming only some of them looks perfectly healthy and silently does not do the rest — the admin **readiness panel** reports exactly this, and names the queue that is missing.
+
+#### If your host has no user systemd
+
+`app:worker:install` detects that, writes nothing, and prints a complete cron line instead — paths and queues already filled in. Add it with `crontab -e`. It starts a short-lived worker every minute; `--time-limit=60` makes each one exit before the next starts, so processing is effectively continuous. No restart step is needed after a deploy — the next minute's run picks up the new code.
+
+#### If your host uses supervisor
+
+Point a program at the command `app:worker:install --print` shows in its `ExecStart` line, with `autostart=true` and `autorestart=true`, and restart it (`supervisorctl restart tallyst-messenger`) after a deploy.
+
+#### After an upgrade
+
+Restart the worker — it keeps running the **old code** until you do:
+
+```bash
+systemctl --user restart tallyst-messenger
+```
+
+`app:upgrade:finalize` checks the worker for you and says which of these you need: a restart, a queue you are missing, or the full setup if there is no worker at all.
+
+> ⚠ **Upgrading from 1.12.x?** The worker command gained a second queue name, `scheduler_order_maintenance`. Run `php bin/console app:worker:install --update` — it rewrites only the `ExecStart` line and leaves any changes of your own alone — then `systemctl --user daemon-reload && systemctl --user restart tallyst-messenger`. Without it e-mail keeps working, but checkouts that were never completed are never closed.
+
+<details>
+<summary>The service file, if you would rather write it yourself</summary>
+
+`app:worker:install --print` shows exactly what would be written, with your real paths:
 
 ```ini
 [Unit]
-Description=Tallyst messenger worker
+Description=Tallyst CMS messenger worker
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/php8.5 /home/USER/htdocs/my-site/bin/console messenger:consume async scheduler_order_maintenance --time-limit=3600
+Type=simple
+WorkingDirectory=/path/to/my-site
+ExecStart=/usr/bin/php8.5 /path/to/my-site/bin/console messenger:consume async scheduler_order_maintenance --time-limit=3600 --memory-limit=128M
 Restart=always
 RestartSec=5
+SyslogIdentifier=tallyst-messenger
 
 [Install]
 WantedBy=default.target
 ```
 
-Replace the `php8.5` path with the output of `which php8.5` and the project path with yours. Then enable it:
+⚠ Use the **versioned** PHP binary (`php8.5`), never a bare `php` — on a host with several PHP versions a bare `php` is routinely the wrong one. And keep the queue list complete; `app:worker:install --print` is always current, this snippet is not.
 
-```bash
-systemctl --user daemon-reload
-systemctl --user enable --now tallyst-messenger
-loginctl enable-linger $USER     # keep it running after logout and across reboots
-```
-
-Check it with `systemctl --user status tallyst-messenger`. After a deploy (a cache rebuild), restart it: `systemctl --user restart tallyst-messenger`.
-
-#### Option B — cron (works almost everywhere)
-
-If your host has no systemd (typical shared hosting), run the worker from cron. It starts a short-lived worker every minute; `--time-limit=60` makes each one exit before the next starts, so processing is effectively continuous. Add to your crontab (`crontab -e`):
-
-```cron
-* * * * * cd /home/USER/htdocs/my-site && /usr/bin/php8.5 bin/console messenger:consume async scheduler_order_maintenance --time-limit=60 --limit=10 >/dev/null 2>&1
-```
-
-Replace the path and the `php8.5` binary with yours (`which php8.5`). No restart step is needed after a deploy — the next minute's run picks up the new code.
-
-#### Option C — supervisor
-
-If your host uses [Supervisor](http://supervisord.org/), point a program at `php8.5 bin/console messenger:consume async scheduler_order_maintenance --time-limit=3600` with `autostart=true`, `autorestart=true`, and restart it (`supervisorctl restart tallyst-messenger`) after a deploy.
-
-> Confirm the worker is actually running from the admin **readiness panel** (below) — it reports the worker heartbeat and the queue.
-
-> ⚠ **Upgrading from 1.12.x?** The worker command gained a second queue name — `scheduler_order_maintenance`. Update your service, cron entry or supervisor program to match the lines above and restart it. Without it, e-mail keeps working but checkouts that were never completed are never closed, and the **readiness panel** will tell you so.
+</details>
 
 ### Nightly cleanup (recommended, not required)
 

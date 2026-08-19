@@ -9,6 +9,7 @@ use App\Install\InstallStateDetector;
 use App\Install\EnvLocalWriter;
 use App\Settings\EncryptionKeyProvisioner;
 use Doctrine\DBAL\Connection;
+use App\Ops\WorkerServiceUnit;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -47,6 +48,7 @@ class InstallCommand extends Command
         private readonly DatabaseDsnBuilder $dsnBuilder,
         private readonly DatabaseProber $prober,
         private readonly InstallStateDetector $state,
+        private readonly WorkerServiceUnit $workerUnit,
         private readonly ConsoleStepRunner $steps,
     ) {
         parent::__construct();
@@ -331,15 +333,19 @@ class InstallCommand extends Command
         }
 
         $io->success('Tallyst is installed.');
+
+        // ⚠ THE WORKER BLOCK COMES FIRST, BEFORE THE OTHER NEXT STEPS. Without a worker no e-mail is
+        // ever sent — not a password reset, not an order confirmation — and it is the only remaining
+        // step that cannot be done from the admin UI later. Everything below it can wait; this
+        // cannot, so it is not buried in a numbered list.
+        $this->workerSetup($io);
+
         $io->writeln([
             sprintf('Open <info>%s/admin</info> and sign in as <info>%s</info>.', $siteUrl, $adminEmail),
             '',
             '<comment>Next steps:</comment>',
-            '  1) Start the background worker so e-mails send (password reset, orders):',
-            '       see the "Background worker" section in docs/INSTALL.md',
-            '       (systemd, supervisor, or cron — depends on your host)',
-            '  2) Enter Stripe/PayPal keys and SMTP in Settings (admin).',
-            '  3) Live Stripe/PayPal keys + a webhook endpoint WITHOUT basic-auth',
+            '  1) Enter Stripe/PayPal keys and SMTP in Settings (admin).',
+            '  2) Live Stripe/PayPal keys + a webhook endpoint WITHOUT basic-auth',
             '       (/webhook/stripe + /webhook/paypal — else payment succeeds but the order stays "processing").',
             '',
             '<comment>Mode:</comment> installed in PROD mode (neutral errors, optimised) — recommended.',
@@ -424,5 +430,51 @@ class InstallCommand extends Command
         $io->error($message);
 
         return $code;
+    }
+
+    /**
+     * The one step left after installing, written out in full because a fresh install has no worker
+     * and no service file — the owner has nothing to compare against.
+     *
+     * ⚠ It says what is LOST without it, not "start the worker". Somebody who does not know what
+     * breaks has no way to judge whether the step can wait, and it cannot.
+     */
+    private function workerSetup(SymfonyStyle $io): void
+    {
+        $io->writeln([
+            '<comment>One step left: the background worker</comment>',
+            'Without it no e-mail is ever sent — password resets, order confirmations, nothing.',
+            'Everything else already works.',
+            '',
+        ]);
+
+        if (!$this->workerUnit->systemdAvailable()) {
+            $io->writeln([
+                'This host has no user systemd, so no service file was written.',
+                'Run the worker from cron instead — this line is complete, paths and all:',
+                '',
+                '  '.$this->workerUnit->cronLine(),
+                '',
+            ]);
+
+            return;
+        }
+
+        try {
+            $path = $this->workerUnit->write();
+        } catch (\RuntimeException $e) {
+            // ⚠ Never fail the install over this. The site is installed and working; the worker is
+            // an ops step, and an owner who is told how to do it by hand is not stuck.
+            $io->writeln([
+                'Could not write the service file ('.$e->getMessage().').',
+                'See the "Background worker" section in docs/INSTALL.md.',
+                '',
+            ]);
+
+            return;
+        }
+
+        $io->writeln(['I have written the service file for you:', '', '  '.$path, '']);
+        WorkerInstallCommand::printStartInstructions($io, $this->workerUnit);
     }
 }

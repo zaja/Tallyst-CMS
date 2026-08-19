@@ -8,6 +8,10 @@ use App\Install\DatabaseBackupService;
 use App\Install\DatabaseProber;
 use App\Install\InstallStateDetector;
 use Doctrine\DBAL\Connection;
+use App\Messenger\ConsumableTransports;
+use App\Messenger\WorkerHeartbeat;
+use App\Ops\WorkerServiceUnit;
+use App\Ops\WorkerState;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -39,6 +43,9 @@ class UpgradeFinalizeCommand extends Command
         private readonly DatabaseProber $prober,
         private readonly ConsoleStepRunner $steps,
         private readonly DatabaseBackupService $backup,
+        private readonly WorkerHeartbeat $heartbeat,
+        private readonly ConsumableTransports $transports,
+        private readonly WorkerServiceUnit $unit,
     ) {
         parent::__construct();
     }
@@ -55,6 +62,13 @@ class UpgradeFinalizeCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $io->title('Tallyst — upgrade finalization');
+
+        // ⚠ READ THE WORKER STATE FIRST, BEFORE ANY cache:clear. The heartbeat lives in cache.app and
+        // this command clears the cache twice; asking afterwards would report "no worker" on every
+        // single upgrade and hand back the full setup block each time — the exact repetition that
+        // makes owners stop reading it. It is also the truer question: the advice they need depends
+        // on the worker they had BEFORE this upgrade.
+        $workerBefore = WorkerState::read($this->heartbeat, $this->transports);
 
         $interactive = $input->isInteractive();
         $force = (bool) $input->getOption('force');
@@ -94,7 +108,7 @@ class UpgradeFinalizeCommand extends Command
         $this->step($io, ['cache:clear'], true);
 
         // 7. FINAL MESSAGE -----------------------------------------------------------------------
-        $this->finalMessage($io, $assetFailures);
+        $this->finalMessage($io, $assetFailures, $workerBefore);
 
         return Command::SUCCESS;
     }
@@ -225,7 +239,7 @@ class UpgradeFinalizeCommand extends Command
     /**
      * @param array<int, string> $assetFailures
      */
-    private function finalMessage(SymfonyStyle $io, array $assetFailures): void
+    private function finalMessage(SymfonyStyle $io, array $assetFailures, WorkerState $workerBefore): void
     {
         if ([] !== $assetFailures) {
             // Loud, not buried: a failed compile means dead admin/front JS despite a "successful" upgrade.
@@ -239,17 +253,78 @@ class UpgradeFinalizeCommand extends Command
         }
 
         $io->success('Upgrade finalized.');
+
+        $this->workerMessage($io, $workerBefore);
+
         $io->writeln([
             '<comment>Next steps (visible — they need ops privileges; this command does not do them):</comment>',
-            '  1) Restart the messenger worker (it keeps running the OLD code until you do):',
-            '       see the "Background worker" section in docs/INSTALL.md',
-            '       (systemd, supervisor, or cron — depends on your host)',
-            '  2) Hard-refresh your browser (stale assets can linger in the cache).',
+            '  1) Hard-refresh your browser (stale assets can linger in the cache).',
             '',
             '<comment>Reminder (backup):</comment>',
             '  The DB backup (if made) is in var/backups/. Back up `.env.local` (especially',
             '  SETTINGS_ENCRYPTION_KEY) and public/media/ separately — losing the key permanently',
             '  kills your stored SMTP password.',
+        ]);
+    }
+
+    /**
+     * What to say about the worker — and it is deliberately three different things.
+     *
+     * ⚠ AN OWNER WHO IS SHOWN THE SAME SETUP BLOCK ON EVERY UPGRADE STOPS READING IT, and then
+     * misses the one upgrade where something is genuinely wrong. So a healthy worker gets a single
+     * line, an incomplete one gets exactly the command that fixes it, and only a missing worker gets
+     * the whole thing.
+     */
+    private function workerMessage(SymfonyStyle $io, WorkerState $state): void
+    {
+        if ($state->isComplete()) {
+            $io->writeln([
+                '<comment>Restart the messenger worker</comment> — it keeps running the OLD code until you do,',
+                'so anything fixed in this release is still broken for it:',
+                '',
+                '  systemctl --user restart '.$this->unit->serviceName(),
+                '',
+            ]);
+
+            return;
+        }
+
+        if ($state->isIncomplete()) {
+            $io->warning(\sprintf(
+                'Your worker is running but is not watching: %s',
+                implode(', ', $state->missingQueues),
+            ));
+            $io->writeln([
+                'Anything that depends on those queues silently does not happen.',
+                '',
+                '  php bin/console app:worker:install --update',
+                '  systemctl --user daemon-reload && systemctl --user restart '.$this->unit->serviceName(),
+                '',
+            ]);
+
+            return;
+        }
+
+        // Absent: the same full block as a fresh install, since that is the situation they are in.
+        $io->warning('No background worker is running — no e-mail is being sent at all.');
+        if (!$this->unit->systemdAvailable()) {
+            $io->writeln([
+                'This host has no user systemd. Run the worker from cron instead:',
+                '',
+                '  '.$this->unit->cronLine(),
+                '',
+            ]);
+
+            return;
+        }
+
+        $io->writeln([
+            'Write the service file for this install:',
+            '',
+            '  php bin/console app:worker:install',
+            '',
+            'It fills in every path and queue for you, then prints the two commands that start it.',
+            '',
         ]);
     }
 }
